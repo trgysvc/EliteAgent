@@ -1,0 +1,2 @@
+*.metallib filter=lfs diff=lfs merge=lfs -text
+*.air filter=lfs diff=lfs merge=lfs -text
