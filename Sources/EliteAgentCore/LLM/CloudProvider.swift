@@ -1,0 +1,149 @@
+import Foundation
+
+public actor CloudProvider: LLMProvider {
+    public nonisolated let providerID: ProviderID
+    public nonisolated let providerType: ProviderType = .cloud
+    public let capabilities: Set<Capability> = [.general, .code, .fast]
+    public let costPer1KTokens: Decimal = 0.002
+    public let maxContextTokens: Int = 128000
+    public private(set) var status: ProviderStatus = .ready
+    
+    private let vaultManager: VaultManager
+    private let endpointURL: URL
+    private let modelName: String
+    private let providerConf: ProviderConfig
+    
+    public init(providerID: ProviderID, vaultManager: VaultManager) throws {
+        self.providerID = providerID
+        self.vaultManager = vaultManager
+        
+        let config = vaultManager.config
+        guard let conf = config.providers.first(where: { $0.id == providerID.rawValue }) else {
+            throw ProviderError.networkError("Provider config not found in vault.plist")
+        }
+        self.providerConf = conf
+        self.endpointURL = URL(string: conf.endpoint ?? "https://api.openai.com/v1/chat/completions")!
+        self.modelName = conf.modelName ?? "gpt-4o-mini"
+    }
+    
+    public func healthCheck() async -> Bool {
+        return (try? await vaultManager.getAPIKey(for: providerConf)) != nil
+    }
+    
+    public func complete(_ request: CompletionRequest) async throws -> CompletionResponse {
+        let apiKey: String
+        do {
+            print("[TRACE] CloudProvider: Retrieving API Key...")
+            apiKey = try await vaultManager.getAPIKey(for: providerConf)
+            print("[TRACE] CloudProvider: API Key retrieved (length: \(apiKey.count)).")
+        } catch {
+            print("[TRACE] CloudProvider: API Key retrieval FAILED: \(error)")
+            throw ProviderError.networkError("API Key retrieval failed: \(error)")
+        }
+        
+        var urlRequest = URLRequest(url: endpointURL)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("https://eliteagent.app", forHTTPHeaderField: "HTTP-Referer")
+        urlRequest.setValue("EliteAgent/5.2", forHTTPHeaderField: "X-Title")
+        
+        var openAIMessages: [[String: Any]] = [
+            ["role": "system", "content": request.systemPrompt]
+        ]
+        
+        for msg in request.messages {
+            openAIMessages.append(["role": msg.role, "content": msg.content])
+        }
+        
+        let body: [String: Any] = [
+            "model": modelName,
+            "messages": openAIMessages,
+            "max_tokens": request.maxTokens,
+            "temperature": request.temperature ?? 0.2
+        ]
+        
+        urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
+        urlRequest.timeoutInterval = TimeInterval(request.maxLatencyMs ?? 30000) / 1000.0
+        
+        let startTime = Date()
+        print("[TRACE] CloudProvider: Starting URLSession data task to \(endpointURL)...")
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let latency = Int(Date().timeIntervalSince(startTime) * 1000)
+        print("[TRACE] CloudProvider: URLSession data task COMPLETED. Latency: \(latency)ms")
+        
+        guard let httpRes = response as? HTTPURLResponse else {
+            throw ProviderError.networkError("Invalid HTTP response")
+        }
+        
+        guard httpRes.statusCode == 200 else {
+            let errStr = String(data: data, encoding: .utf8) ?? "Unknown HTTP Error"
+            throw ProviderError.networkError("Status \(httpRes.statusCode): \(errStr)")
+        }
+        
+        struct OpenAIResponse: Codable {
+            struct Choice: Codable {
+                struct ChatMessage: Codable {
+                    let role: String
+                    let content: String?        // optional — can be null
+                    let reasoning: String?      // optional — reasoning models
+                    
+                    struct ReasoningDetail: Codable {
+                        let type: String
+                        let text: String?
+                    }
+                    let reasoningDetails: [ReasoningDetail]?
+                    
+                    enum CodingKeys: String, CodingKey {
+                        case role, content, reasoning
+                        case reasoningDetails = "reasoning_details"
+                    }
+                    
+                    // Computed property — returns best available text
+                    var bestContent: String {
+                        content ?? reasoning ?? 
+                        reasoningDetails?.compactMap(\.text).first ?? ""
+                    }
+                }
+                let message: ChatMessage
+            }
+            struct Usage: Codable {
+                let prompt_tokens: Int
+                let completion_tokens: Int
+                let total_tokens: Int
+            }
+            let choices: [Choice]
+            let usage: Usage
+        }
+        
+        let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+        let message = decoded.choices.first?.message
+        let text = message?.bestContent ?? ""
+        
+        guard !text.isEmpty else {
+            throw ProviderError.networkError("Failed to parse completion text (bestContent empty)")
+        }
+        
+        let count = TokenCount(
+            prompt: decoded.usage.prompt_tokens,
+            completion: decoded.usage.completion_tokens,
+            total: decoded.usage.total_tokens
+        )
+        let cost = Decimal((count.total)) / 1000.0 * self.costPer1KTokens
+        
+        // Extract think block natively if model returned it inside <think> tags
+        let parsed = LLMModel.parseThinkBlock(from: text)
+        
+        AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "LLM Call completed | Model: \(modelName) | Latency: \(latency)ms | Tokens: \(count.total)")
+        
+        return CompletionResponse(
+            taskID: request.taskID,
+            providerUsed: providerID,
+            content: parsed.content,
+            thinkBlock: parsed.think,
+            tokensUsed: count,
+            latencyMs: latency,
+            costUSD: cost
+        )
+    }
+}
