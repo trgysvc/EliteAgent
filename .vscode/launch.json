@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Debug EliteAgent",
+            "target": "EliteAgent",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug EliteAgent"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Release EliteAgent",
+            "target": "EliteAgent",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release EliteAgent"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Debug EliteAgentXPC",
+            "target": "EliteAgentXPC",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug EliteAgentXPC"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Release EliteAgentXPC",
+            "target": "EliteAgentXPC",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release EliteAgentXPC"
+        }
+    ]
+}
