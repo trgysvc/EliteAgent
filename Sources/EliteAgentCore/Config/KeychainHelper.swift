@@ -20,11 +20,13 @@ public enum KeychainError: Error, CustomStringConvertible, Sendable {
 }
 
 public struct KeychainHelper: Sendable {
+    private let serviceIdentifier = "com.trgysvc.EliteAgent"
     public init() {}
     
     public func save(key: String, data: Data) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceIdentifier,
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked
@@ -36,6 +38,7 @@ public struct KeychainHelper: Sendable {
             if status == errSecDuplicateItem {
                 let updateQuery: [String: Any] = [
                     kSecClass as String: kSecClassGenericPassword,
+                    kSecAttrService as String: serviceIdentifier,
                     kSecAttrAccount as String: key
                 ]
                 let attributes: [String: Any] = [
@@ -58,7 +61,7 @@ public struct KeychainHelper: Sendable {
     public func read(key: String) throws -> Data {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "com.eliteagent",
+            kSecAttrService as String: serviceIdentifier,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
@@ -82,6 +85,7 @@ public struct KeychainHelper: Sendable {
     public func delete(key: String) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceIdentifier,
             kSecAttrAccount as String: key
         ]
         let status = SecItemDelete(query as CFDictionary)

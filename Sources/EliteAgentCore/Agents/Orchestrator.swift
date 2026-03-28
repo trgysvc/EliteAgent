@@ -41,7 +41,7 @@ public final class Orchestrator: ObservableObject {
     private let bus: SignalBus
     private let planner: PlannerAgent
     private let memory: MemoryAgent
-    private let cloudProvider: CloudProvider
+    private var cloudProvider: CloudProvider?
     private let toolRegistry: ToolRegistry
     private var observer: ProjectObserver?
     
@@ -55,10 +55,11 @@ public final class Orchestrator: ObservableObject {
         let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
         do {
             let vault = try VaultManager(configURL: defaultVaultPath)
-            // Use openrouter as the primary cloud provider (standard for EliteAgent)
             self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
         } catch {
-            fatalError("Failed to initialize Core Services (Check vault.plist): \(error)")
+            print("[ORCHESTRATOR] CRITICAL: Failed to initialize Core Services: \(error)")
+            self.status = .error
+            self.cloudProvider = nil
         }
         
         // Initialize Tool Registry
@@ -73,16 +74,18 @@ public final class Orchestrator: ObservableObject {
         
         // Register SubagentTool (Recursive)
         let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.steps.append(step)
             }
         }
         
-        let subagentTool = SubagentTool(planner: self.planner, cloudProvider: self.cloudProvider, onStepUpdate: handler) { [weak self] planner, provider in
-            guard let self = self else { fatalError() }
-            return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, toolRegistry: ToolRegistry.shared)
+        if let provider = self.cloudProvider {
+            let subagentTool = SubagentTool(planner: self.planner, cloudProvider: provider, onStepUpdate: handler) { [weak self] planner, provider in
+                guard let self = self else { fatalError() }
+                return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, toolRegistry: ToolRegistry.shared)
+            }
+            self.toolRegistry.register(subagentTool)
         }
-        self.toolRegistry.register(subagentTool)
         
         // Initialize Auto-Update (Sparkle)
         UpdaterService.shared.checkForUpdates()
@@ -116,10 +119,14 @@ public final class Orchestrator: ObservableObject {
             let session = Session(id: sessionID, workspaceURL: workspaceURL)
             
             // 3. Create Runtime
+            guard let provider = self.cloudProvider else {
+                throw ProviderError.networkError("Cloud Provider not initialized. Please check your vault.plist and API keys.")
+            }
+            
             let runtime = OrchestratorRuntime(
                 planner: planner, 
                 memory: memory,
-                cloudProvider: cloudProvider, 
+                cloudProvider: provider, 
                 toolRegistry: toolRegistry
             )
             
