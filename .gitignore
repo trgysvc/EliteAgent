@@ -1,3 +1,5 @@
+Packages/
+.gemini/
 .DS_Store
 .build/
 .swiftpm/

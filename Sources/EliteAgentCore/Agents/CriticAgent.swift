@@ -3,8 +3,8 @@ import Foundation
 public actor CriticAgent: AgentProtocol {
     public let agentID: AgentID = .critic
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "mlx-llama3-8b")
-    public let fallbackProviders: [ProviderID] = [ProviderID(rawValue: "mlx-r1-8b")]
+    public let preferredProvider: ProviderID = ProviderID(rawValue: "mlx")
+    public let fallbackProviders: [ProviderID] = [ProviderID(rawValue: "openrouter")]
     
     private let bus: SignalBus
     

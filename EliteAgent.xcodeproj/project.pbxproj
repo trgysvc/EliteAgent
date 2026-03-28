@@ -9,23 +9,11 @@
 /* Begin PBXBuildFile section */
 		AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
 		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AEEB405D2F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEB7A8CA2F7451CE00A844B2 /* Sparkle */; };
+		AEEB405E2F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEB7A8CA2F7451CE00A844B2 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AE747A262F70602B004732A5 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AE747A102F70602B004732A5 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AE747A172F70602B004732A5;
-			remoteInfo = EliteAgent;
-		};
-		AE747A302F70602C004732A5 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AE747A102F70602B004732A5 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AE747A172F70602B004732A5;
-			remoteInfo = EliteAgent;
-		};
 		AEB7A8C62F7451CE00A844B2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AE747A102F70602B004732A5 /* Project object */;
@@ -34,78 +22,6 @@
 			remoteInfo = EliteAgentCore;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		AEB7A8C32F7451CE00A844B2 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
-			dstSubfolderSpec = 16;
-			files = (
-				AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
-/* Begin PBXFileReference section */
-		AE747A182F70602B004732A5 /* EliteAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EliteAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; includeInIndex = 0; path = libEliteAgentCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = EliteAgentXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		AE747A1A2F70602B004732A5 /* Sources/EliteAgentApp */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Sources/EliteAgentApp;
-			sourceTree = "<group>";
-		};
-		AE747A282F70602B004732A5 /* EliteAgentTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = EliteAgentTests;
-			sourceTree = "<group>";
-		};
-		AE747A322F70602C004732A5 /* EliteAgentUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = EliteAgentUITests;
-			sourceTree = "<group>";
-		};
-		AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Sources/EliteAgentCore;
-			sourceTree = "<group>";
-		};
-		AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Sources/EliteAgentXPC;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		AE747A152F70602B004732A5 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8A32F7451CE00A844B2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8B32F7451CE00A844B2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		AEB7A8C32F7451CE00A844B2 /* CopyFiles */ = {
@@ -130,11 +46,62 @@
 		};
 /* End PBXCopyFilesBuildPhase section */
 
+/* Begin PBXFileReference section */
+		AE747A182F70602B004732A5 /* EliteAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EliteAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = archive.ar; path = libEliteAgentCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = EliteAgentXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AE747A1A2F70602B004732A5 /* Sources/EliteAgent */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/EliteAgent;
+			sourceTree = "<group>";
+		};
+		AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/EliteAgentCore;
+			sourceTree = "<group>";
+		};
+		AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/EliteAgentXPC;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AE747A152F70602B004732A5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AEEB405D2F785F210082B0CE /* Sparkle in Frameworks */,
+				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AEB7A8A32F7451CE00A844B2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AEEB405E2F785F210082B0CE /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AEB7A8B32F7451CE00A844B2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		AE747A0F2F70602B004732A5 = {
 			isa = PBXGroup;
 			children = (
-				AE747A1A2F70602B004732A5 /* Sources/EliteAgentApp */,
+				AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
 				AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */,
 				AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */,
 				AE747A192F70602B004732A5 /* Products */,
@@ -170,10 +137,11 @@
 				AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				AE747A1A2F70602B004732A5 /* Sources/EliteAgentApp */,
+				AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
 			);
 			name = EliteAgent;
 			packageProductDependencies = (
+				AEB7A8CA2F7451CE00A844B2 /* Sparkle */,
 			);
 			productName = EliteAgent;
 			productReference = AE747A182F70602B004732A5 /* EliteAgent.app */;
@@ -195,6 +163,7 @@
 			);
 			name = EliteAgentCore;
 			packageProductDependencies = (
+				AEB7A8CA2F7451CE00A844B2 /* Sparkle */,
 			);
 			productName = EliteAgentCore;
 			productReference = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */;
@@ -228,25 +197,17 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2630;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					AE747A172F70602B004732A5 = {
-						CreatedOnToolsVersion = 26.3;
-					};
-					AE747A242F70602B004732A5 = {
-						CreatedOnToolsVersion = 26.3;
-						TestTargetID = AE747A172F70602B004732A5;
-					};
-					AE747A2E2F70602C004732A5 = {
-						CreatedOnToolsVersion = 26.3;
-						TestTargetID = AE747A172F70602B004732A5;
+						CreatedOnToolsVersion = 16.0;
 					};
 					AEB7A8A02F7451CE00A844B2 = {
-						CreatedOnToolsVersion = 26.3;
+						CreatedOnToolsVersion = 16.0;
 					};
 					AEB7A8B02F7451CE00A844B2 = {
-						CreatedOnToolsVersion = 26.3;
+						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
@@ -259,6 +220,9 @@
 			);
 			mainGroup = AE747A0F2F70602B004732A5;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AEB7A8C82F7451CE00A844B2 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE747A192F70602B004732A5 /* Products */;
 			projectDirPath = "";
@@ -306,16 +270,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AE747A272F70602B004732A5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AE747A172F70602B004732A5 /* EliteAgent */;
-			targetProxy = AE747A262F70602B004732A5 /* PBXContainerItemProxy */;
-		};
-		AE747A312F70602C004732A5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AE747A172F70602B004732A5 /* EliteAgent */;
-			targetProxy = AE747A302F70602C004732A5 /* PBXContainerItemProxy */;
-		};
 		AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */;
@@ -378,7 +332,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -436,11 +390,12 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -449,30 +404,34 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgent/Resources/EliteAgent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "EliteAgent needs to control other apps to automate workflows.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://eliteagent.app/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = placeholder_eddsa_key;
+				INFOPLIST_KEY_SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.EliteAgent;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -481,130 +440,145 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgent/Resources/EliteAgent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "EliteAgent needs to control other apps to automate workflows.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://eliteagent.app/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = placeholder_eddsa_key;
+				INFOPLIST_KEY_SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.EliteAgent;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
 		AEB7A8A62F7451CE00A844B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FMT_USE_CONSTEVAL=0",
 					"FMT_ENFORCE_COMPILE_STRING=0",
 					"FMT_USE_CONSTEXPR=0",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_INCLUDE_PATHS = "$(inherited)";
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
 		AEB7A8A72F7451CE00A844B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FMT_USE_CONSTEVAL=0",
 					"FMT_ENFORCE_COMPILE_STRING=0",
 					"FMT_USE_CONSTEXPR=0",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_INCLUDE_PATHS = "$(inherited)";
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
 		AEB7A8B62F7451CE00A844B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgentXPC/Resources/EliteAgentXPC.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = EliteAgentXPC/Info.plist;
+				INFOPLIST_FILE = Sources/EliteAgentXPC/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.eliteagent.sandbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
+				XPC_SERVICE_JOIN_EXISTING_SESSION = YES;
 			};
 			name = Debug;
 		};
 		AEB7A8B72F7451CE00A844B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgentXPC/Resources/EliteAgentXPC.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = EliteAgentXPC/Info.plist;
+				INFOPLIST_FILE = Sources/EliteAgentXPC/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.eliteagent.sandbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -648,6 +622,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AEB7A8C82F7451CE00A844B2 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AEB7A8CA2F7451CE00A844B2 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB7A8C82F7451CE00A844B2 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AE747A102F70602B004732A5 /* Project object */;
 }

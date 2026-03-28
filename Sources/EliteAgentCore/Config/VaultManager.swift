@@ -57,8 +57,29 @@ public actor VaultManager {
     
     public init(configURL: URL) throws {
         self.configURL = configURL
-        guard FileManager.default.fileExists(atPath: configURL.path) else {
-            throw VaultError.fileNotFound(configURL)
+        let folderURL = configURL.deletingLastPathComponent()
+        
+        // Ensure folder exists
+        if !FileManager.default.fileExists(atPath: folderURL.path) {
+            try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        }
+        
+        // Ensure file exists or create default
+        if !FileManager.default.fileExists(atPath: configURL.path) {
+            print("[VaultManager] Config missing at \(configURL.path). Creating default...")
+            let defaultConfig = VaultConfig(
+                providers: [
+                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "deepseek-r1-8b", capabilities: ["reasoning", "tools"], costPer1KTokens: 0, maxContextTokens: 32768),
+                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "anthropic/claude-3.5-sonnet", capabilities: ["vision", "tools"], costPer1KTokens: nil, maxContextTokens: 200000)
+                ],
+                routingStrategy: .localFirst,
+                inference: InferenceConfig(pauseOnUserInteraction: true),
+                browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
+            )
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .xml
+            let defaultData = try encoder.encode(defaultConfig)
+            try defaultData.write(to: configURL)
         }
         
         do {

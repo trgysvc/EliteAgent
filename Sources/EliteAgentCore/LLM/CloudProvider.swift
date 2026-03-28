@@ -22,8 +22,8 @@ public actor CloudProvider: LLMProvider {
             throw ProviderError.networkError("Provider config not found in vault.plist")
         }
         self.providerConf = conf
-        self.endpointURL = URL(string: conf.endpoint ?? "https://api.openai.com/v1/chat/completions")!
-        self.modelName = conf.modelName ?? "gpt-4o-mini"
+        self.endpointURL = URL(string: conf.endpoint ?? "https://openrouter.ai/api/v1")!
+        self.modelName = conf.modelName ?? "anthropic/claude-3.5-sonnet"
     }
     
     public func healthCheck() async -> Bool {
@@ -64,11 +64,23 @@ public actor CloudProvider: LLMProvider {
         ]
         
         urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
-        urlRequest.timeoutInterval = TimeInterval(request.maxLatencyMs ?? 30000) / 1000.0
+        urlRequest.timeoutInterval = 60.0 // Strict 60s Timeout for Stability
         
         let startTime = Date()
         print("[TRACE] CloudProvider: Starting URLSession data task to \(endpointURL)...")
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        
+        let data: Data
+        let response: URLResponse
+        
+        do {
+            (data, response) = try await URLSession.shared.data(for: urlRequest)
+        } catch let error as URLError where error.code == .timedOut {
+            print("[TRACE] CloudProvider: URLSession TIMED OUT after 60s.")
+            throw ProviderError.networkError("Network Timeout (60s limit reached)")
+        } catch {
+            throw error
+        }
+        
         let latency = Int(Date().timeIntervalSince(startTime) * 1000)
         print("[TRACE] CloudProvider: URLSession data task COMPLETED. Latency: \(latency)ms")
         

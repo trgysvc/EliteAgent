@@ -3,12 +3,16 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.trgysvc.eliteagent</string>
+    <string>com.trgysvc.EliteAgent</string>
     <key>CFBundleName</key>
     <string>EliteAgent</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>SUFeedURL</key>
+    <string>https://eliteagent.app/appcast.xml</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>EliteAgent needs to control other apps to provide autonomous automation and workflow management.</string>
 </dict>
 </plist>

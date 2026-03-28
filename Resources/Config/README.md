@@ -6,7 +6,7 @@
 
 **macOS Only · Swift 6 · Apple Silicon M-series**
 
-[![Status](https://img.shields.io/badge/status-in%20development-yellow)](https://github.com/eliteagent)
+[![Status](https://img.shields.io/badge/status-v5.2--ULTIMATE-brightgreen)](https://github.com/eliteagent)
 [![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)](https://github.com/eliteagent)
 [![Swift](https://img.shields.io/badge/swift-6.0-orange)](https://swift.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -25,7 +25,7 @@
 
 Elite Agent is a general-purpose autonomous agent that runs natively on Apple Silicon Macs. It thinks with local LLMs (via MLX) or cloud APIs (OpenRouter, Claude, GPT), controls any macOS application through Apple's Accessibility API, and keeps your private data from ever reaching the cloud.
 
-It is not a wrapper. It is not Electron. It is a real macOS application — a launchd daemon with a SwiftUI interface, built entirely in Swift 6 with zero external dependencies beyond Apple's own frameworks and MLX.
+It is not a wrapper. It is not Electron. It is a real macOS application — a launchd daemon with a SwiftUI interface, built entirely in Swift 6 with Sparkle-powered **autonomous updates** and zero external dependencies beyond Apple's own frameworks and MLX.
 
 ---
 
@@ -51,7 +51,7 @@ Web search, page reading, summarization, multi-source comparison, report generat
 Write, refactor, test and debug Swift code. Build and run Xcode projects via Xcode MCP. Integrate Figma components directly into your Xcode workspace.
 
 **File & System Operations**
-Read, write, organize files. Run terminal commands in XPC-isolated sandbox. Grep, parse JSON, transform data.
+Read, write, organize files. Native **PDF & DOCX content analysis** (via PDFKit & textutil). Run terminal commands in XPC-isolated sandbox. Grep, parse JSON, transform data.
 
 **macOS App Automation (CUA)**
 Control any macOS application — Xcode, Finder, Safari, Slack, Adobe apps, Microsoft Office — through Apple's Accessibility tree. No browser extension. No Playwright. Native.
@@ -199,15 +199,15 @@ Full architecture specification: [`EliteAgent_PRD_v5.2.md`](EliteAgent_PRD_v5.2.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| Foundation | Actor skeleton, Signal system, Keychain, launchd | 🔲 In progress |
-| LLM Bridge | MLX + Ollama + Cloud providers, routing profiles | 🔲 Planned |
-| Tool Engine | File, shell (XPC), web search | 🔲 Planned |
-| Privacy Guard | Rule + model check, cache, cloud-only mode | 🔲 Planned |
-| Task Loop | Planner prompts, Critic scoring, self-correction | 🔲 Planned |
-| Memory | L1/L2, retrieval, Git State Engine | 🔲 Planned |
+| Foundation | Actor skeleton, Signal system, Keychain, Sparkle Updates | ✅ Done |
+| LLM Bridge | MLX + Ollama + Cloud providers, routing profiles | ✅ Done |
+| Tool Engine | File (PDF/DOCX), shell (XPC), Web, Mail, Music | ✅ Done |
+| Privacy Guard | Rule + model check, cache, cloud-only mode | 🔲 In progress |
+| Task Loop | Planner prompts, Critic scoring, self-healing | 🔲 In progress |
+| Memory | L1/L2, retrieval, Git State Engine | 🔲 In progress |
 | MCP Gateway | Xcode, Figma, Chrome | 🔲 Planned |
 | CUA | AXUIElement, observe→decide→act loop | 🔲 Planned |
-| UI | SwiftUI chat window, Menu Bar, Dashboard | 🔲 Planned |
+| UI | SwiftUI chat window, Menu Bar, Dashboard | 🔲 In progress |
 
 ---
 
@@ -404,7 +404,7 @@ Mimari kararlar PRD'de belgelenmiştir. PR açmadan önce:
 
 <div align="center">
 
-*Elite Agent Core · v5.1-elite · 2026*
+*Elite Agent Core · v5.2-ULTIMATE · 2026*
 *Built for Apple Silicon. Privacy by architecture. Zero compromise.*
 
 </div>

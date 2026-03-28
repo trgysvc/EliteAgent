@@ -17,6 +17,7 @@ public enum AgentStatus: String, Sendable {
     case working
     case waitingLLM = "waiting_llm"
     case waiting
+    case healing
     case error
 }
 
@@ -25,11 +26,15 @@ public struct TaskStep: Identifiable, Sendable {
     public let name: String
     public let status: String
     public let latency: String
+    public let depth: Int
+    public let thought: String?
     
-    public init(name: String, status: String, latency: String) {
+    public init(name: String, status: String, latency: String, depth: Int = 0, thought: String? = nil) {
         self.name = name
         self.status = status
         self.latency = latency
+        self.depth = depth
+        self.thought = thought
     }
 }
 
@@ -117,3 +122,24 @@ public enum SignalError: Error, Sendable {
     case timeout(sigID: UUID, target: AgentID)
     case invalidDirection(source: AgentID, target: AgentID)
 }
+
+public struct AnyCodable: Decodable {
+    public let value: Any
+    
+    public init(_ value: Any) {
+        self.value = value
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let x = try? container.decode(Bool.self) { value = x }
+        else if let x = try? container.decode(Int.self) { value = x }
+        else if let x = try? container.decode(Double.self) { value = x }
+        else if let x = try? container.decode(String.self) { value = x }
+        else if let x = try? container.decode([AnyCodable].self) { value = x.map { $0.value } }
+        else if let x = try? container.decode([String: AnyCodable].self) { value = x.mapValues { $0.value } }
+        else { throw DecodingError.typeMismatch(AnyCodable.self, .init(codingPath: decoder.codingPath, debugDescription: "Wrong type")) }
+    }
+}
+
+extension AnyCodable: @unchecked Sendable {}
