@@ -20,12 +20,12 @@
     <string>(allow system-audit)</string>
     <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
     <array>
-        <string>com.eliteagent.sandbox</string>
+        <string>com.trgysvc.EliteAgent.XPC</string>
         <string>com.apple.security.system-audit</string>
     </array>
     <key>keychain-access-groups</key>
     <array>
-        <string>$(AppIdentifierPrefix)com.trgysvc.eliteagent</string>
+        <string>$(AppIdentifierPrefix)com.trgysvc.EliteAgent</string>
     </array>
     <key>com.apple.security.temporary-exception.apple-events</key>
     <array>

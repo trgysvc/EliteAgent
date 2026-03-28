@@ -12,6 +12,10 @@ public final class UpdaterService: NSObject, SPUUpdaterDelegate, Sendable {
         self.updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
     }
     
+    public func feedURLString(for updater: SPUUpdater) -> String? {
+        return "https://eliteagent.app/appcast.xml"
+    }
+    
     public func checkForUpdates() {
         print("[UPDATER]: Checking for new EliteAgent releases...")
         updater?.updater.checkForUpdates()
