@@ -10,6 +10,7 @@ public final class UpdaterService: NSObject, SPUUpdaterDelegate, Sendable {
         super.init()
         // Initialize Sparkle SPUStandardUpdaterController
         self.updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
+        self.updater?.startUpdater()
     }
     
     public func feedURLString(for updater: SPUUpdater) -> String? {

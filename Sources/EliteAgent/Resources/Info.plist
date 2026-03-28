@@ -12,6 +12,10 @@
     <string>NSApplication</string>
     <key>SUFeedURL</key>
     <string>https://eliteagent.app/appcast.xml</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>EliteAgent needs to control other apps to provide autonomous automation and workflow management.</string>
 </dict>
