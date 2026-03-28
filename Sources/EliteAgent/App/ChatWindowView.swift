@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import EliteAgentCore
 
 public struct GlassEffectStyle: Sendable {
     public static let regular = GlassEffectStyle()
@@ -169,6 +170,7 @@ public struct ChatWindowView: View {
         case .idle: return .green
         case .working: return .yellow
         case .waiting, .waitingLLM: return .orange
+        case .healing: return .purple
         case .error: return .red
         }
     }
@@ -182,6 +184,10 @@ public struct ChatWindowView: View {
         case "running":
             Image(systemName: "arrow.trianglehead.2.clockwise")
                 .foregroundColor(.yellow)
+                .symbolEffect(.pulse, isActive: true)
+        case "healing":
+            Image(systemName: "rays")
+                .foregroundColor(.purple)
                 .symbolEffect(.pulse, isActive: true)
         case "failed":
             Image(systemName: "xmark.circle.fill")

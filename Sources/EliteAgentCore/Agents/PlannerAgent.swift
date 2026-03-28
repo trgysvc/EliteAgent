@@ -4,7 +4,7 @@ import Combine
 public actor PlannerAgent: AgentProtocol {
     public let agentID: AgentID = .planner
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "mlx-r1-32b")
+    public let preferredProvider: ProviderID = ProviderID(rawValue: "mlx")
     public let fallbackProviders: [ProviderID] = [ProviderID(rawValue: "openrouter")]
     
     private let bus: SignalBus

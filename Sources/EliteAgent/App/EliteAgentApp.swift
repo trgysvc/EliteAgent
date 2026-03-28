@@ -66,7 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let hostingView = NSHostingView(rootView: 
             MenuBarView(orchestrator: orchestrator)
-                .background(.clear)
+                .background(Color.clear)
         )
         hostingView.frame = visualEffect.bounds
         hostingView.autoresizingMask = [.width, .height]

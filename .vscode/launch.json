@@ -39,6 +39,26 @@
             "target": "EliteAgentXPC",
             "configuration": "release",
             "preLaunchTask": "swift: Build Release EliteAgentXPC"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Debug elite",
+            "target": "elite",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug elite"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Release elite",
+            "target": "elite",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release elite"
         }
     ]
 }

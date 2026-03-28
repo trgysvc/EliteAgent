@@ -28,6 +28,8 @@ public actor MemoryAgent: AgentProtocol {
     public let fallbackProviders: [ProviderID] = []
     
     private let bus: SignalBus
+    private let vault = ExperienceVault.shared
+    private let embedder = EmbeddingService.shared
     
     // L1 Context
     private var l1Context: [MemoryEntry] = []
@@ -165,5 +167,27 @@ public actor MemoryAgent: AgentProtocol {
         }
         
         return matches
+    }
+    
+    // MARK: - Experiential Memory (RAG)
+    
+    public func storeExperience(task: String, solution: String) async {
+        guard let vector = embedder.getVector(for: task) else { return }
+        await vault.save(task: task, solution: solution, embedding: vector)
+    }
+    
+    public func retrieveRelevantExperiences(query: String, limit: Int = 3) async -> String {
+        guard let vector = embedder.getVector(for: query) else { return "" }
+        let matches = await vault.search(embedding: vector, limit: limit)
+        
+        if matches.isEmpty { return "" }
+        
+        var context = "\n### PAST EXPERIENCES (RAG):\n"
+        for (task, solution, score) in matches {
+            if score > 0.6 { // Semantic Threshold
+                context += "- Task: \(task)\n  Solution: \(solution)\n"
+            }
+        }
+        return context
     }
 }
