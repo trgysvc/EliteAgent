@@ -88,7 +88,9 @@ public final class Orchestrator: ObservableObject {
         }
         
         // Initialize Auto-Update (Sparkle)
+        #if !DEBUG
         UpdaterService.shared.checkForUpdates()
+        #endif
     }
     
     public func start() async {
@@ -131,10 +133,6 @@ public final class Orchestrator: ObservableObject {
             )
             
             // 3b. Start Project Observer
-            self.observer?.stop()
-            self.observer = ProjectObserver(path: workspaceURL.path, delegate: self)
-            self.observer?.start()
-            
             self.observer?.stop()
             self.observer = ProjectObserver(path: workspaceURL.path, delegate: self)
             self.observer?.start()

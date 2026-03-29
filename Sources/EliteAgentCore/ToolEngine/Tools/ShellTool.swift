@@ -1,6 +1,9 @@
 import Foundation
 
-@objc public protocol SandboxProtocol {
+// NOTE: SandboxProtocol is defined in EliteAgentXPC/main.swift (the XPC service).
+// We re-declare the Objective-C protocol here so the client-side NSXPCInterface
+// can reference it without a shared framework. Both declarations must stay identical.
+@objc protocol SandboxProtocol {
     func runCommand(_ command: String, inDirectory directory: String?, reply: @escaping (String?, Error?) -> Void)
 }
 
@@ -18,7 +21,7 @@ public struct ShellTool: AgentTool, Sendable {
         let workspacePath = session.workspaceURL.path
         
         // Enforce XPC boundary execution
-        let connection = NSXPCConnection(serviceName: "com.eliteagent.sandbox")
+        let connection = NSXPCConnection(serviceName: "com.trgysvc.EliteAgent.XPC")
         connection.remoteObjectInterface = NSXPCInterface(with: SandboxProtocol.self)
         connection.resume()
         

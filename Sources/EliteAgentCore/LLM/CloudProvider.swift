@@ -22,7 +22,11 @@ public actor CloudProvider: LLMProvider {
             throw ProviderError.networkError("Provider config not found in vault.plist")
         }
         self.providerConf = conf
-        self.endpointURL = URL(string: conf.endpoint ?? "https://openrouter.ai/api/v1")!
+        var urlStr = conf.endpoint ?? "https://openrouter.ai/api/v1"
+        if !urlStr.hasSuffix("/chat/completions") && !urlStr.contains("/messages") {
+            urlStr = urlStr.hasSuffix("/") ? urlStr + "chat/completions" : urlStr + "/chat/completions"
+        }
+        self.endpointURL = URL(string: urlStr)!
         self.modelName = conf.modelName ?? "anthropic/claude-3.5-sonnet"
     }
     
@@ -90,6 +94,7 @@ public actor CloudProvider: LLMProvider {
         
         guard httpRes.statusCode == 200 else {
             let errStr = String(data: data, encoding: .utf8) ?? "Unknown HTTP Error"
+            print("[CLOUD_PROVIDER ERROR] HTTP \(httpRes.statusCode): \(errStr)")
             throw ProviderError.networkError("Status \(httpRes.statusCode): \(errStr)")
         }
         
@@ -120,29 +125,40 @@ public actor CloudProvider: LLMProvider {
                 let message: ChatMessage
             }
             struct Usage: Codable {
-                let prompt_tokens: Int
-                let completion_tokens: Int
-                let total_tokens: Int
+                let prompt_tokens: Int?
+                let completion_tokens: Int?
+                let total_tokens: Int?
             }
             let choices: [Choice]
-            let usage: Usage
+            let usage: Usage?
         }
         
-        let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+        let decoded: OpenAIResponse
+        do {
+            decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+        } catch {
+            let rawData = String(data: data, encoding: .utf8) ?? "unable to decode raw string"
+            print("[CLOUD_PROVIDER ERROR] Failed to decode JSON. Error: \(error)")
+            print("[CLOUD_PROVIDER RAW RESP] \(rawData)")
+            throw ProviderError.networkError("JSON parsing failed: \(error.localizedDescription)")
+        }
+        
         let message = decoded.choices.first?.message
         let text = message?.bestContent ?? ""
         
         guard !text.isEmpty else {
+            let rawData = String(data: data, encoding: .utf8) ?? "none"
+            print("[CLOUD_PROVIDER EMPTY TEXT] raw: \(rawData)")
             throw ProviderError.networkError("Failed to parse completion text (bestContent empty)")
         }
         
         let count = TokenCount(
-            prompt: decoded.usage.prompt_tokens,
-            completion: decoded.usage.completion_tokens,
-            total: decoded.usage.total_tokens
+            prompt: decoded.usage?.prompt_tokens ?? 0,
+            completion: decoded.usage?.completion_tokens ?? 0,
+            total: decoded.usage?.total_tokens ?? 0
         )
         let cost = Decimal((count.total)) / 1000.0 * self.costPer1KTokens
-        
+
         // Extract think block natively if model returned it inside <think> tags
         let parsed = LLMModel.parseThinkBlock(from: text)
         

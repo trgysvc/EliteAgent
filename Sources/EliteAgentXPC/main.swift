@@ -1,25 +1,29 @@
 import Foundation
 
 @objc public protocol SandboxProtocol {
-    func runCommand(_ command: String, reply: @escaping (String?, Error?) -> Void)
+    func runCommand(_ command: String, inDirectory directory: String?, reply: @escaping (String?, Error?) -> Void)
 }
 
 class SandboxXPCService: NSObject, NSXPCListenerDelegate, SandboxProtocol {
-    func runCommand(_ command: String, reply: @escaping (String?, Error?) -> Void) {
-        let prohibited = ["rm -rf /", "sudo", "chmod -R 777"]
+    func runCommand(_ command: String, inDirectory directory: String?, reply: @escaping (String?, Error?) -> Void) {
+        let prohibited = ["rm -rf /", "sudo rm -rf", "chmod -R 777 /"]
         guard !prohibited.contains(where: { command.contains($0) }) else {
             reply(nil, NSError(domain: "SandboxError", code: 403, userInfo: [NSLocalizedDescriptionKey: "Forbidden command detected. Operation Blocked."]))
             return
         }
-        
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", command]
-        
+
+        if let dir = directory {
+            process.currentDirectoryURL = URL(fileURLWithPath: dir)
+        }
+
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
-        
+
         do {
             try process.run()
             process.waitUntilExit()
@@ -30,7 +34,7 @@ class SandboxXPCService: NSObject, NSXPCListenerDelegate, SandboxProtocol {
             reply(nil, error)
         }
     }
-    
+
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         newConnection.exportedInterface = NSXPCInterface(with: SandboxProtocol.self)
         newConnection.exportedObject = self

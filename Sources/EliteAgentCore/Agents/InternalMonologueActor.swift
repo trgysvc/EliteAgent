@@ -44,8 +44,10 @@ public actor InternalMonologueActor {
         
         let response = try await provider.complete(request)
         
-        // Simple extraction and parsing
-        guard let data = response.content.data(using: .utf8),
+        // Extract raw JSON — LLMs often wrap output in ```json ... ``` fences
+        let rawJSON = Self.extractJSON(from: response.content)
+        
+        guard let data = rawJSON.data(using: .utf8),
               let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let strategies = result["strategies"] as? [[String: Any]],
               let selectedName = result["selected"] as? String,
@@ -59,5 +61,25 @@ public actor InternalMonologueActor {
             plan: selectedDict["plan"] as? String ?? "",
             risk: selectedDict["risk"] as? String ?? ""
         )
+    }
+    
+    /// Strips ```json / ``` markdown fences and extracts the first JSON object.
+    /// Conforms to defensive parsing best-practice for LLM outputs.
+    static func extractJSON(from text: String) -> String {
+        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove ```json ... ``` or ``` ... ``` fences if present
+        if cleaned.hasPrefix("```") {
+            let lines = cleaned.components(separatedBy: "\n")
+            let body = lines.dropFirst().dropLast().joined(separator: "\n")
+            cleaned = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract the outermost {...} block
+        guard let start = cleaned.firstIndex(of: "{"),
+              let end = cleaned.lastIndex(of: "}") else {
+            return cleaned
+        }
+        return String(cleaned[start...end])
     }
 }

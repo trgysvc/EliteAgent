@@ -97,12 +97,15 @@ public actor VaultManager {
         }
         
         do {
+            print("[TRACE] VaultManager: Attempting to read '\(keychainKey)' from Keychain...")
             let keyData = try keychain.read(key: keychainKey)
             guard let keyString = String(data: keyData, encoding: .utf8) else {
                 throw KeychainError.invalidItemFormat
             }
+            print("[TRACE] VaultManager: Successfully retrieved API Key for '\(keychainKey)'.")
             return keyString
         } catch KeychainError.itemNotFound {
+            print("[TRACE] VaultManager: API Key NOT FOUND for identifier '\(keychainKey)'.")
             throw VaultError.missingKeychainResource(keychainKey: keychainKey)
         } catch let error as KeychainError {
             throw VaultError.apiTokenReadFailed(error.description)

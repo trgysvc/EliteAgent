@@ -21,6 +21,8 @@ public enum KeychainError: Error, CustomStringConvertible, Sendable {
 
 public struct KeychainHelper: Sendable {
     private let serviceIdentifier = "com.trgysvc.EliteAgent"
+    private let legacyServiceIdentifier = "com.eliteagent"
+    
     public init() {}
     
     public func save(key: String, data: Data) throws {
@@ -71,7 +73,26 @@ public struct KeychainHelper: Sendable {
         let status = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
         
         guard status == errSecSuccess else {
-            if status == errSecItemNotFound { throw KeychainError.itemNotFound }
+            if status == errSecItemNotFound {
+                // FALLBACK: Try legacy identifier
+                let legacyQuery: [String: Any] = [
+                    kSecClass as String: kSecClassGenericPassword,
+                    kSecAttrService as String: legacyServiceIdentifier,
+                    kSecAttrAccount as String: key,
+                    kSecReturnData as String: true,
+                    kSecMatchLimit as String: kSecMatchLimitOne
+                ]
+                var legacyRef: AnyObject?
+                let legacyStatus = SecItemCopyMatching(legacyQuery as CFDictionary, &legacyRef)
+                
+                if legacyStatus == errSecSuccess, let legacyData = legacyRef as? Data {
+                    print("[KEYCHAIN] Found key in legacy namespace '\(legacyServiceIdentifier)'. Migrating...")
+                    // Optionally migrate here, but for now just return
+                    return legacyData
+                }
+                
+                throw KeychainError.itemNotFound 
+            }
             if status == errSecAuthFailed { throw KeychainError.accessDenied }
             throw KeychainError.unknown(status)
         }

@@ -59,23 +59,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
         }
         popover = NSPopover()
-        let visualEffect = NSVisualEffectView()
-        visualEffect.blendingMode = .behindWindow
-        visualEffect.state = .active
-        visualEffect.material = .popover
         
-        let hostingView = NSHostingView(rootView: 
-            MenuBarView(orchestrator: orchestrator)
-                .background(Color.clear)
-        )
-        hostingView.frame = visualEffect.bounds
-        hostingView.autoresizingMask = [.width, .height]
+        let menuBarView = MenuBarView(orchestrator: orchestrator)
+            .background(Color.clear)
         
-        visualEffect.addSubview(hostingView)
-        
-        let viewController = NSViewController()
-        viewController.view = visualEffect
-        popover?.contentViewController = viewController
+        let hostingController = NSHostingController(rootView: menuBarView)
+        popover?.contentViewController = hostingController
+        popover?.behavior = .transient
     }
     
     @objc func togglePopover() {
