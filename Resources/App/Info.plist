@@ -4,6 +4,10 @@
 <dict>
     <key>CFBundleIdentifier</key>
     <string>com.trgysvc.EliteAgent</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>CFBundleDisplayName</key>
+    <string>Elite Agent</string>
     <key>CFBundleName</key>
     <string>EliteAgent</string>
     <key>LSUIElement</key>

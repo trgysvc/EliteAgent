@@ -20,6 +20,7 @@ public actor OrchestratorRuntime {
     public func setStatusUpdateHandler(_ handler: @Sendable @escaping (AgentStatus) -> Void) {
         self.onStatusUpdate = handler
     }
+    private var onTokenUpdate: (@Sendable (TokenCount) -> Void)?
     
     public init(planner: PlannerAgent, memory: MemoryAgent, cloudProvider: CloudProvider, toolRegistry: ToolRegistry) {
         self.planner = planner
@@ -27,6 +28,10 @@ public actor OrchestratorRuntime {
         self.cloudProvider = cloudProvider
         self.toolRegistry = toolRegistry
         self.contextManager = DynamicContextManager(maxTokens: cloudProvider.maxContextTokens, provider: cloudProvider)
+    }
+    
+    public func setTokenUpdateHandler(_ handler: @Sendable @escaping (TokenCount) -> Void) async {
+        self.onTokenUpdate = handler
     }
     
     public func executeTask(prompt: String, session: Session) async throws {
@@ -74,7 +79,16 @@ public actor OrchestratorRuntime {
             
             let response = try await cloudProvider.complete(request)
             await contextManager.addMessage(Message(role: "assistant", content: response.content))
-            await session.addTokenUsage(response.tokensUsed.total)
+            await session.addTokenUsage(response.tokensUsed)
+            onTokenUpdate?(response.tokensUsed)
+            
+            // Record to MetricsStore
+            await MetricsStore.shared.update(
+                modelID: cloudProvider.modelName, 
+                promptTokens: response.tokensUsed.prompt, 
+                completionTokens: response.tokensUsed.completion, 
+                cost: response.costUSD
+            )
             
             // 3. Parse Thinking vs Action
             let result = ThinkingParser.parse(response.content)

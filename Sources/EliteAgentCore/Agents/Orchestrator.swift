@@ -37,6 +37,8 @@ public final class Orchestrator: ObservableObject {
     @Published public var thinkBlocks: [ThinkBlock] = []
     @Published public var providerUsed: String = "None"
     @Published public var costToday: Decimal = 0.00
+    @Published public var promptTokens: Int = 0
+    @Published public var completionTokens: Int = 0
     
     private let bus: SignalBus
     private let planner: PlannerAgent
@@ -109,6 +111,8 @@ public final class Orchestrator: ObservableObject {
         self.steps.removeAll()
         self.thinkBlocks.removeAll()
         self.currentTask = prompt
+        self.promptTokens = 0
+        self.completionTokens = 0
         
         let taskStart = CFAbsoluteTimeGetCurrent()
         
@@ -120,10 +124,18 @@ public final class Orchestrator: ObservableObject {
             // 2. Create Root Session
             let session = Session(id: sessionID, workspaceURL: workspaceURL)
             
-            // 3. Create Runtime
+            // 3. Create Runtime (Refreshed Provider)
+            let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+            let vault = try VaultManager(configURL: defaultVaultPath)
+            
+            // Re-detect which provider is selected and refresh model/pricing
+            self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
+            
             guard let provider = self.cloudProvider else {
                 throw ProviderError.networkError("Cloud Provider not initialized. Please check your vault.plist and API keys.")
             }
+            
+            self.providerUsed = provider.modelName
             
             let runtime = OrchestratorRuntime(
                 planner: planner, 
@@ -147,6 +159,13 @@ public final class Orchestrator: ObservableObject {
             await runtime.setStatusUpdateHandler { [weak self] status in
                 Task { @MainActor in
                     self?.status = status
+                }
+            }
+            
+            await runtime.setTokenUpdateHandler { [weak self] count in
+                Task { @MainActor in
+                    self?.promptTokens += count.prompt
+                    self?.completionTokens += count.completion
                 }
             }
             
