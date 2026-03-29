@@ -1,34 +1,15 @@
 import Foundation
-import Sparkle
 
-public final class UpdaterService: NSObject, SPUUpdaterDelegate, Sendable {
+/// UpdaterService is a stub in EliteAgentCore.
+/// The real Sparkle-dependent implementation lives in the main App target (EliteAgent)
+/// because Sparkle.framework is only linked to the App, not the static Core library.
+public final class UpdaterService: @unchecked Sendable {
     public static let shared = UpdaterService()
+    private init() {}
     
-    private var updater: SPUStandardUpdaterController?
-    
-    private override init() {
-        super.init()
-        // Initialize Sparkle SPUStandardUpdaterController
-        self.updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
-        self.updater?.startUpdater()
-    }
-    
-    public func feedURLString(for updater: SPUUpdater) -> String? {
-        return "https://eliteagent.app/appcast.xml"
-    }
-    
+    /// Called by App target's concrete UpdaterService via notification or direct call.
+    /// No-op in Core — prevents Core from depending on Sparkle.
     public func checkForUpdates() {
-        print("[UPDATER]: Checking for new EliteAgent releases...")
-        updater?.updater.checkForUpdates()
+        print("[UPDATER]: checkForUpdates() — Core stub. Implement in App target.")
     }
-    
-    public func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
-        print("[UPDATER]: Found new version: \(item.displayVersionString)")
-    }
-    
-    public func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
-        print("[UPDATER]: EliteAgent is already at the latest version.")
-    }
-    
-    // Auto-update logic (Silent) - configure in Info.plist (SUAllowsAutomaticUpdates)
 }

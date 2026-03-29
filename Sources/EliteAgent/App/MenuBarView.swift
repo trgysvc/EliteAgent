@@ -8,6 +8,7 @@ public struct MenuBarView: View {
     @State private var isVisible: Bool = false
     @FocusState private var isInputFocused: Bool
     @State private var pulsate: Bool = false
+    @State private var showDebug: Bool = false
     
     public init(orchestrator: Orchestrator) {
         self.orchestrator = orchestrator
@@ -26,6 +27,17 @@ public struct MenuBarView: View {
                     .tracking(1.2)
                 
                 Spacer()
+                
+                Button(action: { showDebug.toggle() }) {
+                    Image(systemName: "ladybug")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(orchestrator.status == .error ? .red : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help("System Diagnostics")
+                .popover(isPresented: $showDebug) {
+                    DebugDashboard(orchestrator: orchestrator)
+                }
                 
                 Button(action: openChat) {
                     Image(systemName: "uiwindow.split.2x1")
@@ -179,6 +191,30 @@ public struct MenuBarView: View {
                 withAnimation(.easeInOut(duration: 0.8).repeatForever()) {
                     pulsate = true
                 }
+                
+                // Auto-show diagnostics if key is missing
+                checkCredentialHealth()
+            }
+        }
+    }
+    
+    private func checkCredentialHealth() {
+        let vaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        if !FileManager.default.fileExists(atPath: vaultPath.path) {
+            showDebug = true
+            return
+        }
+        
+        Task {
+            do {
+                let manager = try VaultManager(configURL: vaultPath)
+                if let provider = await manager.config.providers.first(where: { $0.type == .cloud }) {
+                    _ = try await manager.getAPIKey(for: provider)
+                } else {
+                    showDebug = true
+                }
+            } catch {
+                showDebug = true
             }
         }
     }

@@ -20,8 +20,7 @@ let package = Package(
         .executableTarget(
             name: "EliteAgent",
             dependencies: ["EliteAgentCore"],
-            path: "Sources/EliteAgent",
-            exclude: ["Resources"]
+            path: "Sources/EliteAgent"
         ),
         .target(
             name: "EliteAgentCore",
@@ -37,8 +36,7 @@ let package = Package(
         .executableTarget(
             name: "EliteAgentXPC",
             dependencies: ["EliteAgentCore"],
-            path: "Sources/EliteAgentXPC",
-            exclude: ["Resources"]
+            path: "Sources/EliteAgentXPC"
         ),
         .executableTarget(
             name: "elite",

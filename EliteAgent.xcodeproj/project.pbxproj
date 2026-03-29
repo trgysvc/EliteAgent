@@ -9,8 +9,7 @@
 /* Begin PBXBuildFile section */
 		AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
 		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		AEEB405D2F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEB7A8CA2F7451CE00A844B2 /* Sparkle */; };
-		AEEB405E2F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEB7A8CA2F7451CE00A844B2 /* Sparkle */; };
+		AEEB40622F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +31,7 @@
 			files = (
 				AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in CopyFiles */,
 			);
+			name = "Embed XPC Services";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AEB7A8C72F7451CE00A844B2 /* Embed Frameworks */ = {
@@ -75,7 +75,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AEEB405D2F785F210082B0CE /* Sparkle in Frameworks */,
+				AEEB40622F785F210082B0CE /* Sparkle in Frameworks */,
 				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,7 +84,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AEEB405E2F785F210082B0CE /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,7 +140,7 @@
 			);
 			name = EliteAgent;
 			packageProductDependencies = (
-				AEB7A8CA2F7451CE00A844B2 /* Sparkle */,
+				AEEB40612F785F210082B0CE /* Sparkle */,
 			);
 			productName = EliteAgent;
 			productReference = AE747A182F70602B004732A5 /* EliteAgent.app */;
@@ -163,7 +162,7 @@
 			);
 			name = EliteAgentCore;
 			packageProductDependencies = (
-				AEB7A8CA2F7451CE00A844B2 /* Sparkle */,
+				AEEB40612F785F210082B0CE /* Sparkle */,
 			);
 			productName = EliteAgentCore;
 			productReference = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */;
@@ -221,7 +220,7 @@
 			mainGroup = AE747A0F2F70602B004732A5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				AEB7A8C82F7451CE00A844B2 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE747A192F70602B004732A5 /* Products */;
@@ -404,7 +403,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgent/Resources/EliteAgent.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -414,7 +413,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/EliteAgent/Resources/Info.plist;
+				INFOPLIST_FILE = Resources/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -436,7 +435,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgent/Resources/EliteAgent.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -446,7 +445,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/EliteAgent/Resources/Info.plist;
+				INFOPLIST_FILE = Resources/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -466,8 +465,8 @@
 		AEB7A8A62F7451CE00A844B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
@@ -496,8 +495,8 @@
 		AEB7A8A72F7451CE00A844B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
@@ -528,13 +527,13 @@
 			buildSettings = {
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgentXPC/Resources/EliteAgentXPC.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = Sources/EliteAgentXPC/Resources/Info.plist;
+				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -554,13 +553,13 @@
 			buildSettings = {
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = Sources/EliteAgentXPC/Resources/EliteAgentXPC.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = Sources/EliteAgentXPC/Resources/Info.plist;
+				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -616,20 +615,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AEB7A8C82F7451CE00A844B2 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+		AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.6.0;
+				minimumVersion = 2.6.4;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AEB7A8CA2F7451CE00A844B2 /* Sparkle */ = {
+		AEEB40612F785F210082B0CE /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = AEB7A8C82F7451CE00A844B2 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			package = AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
