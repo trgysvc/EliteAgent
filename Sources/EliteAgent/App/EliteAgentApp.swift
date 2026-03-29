@@ -21,6 +21,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        
+        // STARTUP BIOMETRIC AUTH
+        if AppSettings.shared.isBiometricEnabledForStartup {
+            Task { @MainActor in
+                let success = await SecuritySentinel.shared.authenticateUser(reason: "EliteAgent Erişimi İçin Onay Gerekiyor")
+                if !success {
+                    NSApp.terminate(nil)
+                    return
+                }
+                finishLaunching()
+            }
+        } else {
+            finishLaunching()
+        }
+    }
+    
+    private func finishLaunching() {
         let vm = ModelPickerViewModel(orchestrator: orchestrator)
         self.modelPickerVM = vm
         

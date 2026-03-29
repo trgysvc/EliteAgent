@@ -10,6 +10,8 @@ public enum TaskCategory: String, Codable, Sendable, CaseIterable {
     case applicationAutomation
     case computerUseAX
     case conversation
+    case hardware
+    case status
     case other
 }
 
@@ -23,6 +25,8 @@ public struct TaskClassifier: Sendable {
         if p.contains("kod") || p.contains("swift") || p.contains("build") { return .codeGeneration }
         if p.contains("system") || p.contains("terminal") || p.contains("shell") { return .systemManagement }
         if p.contains("json") || p.contains("veri") || p.contains("parse") { return .dataProcessing }
+        if p.contains("sıcaklık") || p.contains("işlemci") || p.contains("cpu") || p.contains("gpu") || p.contains("donanım") || p.contains("hardware") || p.contains("thermal") { return .hardware }
+        if p.contains("durum") || p.contains("status") || p.contains("ne durum") { return .status }
         if p.contains("farklı") || p.contains("workflow") { return .multiStepWorkflow }
         if p.contains("safari") || p.contains("xcode") || p.contains("figma") || p.contains("app") { return .applicationAutomation }
         if p.contains("tıkla") || p.contains("click") || p.contains("ekran") { return .computerUseAX }

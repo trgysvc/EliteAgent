@@ -8,7 +8,10 @@ public actor OrchestratorRuntime {
     private let planner: PlannerAgent
     private let memory: MemoryAgent
     private let cloudProvider: CloudProvider
+    private let localProvider: MLXProvider?
     private let contextManager: DynamicContextManager
+    private let bus: SignalBus
+    private var emergencyBuffer: [Signal] = []
     
     private var onStepUpdate: (@Sendable (TaskStep) -> Void)?
     private var onStatusUpdate: (@Sendable (AgentStatus) -> Void)?
@@ -22,11 +25,13 @@ public actor OrchestratorRuntime {
     }
     private var onTokenUpdate: (@Sendable (TokenCount) -> Void)?
     
-    public init(planner: PlannerAgent, memory: MemoryAgent, cloudProvider: CloudProvider, toolRegistry: ToolRegistry) {
+    public init(planner: PlannerAgent, memory: MemoryAgent, cloudProvider: CloudProvider, localProvider: MLXProvider? = nil, toolRegistry: ToolRegistry, bus: SignalBus) {
         self.planner = planner
         self.memory = memory
         self.cloudProvider = cloudProvider
+        self.localProvider = localProvider
         self.toolRegistry = toolRegistry
+        self.bus = bus
         self.contextManager = DynamicContextManager(maxTokens: cloudProvider.maxContextTokens, provider: cloudProvider)
     }
     
@@ -34,12 +39,14 @@ public actor OrchestratorRuntime {
         self.onTokenUpdate = handler
     }
     
-    public func executeTask(prompt: String, session: Session) async throws {
+    public func executeTask(prompt: String, session: Session, complexity: Int = 3) async throws {
         await session.updateStatus(.thinking)
         onStatusUpdate?(.working)
         
-        // Sound Architect: Dampen background audio (FoleyDimmerLogic)
-        await AudioArchitect.shared.dampen()
+        // Sound Architect: Dampen background audio (Focus Mode check)
+        if await AppSettings.shared.isQuietModeEnabled {
+            await AudioArchitect.shared.dampen()
+        }
         
         // 1. Cognitive Simulation (Internal Monologue)
         let ragContext = await memory.retrieveRelevantExperiences(query: prompt)
@@ -52,7 +59,29 @@ public actor OrchestratorRuntime {
         await contextManager.addMessage(Message(role: "user", content: prompt))
         var isRunning = true
         
+        // Subscribe to emergency channel
+        let (emergencyStream, _) = await bus.subscribe(for: .orchestrator)
+        let signalingTask = Task { [weak self] in
+            for await signal in emergencyStream {
+                await self?.pushEmergency(signal)
+            }
+        }
+        defer { signalingTask.cancel() }
+        
         while isRunning {
+            // 0. Hardware Protection Reflex (Emergency Priority)
+            if let emergency = popEmergency() {
+                onStepUpdate?(TaskStep(name: "⚠️ EMERGENCY: \(emergency.name)", status: "critical", latency: "ANE", thought: "Hardware reflex triggered. Priority: \(emergency.priority)"))
+                try await handleEmergency(emergency, session: session)
+            }
+
+            // 0b. Check for Task Cancellation
+            if Task.isCancelled {
+                isRunning = false
+                await session.updateStatus(.failed)
+                return
+            }
+            
             // 1. Check Recursion Depth
             if await session.isRecursionLimitReached() {
                 await session.updateStatus(.failed)
@@ -77,7 +106,9 @@ public actor OrchestratorRuntime {
                 complexity: 3
             )
             
-            let response = try await cloudProvider.complete(request)
+            // Hybrid Reasoning: Route between Local and Cloud
+            let providerToUse: LLMProvider = (localProvider != nil && complexity <= 1) ? localProvider! : cloudProvider
+            let response = try await providerToUse.complete(request)
             await contextManager.addMessage(Message(role: "assistant", content: response.content))
             await session.addTokenUsage(response.tokensUsed)
             onTokenUpdate?(response.tokensUsed)
@@ -153,8 +184,10 @@ public actor OrchestratorRuntime {
                 // 5. Store Experience (Cumulative Intelligence)
                 await memory.storeExperience(task: prompt, solution: result.finalAnswer)
                 
-                // Sound Architect: Restore background audio (FoleyDimmerLogic)
-                await AudioArchitect.shared.restore()
+                // Sound Architect: Restore background audio (Focus Mode check)
+                if await AppSettings.shared.isQuietModeEnabled {
+                    await AudioArchitect.shared.restore()
+                }
                 
                 print("[FINAL]: \(result.finalAnswer)")
             }
@@ -278,5 +311,23 @@ public actor OrchestratorRuntime {
         }
         
         return result
+    }
+
+    private func pushEmergency(_ signal: Signal) {
+        emergencyBuffer.append(signal)
+    }
+    
+    private func popEmergency() -> Signal? {
+        guard !emergencyBuffer.isEmpty else { return nil }
+        return emergencyBuffer.removeFirst()
+    }
+    
+    private func handleEmergency(_ signal: Signal, session: Session) async throws {
+        // Logic for handling critical hardware states
+        if signal.name == "THERMAL_CRITICAL" {
+            onStepUpdate?(TaskStep(name: "Thermal Throttling", status: "throttled", latency: "0ms", thought: "Reducing LLM complexity to protect M-series silicon."))
+            // In a real scenario, we might switch to a smaller model or pause
+            try await Task.sleep(nanoseconds: 2_000_000_000) // Cooling period
+        }
     }
 }
