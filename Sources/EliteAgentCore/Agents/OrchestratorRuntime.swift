@@ -79,15 +79,16 @@ public actor OrchestratorRuntime {
             // 3. Parse Thinking vs Action
             let result = ThinkingParser.parse(response.content)
             
-            // Log thinking (we'll need a callback or signal to the UI Orchestrator)
-            // For now, print it
+            // Log thinking
             if let think = result.thinking {
                 let depth = session.recursionDepth
                 onStepUpdate?(TaskStep(name: "Reasoning...", status: "thinking", latency: "...", depth: depth, thought: think))
             }
             
-            // 4. Determine Action
-            if let toolCall = parseToolCall(result.finalAnswer) {
+            // 4. Determine Action: PRIORITIZE tool call in full content or final answer
+            let toolCallCandidate = parseToolCall(response.content) ?? parseToolCall(result.finalAnswer)
+            
+            if let toolCall = toolCallCandidate {
                 let depth = session.recursionDepth
                 onStepUpdate?(TaskStep(name: "Tool: \(toolCall.name)", status: "executing", latency: "...", depth: depth))
                 
@@ -146,32 +147,122 @@ public actor OrchestratorRuntime {
         }
     }
     
-    private struct ToolCall: Decodable {
-        let name: String
-        let params: [String: AnyCodable]
-        
-        enum CodingKeys: String, CodingKey {
-            case tool = "tool"
-            case params = "params"
-        }
-        
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            name = try container.decode(String.self, forKey: .tool)
-            params = try container.decode([String: AnyCodable].self, forKey: .params)
-        }
-    }
-    
     private func parseToolCall(_ text: String) -> (name: String, params: [String: AnyCodable])? {
-        // Simple JSON extractor for tool calls
-        guard let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") else { return nil }
-        let jsonStr = String(text[start...end])
+        // 1. Extract JSON block (strip markdown/tags)
+        let cleaned = text.replacingOccurrences(of: "<final>", with: "")
+                          .replacingOccurrences(of: "</final>", with: "")
+                          .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        guard let data = jsonStr.data(using: .utf8),
-              let toolCall = try? JSONDecoder().decode(ToolCall.self, from: data) else {
+        guard let start = cleaned.firstIndex(of: "{") else { return nil }
+        // Scan for the most balanced JSON-like suffix
+        let rawJson = String(cleaned[start...])
+        
+        // 2. Sanitize: Escape literal newlines ONLY within double-quoted strings
+        var sanitizedJson = sanitizeJSONResilient(rawJson)
+        
+        // 3. Auto-Balancing: AI often forgets closing braces. Let's fix it.
+        sanitizedJson = balanceBraces(sanitizedJson)
+        
+        // 4. Parse using JSONSerialization
+        guard let data = sanitizedJson.data(using: .utf8),
+              let jsonObject = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? findBestJSONMatch(sanitizedJson) else {
             return nil
         }
         
-        return (toolCall.name, toolCall.params)
+        // 5. Map to ToolCall structure
+        guard let name = jsonObject["tool"] as? String,
+              let rawParams = jsonObject["params"] as? [String: Any] else {
+            return nil
+        }
+        
+        let params = rawParams.mapValues { AnyCodable($0) }
+        return (name, params)
+    }
+
+    /// Internal Helper: If JSONSerialization fails, try to aggressively find a { ... } block
+    private func findBestJSONMatch(_ input: String) -> [String: Any]? {
+        // Find the last possible '}' that results in a valid parse
+        var temp = input
+        while temp.contains("}") {
+            if let data = temp.data(using: .utf8),
+               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                return obj
+            }
+            if let lastIdx = temp.lastIndex(of: "}") {
+                temp = String(temp[..<lastIdx])
+            } else { break }
+        }
+        return nil
+    }
+
+    /// Auto-Balance: Appends missing closing braces to fix malformed AI output.
+    private func balanceBraces(_ input: String) -> String {
+        var openCount = 0
+        var insideString = false
+        var escaped = false
+        
+        for char in input {
+            if char == "\"" && !escaped {
+                insideString.toggle()
+            }
+            
+            if !insideString {
+                if char == "{" { openCount += 1 }
+                else if char == "}" { openCount -= 1 }
+            }
+            
+            if char == "\\" && !escaped {
+                escaped = true
+            } else {
+                escaped = false
+            }
+        }
+        
+        var fixed = input
+        if openCount > 0 {
+            // Need to close strings first if the AI cut off mid-string
+            if insideString { fixed += "\"" }
+            // Add missing braces
+            for _ in 0..<openCount {
+                fixed += "}"
+            }
+        }
+        return fixed
+    }
+
+    /// Resilient Sanitizer: Correctly escapes newlines only within strings, handling escaped quotes.
+    private func sanitizeJSONResilient(_ input: String) -> String {
+        // Regex to match JSON strings: " (anything except quote or backslash, or escaped any-char)* "
+        let pattern = #""(?:[^"\\]|\\.)*""#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) else {
+            return input
+        }
+        
+        let nsString = input as NSString
+        var result = ""
+        var lastOffset = 0
+        
+        let matches = regex.matches(in: input, options: [], range: NSRange(location: 0, length: nsString.length))
+        
+        for match in matches {
+            // Add the non-string part (JSON structure)
+            result += nsString.substring(with: NSRange(location: lastOffset, length: match.range.location - lastOffset))
+            
+            // Extract the string part and escape its internal newlines
+            var stringPart = nsString.substring(with: match.range)
+            stringPart = stringPart.replacingOccurrences(of: "\n", with: "\\n")
+            stringPart = stringPart.replacingOccurrences(of: "\r", with: "\\r")
+            stringPart = stringPart.replacingOccurrences(of: "\t", with: "\\t")
+            
+            result += stringPart
+            lastOffset = match.range.location + match.range.length
+        }
+        
+        // Add the remaining part
+        if lastOffset < nsString.length {
+            result += nsString.substring(from: lastOffset)
+        }
+        
+        return result
     }
 }

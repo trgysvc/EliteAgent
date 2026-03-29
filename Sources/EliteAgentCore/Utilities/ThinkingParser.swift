@@ -28,7 +28,11 @@ public final class ThinkingParser {
             // Fallback: If <final> is missing, take everything after </think>
             let endOfThink = thinkMatch.range.location + thinkMatch.range.length
             if endOfThink < nsString.length {
-                finalAnswer = nsString.substring(from: endOfThink).trimmingCharacters(in: .whitespacesAndNewlines)
+                var content = nsString.substring(from: endOfThink).trimmingCharacters(in: .whitespacesAndNewlines)
+                // Clean up any stray <final> tags if they were orphaned
+                content = content.replacingOccurrences(of: "<final>", with: "")
+                content = content.replacingOccurrences(of: "</final>", with: "")
+                finalAnswer = content.trimmingCharacters(in: .whitespacesAndNewlines)
             }
         }
         

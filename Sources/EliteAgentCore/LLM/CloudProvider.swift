@@ -4,8 +4,8 @@ public actor CloudProvider: LLMProvider {
     public nonisolated let providerID: ProviderID
     public nonisolated let providerType: ProviderType = .cloud
     public let capabilities: Set<Capability> = [.general, .code, .fast]
-    public let costPer1KTokens: Decimal = 0.002
-    public let maxContextTokens: Int = 128000
+    public let costPer1KTokens: Decimal = 0.0001
+    public let maxContextTokens: Int = 1000000
     public private(set) var status: ProviderStatus = .ready
     
     private let vaultManager: VaultManager
@@ -27,7 +27,7 @@ public actor CloudProvider: LLMProvider {
             urlStr = urlStr.hasSuffix("/") ? urlStr + "chat/completions" : urlStr + "/chat/completions"
         }
         self.endpointURL = URL(string: urlStr)!
-        self.modelName = conf.modelName ?? "anthropic/claude-3.5-sonnet"
+        self.modelName = conf.modelName ?? "google/gemini-flash-1.5-8b"
     }
     
     public func healthCheck() async -> Bool {

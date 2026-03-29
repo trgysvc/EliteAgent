@@ -6,8 +6,8 @@ public final class WorkspaceManager: Sendable {
     private let baseTempDir: URL
     
     private init() {
-        self.baseTempDir = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("EliteAgent", isDirectory: true)
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        self.baseTempDir = home.appendingPathComponent(".eliteagent/workspaces", isDirectory: true)
         
         try? FileManager.default.createDirectory(at: baseTempDir, withIntermediateDirectories: true)
     }
