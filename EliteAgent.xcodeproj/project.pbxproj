@@ -8,8 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
-		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AEEB40622F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
+		AEEB4F672F7930700082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -23,13 +24,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		AEB7A8C32F7451CE00A844B2 /* CopyFiles */ = {
+		AEB7A8C32F7451CE00A844B2 /* Embed XPC Services */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
 			dstSubfolderSpec = 16;
 			files = (
-				AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in CopyFiles */,
+				AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */,
 			);
 			name = "Embed XPC Services";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,6 +85,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AEEB4F672F7930700082B0CE /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,7 +130,7 @@
 				AE747A152F70602B004732A5 /* Frameworks */,
 				AE747A162F70602B004732A5 /* Resources */,
 				AEB7A8C72F7451CE00A844B2 /* Embed Frameworks */,
-				AEB7A8C32F7451CE00A844B2 /* CopyFiles */,
+				AEB7A8C32F7451CE00A844B2 /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
@@ -408,10 +410,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Resources/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -440,10 +441,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Resources/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
