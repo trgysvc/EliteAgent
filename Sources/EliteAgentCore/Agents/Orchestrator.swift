@@ -1,78 +1,55 @@
 import Foundation
-import Combine
+import SwiftUI
 import CryptoKit
 
-public enum SecurityError: Error, Sendable {
-    case invalidSignature(sigID: UUID)
-}
-
-
-public actor SignalBus {
-    private weak var orchestrator: Orchestrator?
-    public let sharedSecret: SymmetricKey
-    
-    public init(sharedSecret: SymmetricKey = SymmetricKey(size: .bits256)) {
-        self.sharedSecret = sharedSecret
-    }
-    
-    public func setOrchestrator(_ orchestrator: Orchestrator) {
-        self.orchestrator = orchestrator
-    }
-    
-    public func dispatch(_ signal: Signal) async throws {
-        guard signal.verifySignature(using: sharedSecret) else {
-            throw SecurityError.invalidSignature(sigID: signal.sigID)
-        }
-        guard let orchestrator else { return }
-        try await orchestrator.receive(signal)
-    }
-}
-
 @MainActor
-public final class Orchestrator: ObservableObject {
-    public let agentID: AgentID = .orchestrator
-    @Published public private(set) var status: AgentStatus = .idle
-    @Published public var currentTask: String = ""
+public class Orchestrator: ObservableObject {
+    @Published public var status: AgentStatus = .idle
     @Published public var steps: [TaskStep] = []
     @Published public var thinkBlocks: [ThinkBlock] = []
-    @Published public var providerUsed: String = "None"
-    @Published public var costToday: Decimal = 0.00
     @Published public var promptTokens: Int = 0
     @Published public var completionTokens: Int = 0
+    @Published public var costToday: Decimal = 0
+    @Published public var currentTask: String = ""
+    @Published public var providerUsed: String = "Select Model"
     
-    private let bus: SignalBus
     private let planner: PlannerAgent
     private let memory: MemoryAgent
+    private let bus: SignalBus
     private var cloudProvider: CloudProvider?
+    private var localProvider: MLXProvider?
     private let toolRegistry: ToolRegistry
     private var observer: ProjectObserver?
     
     public init() {
-        let bus = SignalBus()
+        // Core Security: Signal Bus
+        let busKey = SymmetricKey(data: SHA256.hash(data: "ELITE_BUS_SECRET".data(using: .utf8)!))
+        let bus = SignalBus(secretKey: busKey)
         self.bus = bus
+        
         self.planner = PlannerAgent(bus: bus)
         self.memory = MemoryAgent(bus: bus)
+        self.toolRegistry = ToolRegistry.shared
         
-        // Initialize Core Services
         let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        
         do {
             let vault = try VaultManager(configURL: defaultVaultPath)
             self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
+            self.localProvider = MLXProvider(providerID: ProviderID(rawValue: "mlx"))
         } catch {
             print("[ORCHESTRATOR] CRITICAL: Failed to initialize Core Services: \(error)")
             self.status = .error
             self.cloudProvider = nil
+            self.localProvider = nil
         }
         
         // Initialize Tool Registry
-        self.toolRegistry = ToolRegistry()
-        self.toolRegistry.register(ShellTool())
         self.toolRegistry.register(ReadFileTool())
         self.toolRegistry.register(WriteFileTool())
-        self.toolRegistry.register(NativeBrowserTool())
-        self.toolRegistry.register(CalendarTool())
-        self.toolRegistry.register(MailTool())
-        self.toolRegistry.register(MediaControllerTool())
+        self.toolRegistry.register(ShellTool())
+        self.toolRegistry.register(AppDiscoveryTool())
+        self.toolRegistry.register(SystemTelemetryTool())
         
         // Register SubagentTool (Recursive)
         let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
@@ -82,66 +59,48 @@ public final class Orchestrator: ObservableObject {
         }
         
         if let provider = self.cloudProvider {
+            let local = self.localProvider
             let subagentTool = SubagentTool(planner: self.planner, cloudProvider: provider, onStepUpdate: handler) { [weak self] planner, provider in
                 guard let self = self else { fatalError() }
-                return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, toolRegistry: ToolRegistry.shared)
+                return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, localProvider: local, toolRegistry: ToolRegistry.shared, bus: self.bus)
             }
             self.toolRegistry.register(subagentTool)
         }
-        
-        // Initialize Auto-Update (Sparkle)
-        #if !DEBUG
-        UpdaterService.shared.checkForUpdates()
-        #endif
-    }
-    
-    public func start() async {
-        await bus.setOrchestrator(self)
-    }
-    
-    public func receive(_ signal: Signal) async throws {
-        if signal.name == "CLARIFY_REQUEST" {
-            guard let question = String(data: signal.payload, encoding: .utf8) else { return }
-            self.steps.append(TaskStep(name: "Clarification: \(question)", status: "working", latency: "0ms"))
-        }
     }
 
+    
     public func submitTask(prompt: String) async throws {
-        self.status = .working
-        self.steps.removeAll()
-        self.thinkBlocks.removeAll()
-        self.currentTask = prompt
-        self.promptTokens = 0
-        self.completionTokens = 0
-        
         let taskStart = CFAbsoluteTimeGetCurrent()
+        self.status = .working
+        self.currentTask = prompt
+        self.steps = []
+        self.thinkBlocks = []
+        
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Starting task: \(prompt)")
         
         do {
-            // 1. Create Workspace
-            let sessionID = UUID()
-            let workspaceURL = try WorkspaceManager.shared.createWorkspace(for: sessionID)
+            // 1. Resolve Workspace
+            let workspaceURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             
-            // 2. Create Root Session
-            let session = Session(id: sessionID, workspaceURL: workspaceURL)
-            
-            // 3. Create Runtime (Refreshed Provider)
-            let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
-            let vault = try VaultManager(configURL: defaultVaultPath)
-            
-            // Re-detect which provider is selected and refresh model/pricing
-            self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
-            
+            // 2. Initialize Runtime
             guard let provider = self.cloudProvider else {
                 throw ProviderError.networkError("Cloud Provider not initialized. Please check your vault.plist and API keys.")
             }
             
             self.providerUsed = provider.modelName
             
+            // Phase 5: Intent Classification (Hybrid Intelligence)
+            let intent = classifyIntent(prompt: prompt)
+            let complexity: Int = (intent == .hardware || intent == .status) ? 0 : 3
+            
+            let local = self.localProvider
             let runtime = OrchestratorRuntime(
                 planner: planner, 
                 memory: memory,
                 cloudProvider: provider, 
-                toolRegistry: toolRegistry
+                localProvider: local,
+                toolRegistry: toolRegistry,
+                bus: bus
             )
             
             // 3b. Start Project Observer
@@ -149,7 +108,7 @@ public final class Orchestrator: ObservableObject {
             self.observer = ProjectObserver(path: workspaceURL.path, delegate: self)
             self.observer?.start()
             
-            // 4. Set UI Callbacks
+            // 4. Set UI Callbacks (MainActor throttling)
             await runtime.setStepUpdateHandler { [weak self] step in
                 Task { @MainActor in
                     self?.steps.append(step)
@@ -162,7 +121,7 @@ public final class Orchestrator: ObservableObject {
                 }
             }
             
-            await runtime.setTokenUpdateHandler { [weak self] count in
+            await runtime.setTokenUpdateHandler { [weak self] (count: TokenCount) in
                 Task { @MainActor in
                     self?.promptTokens += count.prompt
                     self?.completionTokens += count.completion
@@ -172,12 +131,13 @@ public final class Orchestrator: ObservableObject {
             self.steps.append(TaskStep(name: "Initializing recursive runtime...", status: "done", latency: "0ms"))
             
             // 5. Run Task
-            try await runtime.executeTask(prompt: prompt, session: session)
+            let session = Session(workspaceURL: workspaceURL)
+            try await runtime.executeTask(prompt: prompt, session: session, complexity: complexity)
             
             let finalAnswer = await session.finalAnswer ?? "Task completed."
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
             
-            self.steps.append(TaskStep(name: finalAnswer, status: "done", latency: "\(Int(elapsed))s"))
+            self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle
             
         } catch {
@@ -186,15 +146,17 @@ public final class Orchestrator: ObservableObject {
             self.steps.append(TaskStep(name: "Error: \(error.localizedDescription)", status: "failed", latency: "\(Int(elapsed))s"))
         }
     }
+    
+    private func classifyIntent(prompt: String) -> TaskCategory {
+        return TaskClassifier().classify(prompt: prompt)
+    }
 }
 
 extension Orchestrator: ProjectObserverDelegate {
     public func projectDidDetectChange(at path: String, flags: FSEventStreamEventFlags) {
-        // Only trigger for interesting files (.swift, .md, .plist)
         let interestingExts = ["swift", "md", "plist", "json"]
         guard interestingExts.contains(where: { path.hasSuffix($0) }) else { return }
         
-        // Use Task since Orchestrator is @MainActor and we need to append to steps
         Task { @MainActor in
             let step = TaskStep(
                 name: "Proactive: Detected change in \(URL(fileURLWithPath: path).lastPathComponent)", 

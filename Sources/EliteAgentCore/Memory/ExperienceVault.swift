@@ -38,7 +38,23 @@ public actor ExperienceVault {
             embedding BLOB,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            summary TEXT NOT NULL,
+            full_text TEXT,
+            embedding BLOB,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS habits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            description TEXT NOT NULL,
+            frequency INTEGER DEFAULT 1,
+            embedding BLOB,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE INDEX IF NOT EXISTS idx_task ON experiences(task);
+        CREATE INDEX IF NOT EXISTS idx_conv_embedding ON conversations(embedding);
+        CREATE INDEX IF NOT EXISTS idx_habit_embedding ON habits(embedding);
         """
         execute(sql)
     }

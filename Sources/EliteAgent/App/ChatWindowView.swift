@@ -20,6 +20,7 @@ public struct ChatWindowView: View {
     @State private var promptText: String = ""
     @State private var showingAnalytics: Bool = false
     @State private var showingModelSetup: Bool = false
+    @State private var showingSettings: Bool = false
     
     public init(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         self.orchestrator = orchestrator
@@ -138,12 +139,12 @@ public struct ChatWindowView: View {
                             .padding(.vertical, 4)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
                         
-                        Button(action: { showingAnalytics.toggle() }) {
-                            Image(systemName: "chart.bar.xaxis")
+                        Button(action: { showingSettings.toggle() }) {
+                            Image(systemName: "gear")
                                 .font(.body)
                         }
                         .buttonStyle(.bordered)
-                        .help("View Detailed Analytics")
+                        .help("Settings")
                         
                         Button(action: { NSApp.terminate(nil) }) {
                             Image(systemName: "power")
@@ -155,14 +156,14 @@ public struct ChatWindowView: View {
                     .foregroundStyle(.secondary)
                 }
                 .padding()
-                .sheet(isPresented: $showingAnalytics) {
-                    UsageDashboardView(orchestrator: orchestrator)
-                }
                 .sheet(isPresented: $showingModelSetup) {
                     let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
                     if let vault = try? VaultManager(configURL: defaultVaultPath) {
                         ModelSetupView(vault: vault)
                     }
+                }
+                .sheet(isPresented: $showingSettings) {
+                    SettingsView(orchestrator: orchestrator)
                 }
                 
                 Divider()
@@ -204,6 +205,8 @@ public struct ChatWindowView: View {
                     }
                     .padding(.vertical)
                 }
+                .animation(.default, value: orchestrator.steps.map { $0.id })
+                .animation(.default, value: orchestrator.thinkBlocks.map { $0.timestamp })
                 
                 // Floating Action Area
                 HStack {
@@ -266,9 +269,15 @@ public struct ChatWindowView: View {
     private func submitTask() {
         let text = promptText
         guard !text.isEmpty else { return }
+        
+        // Swift 6: structured concurrency
         promptText = ""
         Task {
-            try? await orchestrator.submitTask(prompt: text)
+            do {
+                try await orchestrator.submitTask(prompt: text)
+            } catch {
+                print("[UI] Task submission failed: \(error)")
+            }
         }
     }
     

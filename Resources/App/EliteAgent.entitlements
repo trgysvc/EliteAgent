@@ -21,6 +21,10 @@
 		<string>com.apple.Music</string>
 		<string>com.apple.Safari</string>
 		<string>com.apple.Terminal</string>
+		<string>net.whatsapp.WhatsApp</string>
+		<string>com.apple.MobileSMS</string>
+		<string>com.apple.iChat</string>
+		<string>com.apple.systemevents</string>
 	</array>
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
 	<array>

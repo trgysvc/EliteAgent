@@ -1,16 +1,15 @@
 import Foundation
 import EliteAgentCore
 
-// Top-level async entry point
-let task = Task {
+Task {
     let args = CommandLine.arguments
     guard args.count > 1 else {
         print("Usage: elite \"task description\"")
         exit(1)
     }
+    
     let taskPrompt = args.dropFirst().joined(separator: " ")
-    let orchestrator = Orchestrator()
-    await orchestrator.start()
+    let orchestrator = await Orchestrator()
     
     do {
         try await orchestrator.submitTask(prompt: taskPrompt)
@@ -22,5 +21,5 @@ let task = Task {
     }
 }
 
-// Keep alive until task completes
-RunLoop.main.run()
+// Modern Swift 6 replacement for RunLoop.main.run()
+dispatchMain()
