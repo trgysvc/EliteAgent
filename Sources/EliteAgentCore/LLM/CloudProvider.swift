@@ -10,7 +10,7 @@ public actor CloudProvider: LLMProvider {
     
     private let vaultManager: VaultManager
     private let endpointURL: URL
-    private let modelName: String
+    public let modelName: String
     private let providerConf: ProviderConfig
     
     public init(providerID: ProviderID, vaultManager: VaultManager) throws {
@@ -27,7 +27,7 @@ public actor CloudProvider: LLMProvider {
             urlStr = urlStr.hasSuffix("/") ? urlStr + "chat/completions" : urlStr + "/chat/completions"
         }
         self.endpointURL = URL(string: urlStr)!
-        self.modelName = conf.modelName ?? "google/gemini-flash-1.5-8b"
+        self.modelName = conf.modelName ?? "google/gemini-3-flash-preview"
     }
     
     public func healthCheck() async -> Bool {
@@ -157,7 +157,11 @@ public actor CloudProvider: LLMProvider {
             completion: decoded.usage?.completion_tokens ?? 0,
             total: decoded.usage?.total_tokens ?? 0
         )
-        let cost = Decimal((count.total)) / 1000.0 * self.costPer1KTokens
+        
+        // Dynamic Cost Calculation
+        let promptPrice = providerConf.promptPrice ?? 0
+        let completionPrice = providerConf.completionPrice ?? 0
+        let cost = (Decimal(count.prompt) * promptPrice) + (Decimal(count.completion) * completionPrice)
 
         // Extract think block natively if model returned it inside <think> tags
         let parsed = LLMModel.parseThinkBlock(from: text)

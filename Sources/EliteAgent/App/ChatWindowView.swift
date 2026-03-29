@@ -18,6 +18,8 @@ public struct ChatWindowView: View {
     @ObservedObject public var orchestrator: Orchestrator
     @ObservedObject public var modelPickerVM: ModelPickerViewModel
     @State private var promptText: String = ""
+    @State private var showingAnalytics: Bool = false
+    @State private var showingModelSetup: Bool = false
     
     public init(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         self.orchestrator = orchestrator
@@ -62,16 +64,43 @@ public struct ChatWindowView: View {
                                 Button {
                                     modelPickerVM.selectModel(model)
                                 } label: {
-                                    HStack {
-                                        Label(model.name, systemImage: "cloud")
-                                        Spacer()
-                                        if model.isFree {
-                                            Text("FREE")
-                                                .font(.caption)
-                                                .foregroundStyle(.green)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack {
+                                            Label(model.name, systemImage: "cloud")
+                                            Spacer()
+                                            if model.isFree {
+                                                Text("FREE")
+                                                    .font(.caption)
+                                                    .foregroundStyle(.green)
+                                            }
+                                        }
+                                        
+                                        if case .openRouter(_, _, _, _, let prompt, let completion) = model, let p = prompt, let c = completion {
+                                            HStack(spacing: 8) {
+                                                Text("In: \(formatPrice(p))")
+                                                Text("Out: \(formatPrice(c))")
+                                            }
+                                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                            .foregroundStyle(.secondary)
                                         }
                                     }
                                 }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        Section("Custom Connections") {
+                            ForEach(modelPickerVM.models.filter { if case .custom = $0 { return true }; return false }) { model in
+                                Button {
+                                    modelPickerVM.selectModel(model)
+                                } label: {
+                                    Label(model.name, systemImage: model.icon)
+                                }
+                            }
+                            
+                            Button(action: { showingModelSetup.toggle() }) {
+                                Label("Add Custom Model...", systemImage: "plus.circle")
                             }
                         }
                     } label: {
@@ -96,14 +125,45 @@ public struct ChatWindowView: View {
                     
                     Spacer()
                     
-                    Text("Today: $\(String(format: "%.2f", NSDecimalNumber(decimal: orchestrator.costToday).doubleValue))")
-                        .font(.footnote)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 12) {
+                        Text("Tokens: \(orchestrator.promptTokens) / \(orchestrator.completionTokens)")
+                            .font(.footnote)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                        
+                        Text("Cost: $\(String(format: "%.4f", NSDecimalNumber(decimal: orchestrator.costToday).doubleValue))")
+                            .font(.footnote)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                        
+                        Button(action: { showingAnalytics.toggle() }) {
+                            Image(systemName: "chart.bar.xaxis")
+                                .font(.body)
+                        }
+                        .buttonStyle(.bordered)
+                        .help("View Detailed Analytics")
+                        
+                        Button(action: { NSApp.terminate(nil) }) {
+                            Image(systemName: "power")
+                                .foregroundColor(.red)
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Quit Elite Agent")
+                    }
+                    .foregroundStyle(.secondary)
                 }
                 .padding()
+                .sheet(isPresented: $showingAnalytics) {
+                    UsageDashboardView(orchestrator: orchestrator)
+                }
+                .sheet(isPresented: $showingModelSetup) {
+                    let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+                    if let vault = try? VaultManager(configURL: defaultVaultPath) {
+                        ModelSetupView(vault: vault)
+                    }
+                }
                 
                 Divider()
                 
@@ -163,6 +223,11 @@ public struct ChatWindowView: View {
                 .padding()
             }
         }
+        .onAppear {
+            Task {
+                await modelPickerVM.loadModels()
+            }
+        }
     }
     
     private var statusColor: Color {
@@ -205,5 +270,15 @@ public struct ChatWindowView: View {
         Task {
             try? await orchestrator.submitTask(prompt: text)
         }
+    }
+    
+    private func formatPrice(_ price: Decimal) -> String {
+        // Show price per 1M tokens for better readability in small UI
+        let perMillion = price * 1_000_000
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "$"
+        formatter.maximumFractionDigits = 2
+        return (formatter.string(from: perMillion as NSNumber) ?? "$0") + "/1M"
     }
 }

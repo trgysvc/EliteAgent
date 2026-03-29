@@ -403,18 +403,25 @@
 		AE747A3A2F70602C004732A5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					"\"Apple Silicon\"",
+					"$(ARCHS_STANDARD)",
+				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Resources/App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Elite Agent";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -434,18 +441,25 @@
 		AE747A3B2F70602C004732A5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					"\"Apple Silicon\"",
+					"$(ARCHS_STANDARD)",
+				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Resources/App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Elite Agent";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -531,7 +545,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -557,7 +571,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

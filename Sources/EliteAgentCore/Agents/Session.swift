@@ -18,7 +18,8 @@ public actor Session: Identifiable {
     public let workspaceURL: URL
     
     public private(set) var status: SessionStatus = .idle
-    public private(set) var tokenUsage: Int = 0
+    public private(set) var promptTokens: Int = 0
+    public private(set) var completionTokens: Int = 0
     public private(set) var healingAttempts: Int = 0
     public private(set) var finalAnswer: String?
     
@@ -41,8 +42,13 @@ public actor Session: Identifiable {
         }
     }
     
-    public func addTokenUsage(_ count: Int) {
-        self.tokenUsage += count
+    public func addTokenUsage(_ count: TokenCount) {
+        self.promptTokens += count.prompt
+        self.completionTokens += count.completion
+    }
+    
+    public var totalTokenUsage: Int {
+        promptTokens + completionTokens
     }
     
     public func recordHealingAttempt() {

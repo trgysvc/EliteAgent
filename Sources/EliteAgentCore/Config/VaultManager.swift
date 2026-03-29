@@ -19,7 +19,28 @@ public struct ProviderConfig: Codable, Sendable {
     public let modelName: String?
     public let capabilities: [String]?
     public let costPer1KTokens: Decimal?
+    public let promptPrice: Decimal?
+    public let completionPrice: Decimal?
     public let maxContextTokens: Int?
+    public let temperature: Double?
+    public let topP: Double?
+    public let maxTokens: Int?
+    
+    public init(id: String, type: ProviderType, endpoint: String?, keychainKey: String?, modelName: String?, capabilities: [String]?, costPer1KTokens: Decimal?, promptPrice: Decimal?, completionPrice: Decimal?, maxContextTokens: Int?, temperature: Double?, topP: Double?, maxTokens: Int?) {
+        self.id = id
+        self.type = type
+        self.endpoint = endpoint
+        self.keychainKey = keychainKey
+        self.modelName = modelName
+        self.capabilities = capabilities
+        self.costPer1KTokens = costPer1KTokens
+        self.promptPrice = promptPrice
+        self.completionPrice = completionPrice
+        self.maxContextTokens = maxContextTokens
+        self.temperature = temperature
+        self.topP = topP
+        self.maxTokens = maxTokens
+    }
 }
 
 public struct InferenceConfig: Codable, Sendable {
@@ -69,8 +90,8 @@ public actor VaultManager {
             print("[VaultManager] Config missing at \(configURL.path). Creating default...")
             let defaultConfig = VaultConfig(
                 providers: [
-                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "deepseek-r1-8b", capabilities: ["reasoning", "tools"], costPer1KTokens: 0, maxContextTokens: 32768),
-                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "anthropic/claude-3.5-sonnet", capabilities: ["vision", "tools"], costPer1KTokens: nil, maxContextTokens: 200000)
+                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "deepseek-r1-8b", capabilities: ["reasoning", "tools"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-3.1-flash-lite-preview", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
                 routingStrategy: .localFirst,
                 inference: InferenceConfig(pauseOnUserInteraction: true),
@@ -114,29 +135,52 @@ public actor VaultManager {
         }
     }
     
-    public func updateModelName(for providerID: String, to newModelName: String) throws {
+    public func updateModelPricing(for providerID: String, modelName: String, promptPrice: Decimal? = nil, completionPrice: Decimal? = nil, temperature: Double? = nil, topP: Double? = nil, maxTokens: Int? = nil) throws {
         let data = try Data(contentsOf: configURL)
         var format = PropertyListSerialization.PropertyListFormat.xml
         let obj = try PropertyListSerialization.propertyList(from: data, options: .init(), format: &format)
-        let plist = obj as? [String: Any]
         
-        guard let existingPlist = plist,
+        guard var existingPlist = obj as? [String: Any],
               var providers = existingPlist["providers"] as? [[String: Any]] else { return }
         
         for i in 0..<providers.count {
             if providers[i]["id"] as? String == providerID {
                 var updatedProvider = providers[i]
-                updatedProvider["modelName"] = newModelName
+                updatedProvider["modelName"] = modelName
+                if let p = promptPrice { updatedProvider["promptPrice"] = p }
+                if let c = completionPrice { updatedProvider["completionPrice"] = c }
+                if let t = temperature { updatedProvider["temperature"] = t }
+                if let tp = topP { updatedProvider["topP"] = tp }
+                if let mt = maxTokens { updatedProvider["maxTokens"] = mt }
                 providers[i] = updatedProvider
             }
         }
         
-        var updatedPlist = existingPlist
-        updatedPlist["providers"] = providers
+        existingPlist["providers"] = providers
         
-        let updatedData = try PropertyListSerialization.data(fromPropertyList: updatedPlist as Any, format: format, options: .init())
+        let updatedData = try PropertyListSerialization.data(fromPropertyList: existingPlist as Any, format: format, options: .init())
         try updatedData.write(to: configURL, options: .init())
         
-        print("[VaultManager] Updated modelName to \(newModelName) for provider \(providerID)")
+        print("[VaultManager] Updated model/pricing/params for \(providerID): \(modelName)")
+    }
+    
+    // Helper to add a whole new provider
+    public func addProvider(_ provider: ProviderConfig) throws {
+        let data = try Data(contentsOf: configURL)
+        var format = PropertyListSerialization.PropertyListFormat.xml
+        let obj = try PropertyListSerialization.propertyList(from: data, options: .init(), format: &format)
+        
+        guard var existingPlist = obj as? [String: Any],
+              var providers = existingPlist["providers"] as? [[String: Any]] else { return }
+        
+        let encoder = PropertyListEncoder()
+        let providerData = try encoder.encode(provider)
+        let providerDict = try PropertyListSerialization.propertyList(from: providerData, options: .init(), format: nil) as? [String: Any] ?? [:]
+        
+        providers.append(providerDict)
+        existingPlist["providers"] = providers
+        
+        let updatedData = try PropertyListSerialization.data(fromPropertyList: existingPlist as Any, format: format, options: .init())
+        try updatedData.write(to: configURL, options: .init())
     }
 }
