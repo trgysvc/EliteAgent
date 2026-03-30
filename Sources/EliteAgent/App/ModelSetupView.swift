@@ -1,222 +1,178 @@
 import SwiftUI
 import EliteAgentCore
 
+/// Premium Setup Assistant for the Titan Engine (Local MLX Intelligence).
 public struct ModelSetupView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ModelSetupViewModel
+    @StateObject private var manager = ModelSetupManager.shared
+    @State private var setupPhase: Int = 0 
     
-    public init(vault: VaultManager) {
-        self.viewModel = ModelSetupViewModel(vault: vault)
-    }
+    public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Add New LLM Connection")
-                    .font(.headline)
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            
+            // Subtle Radial Gradient for "Titan" feel
+            RadialGradient(
+                colors: [Color.blue.opacity(0.15), Color.clear],
+                center: .center,
+                startRadius: 0,
+                endRadius: 500
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                // Header
+                headerView
+                
+                // Content Switcher
+                if manager.isModelReady {
+                    successPhase
+                } else if setupPhase == 0 {
+                    welcomePhase
+                } else {
+                    instructionsPhase
+                }
+                
                 Spacer()
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                
+                // Footer
+                footerView
+            }
+            .padding(40)
+        }
+        .frame(width: 500, height: 600)
+    }
+    
+    // MARK: - Components
+    
+    private var headerView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "cpu.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(.linearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .symbolEffect(.pulse)
+            
+            Text("Elite Titan Engine")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+            
+            Text("Hybrid Intelligence Activation")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+    
+    private var welcomePhase: some View {
+        VStack(spacing: 20) {
+            Text("Powering your workspace with local Apple Silicon intelligence.")
+                .multilineTextAlignment(.center)
+                .font(.body)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                featureRow(icon: "lock.shield.fill", title: "100% Private", desc: "No data ever leaves your device.")
+                featureRow(icon: "bolt.fill", title: "Metal Optimized", desc: "Native M-series GPU acceleration.")
+                featureRow(icon: "wifi.slash", title: "Offline Ready", desc: "Works without an internet connection.")
+            }
+            .padding()
+            .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
+        }
+    }
+    
+    private var instructionsPhase: some View {
+        VStack(spacing: 20) {
+            Text("Local Model Not Detected")
+                .font(.headline)
+                .foregroundStyle(.orange)
+            
+            Text("To activate the Titan Engine, please place a compatible MLX model in your local models directory.")
+                .multilineTextAlignment(.center)
+                .font(.body)
+            
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Command Line Setup:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Text("huggingface-cli download mlx-community/Mistral-7B-Instruct-v0.3-4bit --local-dir \(manager.modelsDirectory.path)")
+                    .font(.system(.caption, design: .monospaced))
+                    .padding(12)
+                    .background(.black, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.1)))
+            }
+            .padding()
+            .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
+            
+            Button("Check Directory Again") {
+                manager.checkModelStatus()
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+    
+    private var successPhase: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 60))
+                .foregroundStyle(.green)
+            
+            Text("Titan Engine Active")
+                .font(.headline)
+            
+            Text("Local model detected and optimized for your M-series chip.")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+            
+            Text(manager.modelPath?.lastPathComponent ?? "Default Model")
+                .font(.system(.caption, design: .monospaced))
+                .padding(8)
+                .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .transition(.scale.combined(with: .opacity))
+    }
+    
+    private var footerView: some View {
+        HStack {
+            if !manager.isModelReady {
+                Button("Configure External Cloud...") {
+                    // Logic to jump to cloud setup if preferred
                 }
                 .buttonStyle(.plain)
-            }
-            .padding()
-            .background(.thinMaterial)
-            
-            Form {
-                Section("Connection Details") {
-                    TextField("Connection Name", text: $viewModel.displayName)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    Picker("Provider Type", selection: $viewModel.providerType) {
-                        Text("OpenRouter").tag(ProviderType.cloud)
-                        Text("Ollama / Local").tag(ProviderType.local)
-                    }
-                    
-                    TextField("Base URL", text: $viewModel.baseURL)
-                        .textFieldStyle(.roundedBorder)
-                        .autocorrectionDisabled()
-                    
-                    SecureField("API Key (Optional)", text: $viewModel.apiKey)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    TextField("Model ID", text: $viewModel.modelID)
-                        .textFieldStyle(.roundedBorder)
-                        .autocorrectionDisabled()
-                        .help("e.g. google/gemini-3.1-flash-lite-preview or llama3")
-                }
+                .font(.caption)
+                .foregroundStyle(.blue)
                 
-                Section("Parameters") {
-                    HStack {
-                        Text("Temperature: \(viewModel.temperature, specifier: "%.1f")")
-                        Slider(value: $viewModel.temperature, in: 0...2, step: 0.1)
-                    }
-                    
-                    HStack {
-                        Text("Top-P: \(viewModel.topP, specifier: "%.2f")")
-                        Slider(value: $viewModel.topP, in: 0...1, step: 0.05)
-                    }
-                    
-                    HStack {
-                        Text("Max Tokens")
-                        Spacer()
-                        TextField("", value: $viewModel.maxTokens, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                    }
-                }
+                Spacer()
                 
-                Section("Capabilities") {
-                    Toggle("Supports Vision", isOn: $viewModel.supportsVision)
-                    Toggle("Supports Reasoning (Think Blocks)", isOn: $viewModel.supportsReasoning)
-                }
-            }
-            .formStyle(.grouped)
-            
-            // Footer with Test and Save
-            VStack(spacing: 12) {
-                if let error = viewModel.lastError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                
-                HStack(spacing: 16) {
-                    Button(action: { 
-                        Task { await viewModel.testConnection() } 
-                    }) {
-                        HStack {
-                            if viewModel.isTesting {
-                                ProgressView()
-                                    .controlSize(.small)
-                            }
-                            Text("Connect & Verify")
-                            Circle()
-                                .fill(statusColor)
-                                .frame(width: 10, height: 10)
-                        }
+                Button(setupPhase == 0 ? "Next" : "Finish Later") {
+                    if setupPhase == 0 {
+                        withAnimation { setupPhase = 1 }
+                    } else {
+                        dismiss()
                     }
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.isTesting)
-                    
-                    Button("Save Configuration") {
-                        Task {
-                            if await viewModel.save() {
-                                dismiss()
-                            }
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!viewModel.isVerified || viewModel.isTesting)
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            } else {
+                Button("Begin Experience") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(.blue)
             }
-            .padding()
-            .background(.ultraThinMaterial)
         }
-        .frame(width: 450, height: 600)
     }
     
-    private var statusColor: Color {
-        if viewModel.isTesting { return .yellow }
-        if viewModel.isVerified { return .green }
-        if viewModel.lastError != nil { return .red }
-        return .gray
-    }
-}
-
-@MainActor
-class ModelSetupViewModel: ObservableObject {
-    @Published var displayName: String = "My New Model"
-    @Published var providerType: ProviderType = .cloud
-    @Published var baseURL: String = "https://openrouter.ai/api/v1"
-    @Published var apiKey: String = ""
-    @Published var modelID: String = "google/gemini-3.1-flash-lite-preview"
-    
-    @Published var temperature: Double = 0.7
-    @Published var topP: Double = 1.0
-    @Published var maxTokens: Int = 4096
-    
-    @Published var supportsVision: Bool = true
-    @Published var supportsReasoning: Bool = false
-    
-    @Published var isTesting: Bool = false
-    @Published var isVerified: Bool = false
-    @Published var lastError: String?
-    
-    private let vault: VaultManager
-    private let tester = LLMConnectionTestService()
-    
-    init(vault: VaultManager) {
-        self.vault = vault
-    }
-    
-    func testConnection() async {
-        isTesting = true
-        lastError = nil
-        isVerified = false
-        
-        guard let url = URL(string: baseURL) else {
-            lastError = "Invalid Base URL"
-            isTesting = false
-            return
-        }
-        
-        let result = await tester.testConnection(baseURL: url, apiKey: apiKey, modelID: modelID)
-        
-        switch result {
-        case .success(let name):
-            isVerified = true
-            print("[Test] Connection successful for model: \(name)")
-        case .failure(let error):
-            lastError = error
-        }
-        
-        isTesting = false
-    }
-    
-    func save() async -> Bool {
-        guard isVerified else { return false }
-        
-        let providerID = "custom-\(UUID().uuidString.prefix(6))"
-        let keychainKey = apiKey.isEmpty ? nil : "\(providerID)_API_KEY"
-        
-        if let keychainKey = keychainKey {
-            // Store API Key in Keychain
-            let keychain = KeychainHelper()
-            try? keychain.save(key: keychainKey, data: apiKey.data(using: .utf8)!)
-        }
-        
-        var caps: [String] = []
-        if supportsVision { caps.append("vision") }
-        if supportsReasoning { caps.append("reasoning") }
-        caps.append("tools") // Most models support tools nowadays
-        
-        let newProvider = ProviderConfig(
-            id: providerID,
-            type: providerType,
-            endpoint: baseURL,
-            keychainKey: keychainKey,
-            modelName: modelID,
-            capabilities: caps,
-            costPer1KTokens: nil as Decimal?,
-            promptPrice: nil as Decimal?,
-            completionPrice: nil as Decimal?,
-            maxContextTokens: 128000,
-            temperature: temperature,
-            topP: topP,
-            maxTokens: maxTokens
-        )
-        
-        do {
-            try await vault.addProvider(newProvider)
-            return true
-        } catch {
-            lastError = "Failed to save to vault: \(error.localizedDescription)"
-            return false
+    private func featureRow(icon: String, title: String, desc: String) -> some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .frame(width: 24)
+                .foregroundStyle(.blue)
+            VStack(alignment: .leading) {
+                Text(title).font(.system(size: 14, weight: .semibold))
+                Text(desc).font(.system(size: 12)).foregroundStyle(.secondary)
+            }
         }
     }
 }

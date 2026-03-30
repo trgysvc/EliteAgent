@@ -23,49 +23,53 @@ public struct SystemTelemetryTool: AgentTool {
         @unknown default: thermalDescription = "Unknown"
         }
         
-        // 2. Memory Pressure (via host_statistics64 if needed, but ProcessInfo provides basic)
-        // For simplicity in native Swift, we'll use a shell bridge for detailed memory if needed,
-        // but thermal is the most critical for the "M-series mastery" prompt.
+        // 2. Memory Usage (M-Series optimized via host_statistics64)
+        let memoryStats = getSystemMemoryUsage()
+        let totalRAM = Double(processInfo.physicalMemory) / (1024 * 1024 * 1024) // GB
         
         // 3. System Load (Basic)
         let processorCount = processInfo.processorCount
         let activeProcessorCount = processInfo.activeProcessorCount
         let upTime = processInfo.systemUptime
         
-        // 4. Memory Usage (Rough estimate)
-        let memoryUsed = Double(getTotalMemoryUsed()) / (1024 * 1024 * 1024) // GB
-        let totalRAM = Double(processInfo.physicalMemory) / (1024 * 1024 * 1024) // GB
-        
         let report = """
-        [System Telemetry Report]
+        [System Telemetry Report - Titan V3]
         - Thermal State: \(thermalDescription)
         - Processor Cores: \(processorCount) (Active: \(activeProcessorCount))
-        - RAM Usage: \(String(format: "%.2f", memoryUsed)) GB / \(String(format: "%.2f", totalRAM)) GB
+        - RAM Usage: \(String(format: "%.2f", memoryStats.used)) GB / \(String(format: "%.2f", totalRAM)) GB
         - System Uptime: \(Int(upTime / 3600)) hours
-        - M-Series Check: \(isAppleSilicon() ? "Confirmed (Apple Silicon)" : "Intel/Other")
+        - M-Series: \(isAppleSilicon() ? "Confirmed (ARM64)" : "Legacy Bridge")
         - Recommendations: \(getRecommendations(thermalState: thermalState))
         """
         
         return report
     }
     
-    private func getTotalMemoryUsed() -> UInt64 {
-        var stats = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+    private func getSystemMemoryUsage() -> (used: Double, swap: Double) {
+        let hostPort = mach_host_self()
+        var hostSize = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
+        var hostStats = vm_statistics64()
         
-        let kerr: kern_return_t = withUnsafeMutablePointer(to: &stats) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+        let result = withUnsafeMutablePointer(to: &hostStats) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(hostSize)) {
+                host_statistics64(hostPort, HOST_VM_INFO64, $0, &hostSize)
             }
         }
         
-        if kerr != KERN_SUCCESS {
-            // Graceful Degradation: If Mach kernel call fails, return a safe estimate or handle error
-            print("[TELEMETRY] Mach task_info failed (err: \(kerr)). Falling back to AppKit/ProcessInfo.")
-            return ProcessInfo.processInfo.physicalMemory / 4 // Fallback 25% estimate
+        guard result == KERN_SUCCESS else {
+            return (0.0, 0.0)
         }
         
-        return stats.resident_size
+        var pageSize: vm_size_t = 0
+        host_page_size(hostPort, &pageSize)
+        let pageSize64 = UInt64(pageSize)
+        
+        let active = UInt64(hostStats.active_count) * pageSize64
+        let wired = UInt64(hostStats.wire_count) * pageSize64
+        let compressed = UInt64(hostStats.compressor_page_count) * pageSize64
+        
+        let usedGB = Double(active + wired + compressed) / (1024 * 1024 * 1024)
+        return (usedGB, 0.0)
     }
     
     private func isAppleSilicon() -> Bool {

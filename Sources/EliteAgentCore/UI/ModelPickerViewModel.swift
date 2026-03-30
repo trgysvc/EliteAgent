@@ -26,11 +26,12 @@ public class ModelPickerViewModel: ObservableObject {
     public func loadModels() async {
         isLoading = true
         
-        // 1. Static local MLX list (from PRD/user template)
+        // 1. Static local MLX list (Titan Engine Optimized)
+        let isMistralReady = ModelSetupManager.shared.isModelReady
         let localModels: [ModelSource] = [
-            .localMLX(id: "mlx-r1-32b", name: "DeepSeek R1 32B", ramGB: 96, hasThink: true),
+            .localMLX(id: "mistral-7b-instruct-v0.3-4bit", name: "Mistral 7B (Titan)", ramGB: 16, hasThink: false),
+            .localMLX(id: "phi-3.5-mini-4bit", name: "Phi 3.5 Mini", ramGB: 8, hasThink: false),
             .localMLX(id: "mlx-r1-8b", name: "DeepSeek R1 8B", ramGB: 16, hasThink: true),
-            .localMLX(id: "mlx-llama3-8b", name: "Llama 3 8B", ramGB: 16, hasThink: false),
         ]
         
         // 2. Fetch OpenRouter models via API
@@ -41,8 +42,12 @@ public class ModelPickerViewModel: ObservableObject {
         
         self.models = localModels + openRouterModels + customModels
         
-        // Match current selection from vault if possible
-        updateSelectionFromVault()
+        // 4. Auto-select Titan if ready
+        if isMistralReady, let titan = models.first(where: { $0.id == "mistral-7b-instruct-v0.3-4bit" }) {
+            self.selected = titan
+        } else {
+            updateSelectionFromVault()
+        }
         
         isLoading = false
     }

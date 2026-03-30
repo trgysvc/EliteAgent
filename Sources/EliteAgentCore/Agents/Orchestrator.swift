@@ -20,6 +20,7 @@ public class Orchestrator: ObservableObject {
     private var localProvider: MLXProvider?
     private let toolRegistry: ToolRegistry
     private var observer: ProjectObserver?
+    private var currentWorkspaceURL: URL? // Tracking for observer filtering
     
     public init() {
         // Core Security: Signal Bus
@@ -30,6 +31,9 @@ public class Orchestrator: ObservableObject {
         self.planner = PlannerAgent(bus: bus)
         self.memory = MemoryAgent(bus: bus)
         self.toolRegistry = ToolRegistry.shared
+        
+        // Titan: Proactive hardware telemetry
+        _ = SystemWatchdog.shared
         
         let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
         
@@ -44,12 +48,24 @@ public class Orchestrator: ObservableObject {
             self.localProvider = nil
         }
         
-        // Initialize Tool Registry
-        self.toolRegistry.register(ReadFileTool())
-        self.toolRegistry.register(WriteFileTool())
-        self.toolRegistry.register(ShellTool())
-        self.toolRegistry.register(AppDiscoveryTool())
-        self.toolRegistry.register(SystemTelemetryTool())
+        // Initialize Tool Registry (TITAN FULL STACK)
+        let group = self.toolRegistry
+        group.register(ReadFileTool())
+        group.register(WriteFileTool())
+        group.register(ShellTool())
+        group.register(AppDiscoveryTool())
+        group.register(SystemTelemetryTool())
+        
+        // Register OpenClaw Ports
+        group.register(MessengerTool())
+        group.register(CalendarTool())
+        group.register(MailTool())
+        group.register(MediaControllerTool())
+        group.register(NativeBrowserTool())
+        
+        // Register Web Wrappers
+        group.register(WebSearchToolWrapper())
+        group.register(WebFetchToolWrapper())
         
         // Register SubagentTool (Recursive)
         let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
@@ -79,8 +95,13 @@ public class Orchestrator: ObservableObject {
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Starting task: \(prompt)")
         
         do {
-            // 1. Resolve Workspace
-            let workspaceURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            // 1. Resolve Workspace (Restrict to project root to avoid Desktop/Library spam)
+            var workspaceURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            if workspaceURL.path == "/" || workspaceURL.path == NSHomeDirectory() {
+                // Fallback to project-specific path to prevent spying on the entire disk
+                workspaceURL = URL(fileURLWithPath: "/Users/trgysvc/Developer/EliteAgent")
+            }
+            self.currentWorkspaceURL = workspaceURL
             
             // 2. Initialize Runtime
             guard let provider = self.cloudProvider else {
@@ -154,16 +175,22 @@ public class Orchestrator: ObservableObject {
 
 extension Orchestrator: ProjectObserverDelegate {
     public func projectDidDetectChange(at path: String, flags: FSEventStreamEventFlags) {
-        let interestingExts = ["swift", "md", "plist", "json"]
+        guard let workspacePath = currentWorkspaceURL?.path else { return }
+        guard path.hasPrefix(workspacePath) else { return } // STRICT FILTER: Stop spying on system
+        
+        let interestingExts = ["swift", "md", "plist", "json", "metal"]
         guard interestingExts.contains(where: { path.hasSuffix($0) }) else { return }
+        
+        // Ignore build artifacts and internal git state
+        if path.contains(".build") || path.contains(".git") || path.contains("DerivedData") { return }
         
         Task { @MainActor in
             let step = TaskStep(
-                name: "Proactive: Detected change in \(URL(fileURLWithPath: path).lastPathComponent)", 
+                name: "Proactive: Internal change in \(URL(fileURLWithPath: path).lastPathComponent)", 
                 status: "done", 
-                latency: "0ms",
+                latency: "ANE",
                 depth: 0,
-                thought: "Should I verify this change or generate a Unit Test?"
+                thought: "Detected modification in workspace: \(path.replacingOccurrences(of: workspacePath, with: "..."))"
             )
             self.steps.append(step)
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Proactive observer triggered for \(path)")

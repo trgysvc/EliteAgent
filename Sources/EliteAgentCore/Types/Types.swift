@@ -143,3 +143,11 @@ public struct AnyCodable: Decodable {
 }
 
 extension AnyCodable: @unchecked Sendable {}
+
+@preconcurrency import Metal
+public struct MetalBufferWrapper: @unchecked Sendable {
+    public let buffer: (any MTLBuffer)?
+    public init(_ buffer: (any MTLBuffer)?) {
+        self.buffer = buffer
+    }
+}
