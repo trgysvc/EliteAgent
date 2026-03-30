@@ -67,6 +67,12 @@ public class Orchestrator: ObservableObject {
         group.register(WebSearchToolWrapper())
         group.register(WebFetchToolWrapper())
         
+        // Register Deep Core / Category C & D
+        group.register(PatchTool())
+        group.register(GitTool())
+        group.register(ImageAnalysisTool())
+        group.register(MemoryTool(agent: self.memory))
+        
         // Register SubagentTool (Recursive)
         let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
             Task { @MainActor [weak self] in
@@ -74,14 +80,21 @@ public class Orchestrator: ObservableObject {
             }
         }
         
-        if let provider = self.cloudProvider {
-            let local = self.localProvider
-            let subagentTool = SubagentTool(planner: self.planner, cloudProvider: provider, onStepUpdate: handler) { [weak self] planner, provider in
-                guard let self = self else { fatalError() }
-                return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, localProvider: local, toolRegistry: ToolRegistry.shared, bus: self.bus)
-            }
-            self.toolRegistry.register(subagentTool)
+        let safeProvider: CloudProvider
+        if let p = self.cloudProvider {
+            safeProvider = p
+        } else {
+            let configURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+            let v = try! VaultManager(configURL: configURL)
+            safeProvider = try! CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: v)
         }
+        
+        let local = self.localProvider
+        let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { [weak self] planner, provider in
+            guard let self = self else { fatalError() }
+            return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, localProvider: local, toolRegistry: ToolRegistry.shared, bus: self.bus)
+        }
+        self.toolRegistry.register(subagentTool)
     }
 
     

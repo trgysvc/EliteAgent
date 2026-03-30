@@ -135,6 +135,18 @@ public actor VaultManager {
         }
     }
     
+    public func readSecret(for key: String) throws -> String {
+        do {
+            let keyData = try keychain.read(key: key)
+            guard let keyString = String(data: keyData, encoding: .utf8) else {
+                throw KeychainError.invalidItemFormat
+            }
+            return keyString
+        } catch {
+            throw VaultError.missingKeychainResource(keychainKey: key)
+        }
+    }
+    
     public func updateModelPricing(for providerID: String, modelName: String, promptPrice: Decimal? = nil, completionPrice: Decimal? = nil, temperature: Double? = nil, topP: Double? = nil, maxTokens: Int? = nil) throws {
         let data = try Data(contentsOf: configURL)
         var format = PropertyListSerialization.PropertyListFormat.xml
