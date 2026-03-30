@@ -20,7 +20,17 @@ public actor AppleScriptRunner {
         
         if let error = errorDict {
             let message = error["NSAppleScriptErrorMessage"] as? String ?? "Unknown AppleScript error"
-            throw AppleScriptError.executionFailed(message)
+            let errorCode = error["NSAppleScriptErrorNumber"] as? Int ?? -1
+            
+            var diagnostic = "AppleScript Error \(errorCode): \(message)"
+            if errorCode == -43 {
+                diagnostic += "\n[DIAGNOSTIC] File or Application not found. Check if the target app is installed and EliteAgent has Automation permissions."
+            } else if errorCode == -1728 || errorCode == 0 {
+                diagnostic += "\n[DIAGNOSTIC] Protocol/System Events error. This usually means macOS Privacy & Security blocked the action. Please check Settings > Privacy & Security > Automation for EliteAgent."
+            }
+            
+            print("[ORCHESTRATOR] \(diagnostic)")
+            throw AppleScriptError.executionFailed(diagnostic)
         }
         
         return result.stringValue ?? ""

@@ -106,9 +106,15 @@ public actor OrchestratorRuntime {
                 complexity: 3
             )
             
-            // Hybrid Reasoning: Route between Local and Cloud
-            let providerToUse: LLMProvider = (localProvider != nil && complexity <= 1) ? localProvider! : cloudProvider
+            // Hybrid Reasoning: Route between Local and Cloud (Offline-First Strategy)
+            let isLocalReady = await ModelSetupManager.shared.isModelReady
+            let providerToUse: LLMProvider = (localProvider != nil && isLocalReady) ? localProvider! : cloudProvider
+            
             let response = try await providerToUse.complete(request)
+            
+            // TRACE: Log the raw response for debugging Stochastic Skips / Hallucinations
+            print("[RAW LLM RESPONSE]:\n\(response.content)\n-------------------")
+            
             await contextManager.addMessage(Message(role: "assistant", content: response.content))
             await session.addTokenUsage(response.tokensUsed)
             onTokenUpdate?(response.tokensUsed)
@@ -135,6 +141,7 @@ public actor OrchestratorRuntime {
             
             if let toolCall = toolCallCandidate {
                 let depth = session.recursionDepth
+                print("[ORCHESTRATOR] Verified Tool Call: \(toolCall.name) with params: \(toolCall.params)")
                 onStepUpdate?(TaskStep(name: "Tool: \(toolCall.name)", status: "executing", latency: "...", depth: depth))
                 
                 await session.updateStatus(.executing)

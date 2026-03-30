@@ -18,9 +18,11 @@ public struct ChatWindowView: View {
     @ObservedObject public var orchestrator: Orchestrator
     @ObservedObject public var modelPickerVM: ModelPickerViewModel
     @State private var promptText: String = ""
+    @StateObject private var modelSetup = ModelSetupManager.shared
     @State private var showingAnalytics: Bool = false
     @State private var showingModelSetup: Bool = false
     @State private var showingSettings: Bool = false
+    @State private var showingTitanAssistant: Bool = false
     
     public init(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         self.orchestrator = orchestrator
@@ -36,7 +38,14 @@ public struct ChatWindowView: View {
             }
             .navigationTitle("History")
         } detail: {
-            VStack(spacing: 0) {
+            ZStack {
+                // Phase 2: Neural Sight Metal Engine
+                VisualizerView()
+                    .ignoresSafeArea()
+                    .opacity(orchestrator.status == .idle ? 0.3 : 0.8) // Dimmable based on activity
+                    .animation(.easeInOut(duration: 1.0), value: orchestrator.status)
+                
+                VStack(spacing: 0) {
                 // Toolbar
                 HStack {
                     Menu {
@@ -158,12 +167,15 @@ public struct ChatWindowView: View {
                 .padding()
                 .sheet(isPresented: $showingModelSetup) {
                     let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
-                    if let vault = try? VaultManager(configURL: defaultVaultPath) {
-                        ModelSetupView(vault: vault)
+                    if (try? VaultManager(configURL: defaultVaultPath)) != nil {
+                        ModelSetupView()
                     }
                 }
                 .sheet(isPresented: $showingSettings) {
                     SettingsView(orchestrator: orchestrator)
+                }
+                .sheet(isPresented: $showingTitanAssistant) {
+                    ModelSetupView()
                 }
                 
                 Divider()
@@ -205,8 +217,8 @@ public struct ChatWindowView: View {
                     }
                     .padding(.vertical)
                 }
-                .animation(.default, value: orchestrator.steps.map { $0.id })
-                .animation(.default, value: orchestrator.thinkBlocks.map { $0.timestamp })
+                // Removed explicit .animation() from ScrollView to prevent layout recursion (0x5)
+                // in SwiftUI-AppKit hybrid bridging.
                 
                 // Floating Action Area
                 HStack {
@@ -224,14 +236,22 @@ public struct ChatWindowView: View {
                 .padding(12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                 .padding()
-            }
-        }
-        .onAppear {
-            Task {
-                await modelPickerVM.loadModels()
+            } // Close VStack
+        } // Close ZStack
+    } // Close Detail
+    .onAppear {
+        Task { @MainActor in
+            await modelPickerVM.loadModels()
+            
+            // TITAN ONBOARDING: Show assistant if local model is missing
+            // Use a safer, more explicit MainActor boundary and bypass recursion (0x5)
+            if !modelSetup.isModelReady {
+                try? await Task.sleep(nanoseconds: 800_000_000) // 0.8s wait for stable layout
+                self.showingTitanAssistant = true
             }
         }
     }
+} // Close Body
     
     private var statusColor: Color {
         switch orchestrator.status {

@@ -1,48 +1,59 @@
 import Foundation
 
-// NOTE: SandboxProtocol is defined in EliteAgentXPC/main.swift (the XPC service).
-// We re-declare the Objective-C protocol here so the client-side NSXPCInterface
-// can reference it without a shared framework. Both declarations must stay identical.
-@objc protocol SandboxProtocol {
-    func runCommand(_ command: String, inDirectory directory: String?, reply: @escaping (String?, Error?) -> Void)
-}
-
 public struct ShellTool: AgentTool, Sendable {
     public let name = "shell_exec"
-    public let description = "Execute a shell command via sandboxed XPC service."
+    public let description = "Execute a shell command directly via /bin/zsh. Supports osascript for AppleScript."
     
     public init() {}
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let command = params["command"]?.value as? String else {
-            throw NSError(domain: "ShellTool", code: 3, userInfo: [NSLocalizedDescriptionKey: "Missing 'command' parameter"])
+            throw ToolError.missingParameter("'command' parameter is required.")
         }
         
-        let workspacePath = session.workspaceURL.path
+        // Safety Check via LogicGate
+        let risk = LogicGate.shared.check(command: command)
+        if risk.isDangerous {
+            throw ToolError.executionError("Safety Block: \(risk.reason ?? "Dangerous command detected.")")
+        }
         
-        // Enforce XPC boundary execution
-        let connection = NSXPCConnection(serviceName: "com.trgysvc.EliteAgent.XPC")
-        connection.remoteObjectInterface = NSXPCInterface(with: SandboxProtocol.self)
-        connection.resume()
+        print("[SHELL] Executing: \(command)")
         
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
-            let proxy = connection.remoteObjectProxyWithErrorHandler { error in
-                print("[XPC] ShellTool connection error: \(error)")
-                continuation.resume(throwing: error)
-            } as? SandboxProtocol
+        return try await withCheckedThrowingContinuation { continuation in
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+            process.arguments = ["-c", command]
+            process.currentDirectoryURL = session.workspaceURL
             
-            guard let proxy = proxy else {
-                continuation.resume(throwing: NSError(domain: "ShellTool", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to connect to XPC Service"]))
+            let outputPipe = Pipe()
+            let errorPipe = Pipe()
+            process.standardOutput = outputPipe
+            process.standardError = errorPipe
+            
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(throwing: ToolError.executionError("Failed to launch process: \(error.localizedDescription)"))
                 return
             }
             
-            proxy.runCommand(command, inDirectory: workspacePath) { result, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else if let result = result {
-                    continuation.resume(returning: result)
+            // Run waitUntilExit on a background thread to avoid blocking the actor
+            DispatchQueue.global(qos: .userInitiated).async {
+                process.waitUntilExit()
+                
+                let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+                let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
+                
+                let exitCode = process.terminationStatus
+                
+                if exitCode != 0 && !errorOutput.isEmpty {
+                    let fullResult = output.isEmpty ? errorOutput : "\(output)\n[STDERR]: \(errorOutput)"
+                    continuation.resume(returning: fullResult)
                 } else {
-                    continuation.resume(throwing: NSError(domain: "ShellTool", code: 2, userInfo: nil))
+                    continuation.resume(returning: output.isEmpty ? "(command completed, no output)" : output)
                 }
             }
         }

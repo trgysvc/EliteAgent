@@ -19,7 +19,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "EliteAgent",
-            dependencies: ["EliteAgentCore"],
+            dependencies: [
+                "EliteAgentCore",
+                .product(name: "MLX", package: "mlx-swift")
+            ],
             path: "Sources/EliteAgent"
         ),
         .target(
@@ -31,16 +34,25 @@ let package = Package(
                 .product(name: "MLXOptimizers", package: "mlx-swift"),
                 .product(name: "Sparkle", package: "Sparkle")
             ],
-            path: "Sources/EliteAgentCore"
+            path: "Sources/EliteAgentCore",
+            resources: [
+                .process("UI/NeuralSight.metal")
+            ]
         ),
         .executableTarget(
             name: "EliteAgentXPC",
-            dependencies: ["EliteAgentCore"],
+            dependencies: [
+                "EliteAgentCore",
+                .product(name: "MLX", package: "mlx-swift")
+            ],
             path: "Sources/EliteAgentXPC"
         ),
         .executableTarget(
             name: "elite",
-            dependencies: ["EliteAgentCore"],
+            dependencies: [
+                "EliteAgentCore",
+                .product(name: "MLX", package: "mlx-swift")
+            ],
             path: "Sources/elite"
         )
     ]

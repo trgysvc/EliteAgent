@@ -19,6 +19,8 @@ public final class SecuritySentinel: Sendable {
         // Biyometrik (TouchID/FaceID) kullanılabilir mi kontrol et
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             do {
+                print("[SECURITY] Biyometrik doğrulama bekleniyor: \(reason) (Touch ID/Apple Watch)...")
+                AgentLogger.logAudit(level: .info, agent: "SecuritySentinel", message: "Biometric authentication requested: \(reason)")
                 return try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
             } catch {
                 print("[SecuritySentinel] Biyometrik doğrulama hatası: \(error.localizedDescription)")
