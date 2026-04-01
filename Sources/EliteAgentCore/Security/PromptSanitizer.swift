@@ -16,9 +16,8 @@ public struct PromptSanitizer: Sendable {
         
         for pattern in flaggedPatterns {
             if lowercasedPrompt.contains(pattern) {
-                // Determine log path
-                let logPath = URL(fileURLWithPath: NSHomeDirectory())
-                    .appendingPathComponent(".eliteagent/logs/security.log")
+                let logPath = PathConfiguration.shared.logsURL
+                    .appendingPathComponent("security.log")
                 
                 // Ensure directory exists
                 let dir = logPath.deletingLastPathComponent()

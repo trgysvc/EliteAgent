@@ -13,7 +13,7 @@ public final class DNAReportBuilder: @unchecked Sendable {
     public static func analyze(
         url: URL,
         progress: @Sendable @escaping (Double, String, String?) -> Void
-    ) async throws -> (reportText: String, mdPath: String, jsonPath: String) {
+    ) async throws -> (analysis: MusicDNAAnalysis, reportText: String, mdPath: String, jsonPath: String) {
 
         let filename = url.lastPathComponent
 
@@ -37,7 +37,7 @@ public final class DNAReportBuilder: @unchecked Sendable {
         // Step 3: Mel
         progress(30, "Mel filtre bankası uygulanıyor...", nil)
         let melBank = MelFilterBank(nMels: 128, nFFT: 2048, sampleRate: buffer.sampleRate)
-        let melSpec = melBank.apply(magnitude: stft.magnitude)
+        let melSpec = melBank.apply(magnitude: stft.magnitude, nFrames: stft.nFrames)
 
         // Step 4: Onset
         progress(38, "Onset gücü hesaplanıyor...", nil)
@@ -63,7 +63,7 @@ public final class DNAReportBuilder: @unchecked Sendable {
         // Step 8: MFCC
         progress(68, "MFCC katsayıları hesaplanıyor...", nil)
         let mfccEngine = MFCCEngine(nMFCC: 20, nMels: 128)
-        let mfccResult = mfccEngine.compute(melSpectrogram: melSpec, stftEngine: stftEngine)
+        let mfccResult = mfccEngine.compute(melSpectrogram: melSpec.flatMap { $0 }, stftEngine: stftEngine)
 
         // Step 9: HPSS
         progress(75, "Harmonik/Perküsif ayrımı (HPSS)...", nil)
@@ -74,38 +74,88 @@ public final class DNAReportBuilder: @unchecked Sendable {
         progress(85, "Yapısal segmentasyon (Foote SSM)...", nil)
         let structureEngine = StructureEngine(hopLength: 512, sampleRate: buffer.sampleRate)
         let structure = structureEngine.analyze(chromagram: chroma, nSegments: 7)
+        
+        // Step 11: Forensics (Röntgen)
+        progress(90, "Adli (Forensic) DNA taranıyor...", nil)
+        let forensicEngine = ForensicDNAEngine()
+        let forensicResult = await forensicEngine.scan(at: url)
 
         progress(93, "Raporlar yazılıyor...", nil)
 
-        // Step 11: Output paths
-        let dir = url.deletingLastPathComponent()
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let aiWorksDir = home.appendingPathComponent("Documents/AI Works", isDirectory: true)
+        
+        // Ensure AI Works directory exists
+        if !FileManager.default.fileExists(atPath: aiWorksDir.path) {
+            try? FileManager.default.createDirectory(at: aiWorksDir, withIntermediateDirectories: true, attributes: nil)
+        }
+
+        // Output paths
         let baseName = url.deletingPathExtension().lastPathComponent
-        let mdPath = dir.appendingPathComponent("\(baseName).dna.md").path
-        let jsonPath = dir.appendingPathComponent("\(baseName).dna.json").path
+        let mdPath = aiWorksDir.appendingPathComponent("\(baseName).dna.md").path
+        let jsonPath = aiWorksDir.appendingPathComponent("\(baseName).dna.json").path
 
         // Build Markdown
         let markdown = buildMarkdown(
             url: url, buffer: buffer, rhythm: rhythm,
             chroma: chromaResult, spectral: spectral, mfcc: mfccResult,
-            hpss: hpss, structure: structure, waveform: waveform
+            hpss: hpss, structure: structure, waveform: waveform,
+            forensic: forensicResult
         )
-        try markdown.write(toFile: mdPath, atomically: true, encoding: .utf8)
+        try markdown.write(toFile: mdPath, atomically: true, encoding: String.Encoding.utf8)
 
         // Build JSON
         let json = buildJSON(
             url: url, buffer: buffer, rhythm: rhythm,
             chroma: chromaResult, spectral: spectral, mfcc: mfccResult,
-            hpss: hpss, structure: structure
+            hpss: hpss, structure: structure,
+            forensic: forensicResult
         )
-        try json.write(toFile: jsonPath, atomically: true, encoding: .utf8)
+        try json.write(toFile: jsonPath, atomically: true, encoding: String.Encoding.utf8)
 
         progress(100, "Analiz tamamlandı!", nil)
 
+        // Construct the MusicDNAAnalysis model
+        let analysis = MusicDNAAnalysis(
+            fileName: filename,
+            rhythm: RhythmMetrics(
+                bpm: Float(rhythm.bpm),
+                beatConsistency: Float(rhythm.gridStdSec),
+                characterize: rhythm.gridStdSec < 0.02 ? "Hassas Grid" : "İnsan Hissi"
+            ),
+            tonality: TonalMetrics(
+                key: chromaResult.key,
+                tendency: chromaResult.isMinor ? "Minör Eğilimli" : "Majör Eğilimli"
+            ),
+            spectral: SpectralMetrics(
+                centroid: spectral.centroidHz,
+                rolloff: spectral.rolloffHz,
+                flatness: spectral.flatness,
+                dynamicRange: spectral.dynamicRangeDb,
+                brightnessDescription: spectral.centroidHz > 2500 ? "Parlak" : "Ilık"
+            ),
+            forensic: ForensicMetrics(
+                sourceURL: forensicResult.whereFroms.first,
+                encoder: forensicResult.encoder,
+                isVerified: forensicResult.signatureFound,
+                techSpecs: ["Format": forensicResult.format, "Bitrate": forensicResult.bitRate]
+            ),
+            waveformPeaks: stride(from: 0, to: buffer.samples.count, by: max(1, buffer.samples.count / 100)).map { i in
+                let end = min(i + max(1, buffer.samples.count / 100), buffer.samples.count)
+                let chunk = buffer.samples[i..<end]
+                return sqrt(chunk.reduce(0) { $0 + $1 * $1 } / Float(chunk.count))
+            },
+            chromaProfile: chromaResult.meanChroma,
+            segments: structure.segments.map { 
+                MusicSegment(id: $0.id, start: $0.startSec, end: $0.endSec, label: $0.label)
+            }
+        )
+        
         // Final report for chat
         let reportText = WaveformRenderer.finalReport(
             filename: filename,
             duration: buffer.duration,
-            rhythm: (bpm: rhythm.bpm, gridStd: rhythm.gridStdSec),
+            rhythm: (bpm: Float(rhythm.bpm), gridStd: rhythm.gridStdSec),
             key: chromaResult.key,
             spectral: (
                 centroid: spectral.centroidHz,
@@ -131,7 +181,10 @@ public final class DNAReportBuilder: @unchecked Sendable {
             outputJson: jsonPath
         )
 
-        return (reportText, mdPath, jsonPath)
+        var finalAnalysis = analysis
+        finalAnalysis.reportPath = mdPath
+
+        return (finalAnalysis, reportText, mdPath, jsonPath)
     }
 
     // MARK: Markdown Builder
@@ -139,7 +192,8 @@ public final class DNAReportBuilder: @unchecked Sendable {
     private static func buildMarkdown(
         url: URL, buffer: AudioBuffer, rhythm: RhythmResult,
         chroma: ChromaResult, spectral: SpectralResult, mfcc: MFCCResult,
-        hpss: HPSSResult, structure: StructureResult, waveform: String
+        hpss: HPSSResult, structure: StructureResult, waveform: String,
+        forensic: ForensicDNA
     ) -> String {
         let noteNames = ChromaResult.noteNames
         let filename = url.lastPathComponent
@@ -223,6 +277,16 @@ public final class DNAReportBuilder: @unchecked Sendable {
             return "| \($0.id) | \(s) | \(e) | \(d) | \($0.label) |"
         }.joined(separator: "\n"))
 
+        ## Adli Bilişim (Forensic Röntgen)
+
+        | Özellik | Değer |
+        |---------|-------|
+        | Format | \(forensic.format) |
+        | Bit Rate | \(forensic.bitRate) |
+        | Encoder | \(forensic.encoder) |
+        | Signature | \(forensic.signatureFound ? "✅ Doğrulandı" : "❓ Bilinmiyor") |
+        | WhereFroms | \(forensic.whereFroms.joined(separator: ", ")) |
+
         ---
         *EliteAgent Music DNA Engine — Powered by Apple Accelerate (vDSP)*
         """
@@ -235,7 +299,8 @@ public final class DNAReportBuilder: @unchecked Sendable {
     private static func buildJSON(
         url: URL, buffer: AudioBuffer, rhythm: RhythmResult,
         chroma: ChromaResult, spectral: SpectralResult, mfcc: MFCCResult,
-        hpss: HPSSResult, structure: StructureResult
+        hpss: HPSSResult, structure: StructureResult,
+        forensic: ForensicDNA
     ) -> String {
         let noteNames = ChromaResult.noteNames
         let now = ISO8601DateFormatter().string(from: Date())
@@ -309,6 +374,13 @@ public final class DNAReportBuilder: @unchecked Sendable {
             "segments": [
         \(segmentsStr)
             ]
+          },
+          "forensic": {
+            "format": "\(forensic.format)",
+            "bitrate": "\(forensic.bitRate)",
+            "encoder": "\(forensic.encoder)",
+            "signature_found": \(forensic.signatureFound),
+            "where_froms": [\(forensic.whereFroms.map { "\"\($0)\"" }.joined(separator: ", "))]
           }
         }
         """

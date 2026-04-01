@@ -44,7 +44,7 @@ public final class OnsetEngine: @unchecked Sendable {
         let stftResult = stft.analyze(samples)
 
         // Mel power spectrogram
-        let melSpec = mel.apply(magnitude: stftResult.magnitude)
+        let melSpec = mel.apply(magnitude: stftResult.magnitude, nFrames: stftResult.nFrames)
 
         // power_to_db (10 * log10, ref = max)
         let dbSpec = stft.powerToDb(melSpec)

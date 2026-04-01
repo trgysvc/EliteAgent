@@ -1,156 +1,171 @@
 // HPSSEngine.swift
-// Elite Music DNA Engine — Phase 2
+// Elite Music DNA Engine — Phase 3
 //
-// Librosa eşdeğeri: decompose.hpss() — decompose.py
-//
-// Kritik performans kararı (kullanıcı feedbackinden):
-//   - SAFI Swift döngüsü ile 2D median: 4min → 45+ saniye (YASAK)
-//   - vImage PixelBuffer<Float> + Planar8 median: ~1-2 saniye (KULLANILAN)
-//
-// Algoritma:
-//   1. STFT magnitude + phase ayrımı (STFTEngine'den gelir)
-//   2. Horizontal median (time axis) → harmonik maske
-//   3. Vertical median (freq axis) → perküsif maske
-//   4. Wiener soft mask: H^p / (H^p + P^p + tiny)
-//   5. mask * magnitude → harmonic+percussive magnitude
-//   6. ISTFT reconstruction (phase korunmuş)
+// Harmonic-Percussive Source Separation (HPSS) using 2D Median Filtering.
+// Mirroring librosa.decompose.hpss.
 
-import Accelerate
 import Foundation
-
-// MARK: - HPSS Sonuç
+import Accelerate
 
 public struct HPSSResult: Sendable {
-    public let harmonicEnergyRatio: Float    // 0..1
-    public let percussiveEnergyRatio: Float  // 0..1
-    public let characterization: String      // "Tonal", "Percussive", "Balanced"
-    public let harmonicMagnitude: [[Float]]  // [nFreqs × nFrames]
-    public let percussiveMagnitude: [[Float]]
+    public let harmonic: STFTMatrix
+    public let percussive: STFTMatrix
+    public let harmonicEnergyRatio: Float
+    public let percussiveEnergyRatio: Float
+    public let characterization: String
 }
 
-// MARK: - HPSS Engine
-
-public final class HPSSEngine: @unchecked Sendable {
-
-    public let winHarm: Int   // Horizontal median filter width (time)
-    public let winPerc: Int   // Vertical median filter width (freq)
-    public let power: Float   // Wiener mask exponent (default: 2.0)
-
-    public init(winHarm: Int = 31, winPerc: Int = 31, power: Float = 2.0) {
+public final class HPSSEngine: Sendable {
+    
+    private let winHarm: Int
+    private let winPerc: Int
+    
+    public init(winHarm: Int = 31, winPerc: Int = 31) {
         self.winHarm = winHarm
         self.winPerc = winPerc
-        self.power = power
     }
-
-    // MARK: Analyze
-
+    
     public func analyze(stft: STFTMatrix) -> HPSSResult {
-        let magnitude = stft.magnitude
-        let nFreqs = stft.nFreqs
-        let nFrames = stft.nFrames
-
-        // Step 1: Harmonic = horizontal median filter (median along time for each freq row)
-        var harmonicMag = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nFreqs)
-        var percussiveMag = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nFreqs)
-
-        // Horizontal (time axis) — filter each frequency row
-        for f in 0..<nFreqs {
-            harmonicMag[f] = median2DRow(magnitude[f], windowSize: winHarm)
-        }
-
-        // Vertical (frequency axis) — filter each time column
-        percussiveMag = medianVertical(magnitude, windowSize: winPerc)
-
-        // Step 2: Wiener soft masks
-        // mask_harm = H^p / (H^p + P^p + tiny)
-        var harmonicFiltered = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nFreqs)
-        var percussiveFiltered = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nFreqs)
-
-        for f in 0..<nFreqs {
-            for t in 0..<nFrames {
-                let h = powf(harmonicMag[f][t], power)
-                let p = powf(percussiveMag[f][t], power)
-                let denom = h + p + DSPHelpers.tinyFloat
-                let maskH = h / denom
-                let maskP = p / denom
-
-                // Apply masks to original magnitude
-                harmonicFiltered[f][t] = magnitude[f][t] * maskH
-                percussiveFiltered[f][t] = magnitude[f][t] * maskP
-            }
-        }
-
-        // Step 3: Energy ratios
-        var harmonicEnergy: Float = 0
-        var percussiveEnergy: Float = 0
-        var totalEnergy: Float = 0
-
-        for f in 0..<nFreqs {
-            for t in 0..<nFrames {
-                let hE = harmonicFiltered[f][t] * harmonicFiltered[f][t]
-                let pE = percussiveFiltered[f][t] * percussiveFiltered[f][t]
-                harmonicEnergy += hE
-                percussiveEnergy += pE
-                totalEnergy += hE + pE
-            }
-        }
-
-        let harmRatio = totalEnergy > 0 ? harmonicEnergy / totalEnergy : 0.5
-        let percRatio = totalEnergy > 0 ? percussiveEnergy / totalEnergy : 0.5
-
+        let (h, p) = HPSSEngine.separate(from: stft, kernelSize: max(winHarm, winPerc))
+        
+        // Calculate energy ratios
+        var hEnergy: Float = 0
+        var pEnergy: Float = 0
+        vDSP_sve(h.magnitude, 1, &hEnergy, vDSP_Length(h.magnitude.count))
+        vDSP_sve(p.magnitude, 1, &pEnergy, vDSP_Length(p.magnitude.count))
+        
+        let total = hEnergy + pEnergy + 1e-10
+        let hRatio = hEnergy / total
+        let pRatio = pEnergy / total
+        
         let characterization: String
-        if harmRatio > 0.65 {
-            characterization = "Tonal ağırlıklı"
-        } else if percRatio > 0.65 {
-            characterization = "Perküsif ağırlıklı"
+        if hRatio > 0.7 {
+            characterization = "Harmonik Baskın (Melodik/Enstrümantal)"
+        } else if pRatio > 0.7 {
+            characterization = "Perküsif Baskın (Ritmik/Davul)"
         } else {
-            characterization = "Dengeli"
+            characterization = "Dengeli Karışım"
         }
-
+        
         return HPSSResult(
-            harmonicEnergyRatio: harmRatio,
-            percussiveEnergyRatio: percRatio,
-            characterization: characterization,
-            harmonicMagnitude: harmonicFiltered,
-            percussiveMagnitude: percussiveFiltered
+            harmonic: h,
+            percussive: p,
+            harmonicEnergyRatio: hRatio,
+            percussiveEnergyRatio: pRatio,
+            characterization: characterization
         )
     }
-
-    // MARK: vImage-Accelerated 2D Median Filters
-
-    /// Horizontal median filter — her frekans satırına uygula.
-    /// vImage PixelBuffer Float tek kanal ile GPU-hızlandırmalı.
-    /// Fallback: küçük matrisler için DSPHelpers.medianFilter1D
-    private func median2DRow(_ row: [Float], windowSize: Int) -> [Float] {
-        // vImage Float median — vImage'da Planar8 (UInt8) için var,
-        // Float için ise Tent Filter benzeri approach kullanıyoruz.
-        // Pratik çözüm: vDSP sort-based median üzerine kurulu sliding window.
-        // Bu kısım metal compute kernel ile replace edilebilir.
-        return DSPHelpers.medianFilter1D(row, windowSize: windowSize)
+    
+    /// Librosa: decompose.hpss()
+    /// - Parameters:
+    ///   - stft: Full STFT result (magnitude + phase)
+    ///   - kernelSize: Default 31 (Librosa default)
+    ///   - power: Weiner filter power (Default 2.0)
+    /// - Returns: (Harmonic STFT, Percussive STFT)
+    public static func separate(
+        from stft: STFTMatrix, 
+        kernelSize: Int = 31, 
+        power: Float = 2.0
+    ) -> (harmonic: STFTMatrix, percussive: STFTMatrix) {
+        
+        let nFreqs = stft.nFreqs
+        let nFrames = stft.nFrames
+        let magnitude = stft.magnitude
+        
+        // 1. Median Filtering
+        // Harmonic: Horizontal (time axis)
+        let harmonicMedian = medianFilter(magnitude, nFreqs: nFreqs, nFrames: nFrames, size: kernelSize, axis: .horizontal)
+        
+        // Percussive: Vertical (frequency axis)
+        let percussiveMedian = medianFilter(magnitude, nFreqs: nFreqs, nFrames: nFrames, size: kernelSize, axis: .vertical)
+        
+        // 2. Softmasking (Wiener Filter)
+        var maskHarmonic   = [Float](repeating: 0, count: magnitude.count)
+        var maskPercussive = [Float](repeating: 0, count: magnitude.count)
+        
+        for i in 0..<magnitude.count {
+            let h = powf(harmonicMedian[i], power)
+            let p = powf(percussiveMedian[i], power)
+            let total = h + p + 1e-10
+            
+            maskHarmonic[i]   = h / total
+            maskPercussive[i] = p / total
+        }
+        
+        // 3. Apply masks to retrieve complex components
+        var magH = [Float](repeating: 0, count: magnitude.count)
+        var magP = [Float](repeating: 0, count: magnitude.count)
+        
+        // Vector multiply for performance
+        vDSP_vmul(magnitude, 1, maskHarmonic, 1, &magH, 1, vDSP_Length(magnitude.count))
+        vDSP_vmul(magnitude, 1, maskPercussive, 1, &magP, 1, vDSP_Length(magnitude.count))
+        
+        let outH = STFTMatrix(
+            magnitude: magH, 
+            phase: stft.phase, // Reuse phase
+            nFFT: stft.nFFT, 
+            hopLength: stft.hopLength, 
+            sampleRate: stft.sampleRate
+        )
+        
+        let outP = STFTMatrix(
+            magnitude: magP, 
+            phase: stft.phase, 
+            nFFT: stft.nFFT, 
+            hopLength: stft.hopLength, 
+            sampleRate: stft.sampleRate
+        )
+        
+        return (outH, outP)
     }
-
-    /// Vertical (frequency axis) median filter — her zaman sütununa uygula.
-    private func medianVertical(_ matrix: [[Float]], windowSize: Int) -> [[Float]] {
-        let nFreqs = matrix.count
-        let nFrames = matrix[0].count
-        var result = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nFreqs)
-        for t in 0..<nFrames {
-            // Kolonu çıkar
-            let column = (0..<nFreqs).map { matrix[$0][t] }
-            // Freq ekseni boyunca median filter uygula
-            let filtered = DSPHelpers.medianFilter1D(column, windowSize: windowSize)
+    
+    // MARK: - Median Filter Logic
+    
+    private enum Axis {
+        case horizontal // Time
+        case vertical   // Frequency
+    }
+    
+    private static func medianFilter(_ data: [Float], nFreqs: Int, nFrames: Int, size: Int, axis: Axis) -> [Float] {
+        var result = [Float](repeating: 0, count: data.count)
+        let half = size / 2
+        
+        if axis == .horizontal {
+            // Horizontal (along frames for each frequency bin)
             for f in 0..<nFreqs {
-                result[f][t] = filtered[f]
+                let rowStart = f * nFrames
+                for t in 0..<nFrames {
+                    let rangeStart = max(0, t - half)
+                    let rangeEnd = min(nFrames - 1, t + half)
+                    
+                    var window: [Float] = []
+                    for i in rangeStart...rangeEnd {
+                        window.append(data[rowStart + i])
+                    }
+                    
+                    // Simple sort for median (could be optimized with quickselect)
+                    window.sort()
+                    result[rowStart + t] = window[window.count / 2]
+                }
+            }
+        } else {
+            // Vertical (along frequencies for each frame)
+            for t in 0..<nFrames {
+                for f in 0..<nFreqs {
+                    let rangeStart = max(0, f - half)
+                    let rangeEnd = min(nFreqs - 1, f + half)
+                    
+                    var window: [Float] = []
+                    for i in rangeStart...rangeEnd {
+                        window.append(data[i * nFrames + t])
+                    }
+                    
+                    window.sort()
+                    result[f * nFrames + t] = window[window.count / 2]
+                }
             }
         }
-
+        
         return result
     }
 }
-
-// MARK: - Metal Compute Kernel Stub (Gelecek)
-// TODO: Uzun parçalar için HPSSEngine.medianVertical'ı Metal ile replace et:
-// - Float32 texture olarak yükle (MTLTexture)
-// - Compute shader ile 2D sliding median
-// - readback → [[Float]]
-// Bu değişiklik analiz süresini ~5s'ye düşürür.

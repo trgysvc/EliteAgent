@@ -104,7 +104,7 @@ struct DebugDashboard: View {
             
             // 2. Check API Key presence
             do {
-                let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+                let defaultVaultPath = PathConfiguration.shared.vaultURL
                 let manager = try VaultManager(configURL: defaultVaultPath)
                 if let provider = await manager.config.providers.first(where: { $0.type == .cloud }) {
                     _ = try await manager.getAPIKey(for: provider)

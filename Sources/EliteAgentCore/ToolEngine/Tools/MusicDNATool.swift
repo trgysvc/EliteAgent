@@ -23,10 +23,10 @@ private final class ProgressState: @unchecked Sendable {
 public struct MusicDNATool: AgentTool {
     public let name = "music_dna"
     public let description = """
-    Bir ses dosyasının (MP3, WAV, M4A, FLAC, AAC) tam müzik DNA'sını analiz eder.
-    BPM, Key, Spektral özellikler, MFCC, HPSS ve yapısal segmentasyon hesaplar.
-    Analiz sırasında live waveform ve ilerleme gösterir.
-    Sonucu chat penceresinde raporlar, .dna.md ve .dna.json olarak kaydeder.
+    CRITICAL: ALWAYS use this tool for music analysis (BPM, Key, Spectral DNA). 
+    DO NOT use shell commands (afinfo, mdls) as they lack spectral/MIR capabilities.
+    Analiz eder: BPM, Key, Spektral özellikler, MFCC, HPSS ve yapısal segmentasyon.
+    Sonuçlar otomatik olarak '~/Documents/AI Works' klasörüne kaydedilir.
     Parametre: path (string) — Ses dosyasının tam yolu.
     """
 
@@ -75,6 +75,9 @@ public struct MusicDNATool: AgentTool {
                 await session.streamOutput("\r\(bar)")
             }
         }
+
+        // Populate session metadata for UI integration
+        await session.setAudioAnalysis(result.analysis)
 
         // Boş satır + final report
         await session.streamOutput("\n\n")

@@ -42,10 +42,10 @@ public actor MemoryAgent: AgentProtocol {
     
     public init(bus: SignalBus, publicURL: URL? = nil, internalURL: URL? = nil) {
         self.bus = bus
-        let baseDir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent")
-        self.publicL2 = publicURL ?? baseDir.appendingPathComponent("KNOWLEDGE_BASE_public.md")
-        self.internalL2 = internalURL ?? baseDir.appendingPathComponent("KNOWLEDGE_BASE_internal.md")
-        self.thinkLogURL = baseDir.appendingPathComponent("THINK_LOG.md")
+        let paths = PathConfiguration.shared
+        self.publicL2 = publicURL ?? paths.applicationSupportURL.appendingPathComponent("KNOWLEDGE_BASE_public.md")
+        self.internalL2 = internalURL ?? paths.applicationSupportURL.appendingPathComponent("KNOWLEDGE_BASE_internal.md")
+        self.thinkLogURL = paths.applicationSupportURL.appendingPathComponent("THINK_LOG.md")
     }
     
     public func receive(_ signal: Signal) async throws {
@@ -108,24 +108,24 @@ public actor MemoryAgent: AgentProtocol {
     }
     
     private func archiveTaskHistoryIfNeeded() {
-        let baseDir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent")
-        let historyURL = baseDir.appendingPathComponent("task_history.jsonl")
+        let paths = PathConfiguration.shared
+        let historyURL = paths.applicationSupportURL.appendingPathComponent("task_history.jsonl")
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: historyURL.path),
               let modDate = attrs[.modificationDate] as? Date else { return }
         if Date().timeIntervalSince(modDate) > 30 * 24 * 3600 {
-            let archiveURL = baseDir.appendingPathComponent("task_history_archive.jsonl")
+            let archiveURL = paths.applicationSupportURL.appendingPathComponent("task_history_archive.jsonl")
             try? FileManager.default.moveItem(at: historyURL, to: archiveURL)
         }
     }
     
     public func rotateLogsIfNeeded() {
-        let logPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/logs/audit.log")
+        let logPath = PathConfiguration.shared.auditLogURL
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: logPath.path),
               let size = attrs[.size] as? UInt64 else { return }
         if size > 100 * 1024 * 1024 {
             let isoFormatter = ISO8601DateFormatter()
             let ts = isoFormatter.string(from: Date())
-            let archivedURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/logs/audit.log.\(ts)")
+            let archivedURL = PathConfiguration.shared.logsURL.appendingPathComponent("audit.log.\(ts)")
             try? FileManager.default.moveItem(at: logPath, to: archivedURL)
             FileManager.default.createFile(atPath: logPath.path, contents: nil, attributes: nil)
         }

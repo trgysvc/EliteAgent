@@ -199,7 +199,7 @@ public struct MenuBarView: View {
     }
     
     private func checkCredentialHealth() {
-        let vaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let vaultPath = PathConfiguration.shared.vaultURL
         if !FileManager.default.fileExists(atPath: vaultPath.path) {
             showDebug = true
             return
@@ -207,7 +207,7 @@ public struct MenuBarView: View {
         
         Task {
             do {
-                let manager = try VaultManager(configURL: vaultPath)
+                let manager = try VaultManager(configURL: PathConfiguration.shared.vaultURL)
                 if let provider = await manager.config.providers.first(where: { $0.type == .cloud }) {
                     _ = try await manager.getAPIKey(for: provider)
                 } else {

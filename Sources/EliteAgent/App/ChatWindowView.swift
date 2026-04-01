@@ -174,15 +174,24 @@ struct ChatBubble: View {
             if message.role == .user { Spacer() }
             
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
-                Text(message.content)
-                    .padding(12)
-                    .background(
-                        message.role == .user ? 
-                        AnyShapeStyle(Color.accentColor) : 
-                        AnyShapeStyle(.ultraThinMaterial)
-                    )
-                    .cornerRadius(16)
-                    .foregroundColor(message.role == .user ? .white : .primary)
+                if let analysis = message.audioAnalysis {
+                    MusicDNACard(analysis: analysis) {
+                        if let path = analysis.reportPath {
+                            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+                        }
+                    }
+                    .frame(width: 320)
+                } else {
+                    Text(message.content)
+                        .padding(12)
+                        .background(
+                            message.role == .user ? 
+                            AnyShapeStyle(Color.accentColor) : 
+                            AnyShapeStyle(.ultraThinMaterial)
+                        )
+                        .cornerRadius(16)
+                        .foregroundColor(message.role == .user ? .white : .primary)
+                }
             }
             .frame(maxWidth: 500, alignment: message.role == .user ? .trailing : .leading)
             
