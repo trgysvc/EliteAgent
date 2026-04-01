@@ -125,7 +125,7 @@ public struct ModelSetupView: View {
                     } label: {
                         HStack {
                             Image(systemName: "arrow.down.circle.fill")
-                            Text("Download Titan AI (Mistral-7B)")
+                            Text("Download Qwen 2.5 (7B-4bit)")
                         }
                         .padding(.horizontal, 24)
                         .padding(.vertical, 12)
@@ -133,7 +133,7 @@ public struct ModelSetupView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     
-                    Text("Est. Size: 4.8 GB • 4-bit Quantized")
+                    Text("Est. Size: 4.5 GB • Native MLX Safetensors")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

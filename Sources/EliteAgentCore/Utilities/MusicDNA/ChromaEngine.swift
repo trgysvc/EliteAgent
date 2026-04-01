@@ -171,6 +171,40 @@ public final class ChromaEngine: @unchecked Sendable {
         filterBank.apply(magnitude: stft.magnitude, nFrames: stft.nFrames)
     }
 
+    /// Librosa: feature.chroma_cens()
+    /// Chromagram Energy Normalized Statistics (CENS).
+    /// Best for cover song detection.
+    public func createCENS(from chroma: [[Float]], windowSize: Int = 41) -> [[Float]] {
+        // 1. L1 Normalization (Frame-wise)
+        // Chroma is [12 x nFrames]
+        let nFrames = chroma[0].count
+        var l1Normalized = [[Float]](repeating: [Float](repeating: 0, count: 12), count: nFrames)
+        
+        for t in 0..<nFrames {
+            let frame = (0..<12).map { chroma[$0][t] }
+            l1Normalized[t] = DSPHelpers.normalizeL1(frame)
+        }
+        
+        // 2. Transpose to handle pitch bins independently for temporal smoothing
+        // Now it's [12 x nFrames]
+        var result = DSPHelpers.transpose(l1Normalized)
+        
+        // 3. Temporal Smoothing (Bin-wise)
+        for i in 0..<result.count {
+            result[i] = DSPHelpers.applyHannSmoothing(result[i], windowSize: windowSize)
+        }
+        
+        // 4. L2 Normalization (Bin-wise)
+        for i in 0..<result.count {
+            result[i] = DSPHelpers.normalizeL2(result[i])
+        }
+        
+        // 5. Transpose back to original format [12 x nFrames]
+        // result is already [12 x nFrames], no need for final transpose if we want to return the same shape as input
+        // Actually, Librosa returns [12 x nFrames]. My result is [12 x nFrames].
+        return result
+    }
+
     // MARK: Key Detection (Krumhansl-Schmuckler)
 
     /// Krumhansl-Schmuckler anahtar profil korelasyonu.

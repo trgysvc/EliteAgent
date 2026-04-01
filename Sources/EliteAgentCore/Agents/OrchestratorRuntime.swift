@@ -9,6 +9,8 @@ public actor OrchestratorRuntime {
     private let memory: MemoryAgent
     private let cloudProvider: CloudProvider
     private let localProvider: MLXProvider?
+    private let bridgeProvider: BridgeProvider?
+    private let bridge: HarpsichordBridge
     private let contextManager: DynamicContextManager
     private let bus: SignalBus
     private var emergencyBuffer: [Signal] = []
@@ -25,13 +27,22 @@ public actor OrchestratorRuntime {
     }
     private var onTokenUpdate: (@Sendable (TokenCount) -> Void)?
     
-    public init(planner: PlannerAgent, memory: MemoryAgent, cloudProvider: CloudProvider, localProvider: MLXProvider? = nil, toolRegistry: ToolRegistry, bus: SignalBus) {
+    public init(planner: PlannerAgent, memory: MemoryAgent, cloudProvider: CloudProvider, localProvider: MLXProvider? = nil, bridgeProvider: BridgeProvider? = nil, toolRegistry: ToolRegistry, bus: SignalBus, vaultManager: VaultManager) {
         self.planner = planner
         self.memory = memory
         self.cloudProvider = cloudProvider
         self.localProvider = localProvider
+        self.bridgeProvider = bridgeProvider
         self.toolRegistry = toolRegistry
         self.bus = bus
+        
+        var allProviders: [any LLMProvider] = [cloudProvider]
+        if let l = localProvider { allProviders.append(l) }
+        if let b = bridgeProvider { allProviders.append(b) }
+        
+        // Load tokenizer for routing
+        let tokenizer = BPETokenizer(vocab: [:], merges: [:]) 
+        self.bridge = HarpsichordBridge(vaultManager: vaultManager, providers: allProviders, tokenizer: tokenizer)
         self.contextManager = DynamicContextManager(maxTokens: cloudProvider.maxContextTokens, provider: cloudProvider)
     }
     
@@ -109,20 +120,22 @@ public actor OrchestratorRuntime {
             // Memory Compression: Check if context is too large
             try? await contextManager.compress(sessionID: session.id.uuidString)
             
+            // 3. Construct CompletionRequest for the Hybrid Bridge
             let request = CompletionRequest(
                 taskID: session.id.uuidString,
                 systemPrompt: systemPrompt,
                 messages: await contextManager.getMessages(),
-                maxTokens: 2000,
-                sensitivityLevel: .public,
-                complexity: 3
+                maxTokens: 4096,
+                temperature: 0.7,
+                sensitivityLevel: .internal, 
+                complexity: complexity
             )
             
-            // Hybrid Reasoning: Route between Local and Cloud (Offline-First Strategy)
-            let isLocalReady = await ModelSetupManager.shared.isModelReady
-            let providerToUse: LLMProvider = (localProvider != nil && isLocalReady) ? localProvider! : cloudProvider
+            // Smart Switch: HarpsichordBridge handles the selection and execution
+            let preferred: ProviderID = (localProvider != nil) ? "mlx" : "bridge"
+            let fallbacks: [ProviderID] = ["openrouter"]
             
-            let response = try await providerToUse.complete(request)
+            let response = try await bridge.routeAndComplete(request: request, preferredProvider: preferred, fallbackProviders: fallbacks)
             
             // TRACE: Log the raw response for debugging Stochastic Skips / Hallucinations
             print("[RAW LLM RESPONSE]:\n\(response.content)\n-------------------")
@@ -133,7 +146,7 @@ public actor OrchestratorRuntime {
             
             // Record to MetricsStore
             await MetricsStore.shared.update(
-                modelID: cloudProvider.modelName, 
+                modelID: response.providerUsed.rawValue, 
                 promptTokens: response.tokensUsed.prompt, 
                 completionTokens: response.tokensUsed.completion, 
                 cost: response.costUSD

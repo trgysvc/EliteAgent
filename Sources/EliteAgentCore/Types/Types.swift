@@ -39,14 +39,16 @@ public struct TaskStep: Identifiable, Codable, Sendable {
     }
 }
 
-public struct ProviderID: RawRepresentable, Codable, Equatable, Hashable, Sendable {
+public struct ProviderID: RawRepresentable, Codable, Equatable, Hashable, Sendable, ExpressibleByStringLiteral {
     public let rawValue: String
     public init(rawValue: String) { self.rawValue = rawValue }
+    public init(stringLiteral value: String) { self.rawValue = value }
 }
 
 public enum ProviderType: String, Codable, Sendable {
     case local
     case cloud
+    case bridge
 }
 
 public struct AgentHealth: Sendable {

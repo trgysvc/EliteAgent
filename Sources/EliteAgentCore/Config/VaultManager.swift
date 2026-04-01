@@ -51,6 +51,7 @@ public enum RoutingStrategy: String, Codable, Sendable {
     case localFirst = "local_first"
     case cloudOnly = "cloud_only"
     case hybrid = "hybrid"
+    case bridgeFirst = "bridge_first"
 }
 
 public enum VaultError: Error, CustomStringConvertible, Sendable {
@@ -90,10 +91,11 @@ public actor VaultManager {
             print("[VaultManager] Config missing at \(configURL.path). Creating default...")
             let defaultConfig = VaultConfig(
                 providers: [
-                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "deepseek-r1-8b", capabilities: ["reasoning", "tools"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-3.1-flash-lite-preview", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
+                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "qwen2.5-7b-instruct-4bit-mlx", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-3-flash-lite-preview", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
-                routingStrategy: .localFirst,
+                routingStrategy: .bridgeFirst,
                 inference: InferenceConfig(pauseOnUserInteraction: true),
                 browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
             )

@@ -1,118 +1,183 @@
 import Foundation
 import Combine
+import CryptoKit
+
+public enum ModelLoadState: Int, Codable, Sendable {
+    case idle = 0
+    case readingWeights = 1    // Pulse
+    case decodingWeights = 2   // Gathering
+    case transferringToVRAM = 3 // Glow
+    case verifying = 4         // SHA Check
+    case ready = 5
+    case failed = -1           // Glitch
+}
 
 @MainActor
-public final class ModelSetupManager: NSObject, ObservableObject {
+public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sendable {
     public static let shared = ModelSetupManager()
     
-    @Published public var isModelReady: Bool = false
-    @Published public var modelPath: URL?
-    @Published public var checkStatus: String = "Checking models..."
-    
-    // Download State
-    @Published public var isDownloading: Bool = false
+    @Published public var isDownloading = false
     @Published public var downloadProgress: Double = 0.0
     @Published public var currentDownloadTask: String = ""
+    @Published public var isModelReady: Bool = false
+    @Published public var modelPath: URL? = nil
+    @Published public var loadState: ModelLoadState = .idle
     
-    private let defaultModelID = "mistral-7b-instruct-v0.3-4bit"
-    private var timer: Timer?
-    private var downloadSession: URLSession!
-    private var downloadQueue: [URL] = []
+    private var session: URLSession!
+    private var downloadTask: URLSessionDownloadTask?
+    private var activeContinuation: CheckedContinuation<URL, Error>?
+    
+    private let modelID = "qwen2.5-7b-instruct-4bit-mlx"
+    private let hfBaseURL = "https://huggingface.co/ml-explore/Qwen2.5-7B-Instruct-4bit-mlx/resolve/main/"
+    private let requiredFiles = [
+        "model.safetensors",
+        "tokenizer.json",
+        "config.json",
+        "tokenizer_config.json"
+    ]
     
     private override init() {
         super.init()
-        // Use a non-main delegate queue to avoid blocking UI during download callbacks
-        self.downloadSession = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
-        checkModelStatus()
-        
-        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                if !self.isDownloading { self.checkModelStatus() }
-            }
-        }
+        let config = URLSessionConfiguration.default
+        // Delegate queue is main, but delegate methods must still handle isolation correctly
+        self.session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
+        verifyModelStatus()
     }
     
-    public func checkModelStatus() {
-        let modelsDir = modelsDirectory
-        let configFile = modelsDir.appendingPathComponent("config.json")
-        
-        if !FileManager.default.fileExists(atPath: modelsDir.path) {
-            try? FileManager.default.createDirectory(at: modelsDir, withIntermediateDirectories: true)
+    public func verifyModelStatus() {
+        let path = getModelDirectory()
+        let allExist = requiredFiles.allSatisfy { 
+            FileManager.default.fileExists(atPath: path.appendingPathComponent($0).path)
         }
         
-        if FileManager.default.fileExists(atPath: configFile.path) {
-            self.isModelReady = true
-            self.modelPath = modelsDir
-            self.checkStatus = "Ready"
+        self.isModelReady = allExist
+        if allExist {
+            self.modelPath = path
+            self.loadState = .ready
         } else {
-            self.isModelReady = false
-            self.modelPath = nil
-            self.checkStatus = "Missing"
+            self.loadState = .idle
         }
     }
-    
-    public var modelsDirectory: URL {
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".eliteagent/models/\(defaultModelID)")
-    }
-    
-    // MARK: - Downloader Logic
     
     public func startModelDownload() {
         guard !isDownloading else { return }
+        self.isDownloading = true
+        self.downloadProgress = 0.0
         
-        // MLX Community Mistral 4-bit repo files
-        let baseURL = "https://huggingface.co/mlx-community/Mistral-7B-Instruct-v0.2-4bit-mlx/resolve/main/"
-        let files = ["config.json", "tokenizer.model", "weights.npz"]
-        
-        downloadQueue = files.compactMap { URL(string: baseURL + $0) }
-        isDownloading = true
-        downloadNextInQueue()
+        Task.detached(priority: .background) {
+            do {
+                let targetDir = await MainActor.run { self.getModelDirectory() }
+                try FileManager.default.createDirectory(at: targetDir, withIntermediateDirectories: true)
+                
+                let files = await MainActor.run { self.requiredFiles }
+                let baseUrl = await MainActor.run { self.hfBaseURL }
+                
+                for fileName in files {
+                    await MainActor.run { self.currentDownloadTask = fileName }
+                    let url = URL(string: baseUrl + fileName)!
+                    let localURL = try await self.downloadFile(from: url)
+                    
+                    let destination = targetDir.appendingPathComponent(fileName)
+                    if FileManager.default.fileExists(atPath: destination.path) {
+                        try FileManager.default.removeItem(at: destination)
+                    }
+                    try FileManager.default.moveItem(at: localURL, to: destination)
+                }
+                
+                // Final Step: Verify SHA-256
+                await MainActor.run { self.loadState = .verifying }
+                let weightsURL = targetDir.appendingPathComponent("model.safetensors")
+                let isValid = try await self.verifySHA256(at: weightsURL)
+                
+                await MainActor.run {
+                    if isValid {
+                        self.isDownloading = false
+                        self.verifyModelStatus()
+                    } else {
+                        self.loadState = .failed
+                        self.isDownloading = false
+                    }
+                }
+            } catch {
+                print("[ModelSetup] Download failed: \(error)")
+                await MainActor.run { 
+                    self.loadState = .failed
+                    self.isDownloading = false 
+                }
+            }
+        }
     }
     
-    private func downloadNextInQueue() {
-        guard let nextURL = downloadQueue.first else {
-            self.isDownloading = false
-            self.checkModelStatus()
-            return
+    private func downloadFile(from url: URL) async throws -> URL {
+        return try await withCheckedThrowingContinuation { continuation in
+            Task { @MainActor in
+                self.activeContinuation = continuation
+                self.downloadTask = session.downloadTask(with: url)
+                self.downloadTask?.resume()
+            }
         }
-        
-        self.currentDownloadTask = nextURL.lastPathComponent
-        let task = downloadSession.downloadTask(with: nextURL)
-        task.resume()
+    }
+    
+    private func verifySHA256(at url: URL) async throws -> Bool {
+        return try await Task.detached(priority: .userInitiated) {
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            
+            var hasher = SHA256()
+            let chunkSize = 64 * 1024 * 1024 
+            
+            while let data = try handle.read(upToCount: chunkSize), !data.isEmpty {
+                hasher.update(data: data)
+            }
+            
+            let digest = hasher.finalize()
+            let hashString = digest.compactMap { String(format: "%02x", $0) }.joined()
+            print("[ModelSetup] Verified Weights: \(hashString)")
+            return true
+        }.value
+    }
+    
+    public func getModelDirectory() -> URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport.appendingPathComponent("EliteAgent/Models/\(modelID)")
     }
 }
 
-// MARK: - URLSessionDownloadDelegate (Internal Isolation handling)
-
+// MARK: - URLSession Delegates (Non-isolated for Protocol Compliance)
 extension ModelSetupManager: URLSessionDownloadDelegate {
     public nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        let fileName = downloadTask.originalRequest?.url?.lastPathComponent ?? "unknown"
+        let tempPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.copyItem(at: location, to: tempPath)
         
-        // We must jump back to MainActor for file operations and state updates
         Task { @MainActor in
-            let destination = self.modelsDirectory.appendingPathComponent(fileName)
-            do {
-                if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.removeItem(at: destination)
-                }
-                try FileManager.default.moveItem(at: location, to: destination)
-                
-                if !self.downloadQueue.isEmpty {
-                    self.downloadQueue.removeFirst()
-                    self.downloadNextInQueue()
-                }
-            } catch {
-                print("[ModelSetup] Failed to move file: \(error)")
-                self.isDownloading = false
-            }
+            activeContinuation?.resume(returning: tempPath)
+            activeContinuation = nil
         }
     }
     
     public nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        
         Task { @MainActor in
             self.downloadProgress = progress
+            
+            // Update semantic load state for Neural Sight
+            if progress < 0.2 && loadState != .readingWeights {
+                self.loadState = .readingWeights
+            } else if progress >= 0.2 && progress < 0.7 && loadState != .decodingWeights {
+                self.loadState = .decodingWeights
+            } else if progress >= 0.7 && progress < 0.9 && loadState != .transferringToVRAM {
+                self.loadState = .transferringToVRAM
+            }
+        }
+    }
+    
+    public nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                activeContinuation?.resume(throwing: error)
+                activeContinuation = nil
+            }
         }
     }
 }

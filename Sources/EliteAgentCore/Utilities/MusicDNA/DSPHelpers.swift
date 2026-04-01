@@ -151,6 +151,20 @@ public enum DSPHelpers {
         return out
     }
 
+    /// L1-normalize: divide by sum of absolute values. Librosa: util.normalize(x, norm=1)
+    public static func normalizeL1(_ v: [Float]) -> [Float] {
+        var absV = v
+        vDSP_vabs(v, 1, &absV, 1, vDSP_Length(v.count))
+        var sum: Float = 0
+        vDSP_sve(absV, 1, &sum, vDSP_Length(v.count))
+        
+        guard sum > 1e-8 else { return v }
+        var invSum = 1.0 / sum
+        var out = v
+        vDSP_vsmul(out, 1, &invSum, &out, 1, vDSP_Length(out.count))
+        return out
+    }
+
     // MARK: Cumulative Sum (YIN CMND için)
 
     /// Kümülatif toplam. NumPy: np.cumsum(x)
@@ -282,6 +296,50 @@ public enum DSPHelpers {
             result[k] = sum * norm
         }
 
+        return result
+    }
+
+    // MARK: - Matrix & Smoothing for CENS/PLP
+
+    /// Matrix transpose utility for [[Float]].
+    public static func transpose(_ matrix: [[Float]]) -> [[Float]] {
+        guard !matrix.isEmpty else { return [] }
+        let rows = matrix.count
+        let cols = matrix[0].count
+        var result = [[Float]](repeating: [Float](repeating: 0, count: rows), count: cols)
+        for i in 0..<rows {
+            for j in 0..<cols {
+                result[j][i] = matrix[i][j]
+            }
+        }
+        return result
+    }
+
+    /// Hann window temporal smoothing.
+    /// Librosa's `chroma_cens` smoothing logic using vDSP convolution.
+    public static func applyHannSmoothing(_ signal: [Float], windowSize: Int) -> [Float] {
+        guard signal.count >= windowSize else { return signal }
+        
+        // 1. Create Hann window
+        var hann = [Float](repeating: 0, count: windowSize)
+        vDSP_hann_window(&hann, vDSP_Length(windowSize), Int32(vDSP_HANN_NORM))
+        
+        // 2. Normalize window to preserve energy (sum = 1)
+        var sum: Float = 0
+        vDSP_sve(hann, 1, &sum, vDSP_Length(windowSize))
+        if sum > 0 {
+            var invSum = 1.0 / sum
+            vDSP_vsmul(hann, 1, &invSum, &hann, 1, vDSP_Length(windowSize))
+        }
+
+        // 3. Convolve
+        var result = [Float](repeating: 0, count: signal.count)
+        // Note: vDSP_conv requires reversed window for cross-correlation logic
+        let reversedHann = Array(hann.reversed())
+        
+        // Use overlapping convolution
+        vDSP_conv(signal, 1, reversedHann, 1, &result, 1, vDSP_Length(signal.count), vDSP_Length(windowSize))
+        
         return result
     }
 }

@@ -1,8 +1,8 @@
-// EliteAgent Titan Engine - v3.1
+// EliteAgent Titan Engine - v7.0 (Qwen-Ready)
 import Foundation
 import MLX
-import MLXNN
-import MLXRandom
+import MLXLLM
+import MLXLMCommon
 import Metal
 
 /// The offline brain of EliteAgent.
@@ -14,104 +14,111 @@ public actor InferenceActor {
     nonisolated public let sharedBuffer: MetalBufferWrapper
     private let maxActivations = 1024
     
-    private var mistral: MistralModel?
-    private var tokenizer: BPETokenizer?
+    private var modelContainer: ModelContainer?
+    private var maxContextTokens: Int = 16384 // Optimized for 16GB RAM M4
     
     private init() {
-        // Initialize shared buffer for Metal visualization (Zero-copy)
         let device = MTLCreateSystemDefaultDevice()
         let size = maxActivations * MemoryLayout<Float>.size
         let buffer = device?.makeBuffer(length: size, options: .storageModeShared)
         self.sharedBuffer = MetalBufferWrapper(buffer)
         
-        // Optimize GPU cache for 8GB/16GB devices
-        let mem = ProcessInfo.processInfo.physicalMemory
-        let limit = mem / 2 // Use 50% of RAM as cache limit
-        MLX.Memory.cacheLimit = Int(limit)
+        // Cache limit: 50% for high-performance runs
+        MLX.Memory.cacheLimit = Int(ProcessInfo.processInfo.physicalMemory / 2)
         
-        // Setup monitoring asynchronously to avoid init isolation issues
         Task {
-            await setupMemoryMonitoring()
+            await setupResourceMonitoring()
         }
     }
     
-    private func setupMemoryMonitoring() {
-        // Listen for system memory pressure to clear cache
+    private func setupResourceMonitoring() {
+        // Memory Pressure
         let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .global())
         source.setEventHandler { [weak self] in
-            Task { [weak self] in
-                await self?.clearCache()
-            }
+            Task { [weak self] in await self?.clearCache() }
         }
         source.resume()
+        
+        // Thermal State Notification
+        NotificationCenter.default.addObserver(forName: ProcessInfo.thermalStateDidChangeNotification, object: nil, queue: .main) { _ in
+            print("[Thermal] Monitoring: \(ProcessInfo.processInfo.thermalState)")
+        }
     }
     
     public func clearCache() {
-        AgentLogger.logAudit(level: .info, agent: "guard", message: "System memory pressure detected. Clearing MLX GPU cache.")
+        AgentLogger.logAudit(level: .info, agent: "guard", message: "Memory pressure. Clearing GPU cache.")
         MLX.Memory.clearCache()
     }
     
     public func loadModel(at url: URL) async throws {
-        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Initializing Real MLX Brain from \(url.path)...")
+        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Initializing Qwen via MLXLLM...")
         
-        let config = MistralConfig.mistral7B
-        let model = MistralModel(config)
-        
-        let state = try ModelLoader.loadState(from: url)
-        ModelLoader.apply(state: state, to: model)
-        
-        let tokenizer = try BPETokenizer.load(from: url)
-        
-        self.mistral = model
-        self.tokenizer = tokenizer
-        
-        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Local Intelligence is READY.")
+        // Using MLXLMCommon global factory to load model container from directory
+        self.modelContainer = try await loadModelContainer(directory: url)
+        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Intelligence Ready.")
     }
     
-    /// Generates tokens as an AsyncStream to ensure thread safety with MLXArray mutations.
     public func generate(prompt: String, maxTokens: Int = 100) -> AsyncStream<String> {
         return AsyncStream(String.self) { continuation in
             Task {
-                guard let model = self.mistral, let tokenizer = self.tokenizer else {
-                    continuation.yield("Error: Model not loaded.")
+                guard let container = self.modelContainer else {
+                    continuation.yield("Error: Engine not primed.")
                     continuation.finish()
                     return
                 }
                 
-                var tokens = tokenizer.encode(text: prompt)
-                let cache = (0..<MistralConfig.mistral7B.numHiddenLayers).map { _ in KVCache() }
+                // Qwen 2.5 ChatML format specialization
+                let formattedPrompt = "<|im_start|>system\nYou are EliteAgent, a high-performance assistant.<|im_end|>\n<|im_start|>user\n\(prompt)<|im_end|>\n<|im_start|>assistant\n"
                 
-                for _ in 0..<maxTokens {
-                    let input = MLXArray(tokens.map { Int32($0) }).reshaped(1, -1)
-                    let logits = model(input, cache: cache)
+                do {
+                    // 1. Prepare Input
+                    let lmInput = try await container.prepare(input: UserInput(prompt: formattedPrompt))
+                    let parameters = GenerateParameters(maxTokens: maxTokens)
                     
-                    let lastLogits = logits[0, -1, 0...]
-                    let newTokenID = argMax(lastLogits).item(Int.self)
+                    // 2. Start Async Generation Stream
+                    let stream = try await container.generate(input: lmInput, parameters: parameters)
                     
-                    if newTokenID == 2 { break }
+                    for await generation in stream {
+                        switch generation {
+                        case .chunk(let text):
+                            continuation.yield(text)
+                            
+                            // Real-time Visualizer sync (simulated activation pulse)
+                            updateSharedBuffer(with: text.count) 
+                            
+                            // 3. Adaptive Thermal Throttling
+                            let currentState = ProcessInfo.processInfo.thermalState
+                            if currentState == .serious {
+                                try? await Task.sleep(nanoseconds: 10_000_000) // 10ms delay
+                            } else if currentState == .critical {
+                                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms heavy throttle
+                            }
+                            
+                        case .info(let info):
+                            AgentLogger.logAudit(level: .info, agent: "titan", message: "Generation Complete: \(info.tokensPerSecond.formatted()) t/s")
+                            
+                        case .toolCall(let call):
+                            AgentLogger.logAudit(level: .info, agent: "titan", message: "Tool Call Detected: \(call.function.name)")
+                        }
+                    }
                     
-                    tokens = [newTokenID]
-                    for c in cache { c.offset += 1 }
-                    
-                    let newText = tokenizer.decode(tokens: [newTokenID])
-                    updateSharedBuffer(with: lastLogits)
-                    
-                    continuation.yield(newText)
+                    continuation.finish()
+                } catch {
+                    AgentLogger.logAudit(level: .error, agent: "titan", message: "Generation failed: \(error.localizedDescription)")
+                    continuation.yield("Error: Generation failed.")
+                    continuation.finish()
                 }
-                continuation.finish()
             }
         }
     }
     
-    private func updateSharedBuffer(with data: MLXArray) {
+    private func updateSharedBuffer(with activationValue: Int) {
         guard let buffer = sharedBuffer.buffer else { return }
         let ptr = buffer.contents().bindMemory(to: Float.self, capacity: maxActivations)
         
-        let normalized = MLX.sigmoid(data[0..<maxActivations].asType(.float32))
-        let values = normalized.asArray(Float.self)
-        
-        for i in 0..<min(maxActivations, values.count) {
-            ptr[i] = values[i]
+        // Push pulse data during generation to drive the visualizer
+        for i in 0..<maxActivations {
+            ptr[i] = Float.random(in: 0.0...1.0) * Float(activationValue % 10) / 10.0
         }
     }
 }

@@ -23,7 +23,9 @@ public class Orchestrator: ObservableObject {
     private let bus: SignalBus
     private var cloudProvider: CloudProvider?
     private var localProvider: MLXProvider?
+    private var bridgeProvider: BridgeProvider?
     private let toolRegistry: ToolRegistry
+    private var vaultManager: VaultManager?
     private var observer: ProjectObserver?
     private var currentWorkspaceURL: URL? // Tracking for observer filtering
     
@@ -47,12 +49,15 @@ public class Orchestrator: ObservableObject {
         
         do {
             let vault = try VaultManager(configURL: paths.vaultURL)
+            self.vaultManager = vault
             self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
+            self.bridgeProvider = try BridgeProvider(providerID: ProviderID(rawValue: "bridge"), vaultManager: vault)
             self.localProvider = MLXProvider(providerID: ProviderID(rawValue: "mlx"))
         } catch {
             print("[ORCHESTRATOR] CRITICAL: Failed to initialize Core Services: \(error)")
             self.status = .error
             self.cloudProvider = nil
+            self.bridgeProvider = nil
             self.localProvider = nil
         }
         
@@ -98,9 +103,22 @@ public class Orchestrator: ObservableObject {
         }
         
         let local = self.localProvider
-        let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { [weak self] planner, provider in
-            guard let self = self else { fatalError() }
-            return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, localProvider: local, toolRegistry: ToolRegistry.shared, bus: self.bus)
+        let bridge = self.bridgeProvider
+        let memory = self.memory
+        let busInstance = self.bus
+        let vault = self.vaultManager
+        
+        let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
+            return OrchestratorRuntime(
+                planner: planner, 
+                memory: memory, 
+                cloudProvider: provider, 
+                localProvider: local, 
+                bridgeProvider: bridge, 
+                toolRegistry: ToolRegistry.shared, 
+                bus: busInstance, 
+                vaultManager: vault!
+            )
         }
         self.toolRegistry.register(subagentTool)
         
@@ -187,8 +205,10 @@ public class Orchestrator: ObservableObject {
                 memory: memory,
                 cloudProvider: provider, 
                 localProvider: local,
+                bridgeProvider: bridgeProvider,
                 toolRegistry: toolRegistry,
-                bus: bus
+                bus: bus,
+                vaultManager: vaultManager!
             )
             
             // 3b. Start Project Observer

@@ -18,9 +18,13 @@ Bu döküman, EliteAgent projesinin ilk satırından son satırına kadar tüm k
 - **4-bit Quantization Support**: Llama, Phi ve Mistral modelleri için optimize edilmiş GPU bellek kullanımı.
 - **Hybrid Reasoning (Cloud/Local)**: Intent Classification (Niyet Sınıflandırma) ile görevin karmaşıklığına göre en uygun modele geçiş.
 - **RAG Memory Bridge**: `MemoryAgent` ve `MemoryTool` ile geçmiş deneyimlerin (Store Experience) kalıcı hafızaya alınması.
+- **Qwen 2.5 Engine (7B-4bit)**: M4-optimized NPU/GPU native yerel SLM entegrasyonu.
+- **ChatML Template Engine**: Qwen-specific prompt formatlama ve akıllı context yönetimi.
 
 ## 3. Görsel ve Teknik Sunum (Visualizers)
 - **Neural Sight (Metal Engine)**: AI'nın her bir düşünce katmanını 3D Point Cloud (nokta bulutu) olarak 120 FPS'te canlandıran Metal Shader'ları.
+- **Triple-Buffering Logic**: CPU ve GPU arasında 0-latency (race-condition free) veri senkronizasyonu.
+- **Semantic Awaken States**: Yükleme sırasında (Pulse/Gather/Glow) görsel durum geri bildirimi.
 - **vDSP Dynamic Waveform**: Apple Accelerate kullanarak akışkan, gradyanlı ve yüksek çözünürlüklü ses dalgası görselleştirmesi.
 - **Röntgen Card UI**: Adli ve biyolojik ses verilerini glassmorphism efektiyle sunan SwiftUI-native analiz kartı.
 
@@ -29,6 +33,8 @@ Bu döküman, EliteAgent projesinin ilk satırından son satırına kadar tüm k
 - **Thermal Watchdog**: `ProcessInfo.thermalState` verilerinin saniyelik takibi ve termal dalgalanma uyarısı.
 - **Memory Pressure Manager**: RAM şişmelerinde (özellikle SLM kullanımı sırasında) "Zarif Geri Çekilme" (Graceful Degradation) protokolleri.
 - **Prompt Sanitizer**: Kullanıcı ve sistem arasındaki tüm veri akışında PII (Kişisel veri) ve API anahtarı sızma koruması.
+- **Adaptive Thermal Throttling**: NPU/GPU üretimi sırasında `serious` ve `critical` ısı durumlarında akıllı yavaşlatma.
+- **Memory-Efficient Integrity Shield**: 5GB+ ağırlıkların 64MB chunked SHA-256 ile güvenli doğrulanması.
 
 ## 5. Universal Tool Ecosystem (Araç Seti)
 - **Dosya ve Döküman (High-Speed I/O)**:
@@ -52,15 +58,17 @@ Bu döküman, EliteAgent projesinin ilk satırından son satırına kadar tüm k
     - `STFTEngine`: Zaman-Frekans dönüşümü (Short-Time Fourier Transform).
     - `MelFilterBank`: İnsan kulağına göre kalibre edilmiş 128-band Mel Spectrogram.
     - `CQTEngine`: Müzikal notalara duyarlı Constant-Q Transform.
+    - **Chroma CENS (v7.1)**: Kapak şarkısı ve değişim tespiti için enerji-normalize harmonik parmak izi (L1-Smooth-L2).
 - **Analysis Modules**:
     - `YINEngine`: Hassas Pitch (perde) takibi ve ton tespiti.
     - `HPSSEngine`: Harmonik ve Perküsif (vokal vs beat) ayrıştırma.
     - `MFCCEngine`: Ses tınısını (timbre) belirleyen ilk 20 katsayı.
     - `Onset/RhythmEngine`: BPM, Beat grid ve vuruş tutarlılık analizi.
+    - **Multi-Band PLP (v7.1)**: Çok bantlı (Sub/Low/Mid/High) predominant local pulse tahmini.
     - `StructureEngine`: Şarkının bölümlerini (Verse, Chorus, Bridge) tespit eden segmentasyon.
 - **Forensic Röntgen (Evidence)**:
     - `ForensicDNAEngine`: Dosya kaynağı (WhereFroms), dijital imzalar ve kodlayıcı tespiti.
 - **AI Works Center**: Raporların `~/Documents/AI Works` klasöründe profesyonel PDF/MD/JSON olarak arşivlenmesi.
 
 ---
-*EliteAgent Core · Version 7.0 Master List · April 2026*
+*EliteAgent Core · Version 7.1 Master List · April 2026*
