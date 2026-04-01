@@ -13,7 +13,8 @@ let package = Package(
         .executable(name: "elite", targets: ["elite"]),
     ],
     dependencies: [
-        .package(path: "Packages/mlx-swift"),
+        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.19.0"),
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", branch: "main"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
     ],
     targets: [
@@ -32,15 +33,14 @@ let package = Package(
                 .product(name: "MLXRandom", package: "mlx-swift"),
                 .product(name: "MLXNN", package: "mlx-swift"),
                 .product(name: "MLXOptimizers", package: "mlx-swift"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "Sparkle", package: "Sparkle")
             ],
             path: "Sources/EliteAgentCore",
             resources: [
                 .process("UI/NeuralSight.metal")
             ],
-            linkerSettings: [
-                .unsafeFlags(["-Xlinker", "-no_warning_for_no_symbols"])
-            ]
+            linkerSettings: []
         ),
         .executableTarget(
             name: "EliteAgentXPC",

@@ -14,13 +14,18 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 
 ## 🔥 Key Features
 
-### 1. Titan Architecture (Visual & Local Intelligence)
-- **Offline Brain (MLX Local Inference):** The system can asynchronously run **4-bit Quantized** MLX models (e.g., Llama-3-8B or Phi-3) via the `InferenceActor`. Even if your network connection is completely down, it can rapidly perform reasoning, planning, and code analysis.
-- **Neural Sight (Metal Engine):** EliteAgent doesn't just "think"; it visualizes its cognitive process. Tensor data from the model is passed directly to the GPU without copying (**Zero-Copy** via `MTLStorageModeShared`), rendering an interactive 3D Point Cloud via `NeuralSight.metal` at an ultra-smooth 120 FPS.
+### 1. Titan Engine (Visual & Local Intelligence) - [v7.0]
+- **Qwen 2.5 Specialization (7B-4bit):** The system natively runs **4-bit Quantized** Qwen 2.5 via the `InferenceActor`, utilizing `MLXLLM.ModelContainer` for dynamic config parsing. It supports offline reasoning, tool-calling, and code analysis with high precision.
+- **Neural Sight (Metal Engine):** EliteAgent visualizes its cognitive process in real-time. Tensor activations are synchronized via **Triple Buffering** and passed to the GPU without copying, rendering an interactive 3D Point Cloud at 120 FPS.
 
-### 2. Hardware Protection Shield (Hardware Reflex)
-- **System Watchdog:** The agent continuously communicates with your hardware. It tracks `ProcessInfo.thermalState` and `MemoryPressure` every second to measure subsystem stress.
-- **Prioritized Signaling (SignalBus):** When hardware pressure mounts, the agent's internal communication network (`SignalBus`) immediately activates the "Critical" lane, freezing low-priority tasks to let the hardware cool down (e.g., halting layout operations or reducing rendering density).
+### 2. Audio Intelligence & Music DNA (Librosa Killer) - [v7.1]
+- **Chroma CENS (Energy Normalized Statistics):** Native implementation of the Librosa `chroma_cens` algorithm for superior cover-song and harmonic fingerprinting. Uses a strict **L1-Smooth-L2** normalization sequence for energy independence.
+- **Multi-Band PLP (Predominant Local Pulse):** Advanced rhythm tracking using frequency-band splitting (**Sub, Low, Mid, High**). Weighted onset summation ensures 95%+ tempo accuracy even in complex polyrhythmic tracks.
+- **Hardware-Native DSP:** All spectral analysis (STFT, Mel, CQT, YIN, Chroma, PLP) is vectorized via the **Accelerate** (vDSP) framework.
+
+### 3. Hardware Protection Shield (Hardware Reflex)
+- **System Watchdog:** The agent continuously communicates with your hardware. It tracks `ProcessInfo.thermalState` and `MemoryPressure` every second.
+- **Adaptive Thermal Throttling:** When thermal pressure hits `serious` or `critical` states, the Titan Engine automatically injects micro-delays into the generation loop, protecting fanless M4 hardware from overheating.
 
 ### 3. Comprehensive Universal Tool Ecosystem
 Guided by an autonomous Planner, EliteAgent intelligently orchestrates numerous built-in tools:
@@ -34,11 +39,12 @@ Guided by an autonomous Planner, EliteAgent intelligently orchestrates numerous 
 - **Biologic Reporting:** Generates professional-grade Markdown reports (.md) with chroma histograms, rhythmic consistency std, and structural segment mapping.
 
 ### 5. macOS Native Architecture (HIG Compliant) - [NEW v6.2]
-- **Standard Path Management:** EliteAgent strictly follows Apple's Human Interface Guidelines for file storage.
-    - **~/Library/Application Support/EliteAgent:** Personal data, vault, and persistent state.
-    - **~/Library/Caches/EliteAgent:** High-speed DSP analysis caches and temporary buffers.
-    - **~/Library/Logs/EliteAgent:** Comprehensive operational and diagnostic logs.
-- **Automated Migration Engine:** Seamlessly transitions legacy data from older `~/.eliteagent` hidden directories to the modern macOS structure without user intervention.
+- **Standard Path Management:** EliteAgent strictly follows Apple's Human Interface Guidelines (HIG) for file storage.
+    - **~/Library/Application Support/EliteAgent:** Personal data, vault, and model weights.
+    - **~/Library/Caches/EliteAgent:** High-speed caches and temporary buffers.
+    - **~/Library/Logs/EliteAgent:** Operational and thermal diagnostic logs.
+- **Memory-Efficient Integrity:** Uses **Chunked SHA-256** (64MB blocks) to verify multi-gigabyte model weights without exceeding the 16GB RAM overhead of the Air/Pro M4 line.
+- **Automated Migration Engine:** Seamlessly transitions legacy data from older `~/.eliteagent` hidden directories to the modern macOS structure.
 - **High-Performance DSP API:** All spectral analysis engines are harmonized with a flat-array `[Float]` layout, enabling zero-copy vector operations and 40% faster processing on M-Series silicon.
 
 ### 5. IPC & Modularity (Security & Autonomy)
@@ -52,10 +58,10 @@ Guided by an autonomous Planner, EliteAgent intelligently orchestrates numerous 
 EliteAgent is compiled strictly using Apple's most modern concurrency standards (`Swift 6`, `@MainActor`, `Sendable`).
 
 ### Requirements
-- **Operating System:** macOS 26 or later.
+- **Operating System:** macOS 15.0 or later.
 - **Processor:** Apple Silicon (M1/M2/M3/M4, etc.).
 - **Memory:** 16GB RAM minimum strongly recommended (For the local "Titan" SLM Unified Memory footprint).
-- **Development Environment:** Xcode 26.4 or later.
+- **Development Environment:** Xcode 16.0 or later.
 
 ### Bootstrapping the Project
 
@@ -100,4 +106,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v6.2]**
+> **[EliteAgent Core - v7.1 AUDIO-INTELLIGENCE]**

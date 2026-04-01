@@ -9,10 +9,8 @@ public struct MenuBarView: View {
     @FocusState private var isInputFocused: Bool
     @State private var pulsate: Bool = false
     @State private var showDebug: Bool = false
-    
-    public init(orchestrator: Orchestrator) {
-        self.orchestrator = orchestrator
-    }
+    @State private var modeMessage: String? = nil
+    @State private var modeTimer: Timer? = nil
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -21,10 +19,19 @@ public struct MenuBarView: View {
                 statusDot
                     .scaleEffect(pulsate ? 1.2 : 1.0)
                 
-                Text(orchestrator.status.rawValue.uppercased())
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .tracking(1.2)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(orchestrator.status.rawValue.uppercased())
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .tracking(1.2)
+                    
+                    if let msg = modeMessage {
+                        Text(msg.uppercased())
+                            .font(.system(size: 8, weight: .black, design: .monospaced))
+                            .foregroundStyle(.cyan)
+                            .transition(.opacity)
+                    }
+                }
                 
                 Spacer()
                 
@@ -194,6 +201,31 @@ public struct MenuBarView: View {
                 
                 // Auto-show diagnostics if key is missing
                 checkCredentialHealth()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .llmProviderSwitched)) { note in
+            if let provider = note.userInfo?["provider"] as? String {
+                withAnimation {
+                    modeMessage = "SMART SWITCH: \(provider)"
+                }
+                clearMessageAfter(3)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .llmMemoryPressureAvoided)) { _ in
+            withAnimation {
+                modeMessage = "MEMORY GUARD: USING CLOUD"
+            }
+            clearMessageAfter(4)
+        }
+    }
+    
+    private func clearMessageAfter(_ seconds: Double) {
+        modeTimer?.invalidate()
+        modeTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { _ in
+            Task { @MainActor in
+                withAnimation {
+                    modeMessage = nil
+                }
             }
         }
     }
