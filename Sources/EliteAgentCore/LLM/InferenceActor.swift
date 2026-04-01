@@ -14,8 +14,8 @@ public actor InferenceActor {
     nonisolated public let sharedBuffer: MetalBufferWrapper
     private let maxActivations = 1024
     
-    private var model: (Module & Sendable)?
-    private var tokenizer: Any? // Placeholder for actual tokenizer logic
+    private var mistral: MistralModel?
+    private var tokenizer: BPETokenizer?
     
     private init() {
         // Initialize shared buffer for Metal visualization (Zero-copy)
@@ -52,37 +52,66 @@ public actor InferenceActor {
     }
     
     public func loadModel(at url: URL) async throws {
-        // Simulate loading weights from local path
-        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Loading local SLM weights from \(url.path)...")
-        // Implementation for actual weight loading (e.g. LLMModel types) would go here
+        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Initializing Real MLX Brain from \(url.path)...")
+        
+        let config = MistralConfig.mistral7B
+        let model = MistralModel(config)
+        
+        let state = try ModelLoader.loadState(from: url)
+        ModelLoader.apply(state: state, to: model)
+        
+        let tokenizer = try BPETokenizer.load(from: url)
+        
+        self.mistral = model
+        self.tokenizer = tokenizer
+        
+        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Local Intelligence is READY.")
     }
     
     /// Generates tokens as an AsyncStream to ensure thread safety with MLXArray mutations.
     public func generate(prompt: String, maxTokens: Int = 100) -> AsyncStream<String> {
-        AsyncStream { continuation in
+        return AsyncStream(String.self) { continuation in
             Task {
-                // Simulate token-by-token generation
-                let tokens = ["Local", " Titan", " reasoning", " in", " progress...", "\n", "Hardware", " optimized", " on", " Apple", " Silicon."]
+                guard let model = self.mistral, let tokenizer = self.tokenizer else {
+                    continuation.yield("Error: Model not loaded.")
+                    continuation.finish()
+                    return
+                }
                 
-                for token in tokens {
-                    try? await Task.sleep(nanoseconds: 50_000_000) // 50ms per token
+                var tokens = tokenizer.encode(text: prompt)
+                let cache = (0..<MistralConfig.mistral7B.numHiddenLayers).map { _ in KVCache() }
+                
+                for _ in 0..<maxTokens {
+                    let input = MLXArray(tokens.map { Int32($0) }).reshaped(1, -1)
+                    let logits = model(input, cache: cache)
                     
-                    // Update shared buffer with mock "activation" data for Neural Sight
-                    updateSharedBuffer()
+                    let lastLogits = logits[0, -1, 0...]
+                    let newTokenID = argMax(lastLogits).item(Int.self)
                     
-                    continuation.yield(token)
+                    if newTokenID == 2 { break }
+                    
+                    tokens = [newTokenID]
+                    for c in cache { c.offset += 1 }
+                    
+                    let newText = tokenizer.decode(tokens: [newTokenID])
+                    updateSharedBuffer(with: lastLogits)
+                    
+                    continuation.yield(newText)
                 }
                 continuation.finish()
             }
         }
     }
     
-    private func updateSharedBuffer() {
+    private func updateSharedBuffer(with data: MLXArray) {
         guard let buffer = sharedBuffer.buffer else { return }
         let ptr = buffer.contents().bindMemory(to: Float.self, capacity: maxActivations)
         
-        for i in 0..<maxActivations {
-            ptr[i] = Float.random(in: 0...1)
+        let normalized = MLX.sigmoid(data[0..<maxActivations].asType(.float32))
+        let values = normalized.asArray(Float.self)
+        
+        for i in 0..<min(maxActivations, values.count) {
+            ptr[i] = values[i]
         }
     }
 }

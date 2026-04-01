@@ -81,95 +81,133 @@ public struct ModelSetupView: View {
     }
     
     private var instructionsPhase: some View {
-        VStack(spacing: 20) {
-            Text("Local Model Not Detected")
-                .font(.headline)
-                .foregroundStyle(.orange)
-            
-            Text("To activate the Titan Engine, please place a compatible MLX model in your local models directory.")
-                .multilineTextAlignment(.center)
-                .font(.body)
-            
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Command Line Setup:")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                Text("huggingface-cli download mlx-community/Mistral-7B-Instruct-v0.3-4bit --local-dir \(manager.modelsDirectory.path)")
-                    .font(.system(.caption, design: .monospaced))
-                    .padding(12)
-                    .background(.black, in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.1)))
+        VStack(spacing: 24) {
+            if manager.isDownloading {
+                // DOWNLOAD PROGRESS VIEW
+                VStack(spacing: 20) {
+                    Text("Downloading Titan Intelligence...")
+                        .font(.headline)
+                    
+                    Text("Fetching \(manager.currentDownloadTask)...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    ProgressView(value: manager.downloadProgress)
+                        .progressViewStyle(.linear)
+                        .tint(.blue)
+                        .frame(height: 8)
+                        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
+                    
+                    Text("\(Int(manager.downloadProgress * 100))%")
+                        .font(.system(.title3, design: .monospaced))
+                        .fontWeight(.bold)
+                }
+                .padding(30)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
+                .shadow(color: .blue.opacity(0.2), radius: 20)
+            } else {
+                // INITIAL MISSING STATE
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.largeTitle)
+                        .foregroundStyle(.orange)
+                    
+                    Text("Local Model Not Detected")
+                        .font(.headline)
+                    
+                    Text("Activate the Titan Engine to enable ultra-fast, 100% private offline reasoning.")
+                        .multilineTextAlignment(.center)
+                        .font(.body)
+                        .padding(.horizontal)
+                    
+                    Button {
+                        manager.startModelDownload()
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.down.circle.fill")
+                            Text("Download Titan AI (Mistral-7B)")
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    
+                    Text("Est. Size: 4.8 GB • 4-bit Quantized")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .padding()
-            .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
-            
-            Button("Check Directory Again") {
-                manager.checkModelStatus()
-            }
-            .buttonStyle(.bordered)
         }
+        .padding()
     }
     
     private var successPhase: some View {
         VStack(spacing: 20) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(.green)
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.15))
+                    .frame(width: 120, height: 120)
+                
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.green)
+                    .symbolEffect(.bounce, value: manager.isModelReady)
+            }
             
             Text("Titan Engine Active")
-                .font(.headline)
+                .font(.system(size: 24, weight: .bold))
             
-            Text("Local model detected and optimized for your M-series chip.")
+            Text("Local intelligence is initialized and ready for hardware-accelerated inference.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             
-            Text(manager.modelPath?.lastPathComponent ?? "Default Model")
-                .font(.system(.caption, design: .monospaced))
-                .padding(8)
-                .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            HStack {
+                Image(systemName: "cpu")
+                Text(manager.modelPath?.lastPathComponent ?? "Default Model")
+            }
+            .font(.system(.caption, design: .monospaced))
+            .padding(10)
+            .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
         }
-        .transition(.scale.combined(with: .opacity))
+        .transition(.asymmetric(insertion: .push(from: .bottom), removal: .opacity))
     }
     
     private var footerView: some View {
         HStack {
-            if !manager.isModelReady {
-                Button("Configure External Cloud...") {
-                    // Logic to jump to cloud setup if preferred
-                }
-                .buttonStyle(.plain)
-                .font(.caption)
-                .foregroundStyle(.blue)
-                
-                Spacer()
-                
-                Button(setupPhase == 0 ? "Next" : "Finish Later") {
-                    if setupPhase == 0 {
-                        withAnimation { setupPhase = 1 }
-                    } else {
-                        dismiss()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            } else {
-                Button("Begin Experience") {
-                    dismiss()
+            if manager.isModelReady {
+                Button { dismiss() } label: {
+                    Text("Enter Chat Arena")
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(.blue)
+            } else if !manager.isDownloading {
+                Button("Finish Later") { dismiss() }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                if setupPhase == 0 {
+                    Button("Get Started") {
+                        withAnimation { setupPhase = 1 }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
             }
         }
     }
     
     private func featureRow(icon: String, title: String, desc: String) -> some View {
         HStack(spacing: 16) {
-            Image(systemName: icon)
-                .frame(width: 24)
-                .foregroundStyle(.blue)
-            VStack(alignment: .leading) {
+            ZStack {
+                Circle().fill(Color.blue.opacity(0.1)).frame(width: 32, height: 32)
+                Image(systemName: icon).font(.system(size: 14)).foregroundStyle(.blue)
+            }
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 14, weight: .semibold))
                 Text(desc).font(.system(size: 12)).foregroundStyle(.secondary)
             }

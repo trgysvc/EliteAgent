@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "EliteAgent",
     platforms: [
-        .macOS(.v14)
+        .macOS("26.0") // Titan Engine Requirement: macOS 26 or later
     ],
     products: [
         .executable(name: "EliteAgent", targets: ["EliteAgent"]),
@@ -37,6 +37,9 @@ let package = Package(
             path: "Sources/EliteAgentCore",
             resources: [
                 .process("UI/NeuralSight.metal")
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "-no_warning_for_no_symbols"])
             ]
         ),
         .executableTarget(

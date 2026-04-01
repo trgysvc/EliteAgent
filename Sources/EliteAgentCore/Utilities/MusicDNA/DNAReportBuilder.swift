@@ -1,0 +1,324 @@
+// DNAReportBuilder.swift
+// Elite Music DNA Engine — Phase 3
+// Markdown + JSON çift format rapor üreticisi
+
+import Foundation
+
+public final class DNAReportBuilder: @unchecked Sendable {
+
+    // MARK: Master Analyze + Report
+
+    /// Tüm analizi koordine eden ana fonksiyon.
+    /// progress callback: (percent: Double, message: String, waveformLine: String?)
+    public static func analyze(
+        url: URL,
+        progress: @Sendable @escaping (Double, String, String?) -> Void
+    ) async throws -> (reportText: String, mdPath: String, jsonPath: String) {
+
+        let filename = url.lastPathComponent
+
+        // Step 1: Load
+        progress(5, "Ses dosyası yükleniyor...", nil)
+        let buffer = try AudioLoader.load(url: url)
+
+        // Waveform (first 8 chunks = full overview)
+        let waveform = WaveformRenderer.renderFull(
+            samples: buffer.samples,
+            sampleRate: buffer.sampleRate,
+            lines: 6
+        )
+        progress(12, "Waveform oluşturuldu", waveform)
+
+        // Step 2: STFT
+        progress(20, "STFT hesaplanıyor (n_fft=2048)...", nil)
+        let stftEngine = STFTEngine(nFFT: 2048, hopLength: 512, sampleRate: buffer.sampleRate)
+        let stft = stftEngine.analyze(buffer.samples)
+
+        // Step 3: Mel
+        progress(30, "Mel filtre bankası uygulanıyor...", nil)
+        let melBank = MelFilterBank(nMels: 128, nFFT: 2048, sampleRate: buffer.sampleRate)
+        let melSpec = melBank.apply(magnitude: stft.magnitude)
+
+        // Step 4: Onset
+        progress(38, "Onset gücü hesaplanıyor...", nil)
+        let onsetEngine = OnsetEngine(sampleRate: buffer.sampleRate)
+        let onsetResult = onsetEngine.onsetStrength(buffer.samples)
+
+        // Step 5: Rhythm (actor — async)
+        progress(45, "BPM ve beat tracking (Ellis DP)...", nil)
+        let rhythmEngine = RhythmEngine(sampleRate: buffer.sampleRate)
+        let rhythm = await rhythmEngine.analyze(onsetResult: onsetResult)
+
+        // Step 6: Chroma + Key
+        progress(55, "Chroma analizi ve tonalite...", nil)
+        let chromaEngine = ChromaEngine(nFFT: 2048, sampleRate: buffer.sampleRate)
+        let chroma = chromaEngine.chromagram(stft: stft)
+        let chromaResult = chromaEngine.detectKey(chromagram: chroma)
+
+        // Step 7: Spectral
+        progress(62, "Spektral özellikler hesaplanıyor...", nil)
+        let spectralEngine = SpectralEngine(sampleRate: buffer.sampleRate, nFFT: 2048, hopLength: 512)
+        let spectral = spectralEngine.analyze(stft: stft, samples: buffer.samples)
+
+        // Step 8: MFCC
+        progress(68, "MFCC katsayıları hesaplanıyor...", nil)
+        let mfccEngine = MFCCEngine(nMFCC: 20, nMels: 128)
+        let mfccResult = mfccEngine.compute(melSpectrogram: melSpec, stftEngine: stftEngine)
+
+        // Step 9: HPSS
+        progress(75, "Harmonik/Perküsif ayrımı (HPSS)...", nil)
+        let hpssEngine = HPSSEngine(winHarm: 31, winPerc: 31)
+        let hpss = hpssEngine.analyze(stft: stft)
+
+        // Step 10: Structure
+        progress(85, "Yapısal segmentasyon (Foote SSM)...", nil)
+        let structureEngine = StructureEngine(hopLength: 512, sampleRate: buffer.sampleRate)
+        let structure = structureEngine.analyze(chromagram: chroma, nSegments: 7)
+
+        progress(93, "Raporlar yazılıyor...", nil)
+
+        // Step 11: Output paths
+        let dir = url.deletingLastPathComponent()
+        let baseName = url.deletingPathExtension().lastPathComponent
+        let mdPath = dir.appendingPathComponent("\(baseName).dna.md").path
+        let jsonPath = dir.appendingPathComponent("\(baseName).dna.json").path
+
+        // Build Markdown
+        let markdown = buildMarkdown(
+            url: url, buffer: buffer, rhythm: rhythm,
+            chroma: chromaResult, spectral: spectral, mfcc: mfccResult,
+            hpss: hpss, structure: structure, waveform: waveform
+        )
+        try markdown.write(toFile: mdPath, atomically: true, encoding: .utf8)
+
+        // Build JSON
+        let json = buildJSON(
+            url: url, buffer: buffer, rhythm: rhythm,
+            chroma: chromaResult, spectral: spectral, mfcc: mfccResult,
+            hpss: hpss, structure: structure
+        )
+        try json.write(toFile: jsonPath, atomically: true, encoding: .utf8)
+
+        progress(100, "Analiz tamamlandı!", nil)
+
+        // Final report for chat
+        let reportText = WaveformRenderer.finalReport(
+            filename: filename,
+            duration: buffer.duration,
+            rhythm: (bpm: rhythm.bpm, gridStd: rhythm.gridStdSec),
+            key: chromaResult.key,
+            spectral: (
+                centroid: spectral.centroidHz,
+                rolloff: spectral.rolloffHz,
+                bandwidth: spectral.bandwidthHz,
+                flatness: spectral.flatness,
+                zcr: spectral.zcr
+            ),
+            dynamics: (
+                rmsMean: spectral.rmsMean,
+                rmsMax: spectral.rmsMax,
+                dynamicRangeDb: spectral.dynamicRangeDb
+            ),
+            hpss: (
+                harmonic: hpss.harmonicEnergyRatio,
+                percussive: hpss.percussiveEnergyRatio,
+                characterization: hpss.characterization
+            ),
+            chroma: chromaResult.meanChroma,
+            mfcc: mfccResult.mfcc,
+            structure: structure.segments.map { ($0.id, $0.startSec, $0.endSec, $0.label) },
+            outputMd: mdPath,
+            outputJson: jsonPath
+        )
+
+        return (reportText, mdPath, jsonPath)
+    }
+
+    // MARK: Markdown Builder
+
+    private static func buildMarkdown(
+        url: URL, buffer: AudioBuffer, rhythm: RhythmResult,
+        chroma: ChromaResult, spectral: SpectralResult, mfcc: MFCCResult,
+        hpss: HPSSResult, structure: StructureResult, waveform: String
+    ) -> String {
+        let noteNames = ChromaResult.noteNames
+        let filename = url.lastPathComponent
+        let now = ISO8601DateFormatter().string(from: Date())
+
+        let md = """
+        # 🧬 Music DNA Report: \(filename)
+
+        **Analiz Tarihi:** \(now)
+        **Süre:** \(String(format: "%.1f", buffer.duration))s
+        **Sample Rate:** \(Int(buffer.sampleRate)) Hz
+
+        ## Waveform
+
+        ```
+        \(waveform)
+        ```
+
+        ## Ritim
+
+        | Özellik | Değer |
+        |---------|-------|
+        | BPM | \(String(format: "%.2f", rhythm.bpm)) |
+        | Beat Tutarlılığı (std) | ±\(String(format: "%.3f", rhythm.gridStdSec))s |
+        | Beat Sayısı | \(rhythm.beatFrames.count) |
+        | Onset Mean | \(String(format: "%.3f", rhythm.onsetMean)) |
+        | Onset Peak | \(String(format: "%.3f", rhythm.onsetPeak)) |
+
+        ## Tonalite
+
+        **Anahtar:** \(chroma.key) (güç: \(String(format: "%.3f", chroma.keyStrength)))
+
+        ### Chroma Profili
+
+        | Nota | Ağırlık |
+        |------|---------|
+        \(zip(noteNames, chroma.meanChroma).map { "| \($0.0) | \(String(format: "%.4f", $0.1)) |" }.joined(separator: "\n"))
+
+        ## Spektral Özellikler
+
+        | Özellik | Değer |
+        |---------|-------|
+        | Centroid | \(String(format: "%.1f", spectral.centroidHz)) Hz |
+        | Rolloff (85%) | \(String(format: "%.1f", spectral.rolloffHz)) Hz |
+        | Bandwidth | \(String(format: "%.1f", spectral.bandwidthHz)) Hz |
+        | Flatness | \(String(format: "%.4f", spectral.flatness)) |
+        | ZCR | \(String(format: "%.4f", spectral.zcr)) |
+
+        ## Dinamik
+
+        | Özellik | Değer |
+        |---------|-------|
+        | RMS (ortalama) | \(String(format: "%.4f", spectral.rmsMean)) |
+        | RMS (peak) | \(String(format: "%.4f", spectral.rmsMax)) |
+        | Dinamik Aralık | \(String(format: "%.2f", spectral.dynamicRangeDb)) dB |
+
+        ## MFCC (İlk 20 Katsayı)
+
+        ```
+        \(mfcc.mfcc.map { String(format: "%.3f", $0) }.joined(separator: ", "))
+        ```
+
+        ## Harmonik/Perküsif Ayrımı (HPSS)
+
+        | | Enerji Oranı |
+        |-|--------------|
+        | Harmonik | \(String(format: "%.1f%%", hpss.harmonicEnergyRatio * 100)) |
+        | Perküsif | \(String(format: "%.1f%%", hpss.percussiveEnergyRatio * 100)) |
+        | Karakterizasyon | \(hpss.characterization) |
+
+        ## Yapısal Analiz
+
+        **\(structure.segmentCount) bölüm tespit edildi.**
+
+        | # | Başlangıç | Bitiş | Süre | Etiket |
+        |---|-----------|-------|------|--------|
+        \(structure.segments.map {
+            let s = formatTime($0.startSec)
+            let e = formatTime($0.endSec)
+            let d = String(format: "%.0fs", $0.durationSec)
+            return "| \($0.id) | \(s) | \(e) | \(d) | \($0.label) |"
+        }.joined(separator: "\n"))
+
+        ---
+        *EliteAgent Music DNA Engine — Powered by Apple Accelerate (vDSP)*
+        """
+
+        return md
+    }
+
+    // MARK: JSON Builder
+
+    private static func buildJSON(
+        url: URL, buffer: AudioBuffer, rhythm: RhythmResult,
+        chroma: ChromaResult, spectral: SpectralResult, mfcc: MFCCResult,
+        hpss: HPSSResult, structure: StructureResult
+    ) -> String {
+        let noteNames = ChromaResult.noteNames
+        let now = ISO8601DateFormatter().string(from: Date())
+
+        let chromaDict = zip(noteNames, chroma.meanChroma)
+            .map { "      \"\($0.0)\": \(String(format: "%.4f", $0.1))" }
+            .joined(separator: ",\n")
+
+        let beatTimesStr = rhythm.beatTimes.prefix(20).map { String(format: "%.3f", $0) }.joined(separator: ", ")
+
+        let segmentsStr = structure.segments.map { seg -> String in
+            """
+                  {
+                    "id": \(seg.id),
+                    "start_sec": \(String(format: "%.2f", seg.startSec)),
+                    "end_sec": \(String(format: "%.2f", seg.endSec)),
+                    "duration_sec": \(String(format: "%.2f", seg.durationSec)),
+                    "label": "\(seg.label)"
+                  }
+            """
+        }.joined(separator: ",\n")
+
+        let mfccStr = mfcc.mfcc.map { String(format: "%.4f", $0) }.joined(separator: ", ")
+        let filename = url.lastPathComponent
+
+        return """
+        {
+          "metadata": {
+            "filename": "\(filename)",
+            "duration_sec": \(String(format: "%.2f", buffer.duration)),
+            "sample_rate": \(Int(buffer.sampleRate)),
+            "analyzed_at": "\(now)",
+            "engine": "EliteAgent Music DNA Engine v1.0"
+          },
+          "rhythm": {
+            "bpm": \(String(format: "%.4f", rhythm.bpm)),
+            "beat_count": \(rhythm.beatFrames.count),
+            "beat_grid_std_sec": \(String(format: "%.4f", rhythm.gridStdSec)),
+            "onset_strength_mean": \(String(format: "%.4f", rhythm.onsetMean)),
+            "onset_strength_peak": \(String(format: "%.4f", rhythm.onsetPeak)),
+            "beat_times_sec_first20": [\(beatTimesStr)]
+          },
+          "tonality": {
+            "key": "\(chroma.key)",
+            "key_strength": \(String(format: "%.4f", chroma.keyStrength)),
+            "is_minor": \(chroma.isMinor),
+            "chroma": {
+        \(chromaDict)
+            }
+          },
+          "spectral": {
+            "centroid_hz": \(String(format: "%.2f", spectral.centroidHz)),
+            "rolloff_hz": \(String(format: "%.2f", spectral.rolloffHz)),
+            "bandwidth_hz": \(String(format: "%.2f", spectral.bandwidthHz)),
+            "flatness": \(String(format: "%.6f", spectral.flatness)),
+            "zcr": \(String(format: "%.6f", spectral.zcr))
+          },
+          "dynamics": {
+            "rms_mean": \(String(format: "%.6f", spectral.rmsMean)),
+            "rms_max": \(String(format: "%.6f", spectral.rmsMax)),
+            "dynamic_range_db": \(String(format: "%.4f", spectral.dynamicRangeDb))
+          },
+          "mfcc": [\(mfccStr)],
+          "hpss": {
+            "harmonic_energy_ratio": \(String(format: "%.4f", hpss.harmonicEnergyRatio)),
+            "percussive_energy_ratio": \(String(format: "%.4f", hpss.percussiveEnergyRatio)),
+            "characterization": "\(hpss.characterization)"
+          },
+          "structure": {
+            "segment_count": \(structure.segmentCount),
+            "segments": [
+        \(segmentsStr)
+            ]
+          }
+        }
+        """
+    }
+
+    // MARK: Helpers
+
+    private static func formatTime(_ sec: Double) -> String {
+        let m = Int(sec) / 60
+        let s = Int(sec) % 60
+        return String(format: "%d:%02d", m, s)
+    }
+}

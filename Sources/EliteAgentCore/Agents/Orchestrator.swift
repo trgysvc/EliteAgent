@@ -13,6 +13,11 @@ public class Orchestrator: ObservableObject {
     @Published public var currentTask: String = ""
     @Published public var providerUsed: String = "Select Model"
     
+    // Conversation History (v5.3.5)
+    @Published public var pastSessions: [ChatSession] = []
+    @Published public var currentMessages: [ChatMessage] = []
+    @Published public var selectedSessionID: UUID? = nil
+    
     private let planner: PlannerAgent
     private let memory: MemoryAgent
     private let bus: SignalBus
@@ -61,6 +66,7 @@ public class Orchestrator: ObservableObject {
         group.register(CalendarTool())
         group.register(MailTool())
         group.register(MediaControllerTool())
+        group.register(MusicDNATool())           // 🧬 Music DNA Engine
         group.register(NativeBrowserTool())
         
         // Register Web Wrappers
@@ -95,12 +101,58 @@ public class Orchestrator: ObservableObject {
             return OrchestratorRuntime(planner: planner, memory: self.memory, cloudProvider: provider, localProvider: local, toolRegistry: ToolRegistry.shared, bus: self.bus)
         }
         self.toolRegistry.register(subagentTool)
+        
+        // Initial load of history
+        Task {
+            await loadHistory()
+        }
+    }
+    
+    private func loadHistory() async {
+        do {
+            let loaded = try await HistoryManager.shared.load()
+            self.pastSessions = loaded.sorted(by: { $0.createdAt > $1.createdAt })
+        } catch {
+            print("[ORCHESTRATOR] Failed to load history: \(error)")
+        }
+    }
+    
+    public func clearAllHistory() async {
+        do {
+            try await HistoryManager.shared.clear()
+            self.pastSessions = []
+            self.currentMessages = []
+            self.selectedSessionID = nil
+        } catch {
+            print("[ORCHESTRATOR] Failed to clear history: \(error)")
+        }
+    }
+    
+    public func selectSession(_ session: ChatSession) {
+        self.selectedSessionID = session.id
+        self.currentMessages = session.messages
+        self.steps = session.steps
+        self.currentTask = session.title
+        // Update stats if needed
+    }
+    
+    public func startNewConversation() {
+        self.selectedSessionID = nil
+        self.currentMessages = []
+        self.steps = []
+        self.thinkBlocks = []
+        self.currentTask = ""
     }
 
     
     public func submitTask(prompt: String) async throws {
         let taskStart = CFAbsoluteTimeGetCurrent()
         self.status = .working
+        
+        // Append user message
+        let userMessage = ChatMessage(role: .user, content: prompt)
+        self.currentMessages.append(userMessage)
+        
         self.currentTask = prompt
         self.steps = []
         self.thinkBlocks = []
@@ -174,10 +226,33 @@ public class Orchestrator: ObservableObject {
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle
             
+            // Append assistant response and save to history
+            let assistantMessage = ChatMessage(role: .assistant, content: finalAnswer)
+            self.currentMessages.append(assistantMessage)
+            
+            let newSession = ChatSession(
+                title: prompt,
+                messages: self.currentMessages,
+                steps: self.steps,
+                metadata: SessionMetadata(
+                    promptTokens: self.promptTokens,
+                    completionTokens: self.completionTokens,
+                    cost: self.costToday,
+                    latency: "\(Int(elapsed))s"
+                )
+            )
+            
+            self.pastSessions.insert(newSession, at: 0)
+            try await HistoryManager.shared.save(self.pastSessions)
+            
         } catch {
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
             self.status = .error
-            self.steps.append(TaskStep(name: "Error: \(error.localizedDescription)", status: "failed", latency: "\(Int(elapsed))s"))
+            let errorMessage = "Error: \(error.localizedDescription)"
+            self.steps.append(TaskStep(name: errorMessage, status: "failed", latency: "\(Int(elapsed))s"))
+            
+            let assistantError = ChatMessage(role: .assistant, content: "I encountered an error while performing your task: \(errorMessage)")
+            self.currentMessages.append(assistantError)
         }
     }
     

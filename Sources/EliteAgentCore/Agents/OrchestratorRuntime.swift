@@ -43,6 +43,18 @@ public actor OrchestratorRuntime {
         await session.updateStatus(.thinking)
         onStatusUpdate?(.working)
         
+        // Bridge session stream to UI (Titan Architecture)
+        let stepHandler = self.onStepUpdate
+        await session.setStreamHandler { text in
+            stepHandler?(TaskStep(
+                name: "Elite Music DNA — Link", 
+                status: "done", 
+                latency: "ANE", 
+                depth: 0, 
+                thought: text
+            ))
+        }
+        
         // Sound Architect: Dampen background audio (Focus Mode check)
         if await AppSettings.shared.isQuietModeEnabled {
             await AudioArchitect.shared.dampen()
