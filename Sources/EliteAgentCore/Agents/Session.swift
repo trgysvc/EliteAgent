@@ -23,6 +23,9 @@ public actor Session: Identifiable {
     public private(set) var healingAttempts: Int = 0
     public private(set) var finalAnswer: String?
     
+    // Music DNA Analysis (Titan Integration)
+    public var audioAnalysis: MusicDNAAnalysis?
+    
     // Live feedback stream (Titan Architecture)
     public var onStreamOutput: (@Sendable (String) -> Void)?
     
@@ -53,13 +56,17 @@ public actor Session: Identifiable {
         }
     }
     
-    public func addTokenUsage(_ count: TokenCount) {
-        self.promptTokens += count.prompt
-        self.completionTokens += count.completion
+    public func setAudioAnalysis(_ analysis: MusicDNAAnalysis) {
+        self.audioAnalysis = analysis
     }
     
     public var totalTokenUsage: Int {
         promptTokens + completionTokens
+    }
+    
+    public func addTokenUsage(_ count: TokenCount) {
+        self.promptTokens += count.prompt
+        self.completionTokens += count.completion
     }
     
     public func recordHealingAttempt() {

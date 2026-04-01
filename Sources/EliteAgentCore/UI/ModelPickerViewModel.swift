@@ -53,7 +53,7 @@ public class ModelPickerViewModel: ObservableObject {
     }
     
     private func loadCustomModelsFromVault() -> [ModelSource] {
-        let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return [] }
         
         return vault.config.providers.filter { $0.id.hasPrefix("custom-") }.map { provider in
@@ -71,7 +71,7 @@ public class ModelPickerViewModel: ObservableObject {
         guard let url = URL(string: "https://openrouter.ai/api/v1/models") else { return [] }
         
         // We need the API key from VaultManager
-        let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return [] }
         
         guard let providerConf = vault.config.providers.first(where: { $0.id == "openrouter" }),
@@ -119,7 +119,7 @@ public class ModelPickerViewModel: ObservableObject {
     public func selectModel(_ model: ModelSource) {
         self.selected = model
         
-        let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return }
         
         Task {
@@ -140,7 +140,7 @@ public class ModelPickerViewModel: ObservableObject {
     }
     
     private func updateSelectionFromVault() {
-        let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return }
         
         // Try to find any provider that is currently "active"

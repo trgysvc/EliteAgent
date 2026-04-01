@@ -33,6 +33,9 @@ public class Orchestrator: ObservableObject {
         let bus = SignalBus(secretKey: busKey)
         self.bus = bus
         
+        // Migration: Legacy -> Apple standard paths
+        PathConfiguration.shared.performMigration()
+        
         self.planner = PlannerAgent(bus: bus)
         self.memory = MemoryAgent(bus: bus)
         self.toolRegistry = ToolRegistry.shared
@@ -40,10 +43,10 @@ public class Orchestrator: ObservableObject {
         // Titan: Proactive hardware telemetry
         _ = SystemWatchdog.shared
         
-        let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let paths = PathConfiguration.shared
         
         do {
-            let vault = try VaultManager(configURL: defaultVaultPath)
+            let vault = try VaultManager(configURL: paths.vaultURL)
             self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
             self.localProvider = MLXProvider(providerID: ProviderID(rawValue: "mlx"))
         } catch {
@@ -90,8 +93,7 @@ public class Orchestrator: ObservableObject {
         if let p = self.cloudProvider {
             safeProvider = p
         } else {
-            let configURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
-            let v = try! VaultManager(configURL: configURL)
+            let v = try! VaultManager(configURL: PathConfiguration.shared.vaultURL)
             safeProvider = try! CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: v)
         }
         
@@ -227,7 +229,8 @@ public class Orchestrator: ObservableObject {
             self.status = .idle
             
             // Append assistant response and save to history
-            let assistantMessage = ChatMessage(role: .assistant, content: finalAnswer)
+            let analysis = await session.audioAnalysis
+            let assistantMessage = ChatMessage(role: .assistant, content: finalAnswer, audioAnalysis: analysis)
             self.currentMessages.append(assistantMessage)
             
             let newSession = ChatSession(

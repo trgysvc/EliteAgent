@@ -17,8 +17,8 @@ public struct AgentLogger: Sendable {
     }
     
     private static func writeLog(fileName: String, level: LogLevel, agent: String, message: String) {
-        let logPath = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent(".eliteagent/logs/\(fileName)")
+        let logPath = PathConfiguration.shared.logsURL
+            .appendingPathComponent(fileName)
         
         let dir = logPath.deletingLastPathComponent()
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

@@ -43,10 +43,6 @@ public final class MelFilterBank: @unchecked Sendable {
 
     // MARK: Apply
 
-    /// Magnitude spectrogram → Mel spectrogram.
-    /// Librosa: mel_S = np.dot(mel_filterbank, S^2)
-    /// Input: magnitude[nFreqs × nFrames]
-    /// Output: melSpec[nMels × nFrames]
     public func apply(magnitude: [[Float]]) -> [[Float]] {
         let nFreqs = magnitude.count
         let nFrames = magnitude[0].count
@@ -57,8 +53,29 @@ public final class MelFilterBank: @unchecked Sendable {
             vDSP_vsq(magnitude[f], 1, &power[f], 1, vDSP_Length(nFrames))
         }
 
-        // Matrix multiply: weights [nMels × nFreqs] × power [nFreqs × nFrames]
-        // → melSpec [nMels × nFrames]
+        return applyMelWeights(to: power)
+    }
+
+    public func apply(magnitude: [Float], nFrames: Int) -> [[Float]] {
+        let nFreqs = magnitude.count / nFrames
+        
+        // Power spectrogram: S^2 (flat)
+        var power = [Float](repeating: 0, count: magnitude.count)
+        vDSP_vsq(magnitude, 1, &power, 1, vDSP_Length(magnitude.count))
+        
+        // Structure into [[Float]] for current weight logic
+        var nestedPower = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nFreqs)
+        for f in 0..<nFreqs {
+            let start = f * nFrames
+            nestedPower[f] = Array(power[start..<(start + nFrames)])
+        }
+        
+        return applyMelWeights(to: nestedPower)
+    }
+    
+    private func applyMelWeights(to power: [[Float]]) -> [[Float]] {
+        let nFreqs = power.count
+        let nFrames = power[0].count
         var melSpec = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nMels)
 
         for m in 0..<nMels {
@@ -69,7 +86,6 @@ public final class MelFilterBank: @unchecked Sendable {
                 vDSP_vadd(melSpec[m], 1, scaled, 1, &melSpec[m], 1, vDSP_Length(nFrames))
             }
         }
-
         return melSpec
     }
 

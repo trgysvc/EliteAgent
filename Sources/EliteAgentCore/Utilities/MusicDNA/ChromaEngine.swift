@@ -94,13 +94,13 @@ final class ChromaFilterBank: @unchecked Sendable {
 
     /// Chroma filter → power spectrogram
     func apply(magnitude: [[Float]]) -> [[Float]] {
-        let nFreqs = min(magnitude.count, weights[0].count)
+        let nFreqs = magnitude.count
         let nFrames = magnitude[0].count
 
         var chroma = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: 12)
 
         for c in 0..<12 {
-            for f in 0..<nFreqs {
+            for f in 0..<min(nFreqs, weights[0].count) {
                 let w = weights[c][f]
                 if w > 0 {
                     var scaled = [Float](repeating: 0, count: nFrames)
@@ -113,15 +113,43 @@ final class ChromaFilterBank: @unchecked Sendable {
         }
 
         // L2 normalize each frame's chroma vector
-        for t in 0..<nFrames {
-            var vec = (0..<12).map { chroma[$0][t] }
-            vec = DSPHelpers.normalizeL2(vec)
-            for c in 0..<12 {
-                chroma[c][t] = vec[c]
+        return normalizeChroma(chroma)
+    }
+
+    func apply(magnitude: [Float], nFrames: Int) -> [[Float]] {
+        let nFreqs = magnitude.count / nFrames
+        var chroma = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: 12)
+
+        for c in 0..<12 {
+            for f in 0..<min(nFreqs, weights[c].count) {
+                let w = weights[c][f]
+                if w > 0 {
+                    let start = f * nFrames
+                    let magRow = Array(magnitude[start..<(start + nFrames)])
+                    var powRow = [Float](repeating: 0, count: nFrames)
+                    vDSP_vsq(magRow, 1, &powRow, 1, vDSP_Length(nFrames))
+                    
+                    var scaled = [Float](repeating: 0, count: nFrames)
+                    vDSP_vsmul(powRow, 1, [w], &scaled, 1, vDSP_Length(nFrames))
+                    vDSP_vadd(chroma[c], 1, scaled, 1, &chroma[c], 1, vDSP_Length(nFrames))
+                }
             }
         }
 
-        return chroma
+        return normalizeChroma(chroma)
+    }
+    
+    private func normalizeChroma(_ chroma: [[Float]]) -> [[Float]] {
+        var result = chroma
+        let nFrames = chroma[0].count
+        for t in 0..<nFrames {
+            var vec = (0..<12).map { result[$0][t] }
+            vec = DSPHelpers.normalizeL2(vec)
+            for c in 0..<12 {
+                result[c][t] = vec[c]
+            }
+        }
+        return result
     }
 }
 
@@ -140,7 +168,7 @@ public final class ChromaEngine: @unchecked Sendable {
     // MARK: Chromagram
 
     public func chromagram(stft: STFTMatrix) -> [[Float]] {
-        filterBank.apply(magnitude: stft.magnitude)
+        filterBank.apply(magnitude: stft.magnitude, nFrames: stft.nFrames)
     }
 
     // MARK: Key Detection (Krumhansl-Schmuckler)

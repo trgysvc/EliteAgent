@@ -41,23 +41,23 @@ public final class SpectralEngine: @unchecked Sendable {
         let nFrames = stft.nFrames
 
         // Per-frame centroid
-        let centroidSeries = spectralCentroid(magnitude: mag, frequencies: freqs)
+        let centroidSeries = spectralCentroid(magnitude: mag, nFrames: nFrames, frequencies: freqs)
         // Mean
         var meanCentroid: Float = 0
         vDSP_meanv(centroidSeries, 1, &meanCentroid, vDSP_Length(nFrames))
 
         // Per-frame bandwidth (around centroid)
-        let bandwidthSeries = spectralBandwidth(magnitude: mag, frequencies: freqs, centroids: centroidSeries)
+        let bandwidthSeries = spectralBandwidth(magnitude: mag, nFrames: nFrames, frequencies: freqs, centroids: centroidSeries)
         var meanBandwidth: Float = 0
         vDSP_meanv(bandwidthSeries, 1, &meanBandwidth, vDSP_Length(nFrames))
 
         // Mean rolloff
-        let rolloffSeries = spectralRolloff(magnitude: mag, frequencies: freqs, rollPercent: 0.85)
+        let rolloffSeries = spectralRolloff(magnitude: mag, nFrames: nFrames, frequencies: freqs, rollPercent: 0.85)
         var meanRolloff: Float = 0
         vDSP_meanv(rolloffSeries, 1, &meanRolloff, vDSP_Length(nFrames))
 
         // Mean flatness (over all frames)
-        let flatnessSeries = spectralFlatness(magnitude: mag)
+        let flatnessSeries = spectralFlatness(magnitude: mag, nFrames: nFrames)
         var meanFlatness: Float = 0
         vDSP_meanv(flatnessSeries, 1, &meanFlatness, vDSP_Length(nFrames))
 
@@ -69,7 +69,7 @@ public final class SpectralEngine: @unchecked Sendable {
         }
 
         // RMS per frame
-        let rmsSeries = rmsEnergy(magnitude: mag)
+        let rmsSeries = rmsEnergy(magnitude: mag, nFrames: nFrames)
         var rmsMean: Float = 0
         var rmsMax: Float = 0
         vDSP_meanv(rmsSeries, 1, &rmsMean, vDSP_Length(nFrames))
@@ -96,11 +96,25 @@ public final class SpectralEngine: @unchecked Sendable {
 
     // MARK: Spectral Centroid
 
-    /// Librosa: sum(freqs * S) / sum(S)   [per frame]
+    /// Flat array [f * nFrames + t]
+    public func spectralCentroid(magnitude: [Float], nFrames: Int, frequencies: [Float]) -> [Float] {
+        let nFreqs = frequencies.count
+        return (0..<nFrames).map { t in
+            var weightedSum: Float = 0
+            var totalMag: Float = 0
+            for f in 0..<nFreqs {
+                let m = magnitude[f * nFrames + t]
+                weightedSum += frequencies[f] * m
+                totalMag += m
+            }
+            return totalMag > DSPHelpers.tinyFloat ? weightedSum / totalMag : 0
+        }
+    }
+
+    /// Nested array [[Float]]
     public func spectralCentroid(magnitude: [[Float]], frequencies: [Float]) -> [Float] {
         let nFreqs = magnitude.count
         let nFrames = magnitude[0].count
-
         return (0..<nFrames).map { t in
             var weightedSum: Float = 0
             var totalMag: Float = 0
@@ -115,11 +129,25 @@ public final class SpectralEngine: @unchecked Sendable {
 
     // MARK: Spectral Bandwidth
 
-    /// Librosa: sqrt(sum(freqs - centroid)^2 * S / sum(S))
+    public func spectralBandwidth(magnitude: [Float], nFrames: Int, frequencies: [Float], centroids: [Float]) -> [Float] {
+        let nFreqs = frequencies.count
+        return (0..<nFrames).map { t in
+            let c = centroids[t]
+            var weightedSqDiff: Float = 0
+            var totalMag: Float = 0
+            for f in 0..<nFreqs {
+                let m = magnitude[f * nFrames + t]
+                let diff = frequencies[f] - c
+                weightedSqDiff += diff * diff * m
+                totalMag += m
+            }
+            return totalMag > DSPHelpers.tinyFloat ? sqrtf(weightedSqDiff / totalMag) : 0
+        }
+    }
+
     public func spectralBandwidth(magnitude: [[Float]], frequencies: [Float], centroids: [Float]) -> [Float] {
         let nFreqs = magnitude.count
         let nFrames = magnitude[0].count
-
         return (0..<nFrames).map { t in
             let c = centroids[t]
             var weightedSqDiff: Float = 0
@@ -136,13 +164,27 @@ public final class SpectralEngine: @unchecked Sendable {
 
     // MARK: Spectral Rolloff
 
-    /// Librosa: smallest f where cumsum(S[:f]) >= roll_percent * sum(S)
+    public func spectralRolloff(magnitude: [Float], nFrames: Int, frequencies: [Float], rollPercent: Float = 0.85) -> [Float] {
+        let nFreqs = frequencies.count
+        return (0..<nFrames).map { t in
+            var frameTotal: Float = 0
+            for f in 0..<nFreqs { frameTotal += magnitude[f * nFrames + t] }
+            let threshold = rollPercent * frameTotal
+            var cumsum: Float = 0
+            for f in 0..<nFreqs {
+                cumsum += magnitude[f * nFrames + t]
+                if cumsum >= threshold { return frequencies[f] }
+            }
+            return frequencies.last ?? 0
+        }
+    }
+
     public func spectralRolloff(magnitude: [[Float]], frequencies: [Float], rollPercent: Float = 0.85) -> [Float] {
         let nFreqs = magnitude.count
         let nFrames = magnitude[0].count
-
         return (0..<nFrames).map { t in
-            let frameTotal = (0..<nFreqs).reduce(Float(0)) { $0 + magnitude[$1][t] }
+            var frameTotal: Float = 0
+            for f in 0..<nFreqs { frameTotal += magnitude[f][t] }
             let threshold = rollPercent * frameTotal
             var cumsum: Float = 0
             for f in 0..<nFreqs {
@@ -155,12 +197,25 @@ public final class SpectralEngine: @unchecked Sendable {
 
     // MARK: Spectral Flatness
 
-    /// Librosa: geometric_mean(S) / arithmetic_mean(S)
-    /// Geometric mean = exp(mean(log(S + tiny)))
+    public func spectralFlatness(magnitude: [Float], nFrames: Int) -> [Float] {
+        let nFreqs = magnitude.count / nFrames
+        return (0..<nFrames).map { t in
+            var logSum: Float = 0
+            var linSum: Float = 0
+            for f in 0..<nFreqs {
+                let m = magnitude[f * nFrames + t]
+                logSum += logf(max(m, DSPHelpers.tinyFloat))
+                linSum += m
+            }
+            let geometricMean = expf(logSum / Float(nFreqs))
+            let arithmeticMean = linSum / Float(nFreqs)
+            return arithmeticMean > DSPHelpers.tinyFloat ? geometricMean / arithmeticMean : 0
+        }
+    }
+
     public func spectralFlatness(magnitude: [[Float]]) -> [Float] {
         let nFreqs = magnitude.count
         let nFrames = magnitude[0].count
-
         return (0..<nFrames).map { t in
             var logSum: Float = 0
             var linSum: Float = 0
@@ -177,12 +232,10 @@ public final class SpectralEngine: @unchecked Sendable {
 
     // MARK: Zero-Crossing Rate
 
-    /// Librosa: sum(|sign[n] - sign[n-1]|) / 2 per frame / frame_length
     public func zeroCrossingRate(samples: [Float], frameLength: Int = 2048, hopLength: Int = 512) -> [Float] {
         let n = samples.count
         let nFrames = max(1, 1 + (n - frameLength) / hopLength)
         var zcr = [Float](repeating: 0, count: nFrames)
-
         for t in 0..<nFrames {
             let start = t * hopLength
             let end = min(start + frameLength, n)
@@ -194,22 +247,31 @@ public final class SpectralEngine: @unchecked Sendable {
             }
             zcr[t] = Float(crossings) / Float(end - start)
         }
-
         return zcr
     }
 
     // MARK: RMS Energy
 
-    /// Librosa: sqrt(mean(S^2))  [per frame from magnitude spectrum]
-    /// Magnitude^2 = power, mean power → RMS
-    public func rmsEnergy(magnitude: [[Float]]) -> [Float] {
-        let nFreqs = magnitude.count
-        let nFrames = magnitude[0].count
-
+    public func rmsEnergy(magnitude: [Float], nFrames: Int) -> [Float] {
+        let nFreqs = magnitude.count / nFrames
         return (0..<nFrames).map { t in
             var sumSq: Float = 0
             for f in 0..<nFreqs {
-                sumSq += magnitude[f][t] * magnitude[f][t]
+                let m = magnitude[f * nFrames + t]
+                sumSq += m * m
+            }
+            return sqrtf(sumSq / Float(nFreqs))
+        }
+    }
+
+    public func rmsEnergy(magnitude: [[Float]]) -> [Float] {
+        let nFreqs = magnitude.count
+        let nFrames = magnitude[0].count
+        return (0..<nFrames).map { t in
+            var sumSq: Float = 0
+            for f in 0..<nFreqs {
+                let m = magnitude[f][t]
+                sumSq += m * m
             }
             return sqrtf(sumSq / Float(nFreqs))
         }

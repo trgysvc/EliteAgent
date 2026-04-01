@@ -7,17 +7,26 @@ public struct WriteFileTool: AgentTool, Sendable {
     public init() {}
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
-        guard let path = params["path"]?.value as? String,
-              let content = params["content"]?.value as? String else {
-            throw NSError(domain: "WriteFileTool", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing 'path' or 'content' parameters"])
+        let rawPath = params["path"]?.value as? String ?? ""
+        let content = params["content"]?.value as? String ?? ""
+        
+        let expandedPath = rawPath.hasPrefix("~") 
+            ? rawPath.replacingOccurrences(of: "~", with: FileManager.default.homeDirectoryForCurrentUser.path) 
+            : rawPath
+        
+        let fileURL: URL
+        if expandedPath.hasPrefix("/") {
+            fileURL = URL(fileURLWithPath: expandedPath).standardizedFileURL
+        } else {
+            fileURL = session.workspaceURL.appendingPathComponent(expandedPath).standardizedFileURL
         }
         
-        let workspaceURL = session.workspaceURL
-        let fileURL = workspaceURL.appendingPathComponent(path).standardizedFileURL
+        // Security check: Allow writes in Workspace OR User's Home (Documents, etc.)
+        let homeURL = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
+        let workspaceURL = session.workspaceURL.standardizedFileURL
         
-        // Security check: Ensure file is inside workspace
-        guard fileURL.path.hasPrefix(workspaceURL.path) else {
-            throw NSError(domain: "WriteFileTool", code: 2, userInfo: [NSLocalizedDescriptionKey: "Path is outside workspace boundaries"])
+        guard fileURL.path.hasPrefix(workspaceURL.path) || fileURL.path.hasPrefix(homeURL.path) else {
+            throw NSError(domain: "WriteFileTool", code: 2, userInfo: [NSLocalizedDescriptionKey: "Path is outside allowed boundaries (Home or Workspace)"])
         }
         
         let parentURL = fileURL.deletingLastPathComponent()
@@ -26,6 +35,6 @@ public struct WriteFileTool: AgentTool, Sendable {
         }
         
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
-        return "File written: \(path)"
+        return "File written: \(rawPath)"
     }
 }

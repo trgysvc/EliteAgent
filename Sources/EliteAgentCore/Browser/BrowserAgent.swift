@@ -76,7 +76,7 @@ public actor BrowserAgent: AgentProtocol {
                     currentURLStr = try SafariJSBridge.getCurrentURL()
                 }
                 
-                let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+                let defaultVaultPath = PathConfiguration.shared.vaultURL
                 guard let vault = try? VaultManager(configURL: defaultVaultPath) else {
                     throw NSError(domain: "BrowserAgent", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to load VaultManager"])
                 }

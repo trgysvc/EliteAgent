@@ -10,12 +10,14 @@ public struct ChatMessage: Identifiable, Codable, Sendable {
     public let role: ChatRole
     public let content: String
     public let timestamp: Date
+    public let audioAnalysis: MusicDNAAnalysis? // Librosa & Forensic data
     
-    public init(id: UUID = UUID(), role: ChatRole, content: String, timestamp: Date = Date()) {
+    public init(id: UUID = UUID(), role: ChatRole, content: String, timestamp: Date = Date(), audioAnalysis: MusicDNAAnalysis? = nil) {
         self.id = id
         self.role = role
         self.content = content
         self.timestamp = timestamp
+        self.audioAnalysis = audioAnalysis
     }
 }
 
@@ -57,8 +59,7 @@ public actor HistoryManager {
     private let fileURL: URL
     
     private init() {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        self.fileURL = home.appendingPathComponent(".eliteagent/history.json")
+        self.fileURL = PathConfiguration.shared.historyURL
         try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
     }
     

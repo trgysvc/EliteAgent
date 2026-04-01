@@ -37,7 +37,7 @@ public struct WebSearchTool: Sendable {
             throw WebSearchError.invalidQuery
         }
         
-        let defaultVaultPath = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".eliteagent/vault.plist")
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath),
               let apiKey = try? await vault.readSecret(for: "BRAVE_API_KEY"), !apiKey.isEmpty else {
             throw WebSearchError.missingApiKey

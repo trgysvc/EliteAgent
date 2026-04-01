@@ -1,91 +1,87 @@
 // MFCCEngine.swift
 // Elite Music DNA Engine — Phase 2
 //
-// Librosa: feature.mfcc() — Mel → log → DCT-II (ortho)
-// n_mfcc=20 (DNA raporu için 20 katsayı)
+// High-performance Mel-frequency cepstral coefficients (MFCC).
+// Mirroring librosa.feature.mfcc using vDSP_DCT.
 
-import Accelerate
 import Foundation
+import Accelerate
 
 public struct MFCCResult: Sendable {
-    public let mfcc: [Float]           // [n_mfcc] — temporal mean
-    public let delta: [Float]          // [n_mfcc] — MFCC delta (velocity)
-    public let mfccMatrix: [[Float]]   // [n_mfcc × nFrames] — tüm frame'ler
+    public let mfcc: [Float]      // Mean MFCC across frames or representative frame
+    public let fullData: [Float]  // nMFCC × nFrames
 }
 
 public final class MFCCEngine: @unchecked Sendable {
-
-    public let nMFCC: Int
-    public let nMels: Int
-
-    public init(nMFCC: Int = 20, nMels: Int = 128) {
+    
+    private let melEngine: MelSpectrogramEngine
+    private let nMFCC: Int
+    private let nMels: Int
+    
+    // vDSP DCT setup using DFT type for pointer compatibility
+    private let dctSetup: vDSP_DFT_Setup
+    
+    public init(melEngine: MelSpectrogramEngine, nMFCC: Int = 20) {
+        self.melEngine = melEngine
         self.nMFCC = nMFCC
-        self.nMels = nMels
+        self.nMels = melEngine.nMels
+        
+        // vDSP_DCT_CreateSetup returns vDSP_DFT_Setup (they share the same pool in C)
+        self.dctSetup = vDSP_DCT_CreateSetup(nil, vDSP_Length(nMels), .II)!
     }
-
-    // MARK: Compute MFCC
-
-    /// Librosa: feature.mfcc(y, sr, n_mfcc=20, n_mels=128)
-    /// 1. Mel spectrogram (power)
-    /// 2. power_to_db (log scale)
-    /// 3. DCT-II ortho → ilk 20 katsayı
-    public func compute(melSpectrogram: [[Float]], stftEngine: STFTEngine) -> MFCCResult {
-        let nFrames = melSpectrogram[0].count
-
-        // power_to_db: 10 * log10(S / ref)
-        let dbMel = stftEngine.powerToDb(melSpectrogram)
-
-        // DCT-II her frame için
-        var mfccMatrix = [[Float]](repeating: [Float](repeating: 0, count: nFrames), count: nMFCC)
-
+    
+    public convenience init(nMFCC: Int = 20, nMels: Int = 128, sampleRate: Double = 22050) {
+        let stft = STFTEngine(nFFT: 2048, hopLength: 512, sampleRate: sampleRate)
+        let mel = MelSpectrogramEngine(stftEngine: stft, nMels: nMels)
+        self.init(melEngine: mel, nMFCC: nMFCC)
+    }
+    
+    deinit {
+        vDSP_DFT_DestroySetup(dctSetup)
+    }
+    
+    /// Librosa: feature.mfcc()
+    public func createMFCC(from samples: [Float]) -> MFCCResult {
+        let mel = melEngine.createMelSpectrogram(from: samples)
+        return compute(melSpectrogram: mel.melData, stftEngine: STFTEngine(nFFT: 2048, hopLength: 512, sampleRate: 22050))
+    }
+    
+    public func compute(melSpectrogram: [Float], stftEngine: STFTEngine) -> MFCCResult {
+        let nFrames = melSpectrogram.count / nMels
+        
+        var logMel = [Float](repeating: 0, count: melSpectrogram.count)
+        for i in 0..<melSpectrogram.count {
+            logMel[i] = 10.0 * log10f(max(melSpectrogram[i], 1e-10))
+        }
+        
+        var mfccs = [Float](repeating: 0, count: nMFCC * nFrames)
+        var inputFrame  = [Float](repeating: 0, count: nMels)
+        var outputFrame = [Float](repeating: 0, count: nMels)
+        
         for t in 0..<nFrames {
-            let frameLog = (0..<nMels).map { dbMel[$0][t] }
-            let coeffs = DSPHelpers.dct2(frameLog, nCoeffs: nMFCC)
-            for k in 0..<nMFCC {
-                mfccMatrix[k][t] = coeffs[k]
+            for m in 0..<nMels {
+                inputFrame[m] = logMel[m * nFrames + t]
+            }
+            
+            vDSP_DCT_Execute(dctSetup, inputFrame, &outputFrame)
+            
+            let orthoScale = sqrtf(2.0 / Float(nMels))
+            for i in 0..<nMFCC {
+                let scale = (i == 0) ? (sqrtf(1.0 / Float(nMels))) : orthoScale
+                mfccs[i * nFrames + t] = outputFrame[i] * scale
             }
         }
-
-        // Temporal mean
-        var mfccMean = [Float](repeating: 0, count: nMFCC)
-        for k in 0..<nMFCC {
-            vDSP_meanv(mfccMatrix[k], 1, &mfccMean[k], vDSP_Length(nFrames))
-        }
-
-        // Delta MFCC (first derivative)
-        let delta = computeDelta(mfccMatrix: mfccMatrix)
-
-        return MFCCResult(mfcc: mfccMean, delta: delta, mfccMatrix: mfccMatrix)
-    }
-
-    // MARK: Delta (MFCC velocity)
-
-    /// Librosa: feature.delta(data, width=9, order=1)
-    /// Linear regression over 9-frame window
-    private func computeDelta(mfccMatrix: [[Float]], width: Int = 9) -> [Float] {
-        let nFrames = mfccMatrix[0].count
-        let half = width / 2
-
-        var delta = [Float](repeating: 0, count: nMFCC)
-
-        for k in 0..<nMFCC {
-            var sumDelta: Float = 0
-            for t in half..<(nFrames - half) {
-                // Slope via linear regression over window
-                var num: Float = 0
-                var den: Float = 0
-                for d in -half...half {
-                    let srcIdx = t + d
-                    if srcIdx >= 0 && srcIdx < nFrames {
-                        num += Float(d) * mfccMatrix[k][srcIdx]
-                        den += Float(d * d)
-                    }
-                }
-                sumDelta += den > 0 ? fabsf(num / den) : 0
+        
+        // Calculate mean MFCCs for the result
+        var meanMFCC = [Float](repeating: 0, count: nMFCC)
+        for i in 0..<nMFCC {
+            var sum: Float = 0
+            for t in 0..<nFrames {
+                sum += mfccs[i * nFrames + t]
             }
-            delta[k] = nFrames > width ? sumDelta / Float(nFrames - width) : 0
+            meanMFCC[i] = sum / Float(nFrames)
         }
-
-        return delta
+        
+        return MFCCResult(mfcc: meanMFCC, fullData: mfccs)
     }
 }
