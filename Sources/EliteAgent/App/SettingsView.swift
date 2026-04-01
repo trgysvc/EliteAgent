@@ -19,6 +19,7 @@ public struct SettingsView: View {
                 Label("Güvenlik", systemImage: "lock.shield").tag("Security")
                 Label("Yapay Zekâ", systemImage: "sparkles").tag("AI")
                 Label("Analizler", systemImage: "chart.bar.xaxis").tag("Analytics")
+                Label("Data & Privacy", systemImage: "hand.raised.fill").tag("Privacy")
             }
             .navigationTitle("Ayarlar")
         } detail: {
@@ -32,6 +33,8 @@ public struct SettingsView: View {
                     AISettingsView()
                 case "Analytics":
                     UsageDashboardView(orchestrator: orchestrator)
+                case "Privacy":
+                    DataPrivacySettingsView(orchestrator: orchestrator)
                 default:
                     Text("Bir kategori seçiniz")
                 }
@@ -110,5 +113,41 @@ struct AISettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Yapay Zekâ Ayarları")
+    }
+}
+struct DataPrivacySettingsView: View {
+    @ObservedObject var orchestrator: Orchestrator
+    @State private var showingClearAlert = false
+    
+    var body: some View {
+        Form {
+            Section("Chat History") {
+                Text("Your chat history is stored locally on this Mac. Clearing it will permanently remove all past conversations and agent experiences.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Button(role: .destructive) {
+                    showingClearAlert = true
+                } label: {
+                    Label("Clear All Chat History", systemImage: "trash")
+                }
+            }
+            
+            Section("Local Storage") {
+                LabeledContent("Storage Location", value: "~/.eliteagent/history.json")
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("Data & Privacy")
+        .alert("Clear History?", isPresented: $showingClearAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear Everything", role: .destructive) {
+                Task {
+                    await orchestrator.clearAllHistory()
+                }
+            }
+        } message: {
+            Text("This action cannot be undone. All your past conversations will be permanently deleted.")
+        }
     }
 }

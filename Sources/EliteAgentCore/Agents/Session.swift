@@ -23,6 +23,9 @@ public actor Session: Identifiable {
     public private(set) var healingAttempts: Int = 0
     public private(set) var finalAnswer: String?
     
+    // Live feedback stream (Titan Architecture)
+    public var onStreamOutput: (@Sendable (String) -> Void)?
+    
     public init(id: UUID = UUID(), 
                 parentID: UUID? = nil, 
                 recursionDepth: Int = 0, 
@@ -33,6 +36,14 @@ public actor Session: Identifiable {
         self.recursionDepth = recursionDepth
         self.maxRecursionDepth = maxRecursionDepth
         self.workspaceURL = workspaceURL
+    }
+    
+    public func setStreamHandler(_ handler: @Sendable @escaping (String) -> Void) {
+        self.onStreamOutput = handler
+    }
+    
+    public func streamOutput(_ text: String) {
+        self.onStreamOutput?(text)
     }
     
     public func updateStatus(_ newStatus: SessionStatus, finalAnswer: String? = nil) {

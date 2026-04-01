@@ -21,15 +21,16 @@ public enum AgentStatus: String, Sendable {
     case error
 }
 
-public struct TaskStep: Identifiable, Sendable {
-    public let id = UUID()
+public struct TaskStep: Identifiable, Codable, Sendable {
+    public let id: UUID
     public let name: String
     public let status: String
     public let latency: String
     public let depth: Int
     public let thought: String?
     
-    public init(name: String, status: String, latency: String, depth: Int = 0, thought: String? = nil) {
+    public init(id: UUID = UUID(), name: String, status: String, latency: String, depth: Int = 0, thought: String? = nil) {
+        self.id = id
         self.name = name
         self.status = status
         self.latency = latency

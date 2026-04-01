@@ -31,7 +31,13 @@ Guided by an autonomous Planner, EliteAgent intelligently orchestrates numerous 
 - **Experience Vault (MemoryTool):** An L2 vector database that permanently stores solved algorithms. For similar future tasks, the agent relies on this RAG-based memory instead of querying the Cloud.
 - **Subagent & Ecosystem (Apple HIG):** Spawnable sub-agents capable of task delegation (e.g., autonomous WhatsApp/iMessage automation, UI/UX interaction, media control).
 
-### 4. IPC & Modularity (Security & Autonomy)
+### 4. Music DNA (Advanced Audio Intelligence) - [NEW v6.0]
+- **Native Swift DSP:** Using Apple's `Accelerate (vDSP)` framework, EliteAgent can extract the "DNA" of any music file without external Python dependencies.
+- **Deep Analysis Features:** STFT, Mel-Spectrogram, Chroma, Onset Detection, HPSS (Harmonic Percussive Source Separation), and MFCC extraction.
+- **Reporting:** Generates high-fidelity Markdown and JSON "DNA Reports" covering tempo, key, structure, and spectral characteristics.
+- **Real-time Waveform:** Built-in visualization for live audio processing feedback.
+
+### 5. IPC & Modularity (Security & Autonomy)
 - **Sandbox Eradication:** The restrictive Apple App Sandbox has been completely broken down, granting the agent genuine "Developer" privileges (Full File I/O + Shell execution).
 - **Trifecta Architecture:** The project is split into three micro-architectures: `App`, `EliteAgentCore` (Framework), and `XPC Service`. This prevents UI blocking (ViewBridge errors) and ensures seamless, thread-safe execution.
 
@@ -90,4 +96,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature."*  
-> **[EliteAgent Core - v5.3]**
+> **[EliteAgent Core - v6.0]**
