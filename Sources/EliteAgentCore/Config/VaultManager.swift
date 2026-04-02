@@ -18,15 +18,15 @@ public struct ProviderConfig: Codable, Sendable {
     public let keychainKey: String?
     public let modelName: String?
     public let capabilities: [String]?
-    public let costPer1KTokens: Decimal?
-    public let promptPrice: Decimal?
-    public let completionPrice: Decimal?
+    public let costPer1KTokens: Double?
+    public let promptPrice: Double?
+    public let completionPrice: Double?
     public let maxContextTokens: Int?
     public let temperature: Double?
     public let topP: Double?
     public let maxTokens: Int?
     
-    public init(id: String, type: ProviderType, endpoint: String?, keychainKey: String?, modelName: String?, capabilities: [String]?, costPer1KTokens: Decimal?, promptPrice: Decimal?, completionPrice: Decimal?, maxContextTokens: Int?, temperature: Double?, topP: Double?, maxTokens: Int?) {
+    public init(id: String, type: ProviderType, endpoint: String?, keychainKey: String?, modelName: String?, capabilities: [String]?, costPer1KTokens: Double?, promptPrice: Double?, completionPrice: Double?, maxContextTokens: Int?, temperature: Double?, topP: Double?, maxTokens: Int?) {
         self.id = id
         self.type = type
         self.endpoint = endpoint
@@ -91,9 +91,9 @@ public actor VaultManager {
             print("[VaultManager] Config missing at \(configURL.path). Creating default...")
             let defaultConfig = VaultConfig(
                 providers: [
-                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "qwen2.5-7b-instruct-4bit-mlx", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "Qwen2.5-7B-Instruct-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
                     ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-3-flash-lite-preview", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
+                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-2.0-flash-lite-preview-02-05", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
                 routingStrategy: .bridgeFirst,
                 inference: InferenceConfig(pauseOnUserInteraction: true),
@@ -108,10 +108,89 @@ public actor VaultManager {
         do {
             let data = try Data(contentsOf: configURL)
             let decoder = PropertyListDecoder()
-            self.config = try decoder.decode(VaultConfig.self, from: data)
+            var decodedConfig = try decoder.decode(VaultConfig.self, from: data)
+            
+            // Sync required providers to ensure migration completeness
+            let wasRestored = try VaultManager.syncRequiredProviders(config: &decodedConfig, configURL: configURL)
+            self.config = decodedConfig
+            
+            if wasRestored {
+                print("[VaultManager] Successfully restored missing required providers.")
+            }
         } catch {
             throw VaultError.invalidFormat(error)
         }
+    }
+    
+    /// Ensures that 'mlx', 'bridge', and 'openrouter' are present. Restores defaults if missing.
+    private static func syncRequiredProviders(config: inout VaultConfig, configURL: URL) throws -> Bool {
+        let requiredIds = ["mlx", "bridge", "openrouter"]
+        let defaults: [String: ProviderConfig] = [
+            "mlx": ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "Qwen2.5-7B-Instruct-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+            "bridge": ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+            "openrouter": ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-2.0-flash-lite-001", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
+
+        ]
+        
+        var missingAny = false
+        var updatedProviders = config.providers
+        
+        for id in requiredIds {
+            if !updatedProviders.contains(where: { $0.id == id }) {
+                if let defaultProv = defaults[id] {
+                    updatedProviders.append(defaultProv)
+                    missingAny = true
+                    print("[VaultManager] Detected missing required provider '\(id)'. Restoring defaults...")
+                }
+            }
+        }
+        
+        if missingAny {
+            config = VaultConfig(
+                providers: updatedProviders,
+                routingStrategy: config.routingStrategy,
+                inference: config.inference,
+                browser: config.browser
+            )
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .xml
+            let updatedData = try encoder.encode(config)
+            try updatedData.write(to: configURL)
+            return true
+        }
+        
+        // v7.5.0: Auto-correct invalid cloud model IDs to the latest stable OpenRouter ID
+        let invalidModelPatterns = ["gemini-3", "gemini-2.0-flash-lite-preview", "google/gemini-2.0-flash-lite"] // Correcting former bad fixes
+        var correctedAny = false
+        var finalProviders = config.providers
+        for i in 0..<finalProviders.count {
+            let p = finalProviders[i]
+            let isInvalid = invalidModelPatterns.contains { pattern in 
+                (p.modelName?.contains(pattern) ?? false) && p.modelName != "google/gemini-2.0-flash-lite-001" 
+            }
+            if p.id == "openrouter", isInvalid {
+                print("[VaultManager] v7.5.0: Correcting invalid model '\(p.modelName ?? "")' → google/gemini-2.0-flash-lite-001")
+                finalProviders[i] = ProviderConfig(
+                    id: p.id, type: p.type, endpoint: p.endpoint, keychainKey: p.keychainKey,
+                    modelName: "google/gemini-2.0-flash-lite-001",
+                    capabilities: p.capabilities, costPer1KTokens: p.costPer1KTokens,
+                    promptPrice: p.promptPrice, completionPrice: p.completionPrice,
+                    maxContextTokens: p.maxContextTokens, temperature: p.temperature,
+                    topP: p.topP, maxTokens: p.maxTokens
+                )
+                correctedAny = true
+            }
+        }
+        if correctedAny {
+            config = VaultConfig(providers: finalProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser)
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .xml
+            let data = try encoder.encode(config)
+            try data.write(to: configURL)
+            return true
+        }
+        
+        return false
     }
     
     public func getAPIKey(for provider: ProviderConfig) throws -> String {
@@ -161,8 +240,8 @@ public actor VaultManager {
             if providers[i]["id"] as? String == providerID {
                 var updatedProvider = providers[i]
                 updatedProvider["modelName"] = modelName
-                if let p = promptPrice { updatedProvider["promptPrice"] = p }
-                if let c = completionPrice { updatedProvider["completionPrice"] = c }
+                if let p = promptPrice { updatedProvider["promptPrice"] = Double(truncating: p as NSNumber) }
+                if let c = completionPrice { updatedProvider["completionPrice"] = Double(truncating: c as NSNumber) }
                 if let t = temperature { updatedProvider["temperature"] = t }
                 if let tp = topP { updatedProvider["topP"] = tp }
                 if let mt = maxTokens { updatedProvider["maxTokens"] = mt }

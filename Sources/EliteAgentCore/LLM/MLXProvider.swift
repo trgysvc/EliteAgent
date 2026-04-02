@@ -25,6 +25,15 @@ public actor MLXProvider: LocalLLMProvider {
         self.status = .loading
         do {
             let modelURL = getModelURL(for: modelName)
+            
+            // Phase 1: Meta-loading (Initializing Structures)
+            self.status = .loading
+            
+            // Phase 2: Priming (VRAM Allocation & Weight Transfer)
+            // The InferenceActor will trigger the actual VRAM state, but we 
+            // signal our intent here for the UI layer.
+            self.status = .priming
+            
             try await InferenceActor.shared.loadModel(at: modelURL)
             self.status = .ready
         } catch {
@@ -43,10 +52,14 @@ public actor MLXProvider: LocalLLMProvider {
         
         // Single prompt construction - InferenceActor handles ChatML specialization
         // We take the last user message or join them.
-        let prompt = request.messages.last?.content ?? ""
+        let prompt = request.messages.map { $0.role == "user" ? $0.content : "" }.joined(separator: "\n")
         
-        // FIX: Added 'await' for actor-isolated method call
-        let stream = await InferenceActor.shared.generate(prompt: prompt, maxTokens: request.maxTokens)
+        // v7.5.0: Pass both system prompt and user prompt to InferenceActor
+        let stream = await InferenceActor.shared.generate(
+            prompt: prompt, 
+            systemPrompt: request.systemPrompt,
+            maxTokens: request.maxTokens
+        )
         var fullContent = ""
         
         for await chunk in stream {

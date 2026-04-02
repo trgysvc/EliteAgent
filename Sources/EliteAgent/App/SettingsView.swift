@@ -5,11 +5,14 @@ import EliteAgentCore
 /// Kullanıcının güvenlik, genel ve yapay zekâ tercihlerini yönetmesini sağlar.
 public struct SettingsView: View {
     @ObservedObject var orchestrator: Orchestrator
+    @ObservedObject var modelPickerVM: ModelPickerViewModel
     @State private var selection: String? = "General"
+    @State private var showingTitanSetup = false
     @Environment(\.dismiss) var dismiss
     
-    public init(orchestrator: Orchestrator) {
+    public init(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         self.orchestrator = orchestrator
+        self.modelPickerVM = modelPickerVM
     }
     
     public var body: some View {
@@ -30,7 +33,7 @@ public struct SettingsView: View {
                 case "Security":
                     SecuritySettingsView()
                 case "AI":
-                    AISettingsView()
+                    AISettingsView(modelPickerVM: modelPickerVM, showingTitanSetup: $showingTitanSetup)
                 case "Analytics":
                     UsageDashboardView(orchestrator: orchestrator)
                 case "Privacy":
@@ -48,6 +51,9 @@ public struct SettingsView: View {
             }
         }
         .frame(minWidth: 650, minHeight: 450)
+        .sheet(isPresented: $showingTitanSetup) {
+            ModelSetupView()
+        }
     }
 }
 
@@ -102,19 +108,114 @@ struct SecuritySettingsView: View {
 }
 
 struct AISettingsView: View {
+    @ObservedObject var modelPickerVM: ModelPickerViewModel
+    @Binding var showingTitanSetup: Bool
+    
     var body: some View {
         Form {
-            Section("Model Yönetimi") {
-                Text("Mevcut Modeller: MLX (Yerel), OpenRouter (Bulut)")
-                Button("Model Ayarlarını Düzenle") {
-                    // Gelecekte model ekleme/çıkarma buraya bağlanabilir
+            Section("Aktif Zeka Modeli") {
+                if let selected = modelPickerVM.selected {
+                    HStack(spacing: 12) {
+                        Image(systemName: selected.icon)
+                            .font(.title)
+                            .foregroundStyle(Color.accentColor)
+                        
+                        VStack(alignment: .leading) {
+                            Text(selected.name)
+                                .font(.headline)
+                            Text(selected.id)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        if case .localMLX = selected {
+                           Text("Hardware Accelerated")
+                                .font(.caption2.bold())
+                                .padding(4)
+                                .background(.green.opacity(0.1), in: Capsule())
+                                .foregroundStyle(.green)
+                        } else {
+                            Text("Cloud Reasoning")
+                                .font(.caption2.bold())
+                                .padding(4)
+                                .background(.blue.opacity(0.1), in: Capsule())
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } else {
+                    Text("Model Seçilmedi")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Section("Yüklü Yerel Modeller (Titan)") {
+                let installed = modelPickerVM.installedLocalModels
+                if installed.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Henüz yerel model indirilmedi.")
+                            .foregroundStyle(.secondary)
+                        Button("Titan Kurulum Sihirbazını Başlat") {
+                            showingTitanSetup = true
+                        }
+                        .buttonStyle(.link)
+                    }
+                } else {
+                    List {
+                        ForEach(installed) { model in
+                            HStack {
+                                Label(model.name, systemImage: "cpu.fill")
+                                Spacer()
+                                Text("Ready")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                            }
+                        }
+                    }
+                    .frame(minHeight: 100)
+                }
+            }
+            
+            Section("Yapılandırma & Araçlar") {
+                Button {
+                    openVaultConfig()
+                } label: {
+                    Label("Provider Seçeneklerini Düzenle (Vault)", systemImage: "doc.text.fill")
+                }
+                .help("vault.plist dosyasını açarak API anahtarlarınızı ve model uç noktalarını düzenleyebilirsiniz.")
+                
+                Button {
+                    openModelsFolder()
+                } label: {
+                    Label("Model Klasörünü Aç", systemImage: "folder.fill")
+                }
+                .help("İndirilen model ağırlıklarını yönetmek için Models klasörünü açar.")
+                
+                Button {
+                    showingTitanSetup = true
+                } label: {
+                    Label("Titan Kurulum Sihirbazı", systemImage: "wand.and.stars")
                 }
             }
         }
         .formStyle(.grouped)
         .navigationTitle("Yapay Zekâ Ayarları")
     }
+    
+    private func openVaultConfig() {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let vaultURL = appSupport.appendingPathComponent("EliteAgent/vault.plist")
+        NSWorkspace.shared.open(vaultURL)
+    }
+    
+    private func openModelsFolder() {
+        let modelsURL = ModelSetupManager.shared.getModelDirectory().deletingLastPathComponent()
+        NSWorkspace.shared.open(modelsURL)
+    }
 }
+
 struct DataPrivacySettingsView: View {
     @ObservedObject var orchestrator: Orchestrator
     @State private var showingClearAlert = false
@@ -134,7 +235,8 @@ struct DataPrivacySettingsView: View {
             }
             
             Section("Local Storage") {
-                LabeledContent("Storage Location", value: "~/.eliteagent/history.json")
+                LabeledContent("History Data", value: "~/Library/Application Support/EliteAgent/history.json")
+                LabeledContent("Vault Config", value: "~/Library/Application Support/EliteAgent/vault.plist")
             }
         }
         .formStyle(.grouped)

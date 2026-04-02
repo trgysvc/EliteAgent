@@ -203,7 +203,7 @@ public struct MenuBarView: View {
                 checkCredentialHealth()
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .llmProviderSwitched)) { note in
+        .onReceive(NotificationCenter.default.publisher(for: .llmProviderSwitched).receive(on: RunLoop.main)) { note in
             if let provider = note.userInfo?["provider"] as? String {
                 withAnimation {
                     modeMessage = "SMART SWITCH: \(provider)"
@@ -211,7 +211,7 @@ public struct MenuBarView: View {
                 clearMessageAfter(3)
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .llmMemoryPressureAvoided)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .llmMemoryPressureAvoided).receive(on: RunLoop.main)) { _ in
             withAnimation {
                 modeMessage = "MEMORY GUARD: USING CLOUD"
             }
@@ -220,12 +220,11 @@ public struct MenuBarView: View {
     }
     
     private func clearMessageAfter(_ seconds: Double) {
-        modeTimer?.invalidate()
-        modeTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { _ in
-            Task { @MainActor in
-                withAnimation {
-                    modeMessage = nil
-                }
+        // Use modern Swift Concurrency for thread-safe timing
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            withAnimation {
+                modeMessage = nil
             }
         }
     }
