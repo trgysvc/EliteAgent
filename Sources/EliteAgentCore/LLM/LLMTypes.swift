@@ -11,6 +11,7 @@ public enum Capability: String, Codable, Sendable, Hashable {
 public enum ProviderStatus: String, Codable, Sendable {
     case ready
     case loading
+    case priming
     case error
 }
 
@@ -105,4 +106,6 @@ public struct CompletionResponse: Codable, Sendable {
 extension Notification.Name {
     public static let llmProviderSwitched = Notification.Name("app.eliteagent.llmProviderSwitched")
     public static let llmMemoryPressureAvoided = Notification.Name("app.eliteagent.llmMemoryPressureAvoided")
+    public static let activeProviderChanged = Notification.Name("app.eliteagent.activeProviderChanged")
 }
+

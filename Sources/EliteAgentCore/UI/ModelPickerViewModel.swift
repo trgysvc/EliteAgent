@@ -7,8 +7,40 @@ public class ModelPickerViewModel: ObservableObject {
     @Published public var models: [ModelSource] = []
     @Published public var selected: ModelSource?
     @Published public var isLoading: Bool = false
+    @Published public var searchText: String = ""
     
     private let orchestrator: Orchestrator
+    
+    // Computed Filtered Properties
+    public var filteredLocalModels: [ModelSource] {
+        let allLocal = models.filter { if case .localMLX = $0 { return true }; return false }
+        if searchText.isEmpty { return allLocal }
+        return allLocal.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    public var filteredOllamaModels: [ModelSource] {
+        let allOllama = models.filter { if case .bridge = $0 { return true }; return false }
+        if searchText.isEmpty { return allOllama }
+        return allOllama.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    public var filteredCloudModels: [ModelSource] {
+        let allCloud = models.filter { if case .openRouter = $0 { return true }; return false }
+                            .sorted { $0.totalPrice < $1.totalPrice }
+        if searchText.isEmpty { return allCloud }
+        return allCloud.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    // For AI Dashboard
+    public var installedLocalModels: [ModelSource] {
+        models.filter { model in
+            if case .localMLX(let id, _, _, _) = model {
+                let path = ModelSetupManager.shared.getModelDirectory().deletingLastPathComponent().appendingPathComponent(id)
+                return FileManager.default.fileExists(atPath: path.path)
+            }
+            return false
+        }
+    }
     
     public var localModels: [ModelSource] {
         models.filter { if case .localMLX = $0 { return true }; return false }
@@ -26,24 +58,22 @@ public class ModelPickerViewModel: ObservableObject {
     public func loadModels() async {
         isLoading = true
         
-        // 1. Static local MLX list (Titan Engine Optimized)
-        let isMistralReady = ModelSetupManager.shared.isModelReady
-        let localModels: [ModelSource] = [
-            .localMLX(id: "mistral-7b-instruct-v0.3-4bit", name: "Mistral 7B (Titan)", ramGB: 16, hasThink: false),
-            .localMLX(id: "phi-3.5-mini-4bit", name: "Phi 3.5 Mini", ramGB: 8, hasThink: false),
-            .localMLX(id: "mlx-r1-8b", name: "DeepSeek R1 8B", ramGB: 16, hasThink: true),
-        ]
+        // 1. Dynamic Titan Engine Discovery (MLX)
+        var localModels: [ModelSource] = []
+        if ModelSetupManager.shared.isModelReady {
+            localModels.append(.localMLX(id: "Qwen2.5-7B-Instruct-4bit", name: "Qwen 2.5 7B (Titan)", ramGB: 16, hasThink: false))
+        }
         
-        // 2. Fetch OpenRouter models via API
+        // 2. Load Custom & Bridge Models from Vault
+        let (customModels, bridgeModels) = loadVaultModels()
+        
+        // 3. Fetch OpenRouter models via API
         let openRouterModels = await fetchOpenRouterModels()
         
-        // 3. Load custom models from Vault
-        let customModels = loadCustomModelsFromVault()
-        
-        self.models = localModels + openRouterModels + customModels
+        self.models = localModels + bridgeModels + openRouterModels + customModels
         
         // 4. Auto-select Titan if ready
-        if isMistralReady, let titan = models.first(where: { $0.id == "mistral-7b-instruct-v0.3-4bit" }) {
+        if ModelSetupManager.shared.isModelReady, let titan = models.first(where: { $0.id == "Qwen2.5-7B-Instruct-4bit" }) {
             self.selected = titan
         } else {
             updateSelectionFromVault()
@@ -52,19 +82,25 @@ public class ModelPickerViewModel: ObservableObject {
         isLoading = false
     }
     
-    private func loadCustomModelsFromVault() -> [ModelSource] {
+    private func loadVaultModels() -> (custom: [ModelSource], bridge: [ModelSource]) {
         let defaultVaultPath = PathConfiguration.shared.vaultURL
-        guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return [] }
+        guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return ([], []) }
         
-        return vault.config.providers.filter { $0.id.hasPrefix("custom-") }.map { provider in
-            .custom(
+        let custom = vault.config.providers.filter { $0.id.hasPrefix("custom-") }.map { provider in
+            ModelSource.custom(
                 providerID: provider.id,
-                name: provider.id.replacingOccurrences(of: "custom-", with: ""), // Or store a real display name
+                name: provider.id.replacingOccurrences(of: "custom-", with: ""),
                 modelID: provider.modelName ?? "unknown",
                 type: provider.type,
                 isReasoning: provider.capabilities?.contains("reasoning") ?? false
             )
         }
+        
+        let bridge = vault.config.providers.filter { $0.type == .bridge }.map { provider in
+            ModelSource.bridge(id: provider.modelName ?? "ollama-model", name: provider.id == "bridge" ? "Ollama / Local" : provider.id)
+        }
+        
+        return (custom, bridge)
     }
     
     private func fetchOpenRouterModels() async -> [ModelSource] {
@@ -128,11 +164,21 @@ public class ModelPickerViewModel: ObservableObject {
                     try await vault.updateModelPricing(for: "openrouter", modelName: id, promptPrice: prompt, completionPrice: completion)
                 } else if case .localMLX(let id, _, _, _) = model {
                     try await vault.updateModelPricing(for: "mlx", modelName: id, promptPrice: 0, completionPrice: 0)
+                } else if case .bridge(let id, _) = model {
+                    try await vault.updateModelPricing(for: "bridge", modelName: id, promptPrice: 0, completionPrice: 0)
                 } else if case .custom(let providerID, _, let modelID, _, _) = model {
-                    // Custom models use their own provider ID
                     try await vault.updateModelPricing(for: providerID, modelName: modelID)
                 }
                 print("[ModelPicker] Model and Pricing changed to \(model.name)")
+                
+                // v7.4.0 LiveSwitch: Notify Orchestrator of provider change immediately
+                await MainActor.run {
+                    NotificationCenter.default.post(
+                        name: .activeProviderChanged,
+                        object: nil,
+                        userInfo: ["model": model]
+                    )
+                }
             } catch {
                 print("[ModelPicker] Failed to update model: \(error)")
             }

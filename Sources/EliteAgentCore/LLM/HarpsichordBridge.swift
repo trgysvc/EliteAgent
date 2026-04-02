@@ -97,7 +97,10 @@ public actor HarpsichordBridge {
         
         // Update Debounce state
         if self.lastProviderID != selectedProviderID {
-            NotificationCenter.default.post(name: .llmProviderSwitched, object: nil, userInfo: ["provider": selectedProviderID.rawValue])
+            let pID = selectedProviderID
+            await MainActor.run {
+                NotificationCenter.default.post(name: .llmProviderSwitched, object: nil, userInfo: ["provider": pID.rawValue])
+            }
         }
         self.lastProviderID = selectedProviderID
         self.lastRouteTime = Date()
@@ -116,7 +119,9 @@ public actor HarpsichordBridge {
                 #if os(macOS)
                 // Threshold: available RAM < 2GB -> skip local
                 if ProcessInfo.processInfo.isLowPowerModeEnabled || !hasAvailableMemory(required: 2_000_000_000) {
-                    NotificationCenter.default.post(name: .llmMemoryPressureAvoided, object: nil)
+                    await MainActor.run {
+                        NotificationCenter.default.post(name: .llmMemoryPressureAvoided, object: nil)
+                    }
                     continue 
                 }
                 #endif

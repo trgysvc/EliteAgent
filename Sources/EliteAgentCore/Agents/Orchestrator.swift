@@ -50,15 +50,88 @@ public class Orchestrator: ObservableObject {
         do {
             let vault = try VaultManager(configURL: paths.vaultURL)
             self.vaultManager = vault
-            self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
-            self.bridgeProvider = try BridgeProvider(providerID: ProviderID(rawValue: "bridge"), vaultManager: vault)
-            self.localProvider = MLXProvider(providerID: ProviderID(rawValue: "mlx"))
+            
+            // Initialize Cloud Provider
+            do {
+                self.cloudProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: vault)
+            } catch {
+                print("[ORCHESTRATOR] Warning: Cloud Provider (openrouter) failed to initialize: \(error)")
+            }
+            
+            // Initialize Bridge Provider
+            do {
+                self.bridgeProvider = try BridgeProvider(providerID: ProviderID(rawValue: "bridge"), vaultManager: vault)
+            } catch {
+                print("[ORCHESTRATOR] Warning: Bridge Provider (Ollama/LM Studio) failed to initialize: \(error)")
+            }
+            
+            // Initialize Local Provider
+            let local = MLXProvider(providerID: ProviderID(rawValue: "mlx"))
+            self.localProvider = local
+            
+            // TITAN PROACTIVE PRIMING: If weights are ready, load them into VRAM immediately
+            if ModelSetupManager.shared.isModelReady {
+                Task {
+                    do {
+                        try await local.loadModel("Qwen2.5-7B-Instruct-4bit")
+                        print("[ORCHESTRATOR] Titan Engine primed and ready in VRAM.")
+                    } catch {
+                        print("[ORCHESTRATOR] Titan Priming Failed: \(error). Re-verifying integrity...")
+                        // Trigger a status update to detect any latent corruption
+                        await MainActor.run {
+                            ModelSetupManager.shared.verifyModelStatus()
+                        }
+                    }
+                }
+            }
+            
+            // v7.4.0 LiveSwitch: Observe real-time model selection changes from UI
+            NotificationCenter.default.addObserver(
+                forName: .activeProviderChanged,
+                object: nil,
+                queue: .main
+            ) { [weak self] note in
+                guard let self = self else { return }
+                guard let model = note.userInfo?["model"] as? ModelSource else { return }
+                
+                Task { @MainActor in
+                    switch model {
+                    case .localMLX(let id, let name, _, _):
+                        self.providerUsed = name
+                        self.steps.append(TaskStep(name: "LiveSwitch", status: "working", latency: "ANE", thought: "Switching to Titan Engine (\(id)). Priming weights..."))
+                        // Prime Titan if not already ready
+                        if let localProv = self.localProvider {
+                            Task {
+                                do {
+                                    try await localProv.loadModel(id)
+                                    await MainActor.run {
+                                        self.steps.append(TaskStep(name: "Titan Ready", status: "done", latency: "ANE", thought: "Local engine is hot. All tasks will use \(name)."))
+                                    }
+                                } catch {
+                                    await MainActor.run {
+                                        self.steps.append(TaskStep(name: "Titan Failed", status: "failed", latency: "ANE", thought: "Could not prime local engine: \(error.localizedDescription)"))
+                                    }
+                                }
+                            }
+                        }
+                        
+                    case .openRouter(let id, let name, _, _, _, _):
+                        self.providerUsed = name
+                        self.steps.append(TaskStep(name: "LiveSwitch", status: "done", latency: "Cloud", thought: "Switched to cloud provider: \(id)"))
+                        
+                    case .bridge(_, let name):
+                        self.providerUsed = name
+                        self.steps.append(TaskStep(name: "LiveSwitch", status: "done", latency: "Bridge", thought: "Switched to bridge provider: \(name)"))
+                        
+                    default:
+                        break
+                    }
+                }
+            }
+            
         } catch {
-            print("[ORCHESTRATOR] CRITICAL: Failed to initialize Core Services: \(error)")
+            print("[ORCHESTRATOR] CRITICAL: Vault Manager failed to start. Local intelligence unavailable: \(error)")
             self.status = .error
-            self.cloudProvider = nil
-            self.bridgeProvider = nil
-            self.localProvider = nil
         }
         
         // Initialize Tool Registry (TITAN FULL STACK)
@@ -98,8 +171,22 @@ public class Orchestrator: ObservableObject {
         if let p = self.cloudProvider {
             safeProvider = p
         } else {
-            let v = try! VaultManager(configURL: PathConfiguration.shared.vaultURL)
-            safeProvider = try! CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: v)
+            // Re-initialize a local instance if the main one failed, but in a safe way
+            do {
+                let v = try VaultManager(configURL: PathConfiguration.shared.vaultURL)
+                safeProvider = try CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: v)
+            } catch {
+                // LAST RESORT: Create a placeholder for the subagent tool to prevent crash
+                // This allows the app to at least boot up so the user can fix settings
+                print("[ORCHESTRATOR] CRITICAL FAIL-SAFE: Could not initialize model providers: \(error)")
+                self.status = .error
+                // This part is tricky because safeProvider must be initialized.
+                // We'll throw or use a throw-away provider if possible.
+                // Given the current architecture, we'll try to use a basic provider or re-throw.
+                // Re-initializing with a dummy might be better.
+                let dummyVault = try! VaultManager(configURL: PathConfiguration.shared.vaultURL)
+                safeProvider = try! CloudProvider(providerID: ProviderID(rawValue: "openrouter"), vaultManager: dummyVault)
+            }
         }
         
         let local = self.localProvider
@@ -179,6 +266,31 @@ public class Orchestrator: ObservableObject {
         
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Starting task: \(prompt)")
         
+        var promptWithContext = prompt
+        
+        // v7.5.0 DocEye: Detect file paths in prompt and inject content as context
+        if let filePath = Orchestrator.extractFilePath(from: prompt) {
+            do {
+                let reader = ReadFileTool()
+                // We create a temporary session for the tool call
+                let tempSession = Session(workspaceURL: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+                let content = try await reader.execute(params: ["path": AnyCodable(filePath)], session: tempSession)
+                
+                let fileName = URL(fileURLWithPath: filePath).lastPathComponent
+                promptWithContext = """
+                ### DOCUMENT CONTEXT (File: \(fileName))
+                \(content)
+                ------------------------------------------
+                USER TASK: \(prompt)
+                """
+                
+                self.steps.append(TaskStep(name: "DocEye", status: "done", latency: "ANE", thought: "Injected context from \(fileName) (\(content.count) characters)"))
+                print("[ORCHESTRATOR] DocEye: Injected context from \(filePath)")
+            } catch {
+                print("[ORCHESTRATOR] DocEye failed to read file: \(error)")
+            }
+        }
+        
         do {
             // 1. Resolve Workspace (Restrict to project root to avoid Desktop/Library spam)
             var workspaceURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -188,23 +300,39 @@ public class Orchestrator: ObservableObject {
             }
             self.currentWorkspaceURL = workspaceURL
             
-            // 2. Initialize Runtime
-            guard let provider = self.cloudProvider else {
-                throw ProviderError.networkError("Cloud Provider not initialized. Please check your vault.plist and API keys.")
+            // 2. Resolve Dynamic Provider from Selection (v7.1.9 Strict Control)
+            let allProviders = vaultManager?.config.providers ?? []
+            let activeModelID = await MainActor.run { ModelSetupManager.shared.activeModelID }
+            let isModelReady = await MainActor.run { ModelSetupManager.shared.isModelReady }
+            
+            var selectedConf = allProviders.first(where: { $0.modelName == activeModelID })
+            if selectedConf == nil {
+                selectedConf = allProviders.first(where: { $0.id == "mlx" })
+            }
+            if selectedConf == nil {
+                selectedConf = allProviders.first(where: { $0.id == "openrouter" })
             }
             
-            self.providerUsed = provider.modelName
+            guard let finalConf = selectedConf else {
+                throw ProviderError.networkError("No valid provider selected in Vault.")
+            }
+            
+            self.providerUsed = finalConf.modelName ?? "Unknown"
+            
+            // Phase 3: Hardware Check for Local Intent (v7.1.9 Guard)
+            if finalConf.type == .local && !isModelReady {
+                self.steps.append(TaskStep(name: "Titan Guard", status: "warning", latency: "ANE", thought: "Selected local model is not primed. Attempting recovery..."))
+            }
             
             // Phase 5: Intent Classification (Hybrid Intelligence)
             let intent = classifyIntent(prompt: prompt)
             let complexity: Int = (intent == .hardware || intent == .status) ? 0 : 3
             
-            let local = self.localProvider
             let runtime = OrchestratorRuntime(
                 planner: planner, 
                 memory: memory,
-                cloudProvider: provider, 
-                localProvider: local,
+                cloudProvider: self.cloudProvider!, 
+                localProvider: self.localProvider,
                 bridgeProvider: bridgeProvider,
                 toolRegistry: toolRegistry,
                 bus: bus,
@@ -238,9 +366,17 @@ public class Orchestrator: ObservableObject {
             
             self.steps.append(TaskStep(name: "Initializing recursive runtime...", status: "done", latency: "0ms"))
             
-            // 5. Run Task
+            // 5. EXECUTION WITH HEALING LOOP
             let session = Session(workspaceURL: workspaceURL)
-            try await runtime.executeTask(prompt: prompt, session: session, complexity: complexity)
+            do {
+                try await runtime.executeTask(prompt: promptWithContext, session: session, complexity: complexity)
+            } catch {
+                if finalConf.type == .local {
+                    let msg = "Titan Engine Failure: \(error.localizedDescription). Switching to Healing Mode via Cloud..."
+                    self.steps.append(TaskStep(name: "Healing Engine", status: "working", latency: "ANE", thought: msg))
+                }
+                throw error
+            }
             
             let finalAnswer = await session.finalAnswer ?? "Task completed."
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
@@ -285,6 +421,30 @@ public class Orchestrator: ObservableObject {
 }
 
 extension Orchestrator: ProjectObserverDelegate {
+    
+    private static func extractFilePath(from prompt: String) -> String? {
+        // Simple regex to detect paths with common extensions
+        // Matches /.../file.pdf, "...", etc.
+        let pattern = #"(/[\w\.\-/ ]+\.(pdf|txt|md|swift|docx|json))|("[^"]+\.(pdf|txt|md|swift|docx|json)")"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
+        
+        let nsPrompt = prompt as NSString
+        let results = regex.matches(in: prompt, options: [], range: NSRange(location: 0, length: nsPrompt.length))
+        
+        guard let match = results.first else { return nil }
+        var path = nsPrompt.substring(with: match.range)
+        
+        // Strip quotes if present
+        if path.hasPrefix("\"") && path.hasSuffix("\"") {
+            path = String(path.dropFirst().dropLast())
+        }
+        if path.hasPrefix("'") && path.hasSuffix("'") {
+            path = String(path.dropFirst().dropLast())
+        }
+        
+        return path.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     public func projectDidDetectChange(at path: String, flags: FSEventStreamEventFlags) {
         guard let workspacePath = currentWorkspaceURL?.path else { return }
         guard path.hasPrefix(workspacePath) else { return } // STRICT FILTER: Stop spying on system

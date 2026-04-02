@@ -50,13 +50,19 @@ public struct SystemTelemetryTool: AgentTool {
         var hostSize = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
         var hostStats = vm_statistics64()
         
+        // Safety Check: host_statistics64 can trigger 0x5 (KERN_PROTECTION_FAILURE) 
+        // in certain hardened runtime configurations if task ports are restricted.
         let result = withUnsafeMutablePointer(to: &hostStats) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(hostSize)) {
                 host_statistics64(hostPort, HOST_VM_INFO64, $0, &hostSize)
             }
         }
         
-        guard result == KERN_SUCCESS else {
+        if result != KERN_SUCCESS {
+            // Handle 0x5 (KERN_PROTECTION_FAILURE) or other kern errors gracefully
+            if result == 5 {
+                AgentLogger.logAudit(level: .warn, agent: "guard", message: "System Telemetry: Mach-level memory stats restricted (Sandbox/0x5). Using fallback.")
+            }
             return (0.0, 0.0)
         }
         

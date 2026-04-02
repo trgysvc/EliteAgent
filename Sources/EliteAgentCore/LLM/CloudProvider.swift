@@ -159,8 +159,8 @@ public actor CloudProvider: LLMProvider {
         )
         
         // Dynamic Cost Calculation
-        let promptPrice = providerConf.promptPrice ?? 0
-        let completionPrice = providerConf.completionPrice ?? 0
+        let promptPrice = Decimal(providerConf.promptPrice ?? 0)
+        let completionPrice = Decimal(providerConf.completionPrice ?? 0)
         let cost = (Decimal(count.prompt) * promptPrice) + (Decimal(count.completion) * completionPrice)
 
         // Extract think block natively if model returned it inside <think> tags

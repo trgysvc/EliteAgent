@@ -39,7 +39,6 @@ kernel void neural_compute(device float* activations [[buffer(0)]],
         intensity = pulse * 0.5;
     } else if (uniforms.state == 2) { // GATHERING (Decoding)
         float3 center = float3(0, 0, 0);
-        float3 dir = normalize(float3(x_grid, y_grid, z_grid));
         targetPos = mix(float3(x_grid, y_grid, z_grid), center, p * 0.8);
         intensity = 0.5 + p * 0.5;
     } else if (uniforms.state == 3) { // GLOW (Transferring)
