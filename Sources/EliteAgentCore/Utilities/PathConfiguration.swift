@@ -63,10 +63,21 @@ public struct PathConfiguration: Sendable {
         let legacy = legacyBaseURL
         let target = applicationSupportURL
         
+        // v7.5.1: Only proceed if the legacy folder exists AND hasn't been marked as migrated
         guard FileManager.default.fileExists(atPath: legacy.path) else { return }
-        print("[MIGRATION] Detected legacy .eliteagent folder. Moving to standard Application Support...")
         
         let filesToMove = ["vault.plist", "history.json", "memory.db", "task_history.jsonl"]
+        let hasActualFiles = filesToMove.contains { file in
+            FileManager.default.fileExists(atPath: legacy.appendingPathComponent(file).path)
+        }
+        
+        guard hasActualFiles else {
+            // No actual files left to move, just get rid of the folder (or rename it)
+            cleanupLegacyFolder(legacy: legacy)
+            return
+        }
+
+        print("[MIGRATION] Detected legacy .eliteagent folder with data. Moving to standard Application Support...")
         
         for file in filesToMove {
             let oldURL = legacy.appendingPathComponent(file)
@@ -78,11 +89,23 @@ public struct PathConfiguration: Sendable {
             }
         }
         
-        // Remove legacy folder if empty or rename to avoid re-migration
-        if (try? FileManager.default.contentsOfDirectory(atPath: legacy.path).isEmpty) == true {
-             try? FileManager.default.removeItem(at: legacy)
+        // Final Cleanup
+        cleanupLegacyFolder(legacy: legacy)
+    }
+    
+    private func cleanupLegacyFolder(legacy: URL) {
+        let items = (try? FileManager.default.contentsOfDirectory(atPath: legacy.path)) ?? []
+        if items.isEmpty {
+            try? FileManager.default.removeItem(at: legacy)
         } else {
-             try? FileManager.default.moveItem(at: legacy, to: URL(fileURLWithPath: legacy.path + "_legacy_bak"))
+            // Rename to avoid re-triggering migration logic
+            let renamed = legacy.deletingLastPathComponent().appendingPathComponent(".eliteagent_migrated_bak")
+            if !FileManager.default.fileExists(atPath: renamed.path) {
+                try? FileManager.default.moveItem(at: legacy, to: renamed)
+            } else {
+                // If bak already exists, just try to delete the contents or items
+                try? FileManager.default.removeItem(at: legacy)
+            }
         }
     }
     

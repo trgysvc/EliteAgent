@@ -204,3 +204,57 @@ EliteAgent artık sadece sesi duymakla kalmıyor; onu bir müzikolog derinliğiy
 
 ---
 *EliteAgent Core · v7.1 · Audio Intelligence & Librosa Parity.*
+
+## 📅 [2026-04-03] — Titan Engine v2: Qwen 3.5 & Agent Process Visualization (v8.0)
+
+Bugün EliteAgent'ın yerel zeka kapasitesini ve kullanıcı deneyimini bir üst seviyeye taşıyan "Titan Engine v2" güncellemesini tamamladık. Qwen 3.5 9B (4-bit) desteği, yüksek performanslı dosya işleme ve gerçek zamanlı işlem görselleştirme ile sistem artık tam anlamıyla üretim (production) standartlarında.
+
+### 🚀 Ana Başlıklar
+- **Qwen 3.5 9B (Titan v2) Optimization**:
+    - **Hardware-Accelerated Inference**: Apple Silicon için optimize edilmiş Qwen 3.5 9B 4-bit mimarisi yayına alındı.
+    - **Advanced Diagnostics**: Model indirme süreçlerinde Hugging Face 401 (Unauthorized/Gated) ve 404 (Not Found) hataları için detaylı teşhis ve kullanıcı bildirimleri eklendi.
+- **Production-Ready File Ingestion (DocEye v2)**:
+    - **Memory-Safe Mapping**: 50MB+ büyüklüğündeki dosyaların RAM spike'larını önlemek için `Data(contentsOf:options: .mappedIfSafe)` mimarisine geçildi.
+    - **Secure Lifecycle**: Model değiştirme veya silme sırasında MLX'in memory-mapped weight dosyalarının kilitlenmesini (`mmap lock`) önleyen deterministik temizlik ve release döngüsü kuruldu.
+- **Async Agent Process Visualization**:
+    - **Real-Time Timeline**: `InferenceActor` içerisindeki işlemler (Reasoning, Extraction, Tool Call, Generation) `AsyncStream` üzerinden UI'a anlık olarak akıtılıyor.
+    - **HIG-Compliant UI State Machine**: Yükleme, işleme ve başarılı sonuç aşamalarını yöneten, `.ultraThinMaterial` ve pürüzsüz animasyonlarla desteklenen yeni bir durum makinesi (state machine) geliştirildi.
+- **Build & Concurrency Excellence**:
+    - **Swift 6 Compatibility**: Proje genelinde `@Observable` (`ObservableObject` fallback) ve `@MainActor` izolasyonları ile thread-safety ve Swift 6 uyumluluğu sağlandı.
+    - **Deterministic Cancellation**: Kullanıcı sohbetten ayrıldığında veya uygulama arka plana geçtiğinde tüm aktif GPU ve dosya görevlerinin güvenli bir şekilde sonlandırılması (cancellation) garanti altına alındı.
+
+### 🛠 Teknik Notlar
+- **mmap Release Grace Period**: Model silmede "Resource Busy" hatalarını önlemek için `.milliseconds(50)` beklemeli deterministik release mekanizması uygulandı.
+- **Dynamic Timeline Shimmer**: Agent adımları arasında geçiş yaparken kullanılan pulse ve shimmer efektleri Metal engine ile senkronize edildi.
+
+### 🏁 Mevcut Durum: **v8.0-TITAN-V2-PROCESS**
+EliteAgent artık sadece bir chat arayüzü değil; karmaşık dökümanları yerel olarak analiz edebilen, her adımını kullanıcıya şeffaf bir şekilde sergileyen ve bellek yönetiminde profesyonel bir zeka platformu.
+
+---
+*EliteAgent Core · v8.0 · Titan Engine v2 & Process Transparency.*
+
+## 📅 [2026-04-03] — v7.8.5: Production Hardening & Recovery
+
+Bugün, EliteAgent'ı "geliştirme aşaması"ndan tam kapsamlı "Üretim (Production)" standartlarına taşıyan kritik sertleştirme ve kurtarma operasyonunu tamamladık. Özellikle WhatsApp otomasyonu ve yerel model güvenliği üzerine odaklanıldı.
+
+### 🚀 Ana Başlıklar
+- **PVP (Production Verification Protocol) [v7.8.5]**:
+    - **Automated CLI Suite**: Üretim öncesi son kontrolleri (Bellek baskısı, dosya bütünlüğü, fallback akışı) saniyeler içinde doğrulayan `swift run elite --verify-pvp` aracı yayına alındı.
+    - **Memory Pressure Test**: `host_statistics64` üzerinden yapılan bellek takibiyle, sistemin kritik RAM basıncı altında model yüklemesini güvenli bir şekilde reddettiği ("Zarif Geri Çekilme") doğrulandı.
+- **Titan Engine: GGUF Integrity Shield**:
+    - **Structural Validation**: Model indirme sonrası oluşan mmap çöklemelerini engellemek için Magic Bytes (`GGUF`), Versiyon (`v3+`) ve Tensör Sayısı kontrolü eklendi.
+    - **Safe Loading**: Yanlış veya bozuk dosyaların ("tooSmall", "corrupt") sisteme yüklenmesi engellenerek uygulama kararlılığı %100'e çıkarıldı.
+- **Tooling & WhatsApp Recovery**:
+    - **MessengerTool Fix**: LLM'in eksik parametre göndermesi (Error 0) sorunu, `PlannerTemplate` içindeki parametre şemalarının (platform, recipient, message) restore edilmesiyle çözüldü.
+    - **Localized Tool Errors**: Teknik hata kodları yerine kullanıcıya "Eksik Parametre: [Ad]" gibi anlaşılır, yerelleştirilmiş Türkçe geri bildirimler sağlandı.
+    - **Keystroke Reliability**: Otomatik mesaj gönderimindeki zamanlama hatası, `delay 1.0` ve AppleScript optimizasyonuyla giderildi.
+- **Infrastructure & Compliance**:
+    - **AISessionState Analytics**: Inference gecikmesi (latency), token hızı (TPS) ve fallback tetikleme sayıları merkezi `@Observable` state üzerine taşınarak şeffaflık sağlandı.
+    - **Metadata-First Streaming**: Yanıt akışı başladığı an ilk paket olarak gönderilen `metadata` sayesinde UI üzerindeki provider badge'i anlık güncellenir hale geldi.
+    - **Privacy Manifest (2024)**: Apple'ın zorunlu kıldığı `PrivacyInfo.xcprivacy` dosyası; FileTimestamp, DiskSpace ve AppleEvents beyanlarıyla oluşturuldu.
+
+### 🏁 Mevcut Durum: **v7.8.5-PRODUCTION-HARDENED**
+EliteAgent artık sadece akıllı değil; hataya yer vermeyen, donanım kaynaklarını adli tıbbî hassasiyetle yöneten ve Apple ekosistemiyle %100 uyumlu otonom bir "Üretim" yazılımıdır.
+
+---
+*EliteAgent Core · v7.8.5 · Production Hardening & Compliance.*

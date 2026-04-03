@@ -23,7 +23,13 @@ public struct ChatWindowView: View {
     @State private var showingSettings: Bool = false
     @State private var showingTitanAssistant: Bool = false
     
-    // v7.6.0 File Attachment UI
+    // v7.7.0 Production Process Visualization
+    @StateObject private var processVM = ChatProcessViewModel()
+    
+    // v7.8.0 Centralized State Sync
+    @State private var sessionState = AISessionState.shared
+    
+    // v7.6.0 File Attachment UI (Legacy bridge for input field)
     @State private var attachedFileURL: URL? = nil
     @State private var showingFileImporter = false
     @State private var isAnimatingAttachment = false
@@ -85,7 +91,22 @@ public struct ChatWindowView: View {
                 VStack(spacing: 0) {
                     // TOP BAR: Model Selection & Stats
                     HStack {
-                        ModelPickerMenu(modelPickerVM: modelPickerVM)
+                        VStack(alignment: .leading, spacing: 2) {
+                            ModelPickerMenu(modelPickerVM: modelPickerVM)
+                            
+                            if sessionState.isFallbackActive {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "cloud.fill")
+                                    Text("\(sessionState.activeProvider) - Cloud Fallback")
+                                }
+                                .font(.system(size: 8, weight: .bold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.orange, in: Capsule())
+                                .foregroundStyle(.white)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+                        }
                         
                         Spacer()
                         
@@ -137,34 +158,23 @@ public struct ChatWindowView: View {
                         }
                     }
                     .overlay {
-                        // v7.7.0 Apple HIG Drop Overlay
-                        if isDraggingOver {
-                            ZStack {
-                                Color.accentColor.opacity(0.05)
-                                    .background(.ultraThinMaterial)
-                                    .ignoresSafeArea()
-                                
-                                VStack(spacing: 16) {
-                                    Image(systemName: "plus.viewfinder")
-                                        .font(.system(size: 48, weight: .light))
-                                        .foregroundStyle(Color.accentColor)
-                                        .symbolEffect(.pulse, options: .repeating)
-                                    
-                                    Text("Drop Document to Analyze")
-                                        .font(.title3.bold())
-                                        .foregroundStyle(.primary)
-                                    
-                                    Text("Supports PDF, TXT, MD, Swift")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(30)
-                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30))
-                                .overlay(RoundedRectangle(cornerRadius: 30).strokeBorder(Color.accentColor.opacity(0.4), lineWidth: 2))
-                                .shadow(color: .accentColor.opacity(0.2), radius: 20)
+                        // v7.7.0 Apple HIG Drop Overlay (New Component)
+                        if processVM.currentState == .idle {
+                            FileUploadZone { url in
+                                processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
                             }
-                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                            .ignoresSafeArea()
+                            .opacity(isDraggingOver ? 1 : 0)
+                            .allowsHitTesting(isDraggingOver)
+                        }
+                    }
+                    .overlay {
+                        // v7.7.0 Process Visualization Overlay
+                        processOverlay(viewModel: processVM)
+                    }
+                    .overlay {
+                        // v7.8.0 Fallback Approval Modal
+                        if sessionState.requiresUserAcknowledgement {
+                            fallbackApprovalModal
                         }
                     }
                     
@@ -221,7 +231,7 @@ public struct ChatWindowView: View {
                                     .symbolRenderingMode(.hierarchical)
                             }
                             .buttonStyle(.plain)
-                            .disabled((promptText.isEmpty && attachedFileURL == nil) || orchestrator.status == .working)
+                            .disabled((promptText.isEmpty && attachedFileURL == nil) || orchestrator.status == .working || sessionState.requiresUserAcknowledgement || sessionState.isInputLocked)
                             .keyboardShortcut(.return, modifiers: .command)
                         }
                         .padding(.horizontal, 8)
@@ -244,16 +254,7 @@ public struct ChatWindowView: View {
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        // Start security-scoped access if needed
-                        let _ = url.startAccessingSecurityScopedResource()
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            attachedFileURL = url
-                            isAnimatingAttachment = true
-                        }
-                        // Reset pulse
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            isAnimatingAttachment = false
-                        }
+                        processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
                     }
                 case .failure(let error):
                     print("[UI] File picker failed: \(error)")
@@ -264,26 +265,25 @@ public struct ChatWindowView: View {
                     await modelPickerVM.loadModels()
                     if !modelSetup.isModelReady {
                         try? await Task.sleep(nanoseconds: 800_000_000)
-                        self.showingTitanAssistant = true
+                        DispatchQueue.main.async {
+                            self.showingTitanAssistant = true
+                        }
                     }
                 }
             }
             .onDrop(of: [.fileURL], isTargeted: $isDraggingOver) { providers in
-                // Handle Dropped Files (v7.7.0)
                 guard let provider = providers.first else { return false }
                 _ = provider.loadObject(ofClass: URL.self) { url, error in
                     if let url = url {
                         Task { @MainActor in
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                self.attachedFileURL = url
-                                self.isAnimatingAttachment = true
-                            }
-                            try? await Task.sleep(nanoseconds: 300_000_000)
-                            withAnimation { self.isAnimatingAttachment = false }
+                            processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
                         }
                     }
                 }
                 return true
+            }
+            .onDisappear {
+                processVM.cancel()
             }
         }
     }
@@ -320,6 +320,71 @@ public struct ChatWindowView: View {
             }
             
             withAnimation { isScanningDocument = false }
+        }
+    }
+    
+    // MARK: - Approval Modal
+    private var fallbackApprovalModal: some View {
+        ZStack {
+            Color.black.opacity(0.4).ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.orange)
+                
+                Text("Yerel Model Hazır Değil")
+                    .font(.headline)
+                
+                if let reason = sessionState.fallbackReason {
+                    Text(reason)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                Text("Bulut modeli (Claude 3.5) ile devam etmek istiyor musunuz?")
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                
+                VStack(spacing: 10) {
+                    if let reason = sessionState.fallbackReason, reason.contains("Eksik") {
+                        Button {
+                            sessionState.resetForNewTask()
+                            showingTitanAssistant = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.down.circle.fill")
+                                Text("Titan Motorunu Kur (İndir)")
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
+                    }
+                    
+                    Button {
+                        orchestrator.approveFallback(decision: .useCloud)
+                    } label: {
+                        Text("Bulut ile Devam Et (Claude)")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    
+                    Button {
+                        orchestrator.approveFallback(decision: .cancel)
+                    } label: {
+                        Text("İptal Et")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .padding(24)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
+            .frame(width: 300)
+            .shadow(radius: 20)
         }
     }
 }
@@ -487,7 +552,9 @@ struct ModelPickerMenu: View {
                 .frame(minWidth: 320, maxHeight: 450)
             }
             .onAppear {
-                isSearchFocused = true
+                DispatchQueue.main.async {
+                    isSearchFocused = true
+                }
             }
         }
     }
@@ -566,11 +633,26 @@ struct StatusIndicator: View {
                 .fill(statusColor)
                 .frame(width: 8, height: 8)
             
-            if status == .working || status == .waiting {
-                Text(status == .working ? "Thinking..." : "Waiting...")
+            if isStatusWaiting {
+                Text(statusText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+    
+    private var isStatusWaiting: Bool {
+        switch status {
+        case .working, .waiting, .waitingLLM, .awaitingFallbackApproval: return true
+        default: return false
+        }
+    }
+    
+    private var statusText: String {
+        switch status {
+        case .working: return "Thinking..."
+        case .awaitingFallbackApproval: return "Approval Needed"
+        default: return "Waiting..."
         }
     }
     
@@ -581,6 +663,7 @@ struct StatusIndicator: View {
         case .waiting, .waitingLLM: return .orange
         case .healing: return .purple
         case .error: return .red
+        case .awaitingFallbackApproval: return .orange
         }
     }
 }

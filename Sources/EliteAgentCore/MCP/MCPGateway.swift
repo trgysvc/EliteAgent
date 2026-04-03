@@ -29,7 +29,7 @@ public struct JSONRPCResponse: Codable, Sendable {
 public actor MCPGateway: AgentProtocol {
     public let agentID: AgentID = .mcpGateway
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "none")
+    public let preferredProvider: ProviderID = .none
     public let fallbackProviders: [ProviderID] = []
     
     private let bus: SignalBus

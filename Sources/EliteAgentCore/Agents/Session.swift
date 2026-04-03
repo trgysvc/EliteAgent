@@ -56,6 +56,10 @@ public actor Session: Identifiable {
         }
     }
     
+    public func setFinalAnswer(_ content: String) {
+        self.updateStatus(.finished, finalAnswer: content)
+    }
+    
     public func setAudioAnalysis(_ analysis: MusicDNAAnalysis) {
         self.audioAnalysis = analysis
     }

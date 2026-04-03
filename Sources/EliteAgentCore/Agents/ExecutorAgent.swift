@@ -3,8 +3,8 @@ import Foundation
 public actor ExecutorAgent: AgentProtocol {
     public let agentID: AgentID = .executor
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "mlx")
-    public let fallbackProviders: [ProviderID] = [ProviderID(rawValue: "openrouter")]
+    public let preferredProvider: ProviderID = .mlx
+    public let fallbackProviders: [ProviderID] = [.openrouter]
     
     private let bus: SignalBus
     

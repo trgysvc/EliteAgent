@@ -25,6 +25,13 @@ public final class ToolRegistry {
             return Array(tools.values)
         }
     }
+    
+    public func execute(toolCall: ToolCall, session: Session) async throws -> String {
+        guard let tool = getTool(named: toolCall.tool) else {
+            throw ToolError.executionError("Tool not found: \(toolCall.tool)")
+        }
+        return try await tool.execute(params: toolCall.params, session: session)
+    }
 }
 
 extension ToolRegistry: @unchecked Sendable {}

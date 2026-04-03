@@ -20,11 +20,17 @@ public struct ReadFileTool: AgentTool, Sendable {
             fileURL = session.workspaceURL.appendingPathComponent(expandedPath).standardizedFileURL
         }
         
-        // Security check: Allow reads in Workspace OR User's Home
-        let homeURL = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
-        let workspaceURL = session.workspaceURL.standardizedFileURL
+        // Security check: Allow reads in Workspace OR User's Home (robust validation)
+        let homePath = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+        let workspacePath = session.workspaceURL.standardizedFileURL.path
+        let standardizedPath = fileURL.standardizedFileURL.path
         
-        guard fileURL.path.hasPrefix(workspaceURL.path) || fileURL.path.hasPrefix(homeURL.path) else {
+        // v7.7.1 Robust Path Comparison
+        let isAllowed = standardizedPath.hasPrefix(workspacePath) || standardizedPath.hasPrefix(homePath)
+        
+        guard isAllowed else {
+            print("[ReadFileTool] Access Denied: \(standardizedPath)")
+            print("[ReadFileTool] Allowed Prefixes: [\(workspacePath), \(homePath)]")
             throw NSError(domain: "ReadFileTool", code: 2, userInfo: [NSLocalizedDescriptionKey: "Path is outside allowed boundaries (Home or Workspace)"])
         }
         

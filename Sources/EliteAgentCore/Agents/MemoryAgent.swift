@@ -12,7 +12,7 @@ public struct MemoryEntry: Codable, Sendable {
     }
 }
 
-public struct ThinkBlock: Codable, Sendable {
+public struct MemoryThinkBlock: Codable, Sendable {
     public let content: String
     public let timestamp: Date
     public init(content: String, timestamp: Date = Date()) {
@@ -24,7 +24,7 @@ public struct ThinkBlock: Codable, Sendable {
 public actor MemoryAgent: AgentProtocol {
     public let agentID: AgentID = .memory
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "none")
+    public let preferredProvider: ProviderID = .none
     public let fallbackProviders: [ProviderID] = []
     
     private let bus: SignalBus
@@ -33,7 +33,7 @@ public actor MemoryAgent: AgentProtocol {
     
     // L1 Context
     private var l1Context: [MemoryEntry] = []
-    private var thinkBuffer: [ThinkBlock] = []
+    private var thinkBuffer: [MemoryThinkBlock] = []
     
     // L2 Storage Paths (Privacy Split - Item 36)
     private let publicL2: URL
@@ -50,7 +50,7 @@ public actor MemoryAgent: AgentProtocol {
     
     public func receive(_ signal: Signal) async throws {
         if signal.name == "THINK_BLOCK" {
-            if let block = try? JSONDecoder().decode(ThinkBlock.self, from: signal.payload) {
+            if let block = try? JSONDecoder().decode(MemoryThinkBlock.self, from: signal.payload) {
                 storeThinkBlock(block)
             }
         } else if signal.name == "ROTATE_LOGS" {
@@ -82,7 +82,7 @@ public actor MemoryAgent: AgentProtocol {
         }
     }
     
-    public func storeThinkBlock(_ block: ThinkBlock) {
+    public func storeThinkBlock(_ block: MemoryThinkBlock) {
         thinkBuffer.append(block)
         if thinkBuffer.count > 5 {
             let oldest = thinkBuffer.removeFirst()

@@ -4,10 +4,18 @@ public struct BrowserConfig: Codable, Sendable {
     public let allowedDomains: [String]
 }
 
+public struct VaultInferenceConfig: Codable, Sendable {
+    public let pauseOnUserInteraction: Bool?
+    
+    public init(pauseOnUserInteraction: Bool?) {
+        self.pauseOnUserInteraction = pauseOnUserInteraction
+    }
+}
+
 public struct VaultConfig: Codable, Sendable {
     public let providers: [ProviderConfig]
     public let routingStrategy: RoutingStrategy
-    public let inference: InferenceConfig?
+    public let inference: VaultInferenceConfig?
     public let browser: BrowserConfig?
 }
 
@@ -43,9 +51,6 @@ public struct ProviderConfig: Codable, Sendable {
     }
 }
 
-public struct InferenceConfig: Codable, Sendable {
-    public let pauseOnUserInteraction: Bool?
-}
 
 public enum RoutingStrategy: String, Codable, Sendable {
     case localFirst = "local_first"
@@ -96,7 +101,7 @@ public actor VaultManager {
                     ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-2.0-flash-lite-preview-02-05", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
                 routingStrategy: .bridgeFirst,
-                inference: InferenceConfig(pauseOnUserInteraction: true),
+                inference: VaultInferenceConfig(pauseOnUserInteraction: true),
                 browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
             )
             let encoder = PropertyListEncoder()
@@ -199,15 +204,12 @@ public actor VaultManager {
         }
         
         do {
-            print("[TRACE] VaultManager: Attempting to read '\(keychainKey)' from Keychain...")
             let keyData = try keychain.read(key: keychainKey)
             guard let keyString = String(data: keyData, encoding: .utf8) else {
                 throw KeychainError.invalidItemFormat
             }
-            print("[TRACE] VaultManager: Successfully retrieved API Key for '\(keychainKey)'.")
             return keyString
         } catch KeychainError.itemNotFound {
-            print("[TRACE] VaultManager: API Key NOT FOUND for identifier '\(keychainKey)'.")
             throw VaultError.missingKeychainResource(keychainKey: keychainKey)
         } catch let error as KeychainError {
             throw VaultError.apiTokenReadFailed(error.description)

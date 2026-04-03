@@ -1,6 +1,8 @@
 import Foundation
 import Combine
 import CryptoKit
+import MLX
+import MLXLLM
 
 public enum ModelLoadState: Int, Codable, Sendable {
     case idle = 0
@@ -12,36 +14,189 @@ public enum ModelLoadState: Int, Codable, Sendable {
     case failed = -1           // Glitch
 }
 
+public enum ModelDeletionError: LocalizedError {
+    case isActive
+    case downloadInProgress
+    case fileSystemError(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .isActive: return "Aktif model silinemez. Lütfen önce başka bir modele geçin."
+        case .downloadInProgress: return "İndirme devam ederken silme işlemi yapılamaz."
+        case .fileSystemError(let msg): return "Dosya sistemi hatası: \(msg)"
+        }
+    }
+}
+
+public enum GGUFValidationError: LocalizedError {
+    case fileNotFound, tooSmall, invalidMagic, unsupportedVersion, noTensors, misaligned
+    public var errorDescription: String? {
+        switch self {
+        case .fileNotFound: return "Dosya bulunamadı"
+        case .tooSmall: return "Dosya boyutu GGUF için çok küçük"
+        case .invalidMagic: return "Dosya GGUF formatında değil"
+        case .unsupportedVersion: return "Desteklenmeyen GGUF versiyonu (v3+ gerekli)"
+        case .noTensors: return "Tensör bilgisi bulunamadı (dosya bozuk)"
+        case .misaligned: return "Hizalama (alignment) kuralına uymuyor"
+        }
+    }
+}
+
 @MainActor
 public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sendable {
     public static let shared = ModelSetupManager()
     
+    public enum ModelState: String, Sendable { 
+        case idle
+        case unloading
+        case loading
+        case verifying
+        case ready
+        case failed 
+    }
+    
+    @Published public var activeModelID: String = "Qwen2.5-7B-Instruct-4bit"
+    @Published public var state: ModelState = .idle
     @Published public var isDownloading = false
     @Published public var downloadProgress: Double = 0.0
     @Published public var currentDownloadTask: String = ""
     @Published public var isModelReady: Bool = false
     @Published public var modelPath: URL? = nil
     @Published public var loadState: ModelLoadState = .idle
+    @Published public var errorMessage: String? = nil
+    
+    private var lastKnownGoodModelID: String = "Qwen2.5-7B-Instruct-4bit"
+    private var rollbackAttempted = false
+    private let hardcodedFallbackID = "Qwen2.5-7B-Instruct-4bit"
     
     private var session: URLSession!
     private var downloadTask: URLSessionDownloadTask?
     private var activeContinuation: CheckedContinuation<URL, Error>?
+    private var currentTask: Task<Void, Error>?
     
-    public let activeModelID = "Qwen2.5-7B-Instruct-4bit"
-    private let hfBaseURL = "https://huggingface.co/mlx-community/Qwen2.5-7B-Instruct-4bit/resolve/main/"
-    private let requiredFiles = [
-        "model.safetensors",
-        "tokenizer.json",
-        "config.json",
-        "tokenizer_config.json"
-    ]
+    private var requiredFiles: [String] {
+        let base = ["tokenizer.json", "config.json", "tokenizer_config.json"]
+        if activeModelID.contains("3.5") || activeModelID.contains("9B") {
+            // MLX 9B 4-bit models are typically sharded into 2 parts (~3GB each)
+            return base + ["model-00001-of-00002.safetensors", "model-00002-of-00002.safetensors"]
+        }
+        return base + ["model.safetensors"]
+    }
     
     private override init() {
         super.init()
         let config = URLSessionConfiguration.default
-        // Delegate queue is main, but delegate methods must still handle isolation correctly
         self.session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
+        
+        // v7.8.6: Pulse check and sync with specialized state
+        self.activeModelID = AISessionState.shared.selectedModel
+        
+        // Initial setup for rollback
+        // v7.8.6: Pulse check and sync with specialized state
+        self.activeModelID = AISessionState.shared.selectedModel
+        
         verifyModelStatus()
+    }
+    
+    public func syncGPU() async {
+        // High-Stability GPU Sync: Forces Metal graph completion before cache clearing
+        await Task.detached(priority: .userInitiated) {
+            MLX.eval()
+            MLX.Memory.clearCache()
+        }.value
+    }
+    
+    public func switchToModel(_ modelID: String) async {
+        guard modelID != activeModelID || state == .failed, state != .loading && state != .unloading else { return }
+        
+        currentTask?.cancel()
+        currentTask = Task {
+            try Task.checkCancellation()
+            
+            // 1. Unload & Synchronize GPU (Thread-Safe)
+            await MainActor.run { 
+                self.state = .unloading 
+                self.errorMessage = nil
+            }
+            await MLXProvider.shared.unloadModel()
+            await syncGPU()
+            
+            let targetDir = getModelDirectory(for: modelID)
+            
+            // 2. Validate Architecture
+            guard validateModelArchitecture(at: targetDir) else {
+                AgentLogger.logAudit(level: .error, agent: "orchestrator", message: "Model \(modelID) architecture not supported or files missing.")
+                await handleLoadFailure(error: "Mimari Desteklenmiyor")
+                return
+            }
+            
+            // 3. Load New Model
+            await MainActor.run { 
+                self.state = .loading 
+                self.activeModelID = modelID 
+            }
+            
+            do {
+                try await MLXProvider.shared.loadModel(modelID)
+                await MainActor.run {
+                    self.state = .ready
+                    self.lastKnownGoodModelID = modelID
+                    self.rollbackAttempted = false
+                    self.verifyModelStatus()
+                }
+                
+                // Invalidate context due to tokenizer change (Async on actor, not UI)
+                await InferenceActor.shared.clearContext()
+            } catch {
+                AgentLogger.logAudit(level: .error, agent: "orchestrator", message: "Failed to switch to model \(modelID): \(error)")
+                await handleLoadFailure(error: error.localizedDescription)
+            }
+        }
+    }
+    
+    private func handleLoadFailure(error: String) async {
+        if !rollbackAttempted && lastKnownGoodModelID != activeModelID {
+            await MainActor.run { 
+                self.state = .failed
+                self.errorMessage = "Hata: \(error). Önceki modele dönülüyor..."
+                self.rollbackAttempted = true
+            }
+            
+            // Wait a moment for UI to show message
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            await switchToModel(lastKnownGoodModelID)
+        } else if rollbackAttempted {
+            // Rollback also failed, try hardcoded fallback
+            await MainActor.run {
+                self.errorMessage = "Rollback başarısız. Kritik kurtarma başlatılıyor..."
+            }
+            // Reset attempt state for final fallback
+            rollbackAttempted = false 
+            await switchToModel(hardcodedFallbackID)
+        } else {
+            await MainActor.run {
+                self.state = .failed
+                self.errorMessage = "Kritik Hata: \(error)"
+            }
+        }
+    }
+    
+    private func validateModelArchitecture(at url: URL) -> Bool {
+        let configURL = url.appendingPathComponent("config.json")
+        guard FileManager.default.fileExists(atPath: configURL.path),
+              let data = try? Data(contentsOf: configURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let architectures = json["architectures"] as? [String] else {
+            return false
+        }
+        
+        // Qwen 3.5 might use Qwen2ForCausalLM as its base architecture or its own.
+        let supported = ["Qwen2ForCausalLM", "MistralForCausalLM", "Qwen2MoEForCausalLM"]
+        return architectures.contains { supported.contains($0) }
+    }
+    
+    private func getHuggingFaceURL(for modelID: String) -> String {
+        return "https://huggingface.co/mlx-community/\(modelID)/resolve/main/"
     }
     
     public func verifyModelStatus() {
@@ -52,7 +207,6 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
             FileManager.default.fileExists(atPath: path.appendingPathComponent($0).path)
         }
         
-        // CORRUPTION CHECK: If config.json contains "Invalid username" or is too small, it's a ghost download
         var isCorrupted = false
         if allExist, let data = try? Data(contentsOf: configURL), let content = String(data: data, encoding: .utf8) {
             if content.contains("Invalid username") || data.count < 100 {
@@ -65,11 +219,12 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
             self.isModelReady = true
             self.modelPath = path
             self.loadState = .ready
+            self.state = .ready
         } else {
             self.isModelReady = false
             self.loadState = .idle
+            self.state = .idle
             if isCorrupted {
-                // Optionally clear the corrupted directory to allow a clean retry
                 try? FileManager.default.removeItem(at: path)
             }
         }
@@ -89,19 +244,19 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
                 }
                 
                 let files = await MainActor.run { self.requiredFiles }
-                let baseUrl = await MainActor.run { self.hfBaseURL }
+                let baseUrl = await MainActor.run { self.getHuggingFaceURL(for: self.activeModelID) }
                 
                 for fileName in files {
                     await MainActor.run { self.currentDownloadTask = fileName }
                     let url = URL(string: baseUrl + fileName)!
                     let localURL = try await self.downloadFile(from: url)
                     
-                    // Integrity Check: Ensure it's not a tiny error page
                     let attributes = try FileManager.default.attributesOfItem(atPath: localURL.path)
-                    let fileSize = attributes[.size] as? Int64 ?? 0
+                    let size = attributes[.size] as? Int64 ?? 0
                     
-                    if fileName == "config.json" && fileSize < 100 {
-                        throw NSError(domain: "ModelSetup", code: 401, userInfo: [NSLocalizedDescriptionKey: "Download failed: Hugging Face returned an error page instead of config.json. Check network/auth."])
+                    // v7.8.5 GGUF Integrity Shield
+                    if fileName.lowercased().hasSuffix(".gguf") {
+                        try await self.verifyGGUF(at: localURL)
                     }
                     
                     let destination = targetDir.appendingPathComponent(fileName)
@@ -109,29 +264,74 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
                         try FileManager.default.removeItem(at: destination)
                     }
                     try FileManager.default.moveItem(at: localURL, to: destination)
+                    print("[SETUP] Downloaded and Verified: \(fileName) (\(size) bytes)")
                 }
                 
-                // Final Step: Verify SHA-256
                 await MainActor.run { self.loadState = .verifying }
-                let weightsURL = targetDir.appendingPathComponent("model.safetensors")
-                let isValid = try await self.verifySHA256(at: weightsURL)
+                
+                // Verify all downloaded safetensors
+                var allValid = true
+                for fileName in files where fileName.contains(".safetensors") {
+                    let weightsURL = targetDir.appendingPathComponent(fileName)
+                    if !((try? await self.verifySHA256(at: weightsURL)) ?? false) {
+                        allValid = false; break
+                    }
+                }
                 
                 await MainActor.run {
-                    if isValid {
-                        self.isDownloading = false
+                    self.isDownloading = false
+                    if allValid {
                         self.verifyModelStatus()
                     } else {
                         self.loadState = .failed
-                        self.isDownloading = false
+                        self.state = .failed
                     }
                 }
             } catch {
                 print("[ModelSetup] Download failed: \(error)")
                 await MainActor.run { 
                     self.loadState = .failed
+                    self.state = .failed
                     self.isDownloading = false 
                 }
             }
+        }
+    }
+    
+    @MainActor
+    public func deleteModel(_ modelID: String) async throws {
+        guard modelID != activeModelID else { throw ModelDeletionError.isActive }
+        
+        // Ensure no active download is conflicting
+        if isDownloading && activeModelID == modelID {
+            throw ModelDeletionError.downloadInProgress
+        }
+        
+        let targetDir = getModelDirectory(for: modelID)
+        guard FileManager.default.fileExists(atPath: targetDir.path) else { return }
+        
+        // 1. Release MLX mmap locks
+        // If we are deleting a non-active model, it might still have been mmapped recently.
+        // We trigger an unload and sync just to be safe if the engine previously touched it.
+        await MLXProvider.shared.unloadModel()
+        await syncGPU()
+        
+        // macOS mmap release grace period
+        await Task.yield()
+        try await Task.sleep(for: .milliseconds(50))
+        
+        // 2. Perform deletion
+        do {
+            try FileManager.default.removeItem(at: targetDir)
+            
+            // 3. Update state consistency
+            if lastKnownGoodModelID == modelID {
+                lastKnownGoodModelID = activeModelID // Reset fallback to currently active
+            }
+            
+            verifyModelStatus()
+        } catch {
+            throw ModelDeletionError.fileSystemError(error.localizedDescription)
         }
     }
     
@@ -165,8 +365,34 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     }
     
     public func getModelDirectory() -> URL {
+        return getModelDirectory(for: activeModelID)
+    }
+    
+    public func getModelDirectory(for id: String) -> URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return appSupport.appendingPathComponent("EliteAgent/Models/\(activeModelID)")
+        return appSupport.appendingPathComponent("EliteAgent/Models/\(id)")
+    }
+    
+    public func isModelAvailable(_ modelID: String) -> Bool {
+        let path = getModelDirectory(for: modelID)
+        return FileManager.default.fileExists(atPath: path.path)
+    }
+    
+    public func modelSize(for modelID: String) async -> String? {
+        let dir = getModelDirectory(for: modelID)
+        return await Task.detached(priority: .utility) {
+            guard let enumerator = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: [.fileSizeKey]) else { return nil }
+            var totalBytes: UInt64 = 0
+            while let fileURL = enumerator.nextObject() as? URL {
+                if let size = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                    totalBytes += UInt64(size)
+                }
+            }
+            let formatter = ByteCountFormatter()
+            formatter.allowedUnits = [.useGB]
+            formatter.countStyle = .file
+            return formatter.string(fromByteCount: Int64(totalBytes))
+        }.value
     }
 }
 
@@ -175,7 +401,14 @@ extension ModelSetupManager: URLSessionDownloadDelegate {
     public nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         // Check HTTP Response Status
         if let response = downloadTask.response as? HTTPURLResponse, response.statusCode != 200 {
-            let error = NSError(domain: "ModelSetup", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP Error \(response.statusCode) during download."])
+            var msg = "HTTP Hatası: \(response.statusCode)"
+            if response.statusCode == 401 || response.statusCode == 403 {
+                msg = "Gated Model: Bu model için Hugging Face üzerinden lisans onayı veya token gerekebilir (401/403)."
+            } else if response.statusCode == 404 {
+                msg = "Model Bulunamadı: Repo ID hatalı veya model yayından kaldırılmış (404)."
+            }
+            
+            let error = NSError(domain: "ModelSetup", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])
             Task { @MainActor in
                 self.activeContinuation?.resume(throwing: error)
                 self.activeContinuation = nil
@@ -216,5 +449,31 @@ extension ModelSetupManager: URLSessionDownloadDelegate {
                 self.activeContinuation = nil
             }
         }
+    }
+
+    // MARK: - GGUF Integrity Shield (v7.8.5)
+    
+    public func verifyGGUF(at url: URL) async throws {
+        guard FileManager.default.fileExists(atPath: url.path) else { throw GGUFValidationError.fileNotFound }
+        
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        
+        guard let header = try handle.read(upToCount: 512) else { throw GGUFValidationError.tooSmall }
+        guard header.count >= 16 else { throw GGUFValidationError.tooSmall }
+        
+        // 1. Magic Logic
+        let magic = Data(header[0..<4])
+        guard magic == Data([0x47, 0x47, 0x55, 0x46]) else { throw GGUFValidationError.invalidMagic }
+        
+        // 2. Version Check (v3+)
+        let version = header[4..<8].withUnsafeBytes { $0.load(as: UInt32.self) }
+        guard version >= 3 else { throw GGUFValidationError.unsupportedVersion }
+        
+        // 3. Tensor Count
+        let tensorCount = header[8..<16].withUnsafeBytes { $0.load(as: UInt64.self) }
+        guard tensorCount > 0 else { throw GGUFValidationError.noTensors }
+        
+        print("[SETUP] GGUF Verification Passed: \(url.lastPathComponent) (Version \(version), Tensors \(tensorCount))")
     }
 }

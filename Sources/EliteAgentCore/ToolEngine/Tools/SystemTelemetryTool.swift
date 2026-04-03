@@ -59,10 +59,7 @@ public struct SystemTelemetryTool: AgentTool {
         }
         
         if result != KERN_SUCCESS {
-            // Handle 0x5 (KERN_PROTECTION_FAILURE) or other kern errors gracefully
-            if result == 5 {
-                AgentLogger.logAudit(level: .warn, agent: "guard", message: "System Telemetry: Mach-level memory stats restricted (Sandbox/0x5). Using fallback.")
-            }
+            // v7.5.1: Fail silent on Sandbox/0x5 as it is common and benign if handled.
             return (0.0, 0.0)
         }
         

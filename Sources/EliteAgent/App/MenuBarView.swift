@@ -20,7 +20,7 @@ public struct MenuBarView: View {
                     .scaleEffect(pulsate ? 1.2 : 1.0)
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(orchestrator.status.rawValue.uppercased())
+                    Text(orchestrator.status.displayString.uppercased())
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .tracking(1.2)
@@ -292,6 +292,7 @@ public struct MenuBarView: View {
         case .waiting, .waitingLLM: return .orange
         case .healing: return .purple
         case .error: return .red
+        case .awaitingFallbackApproval: return .orange
         }
     }
     
