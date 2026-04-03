@@ -5,6 +5,8 @@ import MLXLLM
 /// Orchestration-layer provider that bridges the generic Completion API to the 
 /// hardware-accelerated InferenceActor (Titan Engine).
 public actor MLXProvider: LocalLLMProvider {
+    public static let shared = MLXProvider(providerID: .mlx)
+    
     public nonisolated let providerID: ProviderID
     public nonisolated let providerType: ProviderType = .local
     public let capabilities: Set<Capability> = [.think, .code, .general]
@@ -42,6 +44,11 @@ public actor MLXProvider: LocalLLMProvider {
         }
     }
     
+    public func unloadModel() async {
+        await InferenceActor.shared.unloadModel()
+        self.status = .idle
+    }
+    
     private func getModelURL(for name: String) -> URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return appSupport.appendingPathComponent("EliteAgent/Models/\(name)")
@@ -60,11 +67,24 @@ public actor MLXProvider: LocalLLMProvider {
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens
         )
+        
         var fullContent = ""
+        var firstTokenTime: Date?
+        var tokenCount = 0
         
         for await chunk in stream {
+            if firstTokenTime == nil {
+                firstTokenTime = Date()
+                let initialLatency = String(format: "%.1fs", firstTokenTime!.timeIntervalSince(startTime))
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: First token arrived (\(initialLatency))")
+            }
             fullContent += chunk
+            tokenCount += 1 // One chunk is usually one token or a small set of characters
         }
+        
+        let totalTime = Date().timeIntervalSince(firstTokenTime ?? startTime)
+        let tps = totalTime > 0 ? Double(tokenCount) / totalTime : 0
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Generation speed: \(Int(tps)) t/s")
         
         let latency = Int(Date().timeIntervalSince(startTime) * 1000)
         

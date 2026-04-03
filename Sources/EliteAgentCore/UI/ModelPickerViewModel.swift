@@ -8,6 +8,9 @@ public class ModelPickerViewModel: ObservableObject {
     @Published public var selected: ModelSource?
     @Published public var isLoading: Bool = false
     @Published public var searchText: String = ""
+    @Published public var alertMessage: String?
+    
+    private var cancellables = Set<AnyCancellable>()
     
     private let orchestrator: Orchestrator
     
@@ -53,16 +56,23 @@ public class ModelPickerViewModel: ObservableObject {
     
     public init(orchestrator: Orchestrator) {
         self.orchestrator = orchestrator
+        
+        // Listen for model setup errors to show alerts
+        ModelSetupManager.shared.$errorMessage
+            .receive(on: RunLoop.main)
+            .assign(to: \.alertMessage, on: self)
+            .store(in: &cancellables)
     }
     
     public func loadModels() async {
         isLoading = true
         
         // 1. Dynamic Titan Engine Discovery (MLX)
-        var localModels: [ModelSource] = []
-        if ModelSetupManager.shared.isModelReady {
-            localModels.append(.localMLX(id: "Qwen2.5-7B-Instruct-4bit", name: "Qwen 2.5 7B (Titan)", ramGB: 16, hasThink: false))
-        }
+        // v7.5.5: Qwen 3.5 support (Hybrid Gated DeltaNet)
+        let localModels: [ModelSource] = [
+            .localMLX(id: "Qwen3.5-9B-4bit", name: "Qwen 3.5 9B (Titan v2)", ramGB: 16, hasThink: false),
+            .localMLX(id: "Qwen2.5-7B-Instruct-4bit", name: "Qwen 2.5 7B (Titan)", ramGB: 16, hasThink: false)
+        ]
         
         // 2. Load Custom & Bridge Models from Vault
         let (customModels, bridgeModels) = loadVaultModels()
@@ -72,9 +82,10 @@ public class ModelPickerViewModel: ObservableObject {
         
         self.models = localModels + bridgeModels + openRouterModels + customModels
         
-        // 4. Auto-select Titan if ready
-        if ModelSetupManager.shared.isModelReady, let titan = models.first(where: { $0.id == "Qwen2.5-7B-Instruct-4bit" }) {
-            self.selected = titan
+        // 4. Auto-select active model from SetupManager
+        let activeID = ModelSetupManager.shared.activeModelID
+        if let current = models.first(where: { $0.id == activeID }) {
+            self.selected = current
         } else {
             updateSelectionFromVault()
         }
@@ -155,6 +166,9 @@ public class ModelPickerViewModel: ObservableObject {
     public func selectModel(_ model: ModelSource) {
         self.selected = model
         
+        // v7.8.0 Sync technical ID to centralized state for HarpsichordBridge
+        AISessionState.shared.selectedModel = model.id
+        
         let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return }
         
@@ -164,6 +178,14 @@ public class ModelPickerViewModel: ObservableObject {
                     try await vault.updateModelPricing(for: "openrouter", modelName: id, promptPrice: prompt, completionPrice: completion)
                 } else if case .localMLX(let id, _, _, _) = model {
                     try await vault.updateModelPricing(for: "mlx", modelName: id, promptPrice: 0, completionPrice: 0)
+                    
+                    // Trigger High-Stability Safe Swap
+                    await ModelSetupManager.shared.switchToModel(id)
+                    
+                    // If files are missing, trigger download
+                    if !ModelSetupManager.shared.isModelReady && ModelSetupManager.shared.state != .loading {
+                        ModelSetupManager.shared.startModelDownload()
+                    }
                 } else if case .bridge(let id, _) = model {
                     try await vault.updateModelPricing(for: "bridge", modelName: id, promptPrice: 0, completionPrice: 0)
                 } else if case .custom(let providerID, _, let modelID, _, _) = model {

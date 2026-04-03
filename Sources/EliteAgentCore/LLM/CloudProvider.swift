@@ -11,7 +11,7 @@ public actor CloudProvider: LLMProvider {
     private let vaultManager: VaultManager
     private let endpointURL: URL
     public let modelName: String
-    private let providerConf: ProviderConfig
+    internal let providerConf: ProviderConfig
     
     public init(providerID: ProviderID, vaultManager: VaultManager) throws {
         self.providerID = providerID

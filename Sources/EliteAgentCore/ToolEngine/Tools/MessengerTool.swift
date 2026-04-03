@@ -107,7 +107,7 @@ public struct MessengerTool: AgentTool {
             "        if exists process \"WhatsApp\" then",
             "            set frontmost of process \"WhatsApp\" to true",
             "            if frontmost of process \"WhatsApp\" then",
-            "                delay 0.5",
+            "                delay 1.0",
             "                tell process \"WhatsApp\"",
             "                    keystroke return",
             "                end tell",

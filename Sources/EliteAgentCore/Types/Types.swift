@@ -12,13 +12,32 @@ public enum AgentID: String, Codable, Sendable {
     case browserAgent = "browser_agent"
 }
 
-public enum AgentStatus: String, Sendable {
+public enum FallbackDecision: String, Codable, Sendable {
+    case useCloud
+    case useOllama
+    case cancel
+}
+
+public enum AgentStatus: Sendable, Equatable {
     case idle
     case working
-    case waitingLLM = "waiting_llm"
+    case waitingLLM
     case waiting
     case healing
     case error
+    case awaitingFallbackApproval(taskID: String, error: String)
+    
+    public var displayString: String {
+        switch self {
+        case .idle: return "Idle"
+        case .working: return "Working"
+        case .waitingLLM: return "Waiting for LLM"
+        case .waiting: return "Waiting"
+        case .healing: return "Healing"
+        case .error: return "Error"
+        case .awaitingFallbackApproval: return "Awaiting Approval"
+        }
+    }
 }
 
 public struct TaskStep: Identifiable, Codable, Sendable {
@@ -39,16 +58,57 @@ public struct TaskStep: Identifiable, Codable, Sendable {
     }
 }
 
-public struct ProviderID: RawRepresentable, Codable, Equatable, Hashable, Sendable, ExpressibleByStringLiteral {
-    public let rawValue: String
-    public init(rawValue: String) { self.rawValue = rawValue }
-    public init(stringLiteral value: String) { self.rawValue = value }
+public struct ToolCall: Codable, Sendable {
+    public let tool: String
+    public let params: [String: AnyCodable]
+    
+    public init(tool: String, params: [String: AnyCodable]) {
+        self.tool = tool
+        self.params = params
+    }
+}
+
+public struct ThinkBlock: Sendable {
+    public let thought: String
+    public let toolCall: ToolCall?
+    
+    public init(thought: String, toolCall: ToolCall? = nil) {
+        self.thought = thought
+        self.toolCall = toolCall
+    }
+}
+
+public enum ProviderID: String, Codable, CaseIterable, Sendable {
+    case mlx
+    case bridge
+    case openrouter
+    case none
 }
 
 public enum ProviderType: String, Codable, Sendable {
     case local
     case cloud
     case bridge
+}
+
+public enum FallbackPolicy: String, Codable, Sendable {
+    case strictLocal = "strict_local"
+    case promptBeforeSwitch = "prompt_before_switch"
+    case autoSwitchWithBadge = "auto_switch_with_badge"
+}
+
+public struct InferenceConfig: Codable, Sendable {
+    public var providerPriority: [ProviderID]
+    public var strictLocal: Bool
+    public var requireFallbackApproval: Bool
+    public var fallbackPolicy: FallbackPolicy
+    
+    public static let `default` = InferenceConfig(
+        providerPriority: [.mlx, .bridge, .openrouter],
+        strictLocal: false,
+        requireFallbackApproval: true, // Default to true based on user feedback
+        fallbackPolicy: .promptBeforeSwitch
+    )
 }
 
 public struct AgentHealth: Sendable {
@@ -126,7 +186,7 @@ public enum SignalError: Error, Sendable {
     case invalidDirection(source: AgentID, target: AgentID)
 }
 
-public struct AnyCodable: Decodable {
+public struct AnyCodable: Codable {
     public let value: Any
     
     public init(_ value: Any) {
@@ -142,6 +202,17 @@ public struct AnyCodable: Decodable {
         else if let x = try? container.decode([AnyCodable].self) { value = x.map { $0.value } }
         else if let x = try? container.decode([String: AnyCodable].self) { value = x.mapValues { $0.value } }
         else { throw DecodingError.typeMismatch(AnyCodable.self, .init(codingPath: decoder.codingPath, debugDescription: "Wrong type")) }
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        if let x = value as? Bool { try container.encode(x) }
+        else if let x = value as? Int { try container.encode(x) }
+        else if let x = value as? Double { try container.encode(x) }
+        else if let x = value as? String { try container.encode(x) }
+        else if let x = value as? [Any] { try container.encode(x.map { AnyCodable($0) }) }
+        else if let x = value as? [String: Any] { try container.encode(x.mapValues { AnyCodable($0) }) }
+        else { throw EncodingError.invalidValue(value, .init(codingPath: encoder.codingPath, debugDescription: "Unknown type")) }
     }
 }
 

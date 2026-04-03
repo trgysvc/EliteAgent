@@ -5,7 +5,7 @@ import ApplicationServices
 public actor BrowserAgent: AgentProtocol {
     public let agentID: AgentID = .browserAgent
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "none")
+    public let preferredProvider: ProviderID = .none
     public let fallbackProviders: [ProviderID] = []
     
     private let bus: SignalBus

@@ -1,6 +1,6 @@
 # 🛸 EliteAgent: Master Feature Audit (Kapsamlı Özellik Listesi)
 
-Bu döküman, EliteAgent projesinin ilk satırından son satırına kadar tüm kaynak kodlarının, `devlog.md` kayıtlarının ve `Sources/` dizinindeki tüm araçların (Tools) ve motorların (Engines) taranmasıyla oluşturulmuş **nihai** listedir.
+Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıtlarının ve `Sources/` dizinindeki tüm araçların (Tools) ve motorların (Engines) taranmasıyla oluşturulmuş **nihai** listedir.
 
 ## 1. Mimari ve Altyapı (System Architecture)
 - **XPC Microservices Engine**: Ana uygulamanın arayüzünü dondurmamak için `EliteAgentXPC` servisi üzerinden asenkron işlem yürütme.
@@ -8,67 +8,54 @@ Bu döküman, EliteAgent projesinin ilk satırından son satırına kadar tüm k
 - **Sparkle Auto-Update (v14.0+)**: Uygulamanın arka planda otonom olarak kendi güncel versiyonlarını takip etmesi ve yüklemesi.
 - **Sandbox-Free OS Integration**: Tam dosya sistemi ve shell yetkisi (App Sandbox devredışı), Enterprise seviyesi yetkilendirme.
 - **HIG Compliance Logic**: Apple Human Interface Guidelines'a %100 uyumlu dosya hiyerarşisi (`PathConfiguration`).
-    - `Application Support`: `~/Library/Application Support/EliteAgent`
-    - `Logs`: `~/Library/Logs/EliteAgent`
-    - `Caches`: `~/Library/Caches/EliteAgent`
+- **PVP (Production Verification Protocol) [v7.8.5]**: Üretim öncesi bellek baskısı, dosya bütünlüğü ve fallback mekanizmalarını test eden CLI doğrulama süiti (`elite --verify-pvp`).
+- **Privacy Manifest (2024) [v7.8.5]**: Apple'ın yeni gizlilik gereksinimlerine uyumlu `PrivacyInfo.xcprivacy` beyanı.
 - **SignalBus (Priority Management)**: `.critical`, `.high` ve `.normal` öncelikli işlem kuyrukları.
 
 ## 2. Titan Yerel Zeka (Intelligence Layer)
 - **MLX Local Provider**: Apple Silicon (NPU/GPU) üzerinde çalışan `InferenceActor` ile tamamen internetten bağımsız çıkarım (Offline Intelligence).
-- **4-bit Quantization Support**: Llama, Phi ve Mistral modelleri için optimize edilmiş GPU bellek kullanımı.
-- **Hybrid Reasoning (Cloud/Local)**: Intent Classification (Niyet Sınıflandırma) ile görevin karmaşıklığına göre en uygun modele geçiş.
-- **RAG Memory Bridge**: `MemoryAgent` ve `MemoryTool` ile geçmiş deneyimlerin (Store Experience) kalıcı hafızaya alınması.
-- **Qwen 2.5 Engine (7B-4bit)**: M4-optimized NPU/GPU native yerel SLM entegrasyonu.
-- **ChatML Template Engine**: Qwen-specific prompt formatlama ve akıllı context yönetimi.
+- **GGUF Integrity Shield [v7.8.5]**: Model dosyaları için zorunlu Magic Byte, Versiyon (v3+) ve Tensör Sayısı doğrulaması.
+- **Unified Memory Diagnostics [v7.8.5]**: `host_statistics64` ile macOS birleşik bellek takibi ve kritik RAM basıncında otomatik blokaj.
+- **Inference Analytics Dashboard [v7.8.5]**: Anlık Latency (ms), TPS (Token/Sec) ve Fallback sayacı takibi (`AISessionState`).
+- **Metadata-First Streaming [v7.8.5]**: Çıkarım başladığı an ilk paket olarak gönderilen `metadata` ile anlık UI badge güncellemesi.
+- **Hybrid Reasoning (Cloud/Local)**: Intent Classification ile görevin karmaşıklığına göre en uygun modele geçiş.
+- **Qwen 3.5 9B Engine**: Apple Silicon için optimize edilmiş, donanım hızlandırmalı amiral gemisi yerel zeka motoru (v8.0/v7.8.5).
 
 ## 3. Görsel ve Teknik Sunum (Visualizers)
-- **Neural Sight (Metal Engine)**: AI'nın her bir düşünce katmanını 3D Point Cloud (nokta bulutu) olarak 120 FPS'te canlandıran Metal Shader'ları.
-- **Triple-Buffering Logic**: CPU ve GPU arasında 0-latency (race-condition free) veri senkronizasyonu.
-- **Semantic Awaken States**: Yükleme sırasında (Pulse/Gather/Glow) görsel durum geri bildirimi.
+- **Neural Sight (Metal Engine)**: AI'nın her bir düşünce katmanını 3D Point Cloud olarak 120 FPS'te canlandıran Metal Shader'ları.
+- **Async Process Timeline**: `InferenceActor` adımlarının (Reasoning, Extraction, Generation) `AsyncStream` ile bir timeline üzerinde anlık görselleştirilmesi.
 - **vDSP Dynamic Waveform**: Apple Accelerate kullanarak akışkan, gradyanlı ve yüksek çözünürlüklü ses dalgası görselleştirmesi.
 - **Röntgen Card UI**: Adli ve biyolojik ses verilerini glassmorphism efektiyle sunan SwiftUI-native analiz kartı.
 
 ## 4. Donanım Koruma ve İzleme (Safety & Health)
-- **Hardware Protection Shield**: İşlemci aşırı ısındığında GPU yükünü (visualizer) azaltan otonom refleks sistemi.
-- **Thermal Watchdog**: `ProcessInfo.thermalState` verilerinin saniyelik takibi ve termal dalgalanma uyarısı.
-- **Memory Pressure Manager**: RAM şişmelerinde (özellikle SLM kullanımı sırasında) "Zarif Geri Çekilme" (Graceful Degradation) protokolleri.
-- **Prompt Sanitizer**: Kullanıcı ve sistem arasındaki tüm veri akışında PII (Kişisel veri) ve API anahtarı sızma koruması.
+- **Hardware Protection Shield**: İşlemci aşırı ısındığında GPU yükünü azaltan otonom refleks sistemi.
+- **Thermal Watchdog**: `ProcessInfo.thermalState` verilerinin saniyelik takibi.
+- **Memory Pressure Manager**: RAM şişmelerinde "Zarif Geri Çekilme" (Graceful Degradation) protokolleri.
 - **Adaptive Thermal Throttling**: NPU/GPU üretimi sırasında `serious` ve `critical` ısı durumlarında akıllı yavaşlatma.
-- **Memory-Efficient Integrity Shield**: 5GB+ ağırlıkların 64MB chunked SHA-256 ile güvenli doğrulanması.
+- **Deterministic mmap Cleanup**: Model silme veya değiştirme sırasında MLX bellek kilitlerini (mmap lock) çözen 50ms bekleme protokolü.
 
 ## 5. Universal Tool Ecosystem (Araç Seti)
 - **Dosya ve Döküman (High-Speed I/O)**:
-    - `WriteFileTool`: Mutlak yol (absolute path) ve tilde (~) desteğiyle güvenli yazma.
-    - `ReadFileTool`: PDF (PDFKit), DOCX (textutil) ve Markdown operasyonları.
-- **Otonom Kodlama ve Git**:
+    - **DocEye v2**: 50MB+ dökümanların `mappedIfSafe` ile bellek dostu işlenmesi.
     - `PatchTool`: Atomik ve diff-tabanlı kod düzeltme (context korumalı).
     - `GitTool`: Kod tabanında otonom `status`, `diff`, `commit` ve `revert` yetenekleri.
 - **İletişim ve Otomasyon (System Protocols)**:
-    - **WhatsApp Otonom Mesajlaşma**: `MessengerTool` üzerinden UI otomasyonu ile mesaj gönderimi.
-    - **Apple Mail & Calendar**: `apple_mail` ve `apple_calendar` araçlarıyla doğrudan sistem randevu ve e-posta kontrolü.
+    - **Otonom Mesajlaşma (WhatsApp/iMessage)**: `MessengerTool` üzerinden UI otomasyonu ve akıllı Contacts lookup.
+    - **Localized Tool Errors [v7.8.5]**: Araç hataları için anlaşılır, kullanıcı dilinde (TR) hata bildirimleri ("Eksik Parametre" vb.).
+    - **Apple Mail & Calendar**: Takvim randevuları ve e-posta kontrolü.
     - **MediaController**: Apple Music arama, çalma ve sistem ses kontrolü.
 - **Web Zekası**:
-    - `BraveSearch`: Brave Search API üzerinden güncel, doğru ve reklamsız dünya bilgisi.
-    - `WebFetch`: Dinamik HTML sayfalarını okuyup otonom olarak Markdown'a çevirme.
+    - `BraveSearch`: Güncel, doğru ve reklamsız dünya bilgisi.
+    - `WebFetch`: Dinamik HTML sayfalarını Markdown'a çevirme.
 - **Vision (Bilgisayarlı Görü)**:
-    - `ImageAnalysisTool`: Apple Vision framework ile ekran/dosya OCR ve UI koordinat çıkarma.
+    - `ImageAnalysisTool`: Apple Vision OCR ve UI koordinat çıkarma.
 
 ## 6. Music DNA: Biologic MIR Engine (EliteMIR)
-- **Spectral DNA (DSP Core)**:
-    - `STFTEngine`: Zaman-Frekans dönüşümü (Short-Time Fourier Transform).
-    - `MelFilterBank`: İnsan kulağına göre kalibre edilmiş 128-band Mel Spectrogram.
-    - `CQTEngine`: Müzikal notalara duyarlı Constant-Q Transform.
-    - **Chroma CENS (v7.1)**: Kapak şarkısı ve değişim tespiti için enerji-normalize harmonik parmak izi (L1-Smooth-L2).
-- **Analysis Modules**:
-    - `YINEngine`: Hassas Pitch (perde) takibi ve ton tespiti.
-    - `HPSSEngine`: Harmonik ve Perküsif (vokal vs beat) ayrıştırma.
-    - `MFCCEngine`: Ses tınısını (timbre) belirleyen ilk 20 katsayı.
-    - `Onset/RhythmEngine`: BPM, Beat grid ve vuruş tutarlılık analizi.
-    - **Multi-Band PLP (v7.1)**: Çok bantlı (Sub/Low/Mid/High) predominant local pulse tahmini.
-    - `StructureEngine`: Şarkının bölümlerini (Verse, Chorus, Bridge) tespit eden segmentasyon.
-- **Forensic Röntgen (Evidence)**:
-    - `ForensicDNAEngine`: Dosya kaynağı (WhereFroms), dijital imzalar ve kodlayıcı tespiti.
+- **Spectral DNA (DSP Core)**: `STFTEngine`, `MelFilterBank`, `CQTEngine`.
+- **Chroma CENS (v7.1)**: Enerji-normalize harmonik parmak izi (L1-Smooth-L2).
+- **Multi-Band PLP (v7.1)**: Çok bantlı (Sub/Low/Mid/High) predominant local pulse (ritim) tahmini.
+- **Analysis Modules**: `YINEngine` (Pitch), `HPSSEngine` (Harmonic/Percussive), `StructureEngine` (Segmentation).
 - **AI Works Center**: Raporların `~/Documents/AI Works` klasöründe profesyonel PDF/MD/JSON olarak arşivlenmesi.
 
 ---
-*EliteAgent Core · Version 7.1 Master List · April 2026*
+*EliteAgent Core · Version 7.8.5 Hardening Update · April 2026*

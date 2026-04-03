@@ -10,7 +10,7 @@ public enum PrivacyDecision: String, Codable, Sendable {
 public actor GuardAgent: AgentProtocol {
     public let agentID: AgentID = .guard_
     public private(set) var status: AgentStatus = .idle
-    public let preferredProvider: ProviderID = ProviderID(rawValue: "mlx")
+    public let preferredProvider: ProviderID = .mlx
     
     // Never access cloud provider - inherently bypassed becausefallback is empty 
     // And compile time constraint localModel: any LocalLLMProvider ensures it.

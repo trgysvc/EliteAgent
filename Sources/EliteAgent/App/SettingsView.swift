@@ -111,6 +111,9 @@ struct AISettingsView: View {
     @ObservedObject var modelPickerVM: ModelPickerViewModel
     @Binding var showingTitanSetup: Bool
     
+    // v7.8.0 Centralized State
+    @State private var sessionState = AISessionState.shared
+    
     var body: some View {
         Form {
             Section("Aktif Zeka Modeli") {
@@ -149,6 +152,66 @@ struct AISettingsView: View {
                     Text("Model Seçilmedi")
                         .foregroundStyle(.secondary)
                 }
+            }
+            
+            Section("Inference Engine Status") {
+                HStack {
+                    Label("Active Provider", systemImage: "server.rack")
+                    Spacer()
+                    Text(sessionState.activeProvider)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(sessionState.isFallbackActive ? .orange : .accentColor)
+                }
+                
+                if sessionState.isFallbackActive {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text("Cloud Fallback Active: Local engine failover triggered.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
+            Section("Inference Analytics (v7.8.5)") {
+                LabeledContent("Last Latency") {
+                    Text(String(format: "%.2fs", sessionState.lastInferenceLatency))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(sessionState.lastInferenceLatency > 5 ? Color.orange : Color.primary)
+                }
+                
+                LabeledContent("Throughput") {
+                    Text(String(format: "%.1f t/s", sessionState.tokensPerSecond))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(sessionState.tokensPerSecond < 10 ? Color.secondary : Color.green)
+                }
+                
+                LabeledContent("Cloud Fallbacks") {
+                    HStack {
+                        Text("\(sessionState.fallbackCount)")
+                        if sessionState.fallbackCount > 0 {
+                            Button("Reset") { sessionState.fallbackCount = 0 }
+                                .buttonStyle(.plain)
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+            }
+            
+            Section("Fallback Policy") {
+                Picker("Hata Politika Yönetimi", selection: $sessionState.fallbackPolicy) {
+                    Text("Always Prompt (Safe)").tag(FallbackPolicy.promptBeforeSwitch)
+                    Text("Strict Local (No Cloud)").tag(FallbackPolicy.strictLocal)
+                    Text("Auto Fallback (Silent)").tag(FallbackPolicy.autoSwitchWithBadge)
+                }
+                .pickerStyle(.menu)
+                .help("Yerel model çalışmadığında sistemin nasıl davranacağını belirler.")
+                
+                Text(policyExplanation)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
             
             Section("Yüklü Yerel Modeller (Titan)") {
@@ -204,6 +267,14 @@ struct AISettingsView: View {
         .navigationTitle("Yapay Zekâ Ayarları")
     }
     
+    private var policyExplanation: String {
+        switch sessionState.fallbackPolicy {
+        case .promptBeforeSwitch: return "Önerilen: Yerel model hata verirse buluta geçmeden önce onayınızı ister."
+        case .strictLocal: return "Güvenli: Bulut servislerine geçişi tamamen engeller. Hata durumunda işlem durur."
+        case .autoSwitchWithBadge: return "Hızlı: Kesintisiz deneyim için otomatik buluta geçer, küçük bir rozetle uyarır."
+        }
+    }
+
     private func openVaultConfig() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let vaultURL = appSupport.appendingPathComponent("EliteAgent/vault.plist")

@@ -9,6 +9,7 @@ public enum Capability: String, Codable, Sendable, Hashable {
 }
 
 public enum ProviderStatus: String, Codable, Sendable {
+    case idle
     case ready
     case loading
     case priming
