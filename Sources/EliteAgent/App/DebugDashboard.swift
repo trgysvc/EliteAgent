@@ -10,6 +10,7 @@ struct DebugDashboard: View {
     @State private var showSaveSuccess = false
     
     let orchestrator: Orchestrator
+    let modelPickerVM: ModelPickerViewModel
     let keychain = KeychainHelper()
     
     var body: some View {
@@ -53,12 +54,14 @@ struct DebugDashboard: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
                     
-                    Button("Save") {
+                    Button("Kaydet") {
                         saveManualKey()
                     }
                     .buttonStyle(.bordered)
                     .disabled(newKey.isEmpty)
                 }
+                .accessibilityLabel("API Anahtarı Girişi")
+                .accessibilityHint("Yeni bir API anahtarı kaydederek Keychain'i günceller")
                 
                 if showSaveSuccess {
                     Text("✅ Key saved to Keychain!")
@@ -72,12 +75,14 @@ struct DebugDashboard: View {
             Button(action: runDiagnostics) {
                 HStack {
                     Image(systemName: "arrow.clockwise")
-                    Text("Run Health Check")
+                    Text("Tanı Kiti Çalıştır")
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .disabled(isChecking)
+            .accessibilityLabel("Tanılama")
+            .accessibilityHint("Sistem bağlantılarını ve anahtar erişimini test eder")
             
             Text("Tip: If XPC fails with 0x5, ensure the app is signed with the same Team ID as the service.")
                 .font(.caption2)
@@ -104,9 +109,8 @@ struct DebugDashboard: View {
             
             // 2. Check API Key presence
             do {
-                let defaultVaultPath = PathConfiguration.shared.vaultURL
-                let manager = try VaultManager(configURL: defaultVaultPath)
-                if let provider = await manager.config.providers.first(where: { $0.type == .cloud }) {
+                let manager = try VaultManager(configURL: PathConfiguration.shared.vaultURL)
+                if let provider = manager.config.providers.first(where: { $0.type == .cloud }) {
                     _ = try await manager.getAPIKey(for: provider)
                     apiKeyState = "✅ Key Found & Accessible"
                 } else {
@@ -128,6 +132,42 @@ struct DebugDashboard: View {
                 newKey = ""
                 showSaveSuccess = true
                 runDiagnostics()
+                
+                // v7.8.9: Crucial - Ensure OpenRouter is in the Vault Config
+                Task {
+                    let defaultVaultPath = PathConfiguration.shared.vaultURL
+                    if let vault = try? VaultManager(configURL: defaultVaultPath) {
+                        // If no openrouter provider, create it
+                        if !vault.config.providers.contains(where: { $0.id == "openrouter" }) {
+                            let orConf = ProviderConfig(
+                                id: "openrouter",
+                                type: .cloud,
+                                endpoint: "https://openrouter.ai/api/v1",
+                                keychainKey: "OPENROUTER_API_KEY",
+                                modelName: "google/gemini-flash-1.5",
+                                capabilities: ["vision", "tools"],
+                                costPer1KTokens: nil,
+                                promptPrice: nil,
+                                completionPrice: nil,
+                                maxContextTokens: 200000,
+                                temperature: 0.7,
+                                topP: 1.0,
+                                maxTokens: 4096
+                            )
+                            
+                            try? await vault.addProvider(orConf)
+                            print("[DebugDashboard] Added missing OpenRouter provider to Vault")
+                        }
+                    }
+                    
+                    // Trigger smart discovery and auto-activation across all instances
+                    NotificationCenter.default.post(name: NSNotification.Name("CredentialsUpdated"), object: nil)
+                    
+                    await modelPickerVM.loadModels()
+                    await MainActor.run {
+                        modelPickerVM.autoSelectPreferredModel()
+                    }
+                }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                     showSaveSuccess = false
@@ -162,13 +202,12 @@ struct ConnectivityRow: View {
     let status: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
             Text(status)
-                .font(.body)
-                .fontWeight(.medium)
+                .font(.body.weight(.medium))
         }
     }
 }

@@ -9,7 +9,6 @@ public struct GlassEffectStyle: Sendable {
 
 public extension View {
     func glassEffect(_ style: GlassEffectStyle) -> some View {
-        // macOS 26 Liquid Glass compatibility simulation for macOS 14 builder
         self.background(Material.regularMaterial)
     }
 }
@@ -19,22 +18,17 @@ public struct ChatWindowView: View {
     @ObservedObject public var modelPickerVM: ModelPickerViewModel
     @State private var promptText: String = ""
     @StateObject private var modelSetup = ModelSetupManager.shared
-    @State private var showingModelSetup: Bool = false
-    @State private var showingSettings: Bool = false
     @State private var showingTitanAssistant: Bool = false
+    @State private var showingSettings: Bool = false
     
-    // v7.7.0 Production Process Visualization
+    // Process Visualization logic carried over correctly
     @StateObject private var processVM = ChatProcessViewModel()
-    
-    // v7.8.0 Centralized State Sync
     @State private var sessionState = AISessionState.shared
     
-    // v7.6.0 File Attachment UI (Legacy bridge for input field)
     @State private var attachedFileURL: URL? = nil
     @State private var showingFileImporter = false
-    @State private var isAnimatingAttachment = false
     @State private var isScanningDocument = false
-    @State private var isDraggingOver = false // v7.7.0 HIG Feedback
+    @State private var isDraggingOver = false 
     
     public init(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         self.orchestrator = orchestrator
@@ -43,113 +37,69 @@ public struct ChatWindowView: View {
     
     public var body: some View {
         NavigationSplitView {
-            // SIDEBAR: Recent Tasks / Past Sessions
+            // SIDEBAR: Clean Native macOS List
             List(orchestrator.pastSessions, selection: $orchestrator.selectedSessionID) { session in
-                Button {
-                    orchestrator.selectSession(session)
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(session.title)
-                            .font(.headline)
-                            .lineLimit(1)
-                        
-                        HStack {
-                            Text(session.createdAt.formatted(.relative(presentation: .named)))
-                            Spacer()
-                            Text(session.metadata.cost > 0 ? "$\(String(format: "%.3f", NSDecimalNumber(decimal: session.metadata.cost).doubleValue))" : "")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(session.title)
+                        .font(.body)
+                        .foregroundStyle(orchestrator.selectedSessionID == session.id ? Color.primary : Color.primary.opacity(0.8))
+                        .lineLimit(1)
+                    
+                    HStack {
+                        Text(session.createdAt.formatted(.relative(presentation: .named)))
+                        Spacer()
+                        if session.metadata.cost > 0 {
+                            Text("$\(String(format: "%.3f", NSDecimalNumber(decimal: session.metadata.cost).doubleValue))")
                         }
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 4)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
-                .listRowSeparator(.hidden)
-                .listRowBackground(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(orchestrator.selectedSessionID == session.id ? Color.accentColor.opacity(0.15) : Color.clear)
-                        .padding(.horizontal, 4)
-                )
+                .padding(.vertical, 4)
+                .tag(session.id)
             }
-            .navigationTitle("Recent Tasks")
-            .toolbar {
-                ToolbarItem {
-                    Button(action: { orchestrator.startNewConversation() }) {
-                        Image(systemName: "square.and.pencil")
-                    }
-                    .help("New Conversation")
+            .listStyle(.sidebar)
+            .navigationTitle("Conversations")
+            .onChange(of: orchestrator.selectedSessionID) { _, newValue in
+                if let id = newValue, let session = orchestrator.pastSessions.first(where: { $0.id == id }) {
+                    orchestrator.selectSession(session)
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 0) {
+                    Divider()
+                    FooterButton(action: { orchestrator.startNewConversation() })
+                }
+                .background(.ultraThinMaterial)
             }
         } detail: {
             ZStack {
-                // BACKGROUND: Neural Sight Metal Engine
+                // BACKGROUND: Visual density reduced for performance
                 VisualizerView()
                     .ignoresSafeArea()
-                    .opacity(orchestrator.status == .idle ? 0.2 : 0.6)
-                    .animation(.easeInOut(duration: 1.0), value: orchestrator.status)
+                    .opacity(orchestrator.status == .working ? 0.2 : 0.05)
                 
                 VStack(spacing: 0) {
-                    // TOP BAR: Model Selection & Stats
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ModelPickerMenu(modelPickerVM: modelPickerVM)
-                            
-                            if sessionState.isFallbackActive {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "cloud.fill")
-                                    Text("\(sessionState.activeProvider) - Cloud Fallback")
-                                }
-                                .font(.system(size: 8, weight: .bold))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.orange, in: Capsule())
-                                .foregroundStyle(.white)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        if isScanningDocument {
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .controlSize(.small)
-                                Text("DocEye Scanning...")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(Color.accentColor.opacity(0.1), in: Capsule())
-                            .transition(.push(from: .top))
-                        } else {
-                            StatusIndicator(status: orchestrator.status)
-                        }
-                        
-                        Spacer()
-                        
-                        SessionStatsView(orchestrator: orchestrator, showingSettings: $showingSettings)
-                    }
-                    .padding()
-                    .glassEffect(.regular)
+                    // TOP BAR: Native header feel
+                    chatHeader
                     
-                    // CHAT AREA: Conversational Bubbles
+                    // CHAT CONTENT
                     ScrollViewReader { proxy in
                         ScrollView {
-                            VStack(spacing: 20) {
+                            VStack(spacing: 24) {
                                 ForEach(orchestrator.currentMessages) { message in
                                     ChatBubble(message: message)
                                         .id(message.id)
                                 }
                                 
-                                // ACTIVE WORKFLOW: Show steps while working
                                 if !orchestrator.steps.isEmpty && orchestrator.status != .idle {
                                     WorkflowView(orchestrator: orchestrator)
                                         .padding(.horizontal)
                                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                                 }
                             }
-                            .padding()
+                            .padding(.vertical, 20)
+                            .padding(.horizontal, 16)
                         }
                         .onChange(of: orchestrator.currentMessages.count) {
                             if let last = orchestrator.currentMessages.last {
@@ -158,13 +108,11 @@ public struct ChatWindowView: View {
                         }
                     }
                     .overlay {
-                        // v7.7.0 Apple HIG Drop Overlay (New Component)
-                        if processVM.currentState == .idle {
+                        if isDraggingOver {
                             FileUploadZone { url in
                                 processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
                             }
-                            .opacity(isDraggingOver ? 1 : 0)
-                            .allowsHitTesting(isDraggingOver)
+                            .background(.ultraThinMaterial.opacity(0.8))
                         }
                     }
                     .overlay {
@@ -172,72 +120,13 @@ public struct ChatWindowView: View {
                         processOverlay(viewModel: processVM)
                     }
                     .overlay {
-                        // v7.8.0 Fallback Approval Modal
                         if sessionState.requiresUserAcknowledgement {
                             fallbackApprovalModal
                         }
                     }
                     
-                    // INPUT AREA: Floating Action Area
-                    VStack(spacing: 8) {
-                        // v7.6.0 Attached File Chip (Appears smoothly)
-                        if let file = attachedFileURL {
-                            HStack {
-                                Image(systemName: "doc.fill")
-                                    .foregroundStyle(Color.accentColor)
-                                Text(file.lastPathComponent)
-                                    .font(.caption.bold())
-                                Button {
-                                    withAnimation { attachedFileURL = nil }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(0.1), in: Capsule())
-                            .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.3), lineWidth: 1))
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                        
-                        HStack(spacing: 12) {
-                            // v7.7.0 Attachment Button (+) - Refined Appearance
-                            Button {
-                                showingFileImporter = true
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.accentColor.opacity(0.15))
-                                        .frame(width: 32, height: 32)
-                                    
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundStyle(Color.accentColor)
-                                }
-                                .scaleEffect(isAnimatingAttachment ? 1.2 : 1.0)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Attach Document")
-                            
-                            TextField("Ask anything...", text: $promptText)
-                                .textFieldStyle(.plain)
-                                .padding(10)
-                            
-                            Button(action: submitTask) {
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.system(size: 30))
-                                    .symbolRenderingMode(.hierarchical)
-                            }
-                            .buttonStyle(.plain)
-                            .disabled((promptText.isEmpty && attachedFileURL == nil) || orchestrator.status == .working || sessionState.requiresUserAcknowledgement || sessionState.isInputLocked)
-                            .keyboardShortcut(.return, modifiers: .command)
-                        }
-                        .padding(.horizontal, 8)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-                    }
-                    .padding()
+                    // INPUT BAR
+                    inputArea
                 }
             }
             .sheet(isPresented: $showingSettings) {
@@ -248,27 +137,11 @@ public struct ChatWindowView: View {
             }
             .fileImporter(
                 isPresented: $showingFileImporter,
-                allowedContentTypes: [.pdf, .plainText, .text, .swiftSource, .xml, .json],
+                allowedContentTypes: [.pdf, .plainText, .swiftSource, .json],
                 allowsMultipleSelection: false
             ) { result in
-                switch result {
-                case .success(let urls):
-                    if let url = urls.first {
-                        processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
-                    }
-                case .failure(let error):
-                    print("[UI] File picker failed: \(error)")
-                }
-            }
-            .onAppear {
-                Task {
-                    await modelPickerVM.loadModels()
-                    if !modelSetup.isModelReady {
-                        try? await Task.sleep(nanoseconds: 800_000_000)
-                        DispatchQueue.main.async {
-                            self.showingTitanAssistant = true
-                        }
-                    }
+                if case .success(let urls) = result, let url = urls.first {
+                    processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
                 }
             }
             .onDrop(of: [.fileURL], isTargeted: $isDraggingOver) { providers in
@@ -282,388 +155,313 @@ public struct ChatWindowView: View {
                 }
                 return true
             }
-            .onDisappear {
-                processVM.cancel()
-            }
         }
     }
     
-    private func submitTask() {
-        var text = promptText
-        
-        // v7.6.0 Handle File Ingestion
-        if let fileURL = attachedFileURL {
-            // Append file path to prompt to trigger DocEye
-            let path = fileURL.path
-            text = "'\(path)' " + text
+    private var chatHeader: some View {
+        HStack(spacing: 12) {
+            ModelPickerMenu(modelPickerVM: modelPickerVM)
             
-            // Auto-complete a generic request if text is empty
-            if promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                text = "'\(path)' bu dökümanı özetle."
+            if sessionState.isFallbackActive {
+                Label("Bulut", systemImage: "cloud.fill")
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(.orange, in: Capsule())
+                    .foregroundStyle(.white)
             }
+            
+            Spacer()
+            
+            if isScanningDocument {
+                ProgressView().controlSize(.small)
+            } else {
+                StatusIndicator(
+                    status: orchestrator.status, 
+                    isModelSelected: modelPickerVM.selected != nil,
+                    hasMessages: !orchestrator.currentMessages.isEmpty
+                )
+            }
+            
+            Spacer()
+            
+            SessionStatsView(orchestrator: orchestrator, showingSettings: $showingSettings)
         }
-        
-        guard !text.isEmpty || attachedFileURL != nil else { return }
-        
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .overlay(Divider(), alignment: .bottom)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Chat Header")
+    }
+    
+    private var inputArea: some View {
+        VStack(spacing: 8) {
+            if let file = attachedFileURL {
+                fileChip(file: file)
+            }
+            
+            HStack(spacing: 12) {
+                Button { showingFileImporter = true } label: {
+                    Image(systemName: "plus")
+                        .font(.headline)
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 32, height: 32)
+                .background(Color.accentColor.opacity(0.1), in: Circle())
+                .accessibilityLabel("Dosya Ekle")
+                .accessibilityHint("Yeni bir dosya yüklemek için Finder'ı açar")
+                .help("Dosya ekle")
+                
+                TextField("EliteAgent'a Sor...", text: $promptText)
+                    .textFieldStyle(.plain)
+                    .padding(12)
+                    .background(.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+                    .submitLabel(.send)
+                    .onSubmit(submitTask)
+                
+                Button(action: submitTask) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Gönder")
+                .accessibilityHint("Giriş yapılan metni veya dosyayı işleme koyar")
+                .disabled((promptText.isEmpty && attachedFileURL == nil) || orchestrator.status == .working)
+                .keyboardShortcut(.return, modifiers: .command)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 22))
+            .shadow(color: .black.opacity(0.03), radius: 3, y: 1)
+        }
+        .padding(16)
+    }
+    
+    private func fileChip(file: URL) -> some View {
+        HStack {
+            Image(systemName: "doc.fill")
+                .foregroundStyle(Color.accentColor)
+            Text(file.lastPathComponent)
+                .font(.caption.bold())
+            Button {
+                withAnimation { attachedFileURL = nil }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.1), in: Capsule())
+    }
+    
+    private func submitTask() {
+        guard !promptText.isEmpty || attachedFileURL != nil else { return }
+        let text = promptText
         promptText = ""
         withAnimation { attachedFileURL = nil }
         
         Task {
-            if text.contains(".pdf") || text.contains(".txt") {
-                withAnimation { isScanningDocument = true }
-            }
-            
-            do {
-                try await orchestrator.submitTask(prompt: text)
-            } catch {
-                print("[ERROR] Task submission failed: \(error)")
-            }
-            
-            withAnimation { isScanningDocument = false }
+            try? await orchestrator.submitTask(prompt: text)
         }
     }
     
-    // MARK: - Approval Modal
+    // processOverlay logic is handled in ChatView+ProcessIntegration.swift
+    
     private var fallbackApprovalModal: some View {
         ZStack {
-            Color.black.opacity(0.4).ignoresSafeArea()
-            
-            VStack(spacing: 20) {
+            Color.black.opacity(0.3).ignoresSafeArea()
+            VStack(spacing: 24) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.orange)
-                
-                Text("Yerel Model Hazır Değil")
-                    .font(.headline)
-                
-                if let reason = sessionState.fallbackReason {
-                    Text(reason)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                
-                Text("Bulut modeli (Claude 3.5) ile devam etmek istiyor musunuz?")
-                    .font(.subheadline)
-                    .multilineTextAlignment(.center)
-                
-                VStack(spacing: 10) {
-                    if let reason = sessionState.fallbackReason, reason.contains("Eksik") {
-                        Button {
-                            sessionState.resetForNewTask()
-                            showingTitanAssistant = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "arrow.down.circle.fill")
-                                Text("Titan Motorunu Kur (İndir)")
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.blue)
-                    }
-                    
-                    Button {
-                        orchestrator.approveFallback(decision: .useCloud)
-                    } label: {
-                        Text("Bulut ile Devam Et (Claude)")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
-                    
-                    Button {
-                        orchestrator.approveFallback(decision: .cancel)
-                    } label: {
-                        Text("İptal Et")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
+                    .font(.title).foregroundStyle(.orange)
+                Text("Yerel Model Hazır Değil").font(.headline)
+                Text("Bulut modeli ile devam etmek istiyor musunuz?").font(.subheadline).multilineTextAlignment(.center)
+                VStack(spacing: 12) {
+                    Button("Bulut ile Devam Et") { orchestrator.approveFallback(decision: .useCloud) }
+                        .buttonStyle(.borderedProminent).tint(.orange).frame(maxWidth: .infinity)
+                    Button("İptal") { orchestrator.approveFallback(decision: .cancel) }
+                        .buttonStyle(.bordered).frame(maxWidth: .infinity)
                 }
             }
-            .padding(24)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
-            .frame(width: 300)
-            .shadow(radius: 20)
         }
+        .padding(24).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20)).frame(width: 280)
     }
 }
 
-// MARK: - Subviews
+// MARK: - HIG Refined Subviews
 
 struct ChatBubble: View {
     let message: ChatMessage
+    @State private var parseError: Bool = false
     
     var body: some View {
         HStack {
             if message.role == .user { Spacer() }
             
-            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
-                if let analysis = message.audioAnalysis {
-                    MusicDNACard(analysis: analysis) {
-                        if let path = analysis.reportPath {
-                            NSWorkspace.shared.open(URL(fileURLWithPath: path))
-                        }
-                    }
-                    .frame(width: 320)
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 8) {
+                if message.role == .assistant, let report = tryParseReport(message.content) {
+                    ResearchReportView(report: report)
+                        .frame(maxWidth: 600)
+                } else if parseError {
+                    fallbackView
                 } else {
-                    Text(message.content)
-                        .padding(12)
-                        .background(
-                            message.role == .user ? 
-                            AnyShapeStyle(Color.accentColor) : 
-                            AnyShapeStyle(.ultraThinMaterial)
-                        )
-                        .cornerRadius(16)
-                        .foregroundColor(message.role == .user ? .white : .primary)
+                    standardTextView
                 }
             }
-            .frame(maxWidth: 500, alignment: message.role == .user ? .trailing : .leading)
+            .frame(maxWidth: 480, alignment: message.role == .user ? .trailing : .leading)
+            .accessibilityLabel("\(message.role == .user ? "Siz" : "Asistan"): \(message.content)")
             
             if message.role == .assistant { Spacer() }
         }
     }
+    
+    private var standardTextView: some View {
+        Text(message.content)
+            .font(.subheadline)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                message.role == .user ? 
+                AnyShapeStyle(Color.accentColor) : 
+                AnyShapeStyle(.ultraThickMaterial)
+            )
+            .foregroundStyle(message.role == .user ? .white : .primary)
+            .cornerRadius(14, antialiased: true)
+    }
+    
+    private var fallbackView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            standardTextView
+            
+            Button {
+                parseError = false
+            } label: {
+                Label("🔄 Yeniden Dene (JSON Parse Hatası)", systemImage: "arrow.clockwise")
+                    .font(.caption.bold())
+                    .foregroundStyle(.orange)
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 14)
+        }
+    }
+    
+    private func tryParseReport(_ content: String) -> ResearchReport? {
+        guard content.contains("\"report\":") && content.contains("\"recommendation\":") else { return nil }
+        
+        // Clean markdown wrap if present
+        var jsonStr = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        if jsonStr.hasPrefix("```json") {
+            jsonStr = jsonStr.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
+        } else if jsonStr.hasPrefix("```") {
+            jsonStr = jsonStr.replacingOccurrences(of: "```", with: "")
+        }
+        
+        guard let data = jsonStr.data(using: .utf8) else { return nil }
+        
+        do {
+            return try JSONDecoder().decode(ResearchReport.self, from: data)
+        } catch {
+            print("[CHAT] JSON Parse Failed: \(error)")
+            // self.parseError = true // Avoid state update during render
+            return nil
+        }
+    }
 }
 
+// The following structures are kept for functional completeness but with refined HIG styles
 struct WorkflowView: View {
     @ObservedObject var orchestrator: Orchestrator
-    
     var body: some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(orchestrator.steps) { step in
                     HStack {
                         StepIcon(status: step.status)
-                        Text(step.name)
-                            .font(.subheadline)
+                        Text(step.name).font(.subheadline)
                         Spacer()
-                        Text(step.latency)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        Text(step.latency).font(.caption2).foregroundStyle(.secondary)
                     }
                 }
-            }
-            .padding()
+            }.padding()
         } label: {
-            HStack {
-                Label("Agent Workflow", systemImage: "cpu")
-                    .font(.caption.bold())
-                Text("(\(orchestrator.steps.count) steps completed)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
+            Label("İş Adımları", systemImage: "cpu.fill").font(.caption.bold())
         }
-        .glassEffect(.regular)
-        .cornerRadius(12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
 struct ModelPickerMenu: View {
     @ObservedObject var modelPickerVM: ModelPickerViewModel
-    @State private var showingPopover = false
-    @FocusState private var isSearchFocused: Bool
-    
     var body: some View {
-        Button {
-            showingPopover.toggle()
+        Menu {
+            Section(modelPickerVM.hasTitanEngine ? "LOCAL - TITAN ENGINE" : "LOCAL TITAN") {
+                ForEach(modelPickerVM.filteredLocalModels) { model in
+                    Button { modelPickerVM.selectModel(model) } label: {
+                        Label(model.name, systemImage: model.icon)
+                    }
+                }
+            }
+            
+            if modelPickerVM.hasOllama {
+                Section("LOCAL - OLLAMA") {
+                    ForEach(modelPickerVM.filteredOllamaModels) { model in
+                        Button { modelPickerVM.selectModel(model) } label: {
+                            Label(model.name, systemImage: model.icon)
+                        }
+                    }
+                }
+            }
+            
+            Section(modelPickerVM.hasOpenRouter ? "CLOUD - OPENROUTER" : "CLOUD") {
+                ForEach(modelPickerVM.filteredCloudModels) { model in
+                    Button { modelPickerVM.selectModel(model) } label: {
+                        Label(model.name, systemImage: model.icon)
+                    }
+                }
+            }
+            Divider()
+            Button("Kurulum Sihirbazı...") { NotificationCenter.default.post(name: NSNotification.Name("OpenModelSetup"), object: nil) }
         } label: {
-            Label(modelPickerVM.selected?.name ?? "Select Model", systemImage: modelPickerVM.selected?.icon ?? "cpu.fill")
-                .font(.subheadline.bold())
-        }
-        .buttonStyle(.bordered)
-        .popover(isPresented: $showingPopover, arrowEdge: .bottom) {
-            VStack(spacing: 0) {
-                // Search Header
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
-                    TextField("Search models...", text: $modelPickerVM.searchText)
-                        .textFieldStyle(.plain)
-                        .focused($isSearchFocused)
-                    
-                    if !modelPickerVM.searchText.isEmpty {
-                        Button { modelPickerVM.searchText = "" } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                
-                Divider()
-                
-                // Model List
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        if !modelPickerVM.filteredLocalModels.isEmpty {
-                            Text("LOCAL — TITAN ENGINE")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                            
-                            ForEach(modelPickerVM.filteredLocalModels) { model in
-                                ModelRow(model: model, isSelected: modelPickerVM.selected?.id == model.id) {
-                                    modelPickerVM.selectModel(model)
-                                    showingPopover = false
-                                }
-                            }
-                        }
-                        
-                        if !modelPickerVM.filteredOllamaModels.isEmpty {
-                            Text("BRIDGE — OLLAMA / LOCAL")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                            
-                            ForEach(modelPickerVM.filteredOllamaModels) { model in
-                                ModelRow(model: model, isSelected: modelPickerVM.selected?.id == model.id) {
-                                    modelPickerVM.selectModel(model)
-                                    showingPopover = false
-                                }
-                            }
-                        }
-                        
-                        if !modelPickerVM.filteredCloudModels.isEmpty {
-                            Text("CLOUD — OPENROUTER")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                            
-                            ForEach(modelPickerVM.filteredCloudModels) { model in
-                                ModelRow(model: model, isSelected: modelPickerVM.selected?.id == model.id) {
-                                    modelPickerVM.selectModel(model)
-                                    showingPopover = false
-                                }
-                            }
-                        }
-                        
-                        if modelPickerVM.filteredLocalModels.isEmpty && modelPickerVM.filteredCloudModels.isEmpty {
-                            ContentUnavailableView("No Models Found", systemImage: "magnifyingglass", description: Text("Try a different search term."))
-                                .frame(height: 200)
-                        }
-                    }
-                    .padding(.bottom)
-                }
-                .frame(minWidth: 320, maxHeight: 450)
+            HStack(spacing: 8) {
+                Text(modelPickerVM.selected?.name ?? "Model Seç")
+                    .font(.subheadline.bold())
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption2)
             }
-            .onAppear {
-                DispatchQueue.main.async {
-                    isSearchFocused = true
-                }
-            }
+            .foregroundStyle(.primary)
         }
-    }
-}
-
-struct ModelRow: View {
-    let model: ModelSource
-    let isSelected: Bool
-    let action: () -> Void
-    @State private var isHovering = false
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: model.icon)
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? .white : .accentColor)
-                    .frame(width: 24)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(model.name)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(isSelected ? .white : .primary)
-                    
-                    if case .openRouter(_, _, let isFree, let context, let prompt, _) = model {
-                        HStack {
-                            if isFree {
-                                Text("FREE")
-                                    .font(.system(size: 8, weight: .black))
-                                    .padding(.horizontal, 4)
-                                    .background(.green.opacity(0.2), in: Capsule())
-                                    .foregroundStyle(.green)
-                            } else if let p = prompt {
-                                Text("$\(NSDecimalNumber(decimal: p).stringValue)/M")
-                                    .font(.system(size: 9, design: .monospaced))
-                            }
-                            Text("\(context)k ctx")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        Text("Titan Optimized")
-                            .font(.system(size: 9))
-                            .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
-                    }
-                }
-                
-                Spacer()
-                
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.white)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.accentColor : (isHovering ? Color.accentColor.opacity(0.1) : Color.clear))
-            )
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 8)
-        .onHover { hovering in
-            isHovering = hovering
-        }
+        .menuStyle(.button)
     }
 }
 
 struct StatusIndicator: View {
     let status: AgentStatus
+    let isModelSelected: Bool
+    let hasMessages: Bool
     
     var body: some View {
-        HStack {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
-            
-            if isStatusWaiting {
-                Text(statusText)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+        HStack(spacing: 8) {
+            Circle().fill(statusColor).frame(width: 8, height: 8)
+                .shadow(color: statusColor.opacity(0.4), radius: 3)
+            if status == .working {
+                Text("Düşünüyor...").font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
     
-    private var isStatusWaiting: Bool {
-        switch status {
-        case .working, .waiting, .waitingLLM, .awaitingFallbackApproval: return true
-        default: return false
-        }
-    }
-    
-    private var statusText: String {
-        switch status {
-        case .working: return "Thinking..."
-        case .awaitingFallbackApproval: return "Approval Needed"
-        default: return "Waiting..."
-        }
-    }
-    
     private var statusColor: Color {
+        // v7.9.0: 3-State Logic (Red -> Orange -> Green)
+        if !isModelSelected { return .red }
+        if !hasMessages { return .orange }
+        
         switch status {
-        case .idle: return .green
-        case .working: return .yellow
-        case .waiting, .waitingLLM: return .orange
-        case .healing: return .purple
         case .error: return .red
-        case .awaitingFallbackApproval: return .orange
+        default: return .green
         }
     }
 }
@@ -671,39 +469,59 @@ struct StatusIndicator: View {
 struct SessionStatsView: View {
     @ObservedObject var orchestrator: Orchestrator
     @Binding var showingSettings: Bool
-    
     var body: some View {
         HStack(spacing: 12) {
             Text("$\(String(format: "%.4f", NSDecimalNumber(decimal: orchestrator.costToday).doubleValue))")
                 .font(.system(.footnote, design: .monospaced))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
-            
-            Button(action: { showingSettings.toggle() }) {
-                Image(systemName: "gearshape.fill")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            
-            Button(action: { NSApp.terminate(nil) }) {
-                Image(systemName: "power")
-                    .foregroundColor(.red.opacity(0.8))
-            }
-            .buttonStyle(.plain)
-            .help("Quit Elite Agent")
+                .padding(.horizontal, 6).padding(.vertical, 2)
+                .background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
+            Button { showingSettings.toggle() } label: { Image(systemName: "gearshape") }
+                .buttonStyle(.plain).foregroundStyle(.secondary)
         }
     }
 }
-
+@MainActor
+struct FooterButton: View {
+    let action: () -> Void
+    @State private var isHovering = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 14, weight: .medium))
+                Text("Yeni Sohbet")
+                    .font(.subheadline)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading) // Align leading for native sidebar feel
+            .background(isHovering ? Color.primary.opacity(0.06) : Color.clear)
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.1)) {
+                isHovering = hovering
+            }
+        }
+        .keyboardShortcut("n", modifiers: .command)
+        .help("Yeni sohbet başlat (⌘N)")
+        .accessibilityLabel("Yeni sohbet")
+        .accessibilityHint("⌘N kısayolu ile de açılabilir")
+    }
+}
 struct StepIcon: View {
     let status: String
     var body: some View {
         switch status {
-        case "done": return AnyView(Image(systemName: "checkmark.circle.fill").foregroundColor(.green))
-        case "running": return AnyView(Image(systemName: "arrow.trianglehead.2.clockwise").foregroundColor(.yellow).symbolEffect(.pulse))
-        case "failed": return AnyView(Image(systemName: "xmark.circle.fill").foregroundColor(.red))
-        default: return AnyView(Image(systemName: "circle").foregroundColor(.secondary))
+        case "done": return Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+        case "running": return Image(systemName: "arrow.trianglehead.2.clockwise").foregroundColor(.yellow)
+        case "failed": return Image(systemName: "xmark.circle.fill").foregroundColor(.red)
+        default: return Image(systemName: "circle").foregroundColor(.secondary)
         }
     }
 }

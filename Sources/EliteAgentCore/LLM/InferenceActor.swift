@@ -12,6 +12,8 @@ public actor InferenceActor {
     nonisolated public let sharedBuffer: MetalBufferWrapper
     private let maxActivations = 1024
     
+    // v7.9.0: Track active generation for graceful cancellation
+    private var currentGenerationTask: Task<Void, Never>?
     private var modelContainer: ModelContainer?
     private var maxContextTokens: Int = 16384 // Optimized for 16GB RAM M4
     private var conversationHistory: [Message] = []
@@ -44,7 +46,17 @@ public actor InferenceActor {
         MLX.Memory.clearCache()
     }
     
+    /// v7.9.0: Aborts any active LLM processing.
+    public func cancelOngoingGenerations() {
+        if currentGenerationTask != nil {
+            AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Aborting active generation task.")
+            currentGenerationTask?.cancel()
+            currentGenerationTask = nil
+        }
+    }
+    
     public func unloadModel() async {
+        cancelOngoingGenerations()
         AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Unloading current model...")
         self.modelContainer = nil
         self.clearCache()
@@ -56,9 +68,29 @@ public actor InferenceActor {
     }
     
     public func clearContext() {
-        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Context invalidated & history cleared (Tokenizer switch).")
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Context invalidated & history cleared (Provider switch).")
+        cancelOngoingGenerations()
         self.conversationHistory.removeAll()
-        // MLXLLM ModelContainer handles internal state, resetting container ensures fresh KV cache
+    }
+    
+    public func restart() async {
+        AgentLogger.logAudit(level: .info, agent: "system", message: "Restarting Inference Engine...")
+        
+        // 1. Purge Model
+        self.modelContainer = nil
+        
+        // 2. Clear GPU Cache (MLX)
+        MLX.eval()
+        MLX.Memory.clearCache()
+        
+        // 3. Reset UI/Stats Bridge
+        await MainActor.run {
+            ModelSetupManager.shared.isModelReady = false
+            ModelSetupManager.shared.loadState = .unloaded
+            ModelSetupManager.shared.downloadProgress = 0.0
+        }
+        
+        AgentLogger.logAudit(level: .info, agent: "system", message: "Inference Engine Restored (Clean Slate).")
     }
     
     public func loadModel(at url: URL) async throws {
@@ -84,7 +116,8 @@ public actor InferenceActor {
     
     public func generate(prompt: String, systemPrompt: String? = nil, maxTokens: Int = 100) -> AsyncStream<String> {
         return AsyncStream(String.self) { continuation in
-            Task { [self] in
+            // v7.9.0: Capture the task for seamless cancellation during provider switching
+            self.currentGenerationTask = Task { [self] in
                 let languageInstruction = InferenceActor.buildLanguageInstruction(for: prompt)
                 let agenticDirectives = """
                 ### SYSTEM DIRECTIVE: SÖYLEME, YAP!
@@ -136,6 +169,11 @@ public actor InferenceActor {
         
         var firstToken = true
         for await generation in stream {
+            if Task.isCancelled {
+                continuation.finish()
+                return
+            }
+            
             if firstToken {
                 firstToken = false
                 let ttft = Date().timeIntervalSince(generationStart)

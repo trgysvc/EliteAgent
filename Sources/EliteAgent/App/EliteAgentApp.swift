@@ -77,7 +77,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         popover = NSPopover()
         
-        let menuBarView = MenuBarView(orchestrator: orchestrator)
+        let menuBarView = MenuBarView(orchestrator: orchestrator, modelPickerVM: modelPickerVM!)
             .background(Color.clear)
         
         let hostingController = NSHostingController(rootView: menuBarView)

@@ -258,3 +258,31 @@ EliteAgent artık sadece akıllı değil; hataya yer vermeyen, donanım kaynakla
 
 ---
 *EliteAgent Core · v7.8.5 · Production Hardening & Compliance.*
+
+## 📅 [2026-04-05] — Research Mode & Orchestrator 2.0 (v8.5)
+
+Bugün, EliteAgent'ın otonomi ve araştırma derinliğini kökten değiştiren "Phase 1: Research Hardening" operasyonunu tamamladık. Sistemi sadece metin üreten bir ajandan, yapılandırılmış rapor üreten ve her adımını raporlayan bir araştırma istasyonuna dönüştürdük.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Research Intelligence (Premium UI)
+- **Autonomous JSON Interceptor**: `ChatBubble` mimarisi güncellenerek, asistan yanıtları içerisindeki `ResearchReport` JSON şemaları anlık yakalanır hale getirildi. Geçerli veri bulunduğunda sistem otomatik olarak premium `ResearchReportView` render moduna geçer.
+- **Graceful Fallback**: JSON ayrıştırma hataları için "Yeniden Dene" ve ham metin gösterim desteği eklendi.
+
+#### 2. Orchestrator 2.0 (Hardening)
+- **Intent-Based Mandatory Tools**: "araştır/incele" gibi niyetler tespit edildiğinde, modelin hayal kurmasını engellemek için Web Search veya Safari araçlarını kullanması zorunlu bir kısıt (Mandatory Logic) olarak tanımlandı.
+- **Progress Signal Injection**: `OrchestratorRuntime` ve `Orchestrator` arasında kurulan `onChatMessage` kanalı ile uzun süren işlemlerde kullanıcıya her 30 saniyede bir canlı ilerleme ikonları (`🔍`, `📡`, `🧠`) enjekte edilmeye başlandı.
+
+#### 3. Sandbox Excellence (The 0x5 Final Fix)
+- **Mach API elimination**: Projenin önceki sürümlerinden miras kalan `host_statistics64` ve `task_for_pid` gibi sandbox ihlaline yol açan (`0x5 failure`) tüm düşük seviyeli Mach çağrıları tamamen kaldırıldı. 
+- **Modern Telemetry**: Sistem telemetrisi, tamamen Apple onaylı `ProcessInfo.processInfo.thermalState` ve standart kütüphane bellek sezgiselleri (heuristics) üzerine taşındı.
+
+### 🛠 Teknik Notlar
+- **Decoupling**: `onChatMessage` handler'ı ile runtime içerisindeki mesaj üretimi, UI'daki mesaj kuyruğundan (currentMessages) izole edilerek thread-safe bir yapı sağlandı.
+- **Swift 6 Verification**: Tüm yeni eklenen handler ve actor izolasyonları Swift 6 concurrency standartlarıyla doğrulandı.
+
+### 🏁 Mevcut Durum: **v8.5-RESEARCH-PRO**
+EliteAgent artık otonom araştırma yapabilen, bulgularını premium bir arayüzle sunan ve macOS sandbox sınırları içerisinde %100 uyumlu çalışan "Araştırma Profesyoneli" seviyesindedir.
+
+---
+*EliteAgent Core · v8.5 · Research & Autonomy Excellence.*

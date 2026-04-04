@@ -14,19 +14,21 @@ public struct UsageDashboardView: View {
     
     public var body: some View {
         Form {
-            Section("Maliyet Özeti") {
+            Section {
                 LabeledContent {
                     Text("$\(formattedCost(totalCost))")
-                        .font(.system(.title3, design: .rounded))
-                        .fontWeight(.bold)
-                        .foregroundStyle(.green)
+                        .font(.title3.weight(.bold).monospaced())
+                        .foregroundStyle(.primary)
                 } label: {
-                    Text("Toplam Yaşam Boyu Maliyet")
+                    Text("Toplam Harcama")
+                        .font(.headline)
                 }
+            } header: {
+                Text("Finansal Özet")
             }
             
             if !metrics.isEmpty {
-                Section("Model Dağılımı (Maliyet)") {
+                Section("Model Bazlı Dağılım") {
                     Chart {
                         ForEach(Array(metrics.keys), id: \.self) { modelID in
                             BarMark(
@@ -34,49 +36,50 @@ public struct UsageDashboardView: View {
                                 y: .value("Model", modelID.components(separatedBy: "/").last ?? modelID)
                             )
                             .foregroundStyle(by: .value("Model", modelID))
-                            .cornerRadius(4)
+                            .cornerRadius(6)
                         }
                     }
-                    .frame(height: 150)
+                    .frame(height: 160)
                     .padding(.vertical, 8)
                 }
                 
                 Section("Kullanım Detayları") {
                     ForEach(Array(metrics.keys).sorted(), id: \.self) { modelID in
                         let m = metrics[modelID]!
-                        HStack {
+                        HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(modelID.components(separatedBy: "/").last ?? modelID)
-                                    .font(.headline)
+                                    .font(.subheadline.bold())
                                 Text("P: \(m.promptTokens) / C: \(m.completionTokens)")
-                                    .font(.caption2)
+                                    .font(.caption2.monospacedDigit())
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Text("$\(formattedCost(m.totalCost))")
-                                .font(.system(.body, design: .monospaced))
-                                .fontWeight(.medium)
+                                .font(.footnote.monospacedDigit())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
                         }
                         .padding(.vertical, 2)
                     }
                 }
             } else {
-                Section {
-                    ContentUnavailableView {
-                        Label("Henüz veri yok", systemImage: "chart.pie")
-                    } description: {
-                        Text("Yapay zekâ görevleri çalıştırıldığında istatistikler burada görünecektir.")
-                    }
+                ContentUnavailableView {
+                    Label("Veri Toplanıyor", systemImage: "chart.bar.fill")
+                } description: {
+                    Text("Kullanım verileri yapay zeka ile etkileşime geçtikçe burada belirecektir.")
                 }
+                .frame(minHeight: 200)
             }
             
             Section {
                 Button(role: .destructive, action: resetMetrics) {
-                    Label("Tüm Verileri Sıfırla", systemImage: "trash")
+                    Label("Tüm Verileri Temizle", systemImage: "trash")
                         .frame(maxWidth: .infinity)
                 }
             } footer: {
-                Text("Bu işlem geri alınamaz ve tüm yerel maliyet geçmişini siler.")
+                Text("Bu işlem yapıldıktan sonra maliyet istatistikleri sıfırlanır.")
             }
         }
         .formStyle(.grouped)
@@ -109,8 +112,4 @@ public struct UsageDashboardView: View {
         formatter.maximumFractionDigits = 6
         return formatter.string(from: cost as NSNumber) ?? "0.00"
     }
-}
-
-extension Color {
-    static let emerald = Color(red: 16/255, green: 185/255, blue: 129/255)
 }

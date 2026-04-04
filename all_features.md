@@ -15,11 +15,15 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
 ## 2. Titan Yerel Zeka (Intelligence Layer)
 - **MLX Local Provider**: Apple Silicon (NPU/GPU) üzerinde çalışan `InferenceActor` ile tamamen internetten bağımsız çıkarım (Offline Intelligence).
 - **GGUF Integrity Shield [v7.8.5]**: Model dosyaları için zorunlu Magic Byte, Versiyon (v3+) ve Tensör Sayısı doğrulaması.
-- **Unified Memory Diagnostics [v7.8.5]**: `host_statistics64` ile macOS birleşik bellek takibi ve kritik RAM basıncında otomatik blokaj.
+- **Unified Memory Diagnostics [HARDENED]**: macOS birleşik bellek takibi için `host_statistics64` (Mach) tasfiye edildi; artık %100 Sandbox-safe `ProcessInfo` ve sezgisel bellek hiyerarşisi kullanılıyor.
 - **Inference Analytics Dashboard [v7.8.5]**: Anlık Latency (ms), TPS (Token/Sec) ve Fallback sayacı takibi (`AISessionState`).
 - **Metadata-First Streaming [v7.8.5]**: Çıkarım başladığı an ilk paket olarak gönderilen `metadata` ile anlık UI badge güncellemesi.
 - **Hybrid Reasoning (Cloud/Local)**: Intent Classification ile görevin karmaşıklığına göre en uygun modele geçiş.
-- **Qwen 3.5 9B Engine**: Apple Silicon için optimize edilmiş, donanım hızlandırmalı amiral gemisi yerel zeka motoru (v8.0/v7.8.5).
+- **Titan Engine v3 (Qwen 3.5 9B)**: Apple Silicon için optimize edilmiş, donanım hızlandırmalı amiral gemisi yerel zeka motoru.
+- **Orchestrator 2.0 (Logic Engine)**:
+    - **Research Intent Classification**: "araştır/analiz et" gibi niyetleri anlık tespit ederek otonom araç moduna geçiş.
+    - **Message Injection Channel**: `onChatMessage` kanalı ile kullanıcıyı bekletmeden (non-blocking) chat'e veri enjeksiyonu.
+    - **Periodic Progress Feedback**: Uzun süren işlemlerde 30s aralıklarla canlı durum ikonları (`🔍`, `📡`, `🧠`, `📊`).
 
 ## 3. Görsel ve Teknik Sunum (Visualizers)
 - **Neural Sight (Metal Engine)**: AI'nın her bir düşünce katmanını 3D Point Cloud olarak 120 FPS'te canlandıran Metal Shader'ları.
@@ -49,6 +53,10 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
     - `WebFetch`: Dinamik HTML sayfalarını Markdown'a çevirme.
 - **Vision (Bilgisayarlı Görü)**:
     - `ImageAnalysisTool`: Apple Vision OCR ve UI koordinat çıkarma.
+- **Research Intelligence (v8.5)**:
+    - **Autonomous JSON Interceptor**: LLM'den gelen yapılandırılmış verileri anlık yakalayıp premium `ResearchReportView` UI bileşenini tetikleme.
+    - **Mandatory Tool Gating**: Araştırma görevlerinde Safari/Brave kullanımını zorunlu kılan bilişsel kısıtlar.
+    - **Confidence & Recommendation Engine**: Çıkarımları 0.8+ güven skoruyla doğrulama ve alternatif öneri haritalama.
 
 ## 6. Music DNA: Biologic MIR Engine (EliteMIR)
 - **Spectral DNA (DSP Core)**: `STFTEngine`, `MelFilterBank`, `CQTEngine`.
@@ -58,4 +66,4 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
 - **AI Works Center**: Raporların `~/Documents/AI Works` klasöründe profesyonel PDF/MD/JSON olarak arşivlenmesi.
 
 ---
-*EliteAgent Core · Version 7.8.5 Hardening Update · April 2026*
+*EliteAgent Core · Version 8.5 Research Update · April 2026*

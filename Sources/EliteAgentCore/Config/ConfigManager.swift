@@ -54,7 +54,7 @@ public actor ConfigManager {
         self.cachedConfig = current
     }
     
-    private func save(_ config: InferenceConfig) async {
+    public func save(_ config: InferenceConfig) async {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted

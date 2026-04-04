@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "EliteAgent",
     platforms: [
-        .macOS("26.0") // Titan Engine Requirement: macOS 26 or later
+        .macOS("15.0") // Titan Engine Requirement: macOS 15 or later (M4/ANE Optimization)
     ],
     products: [
         .executable(name: "EliteAgent", targets: ["EliteAgent"]),
@@ -14,7 +14,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.19.0"),
-        .package(url: "https://github.com/ml-explore/mlx-swift-lm", branch: "main"),
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.31.3")),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
     ],
     targets: [
@@ -22,7 +22,8 @@ let package = Package(
             name: "EliteAgent",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift")
+                .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "Sparkle", package: "Sparkle")
             ],
             path: "Sources/EliteAgent"
         ),
@@ -33,8 +34,10 @@ let package = Package(
                 .product(name: "MLXRandom", package: "mlx-swift"),
                 .product(name: "MLXNN", package: "mlx-swift"),
                 .product(name: "MLXOptimizers", package: "mlx-swift"),
+                .product(name: "MLXFast", package: "mlx-swift"),
+                .product(name: "MLXLinalg", package: "mlx-swift"),
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
-                .product(name: "Sparkle", package: "Sparkle")
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm")
             ],
             path: "Sources/EliteAgentCore",
             resources: [
@@ -46,7 +49,8 @@ let package = Package(
             name: "EliteAgentXPC",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift")
+                .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm")
             ],
             path: "Sources/EliteAgentXPC"
         ),
@@ -54,9 +58,15 @@ let package = Package(
             name: "elite",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift")
+                .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm")
             ],
             path: "Sources/elite"
+        ),
+        .testTarget(
+            name: "EliteAgentTests",
+            dependencies: ["EliteAgentCore"],
+            path: "Tests/EliteAgentTests"
         )
     ]
 )

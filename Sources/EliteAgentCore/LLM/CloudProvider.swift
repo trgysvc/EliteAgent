@@ -98,6 +98,8 @@ public actor CloudProvider: LLMProvider {
             throw ProviderError.networkError("Status \(httpRes.statusCode): \(errStr)")
         }
         
+        print("[DEBUG_TRACE] CloudProvider: Data size received: \(data.count) bytes")
+        
         struct OpenAIResponse: Codable {
             struct Choice: Codable {
                 struct ChatMessage: Codable {
@@ -145,6 +147,7 @@ public actor CloudProvider: LLMProvider {
         
         let message = decoded.choices.first?.message
         let text = message?.bestContent ?? ""
+        print("[DEBUG_TRACE] CloudProvider: Parsed text segment (first 50 chars): \(String(text.prefix(50)))")
         
         guard !text.isEmpty else {
             let rawData = String(data: data, encoding: .utf8) ?? "none"

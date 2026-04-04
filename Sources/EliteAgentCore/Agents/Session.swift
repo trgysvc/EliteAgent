@@ -16,6 +16,8 @@ public actor Session: Identifiable {
     public let recursionDepth: Int
     public let maxRecursionDepth: Int
     public let workspaceURL: URL
+    public let config: InferenceConfig
+    public let complexity: Int
     
     public private(set) var status: SessionStatus = .idle
     public private(set) var promptTokens: Int = 0
@@ -33,12 +35,16 @@ public actor Session: Identifiable {
                 parentID: UUID? = nil, 
                 recursionDepth: Int = 0, 
                 maxRecursionDepth: Int = 5,
-                workspaceURL: URL) {
+                workspaceURL: URL,
+                config: InferenceConfig = .default,
+                complexity: Int = 1) {
         self.id = id
         self.parentID = parentID
         self.recursionDepth = recursionDepth
         self.maxRecursionDepth = maxRecursionDepth
         self.workspaceURL = workspaceURL
+        self.config = config
+        self.complexity = complexity
     }
     
     public func setStreamHandler(_ handler: @Sendable @escaping (String) -> Void) {

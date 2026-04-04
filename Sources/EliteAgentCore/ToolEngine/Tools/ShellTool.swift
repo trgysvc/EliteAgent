@@ -11,10 +11,15 @@ public struct ShellTool: AgentTool, Sendable {
             throw ToolError.missingParameter("'command' parameter is required.")
         }
         
-        // Safety Check via LogicGate
+        // Safety Check via LogicGate (Phase 1 Hardening)
         let risk = LogicGate.shared.check(command: command)
         if risk.isDangerous {
-            throw ToolError.executionError("Safety Block: \(risk.reason ?? "Dangerous command detected.")")
+            let errorMsg = """
+            [SAFETY BLOCK] Command rejected: \(command)
+            Reason: \(risk.reason ?? "Dangerous execution detected.")
+            Suggestion: Use built-in Swift tools or standard whitelisted commands.
+            """
+            throw ToolError.executionError(errorMsg)
         }
         
         print("[SHELL] Executing: \(command)")

@@ -34,11 +34,10 @@ public struct MusicDNACard: View {
                 // Forensic Badges
                 if let encoder = analysis.forensic.encoder {
                     Text(encoder.prefix(10))
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.blue.opacity(0.2))
-                        .cornerRadius(4)
+                        .font(.caption2.bold().monospaced())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
                 }
             }
             
@@ -51,9 +50,9 @@ public struct MusicDNACard: View {
             }
             
             // WAVEFORM
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("BİYOLOJİK İZ (SPECTRAL PEAKS)")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.caption2.bold())
                     .foregroundStyle(.secondary)
                 
                 WaveformView(peaks: analysis.waveformPeaks)
@@ -99,16 +98,16 @@ private struct MetricItem: View {
     let detail: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.system(size: 9, weight: .bold))
+                .font(.caption2.bold())
                 .foregroundStyle(.secondary)
             
             Text(value)
                 .font(.system(.subheadline, design: .rounded).bold())
             
             Text(detail)
-                .font(.system(size: 9))
+                .font(.caption2)
                 .foregroundStyle(.secondary.opacity(0.8))
         }
         .frame(maxWidth: .infinity, alignment: .leading)

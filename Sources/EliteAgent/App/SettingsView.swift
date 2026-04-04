@@ -22,7 +22,8 @@ public struct SettingsView: View {
                 Label("Güvenlik", systemImage: "lock.shield").tag("Security")
                 Label("Yapay Zekâ", systemImage: "sparkles").tag("AI")
                 Label("Analizler", systemImage: "chart.bar.xaxis").tag("Analytics")
-                Label("Data & Privacy", systemImage: "hand.raised.fill").tag("Privacy")
+                Label("Veri ve Gizlilik", systemImage: "hand.raised.fill").tag("Privacy")
+                Label("Gelişmiş", systemImage: "bolt.shield.fill").tag("Advanced")
             }
             .navigationTitle("Ayarlar")
         } detail: {
@@ -34,12 +35,16 @@ public struct SettingsView: View {
                     SecuritySettingsView()
                 case "AI":
                     AISettingsView(modelPickerVM: modelPickerVM, showingTitanSetup: $showingTitanSetup)
+                case "Tools":
+                    ToolsSettingsView()
                 case "Analytics":
                     UsageDashboardView(orchestrator: orchestrator)
                 case "Privacy":
                     DataPrivacySettingsView(orchestrator: orchestrator)
+                case "Advanced":
+                    AdvancedSettingsView()
                 default:
-                    Text("Bir kategori seçiniz")
+                    ContentUnavailableView("Seçim Yapın", systemImage: "sidebar.left")
                 }
             }
             .toolbar {
@@ -74,7 +79,7 @@ struct GeneralSettingsView: View {
             
             Section("Görünüm") {
                 Text("Tematik ayarlar ve arayüz özelleştirmeleri yakında eklenecektir.")
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
@@ -90,15 +95,12 @@ struct SecuritySettingsView: View {
         Form {
             Section("Biyometrik Güvenlik (TouchID)") {
                 Toggle("Uygulama Açılışında Doğrula", isOn: $settings.isBiometricEnabledForStartup)
-                    .help("Uygulama her açıldığında TouchID veya parola ister.")
-                
                 Toggle("Hassas İşlemlerde Onay İste", isOn: $settings.isBiometricEnabledForActions)
-                    .help("Mesaj gönderimi, dosya silme gibi kritik işlemlerde parmak izi onayı ister.")
             }
             
-            Section("Bilgilendirme") {
-                Text("Biyometrik verileriniz Apple'ın güvenli Secure Enclave katmanında saklanır. EliteAgent bu verilere asla doğrudan erişemez.")
-                    .font(.caption)
+            Section {
+                Text("Biyometrik verileriniz Apple'ın güvenli Secure Enclave katmanında saklanır.")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
@@ -110,9 +112,11 @@ struct SecuritySettingsView: View {
 struct AISettingsView: View {
     @ObservedObject var modelPickerVM: ModelPickerViewModel
     @Binding var showingTitanSetup: Bool
-    
-    // v7.8.0 Centralized State
     @State private var sessionState = AISessionState.shared
+    @State private var openRouterKey: String = ""
+    @State private var isSavingKey: Bool = false
+    
+    private let vaultURL = PathConfiguration.shared.vaultURL
     
     var body: some View {
         Form {
@@ -120,161 +124,163 @@ struct AISettingsView: View {
                 if let selected = modelPickerVM.selected {
                     HStack(spacing: 12) {
                         Image(systemName: selected.icon)
-                            .font(.title)
+                            .font(.title2)
                             .foregroundStyle(Color.accentColor)
                         
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(selected.name)
                                 .font(.headline)
                             Text(selected.id)
-                                .font(.caption)
+                                .font(.caption.monospaced())
                                 .foregroundStyle(.secondary)
                         }
                         
                         Spacer()
                         
-                        if case .localMLX = selected {
-                           Text("Hardware Accelerated")
-                                .font(.caption2.bold())
-                                .padding(4)
-                                .background(.green.opacity(0.1), in: Capsule())
-                                .foregroundStyle(.green)
-                        } else {
-                            Text("Cloud Reasoning")
-                                .font(.caption2.bold())
-                                .padding(4)
-                                .background(.blue.opacity(0.1), in: Capsule())
-                                .foregroundStyle(.blue)
-                        }
+                        Text(caseLocalOrCloud(selected))
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(caseLocalOrCloud(selected) == "HIZLANDIRILMIŞ" ? Color.green.opacity(0.1) : Color.blue.opacity(0.1), in: Capsule())
+                            .foregroundStyle(caseLocalOrCloud(selected) == "HIZLANDIRILMIŞ" ? .green : .blue)
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                 } else {
                     Text("Model Seçilmedi")
                         .foregroundStyle(.secondary)
                 }
             }
             
-            Section("Inference Engine Status") {
-                HStack {
-                    Label("Active Provider", systemImage: "server.rack")
-                    Spacer()
-                    Text(sessionState.activeProvider)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(sessionState.isFallbackActive ? .orange : .accentColor)
-                }
+            Section("Motor Durumu") {
+                LabeledContent("Aktif Sağlayıcı", value: sessionState.activeProvider)
                 
                 if sessionState.isFallbackActive {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text("Cloud Fallback Active: Local engine failover triggered.")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    Label("Bulut Fallback Aktif", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
                 }
             }
             
-            Section("Inference Analytics (v7.8.5)") {
-                LabeledContent("Last Latency") {
+            Section("Analizler (v7.9.0)") {
+                LabeledContent("Gecikme") {
                     Text(String(format: "%.2fs", sessionState.lastInferenceLatency))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(sessionState.lastInferenceLatency > 5 ? Color.orange : Color.primary)
+                        .foregroundStyle(sessionState.lastInferenceLatency > 5 ? .orange : .primary)
                 }
                 
-                LabeledContent("Throughput") {
-                    Text(String(format: "%.1f t/s", sessionState.tokensPerSecond))
-                        .font(.system(.caption, design: .monospaced))
+                LabeledContent("Hız (Token/s)") {
+                    Text(String(format: "%.1f", sessionState.tokensPerSecond))
                         .foregroundStyle(sessionState.tokensPerSecond < 10 ? Color.secondary : Color.green)
                 }
                 
-                LabeledContent("Cloud Fallbacks") {
+                LabeledContent("Yönlendirme Sayısı") {
                     HStack {
                         Text("\(sessionState.fallbackCount)")
                         if sessionState.fallbackCount > 0 {
-                            Button("Reset") { sessionState.fallbackCount = 0 }
-                                .buttonStyle(.plain)
-                                .font(.caption2)
-                                .foregroundStyle(.blue)
+                            Button("Sıfırla") { sessionState.fallbackCount = 0 }
+                                .buttonStyle(.borderless)
+                                .controlSize(.mini)
                         }
                     }
                 }
             }
             
-            Section("Fallback Policy") {
-                Picker("Hata Politika Yönetimi", selection: $sessionState.fallbackPolicy) {
-                    Text("Always Prompt (Safe)").tag(FallbackPolicy.promptBeforeSwitch)
-                    Text("Strict Local (No Cloud)").tag(FallbackPolicy.strictLocal)
-                    Text("Auto Fallback (Silent)").tag(FallbackPolicy.autoSwitchWithBadge)
+            Section("Hata Politikası") {
+                Picker("Politika", selection: $sessionState.fallbackPolicy) {
+                    Text("Her Zaman Sor (Güvenli)").tag(FallbackPolicy.promptBeforeSwitch)
+                    Text("Sadece Yerel (Katı)").tag(FallbackPolicy.strictLocal)
+                    Text("Otomatik Geçiş (Hızlı)").tag(FallbackPolicy.autoSwitchWithBadge)
                 }
                 .pickerStyle(.menu)
-                .help("Yerel model çalışmadığında sistemin nasıl davranacağını belirler.")
+            }
+            
+            Section("Kimlik Doğrulama") {
+                HStack {
+                    Image(systemName: "key.horizontal.fill")
+                        .foregroundStyle(.secondary)
+                    
+                    SecureField("OpenRouter API Key", text: $openRouterKey)
+                        .textFieldStyle(.plain)
+                    
+                    if isSavingKey {
+                        ProgressView().controlSize(.mini)
+                    } else {
+                        Button("Kaydet") {
+                            saveOpenRouterKey()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .disabled(openRouterKey.isEmpty)
+                    }
+                }
                 
-                Text(policyExplanation)
-                    .font(.caption2)
+                Text("OpenRouter modellerini kullanabilmek için geçerli bir API anahtarı gereklidir. Anahtarınız macOS Keychain (Anahtar Zinciri) üzerinde güvenli bir şekilde saklanır.")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             
-            Section("Yüklü Yerel Modeller (Titan)") {
-                let installed = modelPickerVM.installedLocalModels
-                if installed.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Henüz yerel model indirilmedi.")
-                            .foregroundStyle(.secondary)
-                        Button("Titan Kurulum Sihirbazını Başlat") {
-                            showingTitanSetup = true
-                        }
-                        .buttonStyle(.link)
-                    }
-                } else {
-                    List {
-                        ForEach(installed) { model in
-                            HStack {
-                                Label(model.name, systemImage: "cpu.fill")
-                                Spacer()
-                                Text("Ready")
-                                    .font(.caption2)
-                                    .foregroundStyle(.green)
-                            }
-                        }
-                    }
-                    .frame(minHeight: 100)
+            Section("Yapılandırma") {
+                Button { openVaultConfig() } label: {
+                    Label("API Anahtarlarını Düzenle (Vault)", systemImage: "key.fill")
                 }
-            }
-            
-            Section("Yapılandırma & Araçlar") {
-                Button {
-                    openVaultConfig()
-                } label: {
-                    Label("Provider Seçeneklerini Düzenle (Vault)", systemImage: "doc.text.fill")
-                }
-                .help("vault.plist dosyasını açarak API anahtarlarınızı ve model uç noktalarını düzenleyebilirsiniz.")
-                
-                Button {
-                    openModelsFolder()
-                } label: {
+                Button { openModelsFolder() } label: {
                     Label("Model Klasörünü Aç", systemImage: "folder.fill")
                 }
-                .help("İndirilen model ağırlıklarını yönetmek için Models klasörünü açar.")
-                
-                Button {
-                    showingTitanSetup = true
-                } label: {
+                Button { showingTitanSetup = true } label: {
                     Label("Titan Kurulum Sihirbazı", systemImage: "wand.and.stars")
                 }
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Yapay Zekâ Ayarları")
-    }
-    
-    private var policyExplanation: String {
-        switch sessionState.fallbackPolicy {
-        case .promptBeforeSwitch: return "Önerilen: Yerel model hata verirse buluta geçmeden önce onayınızı ister."
-        case .strictLocal: return "Güvenli: Bulut servislerine geçişi tamamen engeller. Hata durumunda işlem durur."
-        case .autoSwitchWithBadge: return "Hızlı: Kesintisiz deneyim için otomatik buluta geçer, küçük bir rozetle uyarır."
+        .navigationTitle("Yapay Zekâ Ayarlar")
+        .onAppear {
+            loadExistingKey()
         }
     }
-
+    
+    private func loadExistingKey() {
+        Task {
+            do {
+                let vault = try VaultManager(configURL: vaultURL)
+                // Use the matching ID from VaultManager.syncRequiredProviders
+                if let openRouterProv = vault.config.providers.first(where: { $0.id == "openrouter" }) {
+                    let key = try await vault.getAPIKey(for: openRouterProv)
+                    await MainActor.run {
+                        self.openRouterKey = key
+                    }
+                }
+            } catch {
+                print("[AISettings] No existing OpenRouter key found or failed to read: \(error)")
+            }
+        }
+    }
+    
+    private func saveOpenRouterKey() {
+        isSavingKey = true
+        Task {
+            do {
+                let vault = try VaultManager(configURL: vaultURL)
+                try await vault.updateAPIKey(for: "openrouter", token: openRouterKey)
+                
+                // v7.8.9: Force ModelPicker re-discovery
+                NotificationCenter.default.post(name: NSNotification.Name("CredentialsUpdated"), object: nil)
+                
+                await MainActor.run {
+                    isSavingKey = false
+                }
+            } catch {
+                print("[AISettings] Failed to save OpenRouter key: \(error)")
+                await MainActor.run {
+                    isSavingKey = false
+                }
+            }
+        }
+    }
+    
+    private func caseLocalOrCloud(_ selected: ModelSource) -> String {
+        if case .localMLX = selected { return "HIZLANDIRILMIŞ" }
+        return "BULUT"
+    }
+    
     private func openVaultConfig() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let vaultURL = appSupport.appendingPathComponent("EliteAgent/vault.plist")
@@ -293,34 +299,37 @@ struct DataPrivacySettingsView: View {
     
     var body: some View {
         Form {
-            Section("Chat History") {
-                Text("Your chat history is stored locally on this Mac. Clearing it will permanently remove all past conversations and agent experiences.")
-                    .font(.caption)
+            Section {
+                Text("Chat geçmişiniz yerel olarak Mac'inizde saklanır. Silme işlemi tüm geçmişi kalıcı olarak temizler.")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
-                
+            } header: {
+                Text("Geçmiş Verileri")
+            }
+            
+            Section {
                 Button(role: .destructive) {
                     showingClearAlert = true
                 } label: {
-                    Label("Clear All Chat History", systemImage: "trash")
+                    Label("Tüm Sohbet Geçmişini Sil", systemImage: "trash")
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
             
-            Section("Local Storage") {
-                LabeledContent("History Data", value: "~/Library/Application Support/EliteAgent/history.json")
-                LabeledContent("Vault Config", value: "~/Library/Application Support/EliteAgent/vault.plist")
+            Section("Konum Bilgisi") {
+                LabeledContent("Geçmiş Dosyası", value: "history.json")
+                LabeledContent("Güvenli Kasa", value: "vault.plist")
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Data & Privacy")
-        .alert("Clear History?", isPresented: $showingClearAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Clear Everything", role: .destructive) {
-                Task {
-                    await orchestrator.clearAllHistory()
-                }
+        .navigationTitle("Veri ve Gizlilik")
+        .alert("Geçmişi Sil?", isPresented: $showingClearAlert) {
+            Button("Vazgeç", role: .cancel) { }
+            Button("Her Şeyi Sil", role: .destructive) {
+                Task { await orchestrator.clearAllHistory() }
             }
         } message: {
-            Text("This action cannot be undone. All your past conversations will be permanently deleted.")
+            Text("Bu işlem geri alınamaz. Tüm konuşmalarınız kalıcı olarak silinecektir.")
         }
     }
 }

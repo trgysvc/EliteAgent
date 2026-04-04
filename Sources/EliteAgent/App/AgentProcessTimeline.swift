@@ -11,7 +11,7 @@ public struct AgentProcessTimeline: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 8) {
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     isExpanded.toggle()
@@ -20,7 +20,7 @@ public struct AgentProcessTimeline: View {
                 HStack(spacing: 12) {
                     StepBadge(status: currentStep.status, icon: currentStep.icon)
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(currentStep.name)
                             .font(.headline)
                         
@@ -40,6 +40,8 @@ public struct AgentProcessTimeline: View {
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("İşlem adımı: \(currentStep.name)")
+            .accessibilityHint(isExpanded ? "Detayları gizlemek için dokunun" : "Detayları görmek için dokunun")
             
             if isExpanded {
                 VStack(alignment: .leading, spacing: 12) {
@@ -84,7 +86,7 @@ private struct StepBadge: View {
                 .frame(width: 32, height: 32)
             
             Image(systemName: status == .active ? icon : (status == .success ? "checkmark" : (status == .error ? "exclamationmark" : icon)))
-                .font(.system(size: 14, weight: .bold))
+                .font(.subheadline.bold())
                 .foregroundStyle(statusColor)
                 .symbolEffect(.pulse, options: .repeating, isActive: status == .active)
         }
