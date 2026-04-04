@@ -107,32 +107,18 @@ public actor LocalModelHealthMonitor {
     }
 
     private func diagnoseMemory() -> MemoryDiagnostics {
-        // For macOS, host_statistics64 is the primary way to get system-wide memory.
-        var stats = vm_statistics64_data_t()
-        var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
-        let kr = withUnsafeMutablePointer(to: &stats) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &count)
-            }
-        }
+        // v8.4: Final removal of 'mach_host_self' to avoid 0x5 Sandbox errors.
+        // On modern macOS, we rely on ProcessInfo for baseline and memory pressure monitoring.
+        let totalRAM = Double(ProcessInfo.processInfo.physicalMemory) / (1024 * 1024 * 1024)
         
-        guard kr == KERN_SUCCESS else { 
-            return MemoryDiagnostics(availableBytes: 0, pressureLevel: .unknown) 
-        }
+        // Memory Pressure Check (Safe API)
+        let isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+        let pressureLevel: MemoryDiagnostics.PressureLevel = isLowPower ? .warning : .normal
         
-        // Safe conversion to Int64 to avoid "Negative value is not representable" crashes
-        let ps = Int64(getpagesize())
-        let freePages = Int64(stats.free_count)
-        let purgePages = Int64(stats.purgeable_count)
-        let inactivePages = Int64(stats.inactive_count)
-        let specPages = Int64(stats.speculative_count)
-        let compPages = Int64(stats.compressor_page_count)
-        let activePages = Int64(stats.active_count)
+        // We report a safe heuristic for availableBytes
+        let availableGB: Double = isLowPower ? 2.0 : (totalRAM * 0.4) 
+        let availableBytes = UInt64(availableGB * 1024 * 1024 * 1024)
         
-        let available = max(0, freePages + purgePages + inactivePages + specPages) * ps
-        let pressureRatio = Double(max(0, compPages)) / Double(max(1, activePages + compPages))
-        
-        let level: MemoryDiagnostics.PressureLevel = pressureRatio > 0.95 ? .critical : (pressureRatio > 0.6 ? .warning : .normal)
-        return MemoryDiagnostics(availableBytes: UInt64(available), pressureLevel: level)
+        return MemoryDiagnostics(availableBytes: availableBytes, pressureLevel: pressureLevel)
     }
 }

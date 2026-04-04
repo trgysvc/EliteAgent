@@ -16,7 +16,14 @@ public class ModelPickerViewModel: ObservableObject {
     
     // Computed Filtered Properties
     public var filteredLocalModels: [ModelSource] {
-        let allLocal = models.filter { if case .localMLX = $0 { return true }; return false }
+        let allLocal = models.filter { model in
+            if case .localMLX(let id, _, _, _) = model {
+                // v7.8.6: Technical disk check for local availability
+                let path = ModelSetupManager.shared.getModelDirectory(for: id)
+                return FileManager.default.fileExists(atPath: path.path)
+            }
+            return false
+        }
         if searchText.isEmpty { return allLocal }
         return allLocal.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
@@ -38,7 +45,7 @@ public class ModelPickerViewModel: ObservableObject {
     public var installedLocalModels: [ModelSource] {
         models.filter { model in
             if case .localMLX(let id, _, _, _) = model {
-                let path = ModelSetupManager.shared.getModelDirectory().deletingLastPathComponent().appendingPathComponent(id)
+                let path = ModelSetupManager.shared.getModelDirectory(for: id)
                 return FileManager.default.fileExists(atPath: path.path)
             }
             return false
@@ -54,6 +61,11 @@ public class ModelPickerViewModel: ObservableObject {
               .sorted { $0.totalPrice < $1.totalPrice }
     }
     
+    // v7.9.0: Provider Availability Flags
+    @Published public var hasTitanEngine: Bool = false
+    @Published public var hasOllama: Bool = false
+    @Published public var hasOpenRouter: Bool = false
+    
     public init(orchestrator: Orchestrator) {
         self.orchestrator = orchestrator
         
@@ -62,109 +74,106 @@ public class ModelPickerViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .assign(to: \.alertMessage, on: self)
             .store(in: &cancellables)
+            
+        // v7.8.6: Live Reload on credential changes
+        NotificationCenter.default.publisher(for: NSNotification.Name("CredentialsUpdated"))
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                Task { [weak self] in
+                    await self?.loadModels()
+                    // v7.9.0: Apply priority logic if no model is currently active
+                    await MainActor.run {
+                        if self?.selected == nil {
+                            self?.autoSelectPreferredModel()
+                        }
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
     
     public func loadModels() async {
         isLoading = true
         
         // 1. Dynamic Titan Engine Discovery (MLX)
-        // v7.5.5: Qwen 3.5 support (Hybrid Gated DeltaNet)
-        let localModels: [ModelSource] = [
+        let titanCandidates: [ModelSource] = [
             .localMLX(id: "Qwen3.5-9B-4bit", name: "Qwen 3.5 9B (Titan v2)", ramGB: 16, hasThink: false),
             .localMLX(id: "Qwen2.5-7B-Instruct-4bit", name: "Qwen 2.5 7B (Titan)", ramGB: 16, hasThink: false)
         ]
         
-        // 2. Load Custom & Bridge Models from Vault
-        let (customModels, bridgeModels) = loadVaultModels()
+        let localModels = titanCandidates.filter { model in
+            if case .localMLX(let id, _, _, _) = model {
+                let path = ModelSetupManager.shared.getModelDirectory(for: id)
+                return FileManager.default.fileExists(atPath: path.path)
+            }
+            return false
+        }
+        self.hasTitanEngine = !localModels.isEmpty
         
-        // 3. Fetch OpenRouter models via API
+        // 2. Ollama Bridge Discovery (Dinamik)
+        let ollamaModels = await OllamaManager.shared.fetchModels()
+        self.hasOllama = !ollamaModels.isEmpty
+        
+        // 3. OpenRouter Cloud Discovery (Dinamik)
         let openRouterModels = await fetchOpenRouterModels()
+        self.hasOpenRouter = !openRouterModels.isEmpty
         
-        self.models = localModels + bridgeModels + openRouterModels + customModels
+        // 4. Custom Vault Models
+        let (customModels, _) = loadVaultModels()
         
-        // 4. Auto-select active model from SetupManager
-        let activeID = ModelSetupManager.shared.activeModelID
-        if let current = models.first(where: { $0.id == activeID }) {
+        self.models = localModels + ollamaModels + openRouterModels + customModels
+        
+        // 5. Persisted Selection Sync
+        if let activeID = ModelSetupManager.shared.activeModelID.isEmpty ? nil : ModelSetupManager.shared.activeModelID, 
+           let current = models.first(where: { $0.id == activeID }) {
             self.selected = current
         } else {
-            updateSelectionFromVault()
+            // v7.9.0: Priority-based selection on fresh state
+            autoSelectPreferredModel()
         }
         
         isLoading = false
     }
     
-    private func loadVaultModels() -> (custom: [ModelSource], bridge: [ModelSource]) {
-        let defaultVaultPath = PathConfiguration.shared.vaultURL
-        guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return ([], []) }
+    public func autoSelectPreferredModel() {
+        // v7.9.0 Priority Cascade: Titan > OpenRouter > Ollama
         
-        let custom = vault.config.providers.filter { $0.id.hasPrefix("custom-") }.map { provider in
-            ModelSource.custom(
-                providerID: provider.id,
-                name: provider.id.replacingOccurrences(of: "custom-", with: ""),
-                modelID: provider.modelName ?? "unknown",
-                type: provider.type,
-                isReasoning: provider.capabilities?.contains("reasoning") ?? false
-            )
-        }
-        
-        let bridge = vault.config.providers.filter { $0.type == .bridge }.map { provider in
-            ModelSource.bridge(id: provider.modelName ?? "ollama-model", name: provider.id == "bridge" ? "Ollama / Local" : provider.id)
-        }
-        
-        return (custom, bridge)
-    }
-    
-    private func fetchOpenRouterModels() async -> [ModelSource] {
-        guard let url = URL(string: "https://openrouter.ai/api/v1/models") else { return [] }
-        
-        // We need the API key from VaultManager
-        let defaultVaultPath = PathConfiguration.shared.vaultURL
-        guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return [] }
-        
-        guard let providerConf = vault.config.providers.first(where: { $0.id == "openrouter" }),
-              let apiKey = try? await vault.getAPIKey(for: providerConf) else {
-            return []
-        }
-        
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("https://eliteagent.app", forHTTPHeaderField: "HTTP-Referer")
-        request.setValue("EliteAgent/1.0", forHTTPHeaderField: "X-Title")
-        
-        guard let (data, _) = try? await URLSession.shared.data(for: request) else { return [] }
-        
-        struct ORModel: Codable {
-            let id: String
-            let name: String
-            struct Pricing: Codable {
-                let prompt: String
-                let completion: String
+        // a. Titan Engine (MLX Local)
+        if hasTitanEngine {
+            if let qwen = models.first(where: { if case .localMLX = $0 { return true }; return false }) {
+                self.selectModel(qwen)
+                return
             }
-            let pricing: Pricing
-            let context_length: Int?
         }
         
-        struct ORResponse: Codable {
-            let data: [ORModel]
+        // b. OpenRouter (Cloud - Gemini Flash Priority)
+        if hasOpenRouter {
+            let preferred = ["google/gemini-2.0-flash-001", "google/gemini-flash-1.5"]
+            for id in preferred {
+                if let model = models.first(where: { $0.id == id }) {
+                    self.selectModel(model)
+                    return
+                }
+            }
         }
         
-        guard let decoded = try? JSONDecoder().decode(ORResponse.self, from: data) else { return [] }
-        
-        return decoded.data.map { model in
-            let isFree = model.pricing.prompt == "0"
-            return .openRouter(
-                id: model.id,
-                name: model.name,
-                isFree: isFree,
-                contextK: (model.context_length ?? 0) / 1000,
-                promptPrice: Decimal(string: model.pricing.prompt),
-                completionPrice: Decimal(string: model.pricing.completion)
-            )
+        // c. Ollama (Bridge Local)
+        if hasOllama {
+            if let firstOllama = models.first(where: { if case .bridge = $0 { return true }; return false }) {
+                self.selectModel(firstOllama)
+                return
+            }
         }
     }
     
     public func selectModel(_ model: ModelSource) {
         self.selected = model
+        
+        // v7.8.6: Persist selection to core system
+        ModelSetupManager.shared.activeModelID = model.id
+        
+        // Push notification for UI sync
+        NotificationCenter.default.post(name: NSNotification.Name("ModelSelected"), object: model)
         
         // v7.8.0 Sync technical ID to centralized state for HarpsichordBridge
         AISessionState.shared.selectedModel = model.id
@@ -204,6 +213,81 @@ public class ModelPickerViewModel: ObservableObject {
             } catch {
                 print("[ModelPicker] Failed to update model: \(error)")
             }
+        }
+    }
+    
+    private func loadVaultModels() -> (custom: [ModelSource], bridge: [ModelSource]) {
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
+        guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return ([], []) }
+        
+        let custom = vault.config.providers.filter { $0.id.hasPrefix("custom-") }.map { provider in
+            ModelSource.custom(
+                providerID: provider.id,
+                name: provider.id.replacingOccurrences(of: "custom-", with: ""),
+                modelID: provider.modelName ?? "unknown",
+                type: provider.type,
+                isReasoning: provider.capabilities?.contains("reasoning") ?? false
+            )
+        }
+        
+        let bridge = vault.config.providers.filter { $0.type == .bridge }.map { provider in
+            ModelSource.bridge(id: provider.modelName ?? "ollama-model", name: provider.id == "bridge" ? "Ollama / Local" : provider.id)
+        }
+        
+        return (custom, bridge)
+    }
+    
+    private func fetchOpenRouterModels() async -> [ModelSource] {
+        guard let url = URL(string: "https://openrouter.ai/api/v1/models") else { return [] }
+        
+        // v7.8.9: Force re-load VaultManager to pick up newly saved Keychain tokens & Provider definitions
+        let defaultVaultPath = PathConfiguration.shared.vaultURL
+        guard let vault = try? VaultManager(configURL: defaultVaultPath) else { 
+            print("[ModelPicker] Failed to reload VaultManager for OpenRouter fetch")
+            return [] 
+        }
+        
+        // v7.8.9: Strictly check for 'openrouter' ID in the config
+        guard let providerConf = vault.config.providers.first(where: { $0.id == "openrouter" }),
+              let apiKey = try? await vault.getAPIKey(for: providerConf) else {
+            print("[ModelPicker] OpenRouter provider or key NOT found in Vault config")
+            return []
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("https://eliteagent.app", forHTTPHeaderField: "HTTP-Referer")
+        request.setValue("EliteAgent/1.0", forHTTPHeaderField: "X-Title")
+        
+        guard let (data, _) = try? await URLSession.shared.data(for: request) else { return [] }
+        
+        struct ORModel: Codable {
+            let id: String
+            let name: String
+            struct Pricing: Codable {
+                let prompt: String
+                let completion: String
+            }
+            let pricing: Pricing
+            let context_length: Int?
+        }
+        
+        struct ORResponse: Codable {
+            let data: [ORModel]
+        }
+        
+        guard let decoded = try? JSONDecoder().decode(ORResponse.self, from: data) else { return [] }
+        
+        return decoded.data.map { model in
+            let isFree = model.pricing.prompt == "0"
+            return .openRouter(
+                id: model.id,
+                name: model.name,
+                isFree: isFree,
+                contextK: (model.context_length ?? 0) / 1000,
+                promptPrice: Decimal(string: model.pricing.prompt),
+                completionPrice: Decimal(string: model.pricing.completion)
+            )
         }
     }
     

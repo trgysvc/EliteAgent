@@ -37,7 +37,15 @@ public struct SubagentTool: AgentTool, Sendable {
             await runtime.setStepUpdateHandler(handler)
         }
         
-        try await runtime.executeTask(prompt: prompt, session: childSession)
+        let config = session.config
+        let complexity = session.complexity
+        
+        try await runtime.executeTask(
+            prompt: prompt, 
+            session: childSession, 
+            complexity: complexity, 
+            config: config
+        )
         
         return "Subagent task completed. (Depth: \(childSession.recursionDepth))"
     }

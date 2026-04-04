@@ -11,7 +11,7 @@ public class MenuBarController {
     
     private init() {}
     
-    public func setup(orchestrator: Orchestrator) {
+    public func setup(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
@@ -20,7 +20,7 @@ public class MenuBarController {
             button.target = self
         }
         
-        let menuBarView = MenuBarView(orchestrator: orchestrator)
+        let menuBarView = MenuBarView(orchestrator: orchestrator, modelPickerVM: modelPickerVM)
         let hostingController = NSHostingController(rootView: menuBarView)
         
         popover = NSPopover()

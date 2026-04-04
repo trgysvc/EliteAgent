@@ -28,8 +28,8 @@ public struct FileUploadZone: View {
                     .animation(.easeInOut(duration: 0.2), value: isDraggingOver)
                 
                 VStack(spacing: 16) {
-                    Image(systemName: "plus.viewfinder")
-                        .font(.system(size: 48, weight: .light))
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.largeTitle.weight(.light))
                         .foregroundStyle(isDraggingOver ? Color.accentColor : .secondary)
                         .symbolEffect(.pulse, options: .repeating, isActive: isDraggingOver)
                     
@@ -89,7 +89,7 @@ public struct UploadProgressView: View {
                     .font(.headline)
                 Spacer()
                 Text("\(Int(progress * 100))%")
-                    .font(.system(.body, design: .monospaced))
+                    .font(.body.monospacedDigit())
                     .bold()
             }
             
@@ -97,7 +97,7 @@ public struct UploadProgressView: View {
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(Color.primary.opacity(0.1))
-                        .frame(height: 12)
+                        .frame(height: 8)
                     
                     Capsule()
                         .fill(

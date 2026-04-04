@@ -12,6 +12,7 @@ public enum ModelLoadState: Int, Codable, Sendable {
     case verifying = 4         // SHA Check
     case ready = 5
     case failed = -1           // Glitch
+    case unloaded = -2         // Manual purge
 }
 
 public enum ModelDeletionError: LocalizedError {

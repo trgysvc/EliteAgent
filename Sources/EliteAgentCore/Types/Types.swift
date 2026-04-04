@@ -101,13 +101,56 @@ public struct InferenceConfig: Codable, Sendable {
     public var providerPriority: [ProviderID]
     public var strictLocal: Bool
     public var requireFallbackApproval: Bool
-    public var fallbackPolicy: FallbackPolicy
+    public var fallbackPolicy: FallbackPolicy = .promptBeforeSwitch
+    public var enabledTools: [String: Bool] = [:]
+    
+    // Research Mode Settings
+    public var isSafariAutomationEnabled: Bool = true
+    public var isDeepResearchEnabled: Bool = false
+    public var showResearchProgress: Bool = true
+    public var autoSaveReports: Bool = false
+    public var preferredSearchProvider: String = "Serper (Google)"
+    
+    public init(
+        providerPriority: [ProviderID] = [.mlx, .openrouter, .bridge],
+        strictLocal: Bool = false,
+        requireFallbackApproval: Bool = true,
+        fallbackPolicy: FallbackPolicy = .promptBeforeSwitch,
+        enabledTools: [String: Bool] = [:],
+        isSafariAutomationEnabled: Bool = true,
+        isDeepResearchEnabled: Bool = false,
+        showResearchProgress: Bool = true,
+        autoSaveReports: Bool = false,
+        preferredSearchProvider: String = "Serper (Google)"
+    ) {
+        self.providerPriority = providerPriority
+        self.strictLocal = strictLocal
+        self.requireFallbackApproval = requireFallbackApproval
+        self.fallbackPolicy = fallbackPolicy
+        self.enabledTools = enabledTools
+        self.isSafariAutomationEnabled = isSafariAutomationEnabled
+        self.isDeepResearchEnabled = isDeepResearchEnabled
+        self.showResearchProgress = showResearchProgress
+        self.autoSaveReports = autoSaveReports
+        self.preferredSearchProvider = preferredSearchProvider
+    }
     
     public static let `default` = InferenceConfig(
-        providerPriority: [.mlx, .bridge, .openrouter],
+        providerPriority: [.mlx, .openrouter, .bridge],
         strictLocal: false,
-        requireFallbackApproval: true, // Default to true based on user feedback
-        fallbackPolicy: .promptBeforeSwitch
+        requireFallbackApproval: true,
+        fallbackPolicy: .promptBeforeSwitch,
+        enabledTools: [
+            "shell_exec": true, "read_file": true, "write_file": true,
+            "app_discovery": true, "system_telemetry": true, "patch_tool": true,
+            "git_tool": true, "messenger": true, "calendar": true, "mail": true,
+            "safari_automation": true
+        ],
+        isSafariAutomationEnabled: true,
+        isDeepResearchEnabled: false,
+        showResearchProgress: true,
+        autoSaveReports: false,
+        preferredSearchProvider: "Serper (Google)"
     )
 }
 

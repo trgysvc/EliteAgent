@@ -135,6 +135,7 @@ public class Orchestrator: ObservableObject {
         group.register(NativeBrowserTool())
         group.register(WebSearchToolWrapper())
         group.register(WebFetchToolWrapper())
+        group.register(SafariAutomationTool())
         group.register(PatchTool())
         group.register(GitTool())
         group.register(ImageAnalysisTool())
@@ -191,6 +192,10 @@ public class Orchestrator: ObservableObject {
         self.currentMessages = session.messages
         self.steps = session.steps
         self.currentTask = session.title
+        
+        // v8.1: Sync usage counters to session metadata if needed
+        self.promptTokens = session.metadata.promptTokens
+        self.completionTokens = session.metadata.completionTokens
     }
     
     public func startNewConversation() {
@@ -199,6 +204,8 @@ public class Orchestrator: ObservableObject {
         self.steps = []
         self.thinkBlocks = []
         self.currentTask = ""
+        self.promptTokens = 0
+        self.completionTokens = 0
     }
     
     public func clearAllHistory() async {
@@ -252,9 +259,29 @@ public class Orchestrator: ObservableObject {
         
         if let sl = strictLocal { effectiveConfig.strictLocal = sl }
         
-        // 1. Reset for new task
+        // 1. Reset status but KEEP the manually selected model if valid
+        let previouslySelected = sessionState.selectedModel
         sessionState.resetForNewTask()
-        sessionState.selectedModel = effectiveConfig.providerPriority.first?.rawValue ?? "mlx"
+        
+        // Restore selection if it was explicitly set (not just default)
+        if !previouslySelected.isEmpty {
+            sessionState.selectedModel = previouslySelected
+        } else {
+            sessionState.selectedModel = (effectiveConfig.providerPriority.first?.rawValue ?? "mlx")
+        }
+        
+        // If the user explicitly selected a non-local model, force that provider
+        var finalForceProviders = forceProviders
+        if finalForceProviders == nil {
+            let current = sessionState.selectedModel
+            if current.contains("/") || current.contains(":") { // Likely OpenRouter or Ollama ID
+                if current.contains("/") {
+                    finalForceProviders = [.openrouter]
+                } else if current.contains(":") {
+                    finalForceProviders = [.bridge]
+                }
+            }
+        }
         
         // Precedence logic: If forceProviders is set (e.g. from fallback buttons), it overrides priority
         if pendingTask == nil {
@@ -271,7 +298,11 @@ public class Orchestrator: ObservableObject {
         if let filePath = Orchestrator.extractFilePath(from: prompt) {
             do {
                 let reader = ReadFileTool()
-                let tempSession = Session(workspaceURL: URL(fileURLWithPath: "/Users/trgysvc/Developer/EliteAgent"))
+                let tempSession = Session(
+                    workspaceURL: URL(fileURLWithPath: "/Users/trgysvc/Developer/EliteAgent"),
+                    config: effectiveConfig,
+                    complexity: 1
+                )
                 let content = try await reader.execute(params: ["path": AnyCodable(filePath)], session: tempSession)
                 let fileName = URL(fileURLWithPath: filePath).lastPathComponent
                 promptWithContext = "### DOCUMENT CONTEXT (File: \(fileName))\n\(content)\n------------------------------------------\nUSER TASK: \(prompt)"
@@ -308,22 +339,37 @@ public class Orchestrator: ObservableObject {
                 Task { @MainActor in self?.status = status }
             }
             
-            await runtime.setTokenUpdateHandler { [weak self] count in
+            await runtime.setChatMessageUpdateHandler { [weak self] msg in
+                Task { @MainActor in self?.currentMessages.append(msg) }
+            }
+            
+            await runtime.setTokenUpdateHandler { [weak self] count, cost in
                 Task { @MainActor in
                     self?.promptTokens += count.prompt
                     self?.completionTokens += count.completion
+                    self?.costToday += cost
+                    
+                    // Persistent Tracking (v8.0)
+                    let totalTokens = count.prompt + count.completion
+                    let costDouble = NSDecimalNumber(decimal: cost).doubleValue
+                    await UsageTracker.shared.addUsage(tokens: totalTokens, cost: costDouble)
                 }
             }
             
-            let session = Session(workspaceURL: workspaceURL)
             let intent = classifyIntent(prompt: prompt)
             let complexity: Int = (intent == .codeGeneration || intent == .research) ? 4 : 3
+            
+            let session = Session(
+                workspaceURL: workspaceURL,
+                config: effectiveConfig,
+                complexity: complexity
+            )
             
             try await runtime.executeTask(
                 prompt: promptWithContext, 
                 session: session, 
                 complexity: complexity, 
-                forceProviders: forceProviders,
+                forceProviders: finalForceProviders,
                 config: effectiveConfig
             )
             
@@ -336,13 +382,32 @@ public class Orchestrator: ObservableObject {
             let assistantMessage = ChatMessage(role: .assistant, content: finalAnswer)
             self.currentMessages.append(assistantMessage)
             
-            let newSession = ChatSession(
-                title: prompt,
-                messages: self.currentMessages,
-                steps: self.steps,
-                metadata: SessionMetadata(promptTokens: self.promptTokens, completionTokens: self.completionTokens, cost: 0, latency: "\(Int(elapsed))s")
-            )
-            self.pastSessions.insert(newSession, at: 0)
+            // v8.1: Update existing session or create new one
+            if let existingID = self.selectedSessionID,
+               let index = self.pastSessions.firstIndex(where: { $0.id == existingID }) {
+                // Update current session
+                var updatedSession = self.pastSessions[index]
+                updatedSession.messages = self.currentMessages
+                updatedSession.steps = self.steps
+                updatedSession.metadata.promptTokens = self.promptTokens
+                updatedSession.metadata.completionTokens = self.completionTokens
+                updatedSession.metadata.latency = "\(Int(elapsed))s"
+                self.pastSessions[index] = updatedSession
+            } else {
+                // Create new session
+                let newSession = ChatSession(
+                    title: prompt, // Initial title is the prompt
+                    messages: self.currentMessages,
+                    steps: self.steps,
+                    metadata: SessionMetadata(promptTokens: self.promptTokens, completionTokens: self.completionTokens, cost: 0, latency: "\(Int(elapsed))s")
+                )
+                self.selectedSessionID = newSession.id
+                self.pastSessions.insert(newSession, at: 0)
+                
+                // Trigger auto-naming
+                Task { await summarizeCurrentSession() }
+            }
+            
             try await HistoryManager.shared.save(self.pastSessions)
             
         } catch let error as InferenceError {
@@ -379,6 +444,42 @@ public class Orchestrator: ObservableObject {
     
     private func classifyIntent(prompt: String) -> TaskCategory {
         return TaskClassifier().classify(prompt: prompt)
+    }
+    
+    private func summarizeCurrentSession() async {
+        guard let sessionID = self.selectedSessionID,
+              let session = self.pastSessions.first(where: { $0.id == sessionID }),
+              session.messages.count >= 2 else { return }
+        
+        let conversationText = session.messages.prefix(2).map { "\($0.role): \($0.content)" }.joined(separator: "\n")
+        let summaryPrompt = "Conversational history:\n\(conversationText)\n\nSummarize this conversation in exactly 3-5 words in Turkish. Output ONLY the summary text, no quotes or punctuation."
+        
+        // We use the cloud provider for better quality summarization if available
+        guard let provider = self.cloudProvider else { return }
+        
+        do {
+            let request = CompletionRequest(
+                taskID: UUID().uuidString,
+                systemPrompt: "Sen bir asistsansın. Konuşmayı özetle.",
+                messages: [Message(role: "user", content: summaryPrompt)],
+                maxTokens: 20,
+                sensitivityLevel: .public,
+                complexity: 1
+            )
+            let response = try await provider.complete(request)
+            let cleanSummary = response.content.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                .replacingOccurrences(of: "\"", with: "")
+            
+            await MainActor.run {
+                if let index = self.pastSessions.firstIndex(where: { $0.id == sessionID }) {
+                    self.pastSessions[index].title = cleanSummary
+                    self.currentTask = cleanSummary
+                }
+            }
+            try await HistoryManager.shared.save(self.pastSessions)
+        } catch {
+            print("[ORCHESTRATOR] Auto-summarization failed: \(error)")
+        }
     }
 }
 

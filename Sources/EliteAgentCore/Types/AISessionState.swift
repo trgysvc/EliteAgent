@@ -3,8 +3,9 @@ import Observation
 import SwiftUI
 
 /// Centralized state management for the EliteAgent inference engine and UI.
+@MainActor
 @Observable
-public final class AISessionState: @unchecked Sendable {
+public final class AISessionState {
     public static let shared = AISessionState()
     
     // Persistence Keys
