@@ -20,6 +20,10 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
     - **Proactive VRAM Sanitization**: Her çıkarım öncesi GPU cache temizliği.
     - **Thermal Throttling v2**: `.serious` seviyede %75 bağlam daraltma (context reduction).
 - **Persistent Engine Reset [v9.7]**: Oturumu kapatmadan (System prompt + History koruyarak) 2.5s içinde motoru sıfırlama ve yeniden yükleme.
+- **ModelStateManager (Atomic Inference) [v9.9 Stabilized]**:
+    - **Single Source of Truth**: Tüm sağlayıcı (Provider) durumlarını merkezi bir `@MainActor` singleton üzerinden yönetme.
+    - **Atomic Switching**: Yerel (Local) arıza durumunda 1ms içinde Bulut (Cloud) moduna kesintisiz geçiş.
+    - **State Synchronization**: UI (Badge, Progress) ve motor katmanları arasında %100 senkronizasyon.
 - **MLX Local Provider**: Apple Silicon (NPU/GPU) üzerinde çalışan `InferenceActor` ile tamamen internetten bağımsız çıkarım (Offline Intelligence).
 - **GGUF Integrity Shield [v7.8.5]**: Model dosyaları için zorunlu Magic Byte, Versiyon (v3+) ve Tensör Sayısı doğrulaması.
 - **Unified Memory Diagnostics [HARDENED]**: macOS birleşik bellek takibi için `host_statistics64` (Mach) tasfiye edildi; artık %100 Sandbox-safe `ProcessInfo` ve sezgisel bellek hiyerarşisi kullanılıyor.
@@ -43,6 +47,9 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
 - **Thermal Watchdog**: `ProcessInfo.thermalState` verilerinin saniyelik takibi.
 - **Memory Pressure Manager**: RAM şişmelerinde "Zarif Geri Çekilme" (Graceful Degradation) protokolleri.
 - **Adaptive Thermal Throttling**: NPU/GPU üretimi sırasında `serious` ve `critical` ısı durumlarında akıllı yavaşlatma.
+- **v9.8 Stabilization Suite**:
+    - **180s Global Timeout Policy**: Araştırma ve uzun kod üretimleri için optimize edilmiş güvenli işlem süresi.
+    - **Smart Cache Logic**: Auto-Recovery veya %90+ VRAM kullanımı durumlarında otonom GPU cache temizliği.
 - **Deterministic mmap Cleanup**: Model silme veya değiştirme sırasında MLX bellek kilitlerini (mmap lock) çözen 50ms bekleme protokolü.
 
 ## 5. Universal Tool Ecosystem (Araç Seti)
@@ -58,10 +65,12 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
 - **Web Zekası**:
     - `BraveSearch`: Güncel, doğru ve reklamsız dünya bilgisi.
     - `WebFetch`: Dinamik HTML sayfalarını Markdown'a çevirme.
+    - **BackgroundWebScraper (Headless) [v9.9]**: Safari sekme kirliliğini bitiren, tamamen arka planda çalışan sessiz `WKWebView` tarayıcısı.
 - **Vision (Bilgisayarlı Görü)**:
     - `ImageAnalysisTool`: Apple Vision OCR ve UI koordinat çıkarma.
 - **Research Intelligence (v8.5)**:
     - **Autonomous JSON Interceptor**: LLM'den gelen yapılandırılmış verileri anlık yakalayıp premium `ResearchReportView` UI bileşenini tetikleme.
+    - **ThinkParser Hardening [v9.9]**: 3 aşamalı (Direct JSON -> Markdown CodeBlock -> Regex OuterBraces) ultra-dayanıklı veri ayıklama motoru.
     - **Mandatory Tool Gating**: Araştırma görevlerinde Safari/Brave kullanımını zorunlu kılan bilişsel kısıtlar.
     - **Confidence & Recommendation Engine**: Çıkarımları 0.8+ güven skoruyla doğrulama ve alternatif öneri haritalama.
 
