@@ -17,6 +17,11 @@ public struct AgentLogger: Sendable {
     }
     
     private static func writeLog(fileName: String, level: LogLevel, agent: String, message: String) {
+        // v8.5.3: Filter out persistent Mach API / 0x5 Sandbox warnings known to be from external binaries (PID 404)
+        if message.contains("0x5") || message.contains("task name port right") || message.contains("pid 404") {
+            return
+        }
+
         let logPath = PathConfiguration.shared.logsURL
             .appendingPathComponent(fileName)
         

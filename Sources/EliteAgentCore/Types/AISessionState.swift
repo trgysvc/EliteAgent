@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import SwiftUI
 
-/// Centralized state management for the EliteAgent inference engine and UI.
+// v9.9: Bridged with ModelStateManager (Single Source of Truth)
 @MainActor
 @Observable
 public final class AISessionState {
@@ -12,15 +12,33 @@ public final class AISessionState {
     private let selectedModelKey = "elite.ai.selectedModel"
     private let fallbackPolicyKey = "elite.ai.fallbackPolicy"
     
-    // UI-Bound Properties
+    // UI-Bound Properties (Bridged with ModelStateManager)
     public var selectedModel: String {
-        didSet { UserDefaults.standard.set(selectedModel, forKey: selectedModelKey) }
+        get { ModelStateManager.shared.currentModelID ?? "qwen-2.5-7b-4bit" }
+        set { 
+            ModelStateManager.shared.currentModelID = newValue
+            UserDefaults.standard.set(newValue, forKey: selectedModelKey) 
+        }
     }
+    
     public var activeProvider: String = "local"
-    public var isFallbackActive: Bool = false
-    public var fallbackReason: String? = nil
+    
+    public var isFallbackActive: Bool {
+        get { ModelStateManager.shared.isCloudFallback }
+        set { ModelStateManager.shared.isCloudFallback = newValue }
+    }
+    
+    public var fallbackReason: String? {
+        get { ModelStateManager.shared.fallbackReason }
+        set { ModelStateManager.shared.fallbackReason = newValue }
+    }
+
     public var requiresUserAcknowledgement: Bool = false
+    public var requiresPermissionAcknowledgement: Bool = false
+    public var permissionAppTarget: String? = nil
     public var isInputLocked: Bool = false
+    public var isRestartingEngine: Bool = false
+    public var isThermalThrottled: Bool = false
     
     public var fallbackPolicy: FallbackPolicy {
         didSet { UserDefaults.standard.set(fallbackPolicy.rawValue, forKey: fallbackPolicyKey) }
@@ -35,16 +53,6 @@ public final class AISessionState {
     }
     
     private init() {
-        var model = UserDefaults.standard.string(forKey: selectedModelKey) ?? "Qwen2.5-7B-Instruct-4bit"
-        
-        // v7.8.6 Migration: Unify IDs (Instruct variant was renamed for disk consistency)
-        if model == "Qwen3.5-9B-Instruct-4bit" {
-            model = "Qwen3.5-9B-4bit"
-            UserDefaults.standard.set(model, forKey: selectedModelKey)
-        }
-        
-        self.selectedModel = model
-        
         if let policyRaw = UserDefaults.standard.string(forKey: fallbackPolicyKey),
            let policy = FallbackPolicy(rawValue: policyRaw) {
             self.fallbackPolicy = policy
@@ -58,6 +66,10 @@ public final class AISessionState {
         self.isFallbackActive = false
         self.fallbackReason = nil
         self.requiresUserAcknowledgement = false
+        self.requiresPermissionAcknowledgement = false
+        self.permissionAppTarget = nil
         self.isInputLocked = false
+        self.isRestartingEngine = false
+        self.isThermalThrottled = false
     }
 }

@@ -2,11 +2,28 @@ import SwiftUI
 import EliteAgentCore
 
 struct AdvancedSettingsView: View {
+    @StateObject private var modelManager = ModelManager.shared
     @State private var showingResetAlert = false
     @State private var modelDirSize: String = "Hesaplanıyor..."
     
     var body: some View {
         Form {
+            // v9.0: Universal Model Management Section
+            Section {
+                Toggle("Model Geçişinde Otomatik Bellek Temizliği", isOn: $modelManager.isAutoUnloadEnabled)
+                    .help("Default: ON. Yeni bir model yüklendiğinde eski modellerin VRAM'den otomatik silinmesini sağlar.")
+                
+                if !modelManager.isAutoUnloadEnabled {
+                    Label("Uyarı: Birden fazla modeli yüklü tutmak sistem belleği (VRAM) üzerinde ciddi baskı oluşturabilir.", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+            } header: {
+                Label("Model Yönetimi", systemImage: "cpu.fill")
+            } footer: {
+                Text("Cihazınız için önerilen: \(AutoConfigManager.shared.autoTune().preset == .performance ? "Performance Mode" : "Balanced Mode")")
+            }
+            
             Section {
                 VStack(alignment: .leading, spacing: 12) {
                     Label("Fabrika Ayarlarına Dön", systemImage: "exclamationmark.shield.fill")
@@ -33,7 +50,7 @@ struct AdvancedSettingsView: View {
             }
             
             Section {
-                LabeledContent("Model Depolama", value: modelDirSize)
+                LabeledContent("Toplam Model Boyutu", value: modelDirSize)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } footer: {
@@ -92,9 +109,7 @@ struct AdvancedSettingsView: View {
         // 1. Wipe In-Memory State
         AISessionState.shared.selectedModel = ""
         AISessionState.shared.isInputLocked = false
-        ModelSetupManager.shared.activeModelID = ""
-        ModelSetupManager.shared.isModelReady = false
-        ModelSetupManager.shared.state = .idle
+        ModelManager.shared.loadedModels.removeAll()
         
         // 2. Wipe Local Filesystem
         try? FileManager.default.removeItem(at: appSupport)

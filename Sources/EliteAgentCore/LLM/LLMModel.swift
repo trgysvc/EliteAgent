@@ -25,10 +25,8 @@ public actor LLMModel {
     }
     
     public func generate(systemPrompt: String, messages: [Message], maxTokens: Int, temperature: Double) async throws -> LLMOutput {
-        let lastMessage = messages.last?.content ?? ""
-        
         // Execute real-time reasoning via the InferenceActor (Neural Sight & SLM)
-        let stream = await InferenceActor.shared.generate(prompt: lastMessage, maxTokens: maxTokens)
+        let stream = await InferenceActor.shared.generate(messages: messages, maxTokens: maxTokens)
         var fullResponse = ""
         
         for await token in stream {

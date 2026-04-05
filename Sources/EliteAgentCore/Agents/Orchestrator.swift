@@ -61,6 +61,7 @@ public class Orchestrator: ObservableObject {
         do {
             let vault = try VaultManager(configURL: paths.vaultURL)
             self.vaultManager = vault
+            VaultManager.shared = vault
             
             Task {
                 let savedConfig = await ConfigManager.shared.get()
@@ -85,7 +86,9 @@ public class Orchestrator: ObservableObject {
             if ModelSetupManager.shared.isModelReady {
                 Task {
                     do {
-                        try await local.loadModel("Qwen2.5-7B-Instruct-4bit")
+                        let mlxConfig = vault.config.providers.first(where: { $0.id == "mlx" })
+                        let modelID = mlxConfig?.modelName ?? "qwen-2.5-7b-4bit"
+                        try await local.loadModel(modelID)
                     } catch {
                         print("[ORCHESTRATOR] Titan Priming Failed: \(error)")
                     }
@@ -117,25 +120,66 @@ public class Orchestrator: ObservableObject {
                 }
             }
             
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("UpdateVaultAPIKey"),
+                object: nil,
+                queue: .main
+            ) { [weak self] note in
+                guard let self = self,
+                      let providerID = note.userInfo?["providerID"] as? String,
+                      let key = note.userInfo?["key"] as? String else { return }
+                
+                Task {
+                    try? await self.vaultManager?.updateAPIKey(for: providerID, token: key)
+                }
+            }
+            
         } catch {
             self.status = .error
         }
         
         let group = self.toolRegistry
-        group.register(ReadFileTool())
-        group.register(WriteFileTool())
-        group.register(ShellTool())
-        group.register(AppDiscoveryTool())
-        group.register(SystemTelemetryTool())
+        
+        // Communication Tools
+        group.register(WhatsAppTool())
         group.register(MessengerTool())
-        group.register(CalendarTool())
-        group.register(MailTool())
+        group.register(EmailTool())
+        
+        // Media Tools
         group.register(MediaControllerTool())
         group.register(MusicDNATool())
-        group.register(NativeBrowserTool())
+        
+        // Research Tools
         group.register(WebSearchToolWrapper())
         group.register(WebFetchToolWrapper())
         group.register(SafariAutomationTool())
+        group.register(ResearchReportTool())
+        // NativeBrowserTool is for internal scraping
+        group.register(NativeBrowserTool())
+        
+        // System Tools (EcosystemTools Suite)
+        group.register(SystemVolumeTool())
+        group.register(BrightnessControlTool())
+        group.register(SleepControlTool())
+        group.register(SystemInfoTool())
+        group.register(SystemTelemetryTool())
+        group.register(AppDiscoveryTool())
+        
+        // Productivity Tools
+        group.register(ContactsTool())
+        group.register(CalendarTool())
+        group.register(MailTool()) // Existing Mail implementation
+        group.register(FileManagerTool())
+        group.register(ReadFileTool())
+        group.register(WriteFileTool())
+        
+        // Utility Tools
+        group.register(CalculatorTool())
+        group.register(WeatherTool())
+        group.register(TimerTool())
+        
+        // Advanced Ops Tools
+        group.register(ShellTool())
         group.register(PatchTool())
         group.register(GitTool())
         group.register(ImageAnalysisTool())
@@ -260,20 +304,19 @@ public class Orchestrator: ObservableObject {
         if let sl = strictLocal { effectiveConfig.strictLocal = sl }
         
         // 1. Reset status but KEEP the manually selected model if valid
-        let previouslySelected = sessionState.selectedModel
-        sessionState.resetForNewTask()
+        let previouslySelected = ModelStateManager.shared.currentModelID ?? ""
         
         // Restore selection if it was explicitly set (not just default)
         if !previouslySelected.isEmpty {
-            sessionState.selectedModel = previouslySelected
+            ModelStateManager.shared.currentModelID = previouslySelected
         } else {
-            sessionState.selectedModel = (effectiveConfig.providerPriority.first?.rawValue ?? "mlx")
+            ModelStateManager.shared.currentModelID = (effectiveConfig.providerPriority.first?.rawValue ?? "qwen-2.5-7b-4bit")
         }
         
         // If the user explicitly selected a non-local model, force that provider
         var finalForceProviders = forceProviders
         if finalForceProviders == nil {
-            let current = sessionState.selectedModel
+            let current = ModelStateManager.shared.currentModelID ?? ""
             if current.contains("/") || current.contains(":") { // Likely OpenRouter or Ollama ID
                 if current.contains("/") {
                     finalForceProviders = [.openrouter]

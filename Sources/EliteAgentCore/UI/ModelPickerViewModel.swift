@@ -75,17 +75,33 @@ public class ModelPickerViewModel: ObservableObject {
             .assign(to: \.alertMessage, on: self)
             .store(in: &cancellables)
             
-        // v7.8.6: Live Reload on credential changes
+        // v9.9: Sync with ModelStateManager
+        ModelStateManager.shared.$currentModelID
+            .receive(on: RunLoop.main)
+            .sink { [weak self] modelID in
+                if let modelID = modelID {
+                    self?.selected = self?.models.first(where: { $0.id == modelID })
+                }
+            }
+            .store(in: &cancellables)
+            
         NotificationCenter.default.publisher(for: NSNotification.Name("CredentialsUpdated"))
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 Task { [weak self] in
                     await self?.loadModels()
-                    // v7.9.0: Apply priority logic if no model is currently active
-                    await MainActor.run {
-                        if self?.selected == nil {
-                            self?.autoSelectPreferredModel()
-                        }
+                }
+            }
+            .store(in: &cancellables)
+            
+        // v9.1: Live Refresh when a model is activated in Model Center
+        NotificationCenter.default.publisher(for: .activeProviderChanged)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] note in
+                Task { [weak self] in
+                    await self?.loadModels()
+                    if let modelID = note.object as? String {
+                        self?.selected = self?.models.first(where: { $0.id == modelID })
                     }
                 }
             }
@@ -95,18 +111,20 @@ public class ModelPickerViewModel: ObservableObject {
     public func loadModels() async {
         isLoading = true
         
-        // 1. Dynamic Titan Engine Discovery (MLX)
-        let titanCandidates: [ModelSource] = [
-            .localMLX(id: "Qwen3.5-9B-4bit", name: "Qwen 3.5 9B (Titan v2)", ramGB: 16, hasThink: false),
-            .localMLX(id: "Qwen2.5-7B-Instruct-4bit", name: "Qwen 2.5 7B (Titan)", ramGB: 16, hasThink: false)
-        ]
-        
-        let localModels = titanCandidates.filter { model in
-            if case .localMLX(let id, _, _, _) = model {
-                let path = ModelSetupManager.shared.getModelDirectory(for: id)
-                return FileManager.default.fileExists(atPath: path.path)
-            }
+        // 1. Dynamic Titan Engine Discovery (MLX) - v9.1 Unified
+        let localCandidates = ModelRegistry.availableModels.filter { catalog in
+            if case .localTitanEngine = catalog.provider { return true }
             return false
+        }
+        
+        let localModels: [ModelSource] = localCandidates.compactMap { catalog in
+            let path = ModelManager.shared.modelsDirectory.appendingPathComponent(catalog.id)
+            let isInstalled = FileManager.default.fileExists(atPath: path.appendingPathComponent("config.json").path)
+            
+            if isInstalled {
+                return ModelSource.localMLX(id: catalog.id, name: catalog.name, ramGB: 16, hasThink: catalog.id.contains("think"))
+            }
+            return nil
         }
         self.hasTitanEngine = !localModels.isEmpty
         
@@ -185,11 +203,17 @@ public class ModelPickerViewModel: ObservableObject {
             do {
                 if case .openRouter(let id, _, _, _, let prompt, let completion) = model {
                     try await vault.updateModelPricing(for: "openrouter", modelName: id, promptPrice: prompt, completionPrice: completion)
+                    
+                    // v9.9: Force switch to Cloud in StateManager
+                    ModelStateManager.shared.activeProvider = .cloudOpenRouter(modelID: id)
+                    ModelStateManager.shared.currentModelID = id
+                    ModelStateManager.shared.isCloudFallback = false // Clean manual selection
+                    
                 } else if case .localMLX(let id, _, _, _) = model {
                     try await vault.updateModelPricing(for: "mlx", modelName: id, promptPrice: 0, completionPrice: 0)
                     
-                    // Trigger High-Stability Safe Swap
-                    await ModelSetupManager.shared.switchToModel(id)
+                    // v9.9: Unified Local Switch with Priming
+                    try await ModelStateManager.shared.switchToLocal(id)
                     
                     // If files are missing, trigger download
                     if !ModelSetupManager.shared.isModelReady && ModelSetupManager.shared.state != .loading {
@@ -197,9 +221,10 @@ public class ModelPickerViewModel: ObservableObject {
                     }
                 } else if case .bridge(let id, _) = model {
                     try await vault.updateModelPricing(for: "bridge", modelName: id, promptPrice: 0, completionPrice: 0)
-                } else if case .custom(let providerID, _, let modelID, _, _) = model {
-                    try await vault.updateModelPricing(for: providerID, modelName: modelID)
+                    ModelStateManager.shared.activeProvider = .localOllama(modelName: id)
+                    ModelStateManager.shared.currentModelID = id
                 }
+                
                 print("[ModelPicker] Model and Pricing changed to \(model.name)")
                 
                 // v7.4.0 LiveSwitch: Notify Orchestrator of provider change immediately
@@ -212,6 +237,7 @@ public class ModelPickerViewModel: ObservableObject {
                 }
             } catch {
                 print("[ModelPicker] Failed to update model: \(error)")
+                self.alertMessage = "Model yükleme hatası: \(error.localizedDescription)"
             }
         }
     }

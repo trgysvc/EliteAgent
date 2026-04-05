@@ -57,13 +57,11 @@ public actor MLXProvider: LocalLLMProvider {
     public func complete(_ request: CompletionRequest) async throws -> CompletionResponse {
         let startTime = Date()
         
-        // Single prompt construction - InferenceActor handles ChatML specialization
-        // We take the last user message or join them.
-        let prompt = request.messages.map { $0.role == "user" ? $0.content : "" }.joined(separator: "\n")
+        // v9.2: Pass full message context from Orchestrator to InferenceActor
+        let messages = request.messages.map { Message(role: $0.role, content: $0.content) }
         
-        // v7.5.0: Pass both system prompt and user prompt to InferenceActor
         let stream = await InferenceActor.shared.generate(
-            prompt: prompt, 
+            messages: messages, 
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens
         )
@@ -79,7 +77,7 @@ public actor MLXProvider: LocalLLMProvider {
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: First token arrived (\(initialLatency))")
             }
             fullContent += chunk
-            tokenCount += 1 // One chunk is usually one token or a small set of characters
+            tokenCount += 1
         }
         
         let totalTime = Date().timeIntervalSince(firstTokenTime ?? startTime)
@@ -88,11 +86,11 @@ public actor MLXProvider: LocalLLMProvider {
         
         let latency = Int(Date().timeIntervalSince(startTime) * 1000)
         
-        // Estimates for local token counts (Simplified)
+        // Estimates for local token counts
         let count = TokenCount(
-            prompt: prompt.count / 4,
+            prompt: request.messages.map { $0.content.count }.reduce(0, +) / 4,
             completion: fullContent.count / 4,
-            total: (prompt.count + fullContent.count) / 4
+            total: (request.messages.map { $0.content.count }.reduce(0, +) + fullContent.count) / 4
         )
         
         return CompletionResponse(

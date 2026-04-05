@@ -155,6 +155,10 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         }
     }
     
+    public func reloadCurrentModel() async {
+        await switchToModel(activeModelID)
+    }
+    
     private func handleLoadFailure(error: String) async {
         if !rollbackAttempted && lastKnownGoodModelID != activeModelID {
             await MainActor.run { 

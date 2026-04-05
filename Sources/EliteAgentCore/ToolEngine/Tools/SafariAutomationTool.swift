@@ -45,6 +45,8 @@ public struct SafariAutomationTool: AgentTool {
     // MARK: - Core Actions
 
     private func performSearch(query: String) async throws -> String {
+        AgentLogger.logAudit(level: .info, agent: "Safari", message: "Starting search for: '\(query)'")
+        
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
         let searchURL = "https://www.google.com/search?q=\(encodedQuery)"
         
@@ -63,6 +65,8 @@ public struct SafariAutomationTool: AgentTool {
     }
 
     private func scrapeActiveTab() async throws -> String {
+        AgentLogger.logAudit(level: .info, agent: "Safari", message: "Scraping content from the active tab...")
+        
         let script = """
         tell application "Safari"
             if not (exists document 1) then
@@ -78,6 +82,8 @@ public struct SafariAutomationTool: AgentTool {
     }
 
     private func openURL(_ urlString: String) async throws -> String {
+        AgentLogger.logAudit(level: .info, agent: "Safari", message: "Navigating to: \(urlString)")
+        
         let script = """
         tell application "Safari"
             if not (exists document 1) then

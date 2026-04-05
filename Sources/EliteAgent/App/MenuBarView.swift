@@ -13,6 +13,9 @@ public struct MenuBarView: View {
     @State private var thermalState: ProcessInfo.ThermalState = ProcessInfo.processInfo.thermalState
     @State private var llmStatus: String = "IDLE"
     
+    // v9.6: Watchdog Integration
+    @StateObject private var watchdog = LocalModelWatchdog.shared
+    
     // Phase 1: Tool Health State
     @State private var activeToolsCount: Int = 0
     @State private var totalToolsCount: Int = 0
@@ -114,7 +117,7 @@ public struct MenuBarView: View {
                 
                 StatusItem(
                     label: "LLM",
-                    status: llmStatus,
+                    status: watchdog.status.rawValue.uppercased(),
                     color: statusColor,
                     icon: "brain.head.profile"
                 )
@@ -198,7 +201,11 @@ public struct MenuBarView: View {
     private func checkXPCHealth() {
         Task(priority: .background) {
             let isHealthy = await XPCManager.shared.isServiceAvailable()
-            await MainActor.run { withAnimation { xpcHealthy = isHealthy } }
+            await MainActor.run { 
+                if self.xpcHealthy != isHealthy {
+                    withAnimation { self.xpcHealthy = isHealthy }
+                }
+            }
         }
     }
     
@@ -208,8 +215,10 @@ public struct MenuBarView: View {
             let healthy = registry.getHealthyTools().count
             let total = registry.listTools().count
             await MainActor.run {
-                self.activeToolsCount = healthy
-                self.totalToolsCount = total
+                if self.activeToolsCount != healthy || self.totalToolsCount != total {
+                    self.activeToolsCount = healthy
+                    self.totalToolsCount = total
+                }
             }
         }
     }
@@ -255,11 +264,10 @@ public struct MenuBarView: View {
     
     private var statusColor: Color {
         guard let _ = modelPickerVM.selected else { return .red }
-        switch orchestrator.status {
-        case .idle, .working: return .green
-        case .waiting, .waitingLLM: return .orange
-        case .error: return .red
-        default: return .secondary
+        switch watchdog.status {
+        case .healthy: return .green
+        case .degraded: return .orange
+        case .critical: return .red
         }
     }
     

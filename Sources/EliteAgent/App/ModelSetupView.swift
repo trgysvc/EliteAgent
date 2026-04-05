@@ -1,291 +1,346 @@
 import SwiftUI
 import EliteAgentCore
 
-/// Premium Setup Assistant for the Titan Engine (Local MLX Intelligence).
-/// Refined for Apple HIG alignment with high-performance standards (v7.9.0).
+/// EliteAgent v9.0 Universal Model Hub.
+/// Manages Local, Cloud, and Ollama models with a zero-config grid UI.
 public struct ModelSetupView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var manager = ModelSetupManager.shared
-    @State private var setupPhase: Int = 0 
+    @StateObject private var modelManager = ModelManager.shared
+    @State private var toastMessage: String? = nil
+    @State private var toastType: ToastType = .info
     
-    // Deletion & Modal States
-    @State private var modelToDelete: String?
-    @State private var isDeleting = false
-    @State private var deleteError: String?
-    @State private var cachedModelSize: String?
-    @State private var selectedQuant: String = "Q5_K_M"
+    enum ToastType { case info, error, success }
+    
+    // Grid Layout Configuration
+    private let columns = [
+        GridItem(.adaptive(minimum: 220, maximum: 260), spacing: 20)
+    ]
     
     public init() {}
     
     public var body: some View {
         ZStack {
-            // Adaptive Background (Sequoia Style)
+            // macOS Sequoia Adaptive Background
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
             
-            // Subtle Radial Accent
-            RadialGradient(
-                colors: [.accentColor.opacity(0.1), .clear],
-                center: .topTrailing,
-                startRadius: 0,
-                endRadius: 600
-            )
-            .ignoresSafeArea()
-            
-            VStack(spacing: 32) {
-                // Header
-                headerView
+            VStack(spacing: 24) {
+                headerSection
                 
-                // Content Switcher
-                Group {
-                    if manager.isModelReady {
-                        successPhase
-                    } else if setupPhase == 0 {
-                        welcomePhase
-                    } else {
-                        instructionsPhase
-                    }
-                }
-                .transition(.asymmetric(insertion: .push(from: .bottom), removal: .opacity))
-                
-                Spacer()
-                
-                // Footer
-                footerView
-            }
-            .padding(40)
-        }
-        .frame(width: 520, height: 640)
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: setupPhase)
-        .alert("Model dosyalarını sil?", isPresented: Binding(
-            get: { modelToDelete != nil },
-            set: { if !$0 { modelToDelete = nil; cachedModelSize = nil } }
-        )) {
-            Button("Vazgeç", role: .cancel) { }
-            Button("Sil", role: .destructive) {
-                if let id = modelToDelete { deleteModel(id) }
-            }
-        } message: {
-            Text("Seçilen model (\(cachedModelSize ?? "")) silinecektir. Bu işlem geri alınamaz.")
-        }
-    }
-    
-    private func deleteModel(_ id: String) {
-        isDeleting = true
-        Task {
-            do {
-                try await manager.deleteModel(id)
-                await MainActor.run {
-                    isDeleting = false
-                    modelToDelete = nil
-                }
-            } catch {
-                await MainActor.run {
-                    deleteError = error.localizedDescription
-                    isDeleting = false
-                }
-            }
-        }
-    }
-    
-    // MARK: - Components
-    
-    private var headerView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "cpu.fill")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(.linearGradient(colors: [.accentColor, .blue], startPoint: .top, endPoint: .bottom))
-                .symbolEffect(.pulse)
-            
-            Text("Elite Titan Motoru")
-                .font(.title.bold())
-                .foregroundStyle(.primary)
-            
-            Text("Hibrit Zeka Aktivasyonu")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-    
-    private var welcomePhase: some View {
-        VStack(spacing: 24) {
-            Text("Mac'inizin gücünü yerel Apple Silicon yapay zekası ile birleştirin.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 20)
-            
-            VStack(alignment: .leading, spacing: 16) {
-                featureRow(icon: "lock.shield", title: "%100 Gizli", desc: "Verileriniz asla cihazınızdan çıkmaz.")
-                featureRow(icon: "bolt.fill", title: "Metal Optimizasyonu", desc: "Native M-serisi GPU hızlandırması.")
-                featureRow(icon: "wifi.slash", title: "Çevrimdışı Kullanım", desc: "İnternet bağlantısı olmadan tam performans.")
-            }
-            .padding(20)
-            .background(.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 18))
-        }
-    }
-    
-    private var instructionsPhase: some View {
-        VStack(spacing: 24) {
-            if manager.isDownloading {
-                // DOWNLOAD PROGRESS
-                VStack(spacing: 20) {
-                    Text("İndiriliyor...")
-                        .font(.headline)
-                    
-                    ProgressView(value: manager.downloadProgress)
-                        .progressViewStyle(.linear)
-                        .tint(.accentColor)
-                        .scaleEffect(x: 1, y: 1.5, anchor: .center)
-                    
-                    Text("\(Int(manager.downloadProgress * 100))%")
-                        .font(.title2.bold().monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                .padding(30)
-                .background(.background.opacity(0.4), in: RoundedRectangle(cornerRadius: 24))
-            } else {
-                // MODEL SELECTION
-                VStack(spacing: 20) {
-                    modelSelectionCard(
-                        id: "Qwen2.5-7B-Instruct-4bit",
-                        title: "Titan Dengeli (v1)",
-                        desc: "Qwen 2.5 7B. Hızlı, 8GB RAM uyumlu.",
-                        badge: "4.5 GB"
-                    )
-                    
-                    modelSelectionCard(
-                        id: "Qwen3.5-9B-4bit",
-                        title: "Titan Güçlü (v2)",
-                        desc: "Qwen 3.5 9B. Üstün akıl yürütme, 16GB RAM önerilir.",
-                        badge: "6.2 GB",
-                        isPremium: true
-                    )
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Hassasiyet (Quantization)")
-                            .font(.caption.bold())
-                            .foregroundStyle(.secondary)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 32) {
+                        // Section 1: LOCAL TITAN MODELS
+                        modelSection(title: "LOCAL TITAN ENGINE", icon: "cpu.fill", filter: .local)
                         
-                        Picker("", selection: $selectedQuant) {
-                            Text("Hızlı (Q4)").tag("Q4_K_M")
-                            Text("Dengeli (Q5)").tag("Q5_K_M")
-                            Text("Net (Q8)").tag("Q8_0")
-                        }
-                        .pickerStyle(.segmented)
+                        // Section 2: CLOUD MODELS
+                        modelSection(title: "CLOUD PROVIDERS", icon: "cloud.fill", filter: .cloud)
+                        
+                        // Section 3: OLLAMA BRIDGE
+                        modelSection(title: "OLLAMA BRIDGE", icon: "point.3.connected.trianglepath.dotted", filter: .ollama)
+                        
+                        diskUsageFooter
                     }
-                    .padding(.top, 8)
+                    .padding(20)
                 }
+                
+                footerSection
             }
-        }
-    }
-    
-    private func modelSelectionCard(id: String, title: String, desc: String, badge: String, isPremium: Bool = false) -> some View {
-        Button {
-            manager.activeModelID = id
-        } label: {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
+            .padding(24)
+            
+            // Toast Overlay
+            if let msg = toastMessage {
+                VStack {
+                    Spacer()
                     HStack {
-                        Text(title).font(.body.bold())
-                        if isPremium {
-                            Text("YENİ")
-                                .font(.system(size: 8, weight: .black))
-                                .padding(.horizontal, 4).padding(.vertical, 2)
-                                .background(.blue, in: RoundedRectangle(cornerRadius: 4))
-                                .foregroundStyle(.white)
-                        }
+                        Image(systemName: toastType == .error ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                        Text(msg)
                     }
-                    Text(desc).font(.caption).foregroundStyle(.secondary)
+                    .font(.subheadline.bold())
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(toastType == .error ? Color.red : Color.blue)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .shadow(radius: 4)
+                    .padding(.bottom, 60)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                Spacer()
-                
-                if manager.isModelAvailable(id) {
-                    Button(role: .destructive) {
-                        modelToDelete = id
-                        Task { cachedModelSize = await manager.modelSize(for: id) }
-                    } label: {
-                        Image(systemName: "trash").foregroundStyle(.red)
-                    }.buttonStyle(.plain)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                         withAnimation { toastMessage = nil }
+                    }
                 }
-                
-                Image(systemName: manager.activeModelID == id ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(manager.activeModelID == id ? Color.accentColor : Color.secondary)
             }
-            .padding()
-            .background(manager.activeModelID == id ? Color.accentColor.opacity(0.1) : Color.primary.opacity(0.02))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(manager.activeModelID == id ? Color.accentColor : Color.primary.opacity(0.1), lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
+        .frame(width: 720, height: 600)
     }
     
-    private var successPhase: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 72))
-                .foregroundStyle(.green)
-                .symbolEffect(.bounce, value: manager.isModelReady)
-            
-            Text("Titan Devreye Alındı")
-                .font(.title2.bold())
-            
-            Text("Yerel yapay zeka motoru GPU üzerinde çalışmaya hazır.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+    // MARK: - Actions
+    
+    func showToast(_ message: String, type: ToastType = .info) {
+        withAnimation {
+            self.toastMessage = message
+            self.toastType = type
         }
     }
     
-    private var footerView: some View {
-        HStack {
-            if manager.isModelReady {
-                Button { dismiss() } label: {
-                    Text("Sohbete Başla")
-                        .frame(maxWidth: .infinity)
+    // MARK: - Sections
+    
+    private var headerSection: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Model Merkezi")
+                    .font(.system(size: 28, weight: .bold))
+                Text("Cihaz Analizi: \(AutoConfigManager.shared.recommendation.ramDescription) tespit edildi. Titan Engine yerel yürütme için optimize edildi.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            // Auto Config Badge
+            HStack(spacing: 6) {
+                Image(systemName: "bolt.shield.fill")
+                Text("Auto-Config: \(AutoConfigManager.shared.autoTune().preset.rawValue.uppercased())")
+            }
+            .font(.caption2.bold())
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(.blue.opacity(0.1), in: Capsule())
+            .foregroundStyle(.blue)
+            
+            // v9.6: Stress Simulation Button
+            Button {
+                Task { await LocalModelWatchdog.shared.simulateStress() }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "flame.fill")
+                    Text("Stres Testi")
                 }
+                .font(.caption2.bold())
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(.red.opacity(0.1), in: Capsule())
+                .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
+            .help("Düşük VRAM ve termal baskı simüle ederek kurtarma sistemini test et")
+        }
+    }
+    
+    private func modelSection(title: String, icon: String, filter: ProviderCategory) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label(title, systemImage: icon)
+                .font(.caption.bold())
+                .foregroundStyle(.secondary)
+            
+            LazyVGrid(columns: columns, spacing: 20) {
+                ForEach(ModelRegistry.availableModels.filter { match($0.provider, category: filter) }) { model in
+                    ModelCard(model: model, showToast: showToast)
+                }
+            }
+        }
+    }
+    
+    private var diskUsageFooter: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider()
+            HStack {
+                Image(systemName: "internaldrive.fill")
+                Text("Disk Kullanımı: 4.2 GB used / 16 GB available") // Hardcoded placeholder for Phase 1
+                Spacer()
+                Text("Cihaz: M4 Air (8-core)") // Auto-detect placeholder
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.top, 20)
+    }
+    
+    private var footerSection: some View {
+        HStack {
+            Button("Kapat") { dismiss() }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            
+            Spacer()
+            
+            Button("Sohbete Dön") { dismiss() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-            } else if !manager.isDownloading {
-                if setupPhase == 0 {
-                    Button("Kuruluma Başla") {
-                        withAnimation { setupPhase = 1 }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity)
-                } else {
-                    Button("Vazgeç") { dismiss() }
-                        .buttonStyle(.plain).foregroundStyle(.secondary)
-                    
-                    Spacer()
-                    
-                    Button("Modeli İndir") {
-                        manager.startModelDownload()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(manager.activeModelID.isEmpty)
-                }
-            }
         }
     }
     
-    private func featureRow(icon: String, title: String, desc: String) -> some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title3)
-                .frame(width: 32)
-                .foregroundStyle(Color.accentColor)
+    // MARK: - Helper Methods
+    
+    private enum ProviderCategory { case local, cloud, ollama }
+    
+    private func match(_ provider: ModelProvider, category: ProviderCategory) -> Bool {
+        switch (provider, category) {
+        case (.localTitanEngine, .local): return true
+        case (.cloudOpenRouter, .cloud): return true
+        case (.localOllama, .ollama): return true
+        default: return false
+        }
+    }
+}
+
+// MARK: - Subviews
+
+struct ModelCard: View {
+    let model: ModelCatalog
+    let showToast: (String, ModelSetupView.ToastType) -> Void
+    @StateObject private var manager = ModelManager.shared
+    @State private var errorMessage: String?
+    @State private var isLoading = false
+    
+    private var isDownloaded: Bool { manager.loadedModels.contains(model.id) }
+    private var isActive: Bool { AISessionState.shared.selectedModel == model.id }
+    private var isCurrentlyLoading: Bool { ModelManager.shared.loadingModelID == model.id }
+    private var progress: Double? { manager.downloadProgress[model.id] }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(model.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                Spacer()
+                if isDownloaded {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                }
+            }
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(desc).font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(model.size) • \(model.quantization)")
+                Text(model.estimatedSpeed)
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            
+            Spacer()
+            
+            if let p = progress, p < 1.0 {
+                VStack(spacing: 4) {
+                    ProgressView(value: p)
+                        .progressViewStyle(.linear)
+                        .tint(.blue)
+                    Text("%\(Int(p * 100)) • \(manager.downloadStatus[model.id] ?? "Başlatılıyor...")")
+                        .font(.system(size: 9).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                if isActive {
+                    Label("🟢 Aktif", systemImage: "checkmark.circle.fill")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.green)
+                } else {
+                    actionButton
+                }
             }
         }
-        .accessibilityElement(children: .combine)
+        .padding(16)
+        .frame(height: 140)
+        .background(.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(.primary.opacity(0.1), lineWidth: 1)
+        )
+        .alert("Model Hatası", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            if let msg = errorMessage { Text(msg) }
+        }
+    }
+    
+    @ViewBuilder
+    private var actionButton: some View {
+        if isDownloaded {
+            HStack {
+                Button {
+                    Task {
+                        do {
+                            try await manager.switchTo(model.id)
+                            showToast("✅ \(model.name) yüklendi! Hazır.", .success)
+                        } catch {
+                            showToast("Yükleme Başarısız: \(error.localizedDescription)", .error)
+                        }
+                    }
+                } label: {
+                    if isCurrentlyLoading {
+                        ProgressView().controlSize(.small).scaleEffect(0.8)
+                    } else {
+                        Text("Yükle")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(isCurrentlyLoading)
+                
+                Button("Sil") {
+                    Task { await manager.unload(model.id) }
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.red)
+                .font(.caption2)
+                .disabled(isCurrentlyLoading)
+            }
+        } else if case .cloudOpenRouter = model.provider {
+            Button("Bağlan") {
+                isLoading = true
+                Task { 
+                    do {
+                        try await manager.switchTo(model.id) 
+                        isLoading = false
+                    } catch {
+                        errorMessage = error.localizedDescription
+                        isLoading = false
+                    }
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isLoading)
+        } else {
+            // Check if repair is needed (weights exist but metadata might be missing)
+            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            let modelDir = appSupport.appendingPathComponent("EliteAgent/Models").appendingPathComponent(model.id)
+            let weightsExist = FileManager.default.fileExists(atPath: modelDir.appendingPathComponent("model.safetensors").path) || 
+                               FileManager.default.fileExists(atPath: modelDir.appendingPathComponent("weights.npz").path)
+            
+            if weightsExist && !isDownloaded {
+                Button {
+                    isLoading = true
+                    Task {
+                        do {
+                            try await manager.repairModel(model.id)
+                            isLoading = false
+                        } catch {
+                            errorMessage = "Onarım başarısız: \(error.localizedDescription)"
+                            isLoading = false
+                        }
+                    }
+                } label: {
+                    if isLoading {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Text("🔧 Tamamla")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .foregroundStyle(.orange)
+                .help("Eksik metadata dosyalarını indir")
+                .disabled(isLoading)
+            } else {
+                Button("İndir") {
+                    isLoading = true
+                    Task { 
+                        do {
+                            try await manager.download(model) 
+                            isLoading = false
+                        } catch {
+                            errorMessage = error.localizedDescription
+                            isLoading = false
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(isLoading)
+            }
+        }
     }
 }

@@ -13,7 +13,7 @@ public struct WebSearchToolWrapper: AgentTool {
             throw ToolError.missingParameter("query")
         }
         
-        let results = try await engine.search(query: query)
+        let results = try await engine.search(query: query, session: session)
         let output = results.map { "[\($0.title)](\($0.url)): \($0.snippet)" }.joined(separator: "\n\n")
         return output.isEmpty ? "Sonuç bulunamadı." : output
     }

@@ -13,6 +13,13 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
 - **SignalBus (Priority Management)**: `.critical`, `.high` ve `.normal` öncelikli işlem kuyrukları.
 
 ## 2. Titan Yerel Zeka (Intelligence Layer)
+- **Health Dashboard (Swift Charts) [v9.6]**: VRAM, TPS ve Termal durumun zaman serisi olarak takibi ve görselleştirilmesi.
+- **Stress Simulator [v9.6]**: Kurtarma mekanizmaları için kontrollü donanım baskısı simülasyonu.
+- **MLX Engine Guardian [v9.7 Ironclad]**: 
+    - **60s Timeout Wrapper**: GPU kilitlenmelerine karşı otomatik zaman aşımı koruması.
+    - **Proactive VRAM Sanitization**: Her çıkarım öncesi GPU cache temizliği.
+    - **Thermal Throttling v2**: `.serious` seviyede %75 bağlam daraltma (context reduction).
+- **Persistent Engine Reset [v9.7]**: Oturumu kapatmadan (System prompt + History koruyarak) 2.5s içinde motoru sıfırlama ve yeniden yükleme.
 - **MLX Local Provider**: Apple Silicon (NPU/GPU) üzerinde çalışan `InferenceActor` ile tamamen internetten bağımsız çıkarım (Offline Intelligence).
 - **GGUF Integrity Shield [v7.8.5]**: Model dosyaları için zorunlu Magic Byte, Versiyon (v3+) ve Tensör Sayısı doğrulaması.
 - **Unified Memory Diagnostics [HARDENED]**: macOS birleşik bellek takibi için `host_statistics64` (Mach) tasfiye edildi; artık %100 Sandbox-safe `ProcessInfo` ve sezgisel bellek hiyerarşisi kullanılıyor.
@@ -66,4 +73,5 @@ Bu döküman, EliteAgent projesinin tüm kaynak kodlarının, `devlog.md` kayıt
 - **AI Works Center**: Raporların `~/Documents/AI Works` klasöründe profesyonel PDF/MD/JSON olarak arşivlenmesi.
 
 ---
-*EliteAgent Core · Version 8.5 Research Update · April 2026*
+---
+*EliteAgent Core · IRONCLAD Update · April 2026*

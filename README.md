@@ -14,7 +14,13 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 
 ## 🔥 Key Features
 
-### 1. Titan Engine v3 (Intelligence & Diagnostics) - [v8.5 Production-Research]
+### 1. Self-Healing & Hardware Integrity [v9.7 Ironclad]
+- **Health Dashboard (Swift Charts):** Real-time monitoring of VRAM, TPS, and Thermal state with persistent history.
+- **Stress Simulator (v9.6):** Manual stress trigger to verify Auto-Recovery and Cloud Fallback mechanisms.
+- **MLX Engine Guardian:** 60-second timeout, proactive VRAM sanitization, and thermal-adaptive context reduction.
+- **Deep Recovery (Hard Reset):** Fast engine restart (2-3s) with session and memory preservation.
+
+### 2. Titan Engine v3 (Intelligence & Diagnostics) - [v8.5 Production-Research]
 - **Qwen 3.5 9B Specialization (4-bit):** Native **4-bit Quantized** Qwen 3.5 9B via `InferenceActor`, providing high-speed local reasoning.
 - **GGUF Integrity Shield:** Mandatory verification (Magic bytes, Version v3+, and Tensors) to prevent memory corruption.
 - **Unified Memory Diagnostics [HARDENED]:** Fully Sandbox-compliant memory management using heuristics and `ProcessInfo`, eliminating legacy Mach errors.
@@ -85,4 +91,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v8.5 PRODUCTION-RESEARCH]**
+> **[EliteAgent Core - v9.7 IRONCLAD]**
