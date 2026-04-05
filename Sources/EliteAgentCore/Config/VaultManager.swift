@@ -85,6 +85,8 @@ public enum VaultError: Error, CustomStringConvertible, Sendable {
 }
 
 public actor VaultManager {
+    @MainActor public static var shared: VaultManager!
+    
     public nonisolated let config: VaultConfig
     private let configURL: URL
     private let keychain = KeychainHelper()
@@ -103,7 +105,7 @@ public actor VaultManager {
             print("[VaultManager] Config missing at \(configURL.path). Creating default...")
             let defaultConfig = VaultConfig(
                 providers: [
-                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "Qwen2.5-7B-Instruct-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "qwen-2.5-7b-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
                     ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
                     ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-2.0-flash-lite-preview-02-05", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
@@ -134,11 +136,22 @@ public actor VaultManager {
         }
     }
     
+    /// Returns true if at least one cloud provider is properly configured with an API key identifier.
+    public nonisolated func hasCloudProvider() -> Bool {
+        return config.providers.contains { provider in
+            provider.type == .cloud && provider.keychainKey != nil
+        }
+    }
+    
+    public nonisolated func hasLocalConfiguration() -> Bool {
+        return config.providers.contains { $0.type == .local }
+    }
+    
     /// Ensures that 'mlx', 'bridge', and 'openrouter' are present. Restores defaults if missing.
     private static func syncRequiredProviders(config: inout VaultConfig, configURL: URL) throws -> Bool {
         let requiredIds = ["mlx", "bridge", "openrouter"]
         let defaults: [String: ProviderConfig] = [
-            "mlx": ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "Qwen2.5-7B-Instruct-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+            "mlx": ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "qwen-2.5-7b-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
             "bridge": ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
             "openrouter": ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-flash-1.5", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
 

@@ -78,10 +78,12 @@ public final class ChatProcessViewModel: ObservableObject {
                     }
                 }
                 
-                // 3. Execution
+                // 3. Execution (v9.2: Pass messages array for context consistency)
                 var result = ""
                 let prompt = "Analiz et: \(fileURL.lastPathComponent)"
-                for await chunk in await actor.generate(prompt: prompt) {
+                let messages = [Message(role: "user", content: prompt)]
+                
+                for await chunk in await actor.generate(messages: messages) {
                     if Task.isCancelled { break }
                     result += chunk
                 }

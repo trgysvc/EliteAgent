@@ -1,22 +1,27 @@
-// EliteAgent Titan Engine - v7.5.4 (Concurrency Safe)
+// EliteAgent Titan Engine - v9.0.2 (Universal & Fixed)
 import Foundation
 import MLX
 import MLXLLM
 import MLXLMCommon
 import Metal
 
-/// The offline brain of EliteAgent.
+/// The Universal Brain of EliteAgent. 
+/// Orchestrates local, cloud, and bridge providers via a single entry point.
 public actor InferenceActor {
     public static let shared = InferenceActor()
     
     nonisolated public let sharedBuffer: MetalBufferWrapper
     private let maxActivations = 1024
     
-    // v7.9.0: Track active generation for graceful cancellation
     private var currentGenerationTask: Task<Void, Never>?
     private var modelContainer: ModelContainer?
-    private var maxContextTokens: Int = 16384 // Optimized for 16GB RAM M4
+    private var maxContextTokens: Int = 16384
     private var conversationHistory: [Message] = []
+    
+    // v9.6: Self-Healing Metrics
+    private var lastTPS: Double = 0
+    private var lastLatency: Int = 0
+    private var nextRequestReducedContext: Bool = false
     
     // v7.7.0 Process Visualization Bridge
     private var stepContinuation: AsyncStream<ProcessStep>.Continuation?
@@ -40,24 +45,139 @@ public actor InferenceActor {
         _ = LLMModelFactory.shared
     }
     
+    // MARK: - Universal Inference API (v9.0)
+    
+    /// Universal entry point for all inference requests.
+    public func infer(
+        prompt: String,
+        provider: ModelProvider,
+        config: InferenceConfig
+    ) async throws -> AsyncStream<String> {
+        
+        AgentLogger.logAudit(level: .info, agent: "UniversalInference", message: "Inferring via \(provider)")
+        
+        // Update history before inference
+        self.conversationHistory.append(Message(role: "user", content: prompt))
+        
+        let vaultURL = PathConfiguration.shared.vaultURL
+        
+        switch provider {
+        case .localTitanEngine:
+            return self.generate(messages: self.conversationHistory, systemPrompt: config.systemPrompt, maxTokens: config.maxTokens)
+            
+        case .localOllama:
+            return AsyncStream { continuation in
+                Task {
+                    do {
+                        let vault = try VaultManager(configURL: vaultURL)
+                        let bridge = try BridgeProvider(providerID: .bridge, vaultManager: vault)
+                        let request = CompletionRequest(
+                            taskID: UUID().uuidString,
+                            systemPrompt: config.systemPrompt ?? "",
+                            messages: self.conversationHistory,
+                            maxTokens: config.maxTokens,
+                            sensitivityLevel: .public,
+                            complexity: 2
+                        )
+                        let response = try await bridge.complete(request)
+                        continuation.yield(response.content)
+                        self.conversationHistory.append(Message(role: "assistant", content: response.content))
+                        continuation.finish()
+                    } catch let error as URLError where error.code == .cannotConnectToHost || error.code == .networkConnectionLost {
+                        continuation.yield("⚠️ Ollama Bridge çevrimdışı. Lütfen Ollama uygulamasının çalıştığından emin olun.")
+                        continuation.finish()
+                    } catch {
+                        continuation.yield("Error (Ollama): \(error.localizedDescription)")
+                        continuation.finish()
+                    }
+                }
+            }
+            
+        case .cloudOpenRouter:
+            return AsyncStream { continuation in
+                Task {
+                    do {
+                        let vault = try VaultManager(configURL: vaultURL)
+                        let cloud = try CloudProvider(providerID: .openrouter, vaultManager: vault)
+                        let request = CompletionRequest(
+                            taskID: UUID().uuidString,
+                            systemPrompt: config.systemPrompt ?? "",
+                            messages: self.conversationHistory,
+                            maxTokens: config.maxTokens,
+                            sensitivityLevel: .public,
+                            complexity: 3
+                        )
+                        let response = try await cloud.complete(request)
+                        continuation.yield(response.content)
+                        self.conversationHistory.append(Message(role: "assistant", content: response.content))
+                        continuation.finish()
+                    } catch {
+                        continuation.yield("Error (Cloud): \(error.localizedDescription)")
+                        continuation.finish()
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Local MLX Operations
+    
     public func clearCache() {
-        AgentLogger.logAudit(level: .info, agent: "guard", message: "Memory pressure. Clearing GPU cache.")
         MLX.eval()
         MLX.Memory.clearCache()
     }
     
-    /// v7.9.0: Aborts any active LLM processing.
-    public func cancelOngoingGenerations() {
-        if currentGenerationTask != nil {
-            AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Aborting active generation task.")
-            currentGenerationTask?.cancel()
-            currentGenerationTask = nil
+    public func clearContext() {
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Context invalidated & history cleared.")
+        cancelOngoingGenerations()
+        self.conversationHistory.removeAll()
+    }
+    
+    public func restart() async {
+        AgentLogger.logAudit(level: .warn, agent: "titan", message: "Hard Reset: Titan Motoru Yeniden Başlatılıyor...")
+        
+        await MainActor.run {
+            AISessionState.shared.isRestartingEngine = true
+            ModelSetupManager.shared.isModelReady = false
         }
+        
+        let previousHistory = self.conversationHistory
+        self.modelContainer = nil
+        self.clearCache()
+        
+        // MLX Emergency Purge
+        await MLXEngineGuardian.shared.emergencyPurge()
+        
+        // Reload current model
+        await ModelSetupManager.shared.reloadCurrentModel()
+        
+        // Restore session
+        self.conversationHistory = previousHistory
+        
+        await MainActor.run {
+            AISessionState.shared.isRestartingEngine = false
+            ModelSetupManager.shared.isModelReady = true
+        }
+        
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Hard Reset: Motor başarıyla optimize edildi ve oturum korundu.")
+    }
+    
+    public func cancelOngoingGenerations() {
+        currentGenerationTask?.cancel()
+        currentGenerationTask = nil
+    }
+    
+    // MARK: - v9.6 Self-Healing API
+    
+    public func getAverageTPS() -> Double { return lastTPS }
+    public func getLastLatency() -> Int { return lastLatency }
+    
+    public func setNextRequestConfig(reducedContext: Bool) {
+        self.nextRequestReducedContext = reducedContext
     }
     
     public func unloadModel() async {
         cancelOngoingGenerations()
-        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Unloading current model...")
         self.modelContainer = nil
         self.clearCache()
         
@@ -67,38 +187,8 @@ public actor InferenceActor {
         }
     }
     
-    public func clearContext() {
-        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Context invalidated & history cleared (Provider switch).")
-        cancelOngoingGenerations()
-        self.conversationHistory.removeAll()
-    }
-    
-    public func restart() async {
-        AgentLogger.logAudit(level: .info, agent: "system", message: "Restarting Inference Engine...")
-        
-        // 1. Purge Model
-        self.modelContainer = nil
-        
-        // 2. Clear GPU Cache (MLX)
-        MLX.eval()
-        MLX.Memory.clearCache()
-        
-        // 3. Reset UI/Stats Bridge
-        await MainActor.run {
-            ModelSetupManager.shared.isModelReady = false
-            ModelSetupManager.shared.loadState = .unloaded
-            ModelSetupManager.shared.downloadProgress = 0.0
-        }
-        
-        AgentLogger.logAudit(level: .info, agent: "system", message: "Inference Engine Restored (Clean Slate).")
-    }
-    
     public func loadModel(at url: URL) async throws {
-        AgentLogger.logAudit(level: .info, agent: "orchestrator", message: "Titan: Initializing Model via MLXLMCommon at \(url.lastPathComponent)...")
-        
-        // Ensure clean slate
-        MLX.eval()
-        MLX.Memory.clearCache()
+        self.clearCache()
         
         await MainActor.run {
             ModelSetupManager.shared.loadState = .transferringToVRAM
@@ -114,71 +204,106 @@ public actor InferenceActor {
         }
     }
     
-    public func generate(prompt: String, systemPrompt: String? = nil, maxTokens: Int = 100) -> AsyncStream<String> {
+    public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 500) -> AsyncStream<String> {
         return AsyncStream(String.self) { continuation in
-            // v7.9.0: Capture the task for seamless cancellation during provider switching
             self.currentGenerationTask = Task { [self] in
-                let languageInstruction = InferenceActor.buildLanguageInstruction(for: prompt)
-                let agenticDirectives = """
-                ### SYSTEM DIRECTIVE: SÖYLEME, YAP!
-                Döküman okuduğunda veya dosya yazdığında kullanıcıya "Yaptım" demek yerine ÖNCE mutlaka ilgili aracı (tool) çağır.
-                """
+                // Use the last message content for language detection
+                let lastContent = messages.last?.content ?? ""
+                let languageInstruction = InferenceActor.buildLanguageInstruction(for: lastContent)
                 
                 let finalSystemPrompt = """
                 \(systemPrompt ?? "You are EliteAgent, a powerful AI assistant running locally on Apple Silicon.")
                 \(languageInstruction)
-                \(agenticDirectives)
+                ### SYSTEM DIRECTIVE: SÖYLEME, YAP!
+                Döküman okuduğunda veya dosya yazdığında kullanıcıya \"Yaptım\" demek yerine ÖNCE mutlaka ilgili aracı (tool) çağır.
                 """
-                let formattedPrompt = "<|im_start|>system\n\(finalSystemPrompt)<|im_end|>\n<|im_start|>user\n\(prompt)<|im_end|>\n<|im_start|>assistant\n"
+                
+                // v9.2: Accurate Multi-turn ChatML Construction
+                var fullPrompt = "<|im_start|>system\n\(finalSystemPrompt)<|im_end|>\n"
+                
+                // v9.6: Apply Context Reduction if triggered by RecoveryEngine
+                var historyToUse = messages
+                if nextRequestReducedContext {
+                    let keepCount = 3
+                    if messages.count > keepCount {
+                        historyToUse = Array(messages.suffix(keepCount))
+                        AgentLogger.logAudit(level: .warn, agent: "titan", message: "Recovery: Context reduced to last \(keepCount) messages.")
+                    }
+                    nextRequestReducedContext = false // Reset after application
+                }
+                
+                for msg in historyToUse {
+                    fullPrompt += "<|im_start|>\(msg.role)\n\(msg.content)<|im_end|>\n"
+                }
+                
+                // Ensure assistant trigger
+                if messages.last?.role != "assistant" {
+                    fullPrompt += "<|im_start|>assistant\n"
+                }
+                
+                let promptToCapture = fullPrompt
+                let maxTokensToCapture = maxTokens
                 
                 do {
-                    try await self.internalGenerate(formattedPrompt: formattedPrompt, maxTokens: maxTokens, continuation: continuation)
-                } catch {
-                    AgentLogger.logAudit(level: .error, agent: "titan", message: "Generation failed: \(error.localizedDescription)")
-                    continuation.yield("Error: Generation failed.")
+                    var fullContent = ""
+                    let stream = AsyncStream<String> { innerContinuation in
+                        Task {
+                            do {
+                                // v9.7: Wrap in Guardian for Timeout, OOM and Thermal protection.
+                                try await MLXEngineGuardian.shared.execute { [self] in
+                                    try await self.internalGenerate(formattedPrompt: promptToCapture, maxTokens: maxTokensToCapture, continuation: innerContinuation)
+                                }
+                            } catch let error as EngineError {
+                                innerContinuation.yield("⚠️ Engine Error: \(error.localizedDescription)")
+                                if case .timeout = error {
+                                    handleEngineTimeout()
+                                } else if case .outOfMemory = error {
+                                    Task { await self.restart() }
+                                }
+                                innerContinuation.finish()
+                            } catch {
+                                innerContinuation.yield("Error: \(error.localizedDescription)")
+                                innerContinuation.finish()
+                            }
+                        }
+                    }
+                    
+                    for await chunk in stream {
+                        fullContent += chunk
+                        continuation.yield(chunk)
+                    }
+                    
+                    // Update internal history for future consistency
+                    self.conversationHistory = messages
+                    self.conversationHistory.append(Message(role: "assistant", content: fullContent))
                     continuation.finish()
-                }
+                } 
             }
         }
     }
     
+    private func appendAssistantMessage(_ content: String) async {
+        self.conversationHistory.append(Message(role: "assistant", content: content))
+    }
+    
     private func internalGenerate(formattedPrompt: String, maxTokens: Int, continuation: AsyncStream<String>.Continuation) async throws {
         guard let container = self.modelContainer else {
-            continuation.yield("Error: Engine not primed.")
+            continuation.yield("Error: Engine not primed. Please load a model.")
             continuation.finish()
             return
         }
         
-        let generationStart = Date()
-        
-        // v7.5.4: Bucketed Sequence Length (The core performance fix for the 180s delay)
-        // Pad to nearest 512 tokens (approx 2048 chars) to stabilize Metal graph shape.
         let bucketSize = 512 * 4 
         let paddedPrompt = formattedPrompt.padding(toLength: ((formattedPrompt.count / bucketSize) + 1) * bucketSize, withPad: " ", startingAt: 0)
         
-        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Encoding & Prefilling bucket (\(paddedPrompt.count / bucketSize) blocks)...")
-        emitStep(.step(name: "Reasoning & Context Prep", status: .active, icon: "brain.headset"))
-        let encodingStart = Date()
-        
-        // Prepare (Prefill)
         let lmInput = try await container.prepare(input: UserInput(prompt: paddedPrompt))
-        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Encoding complete (\(String(format: "%.2fs", Date().timeIntervalSince(encodingStart)))). Starting generation...")
-
         let parameters = GenerateParameters(maxTokens: maxTokens)
         let stream = try await container.generate(input: lmInput, parameters: parameters)
         
-        var firstToken = true
         for await generation in stream {
             if Task.isCancelled {
                 continuation.finish()
                 return
-            }
-            
-            if firstToken {
-                firstToken = false
-                let ttft = Date().timeIntervalSince(generationStart)
-                AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: First token received (TTFT: \(String(format: "%.2fs", ttft)))")
-                emitStep(.step(name: "Response Generation", status: .active, icon: "text.bubble.fill"))
             }
             
             switch generation {
@@ -186,19 +311,13 @@ public actor InferenceActor {
                 continuation.yield(text)
                 updateSharedBuffer(with: text.count) 
                 
-                let currentState = ProcessInfo.processInfo.thermalState
-                if currentState == .serious { try? await Task.sleep(nanoseconds: 10_000_000) }
-                else if currentState == .critical { try? await Task.sleep(nanoseconds: 50_000_000) }
-                
             case .info(let info):
-                let ttft = Date().timeIntervalSince(generationStart)
-                AgentLogger.logAudit(level: .info, agent: "titan", message: "Generation Complete: \(info.tokensPerSecond.formatted()) t/s (TTFT: \(String(format: "%.2fs", ttft)))")
-                emitStep(.step(name: "Task Complete", status: .success, icon: "checkmark.seal.fill"))
+                self.lastTPS = info.tokensPerSecond
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "Generation Complete: \(info.tokensPerSecond.formatted()) t/s")
                 stepContinuation?.finish()
                 
             case .toolCall(let call):
-                AgentLogger.logAudit(level: .info, agent: "titan", message: "Tool Call Detected: \(call.function.name)")
-                emitStep(.step(name: "Executing: \(call.function.name)", status: .active, icon: "wrench.and.screwdriver.fill"))
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "Tool Call: \(call.function.name)")
             }
         }
         continuation.finish()
@@ -207,8 +326,7 @@ public actor InferenceActor {
     private static func buildLanguageInstruction(for prompt: String) -> String {
         let turkishChars = CharacterSet(charactersIn: "şğüöçıŞĞÜÖÇİ")
         let hasTurkish = prompt.unicodeScalars.contains { turkishChars.contains($0) }
-        if hasTurkish { return "CRITICAL RULE: Respond ONLY in Turkish." }
-        return "CRITICAL RULE: Always respond in the EXACT same language the user is writing in."
+        return hasTurkish ? "CRITICAL: Respond ONLY in Turkish." : "CRITICAL: Match user's language."
     }
     
     private func updateSharedBuffer(with activationValue: Int) {
@@ -216,6 +334,18 @@ public actor InferenceActor {
         let ptr = buffer.contents().bindMemory(to: Float.self, capacity: maxActivations)
         for i in 0..<maxActivations {
             ptr[i] = Float.random(in: 0.0...1.0) * Float(activationValue % 10) / 10.0
+        }
+    }
+    
+    private func handleEngineTimeout() {
+        AgentLogger.logAudit(level: .error, agent: "titan", message: "Critical: Engine Hang (60s). Switching to Cloud fallback.")
+        Task { @MainActor in
+            AISessionState.shared.isFallbackActive = true
+            NotificationCenter.default.post(
+                name: NSNotification.Name("app.eliteagent.autoFallbackTriggered"), 
+                object: nil, 
+                userInfo: ["message": "Yerel model yanıt vermedi (60s). Bulut modele geçildi."]
+            )
         }
     }
 }

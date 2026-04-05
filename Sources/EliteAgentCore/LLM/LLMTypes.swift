@@ -69,15 +69,23 @@ public struct TokenCount: Codable, Sendable {
 }
 
 public enum ProviderError: Error, Codable, Sendable, CustomStringConvertible {
-    case modelNotLoaded
-    case timeout
     case networkError(String)
+    case authenticationError
+    case rateLimitExceeded
+    case emptyResponse
+    case timeout
+    case unknown(String)
+    case modelNotLoaded
     
     public var description: String {
         switch self {
-        case .modelNotLoaded: return "Model is not loaded."
-        case .timeout: return "Provider timed out."
         case .networkError(let err): return "Network error: \(err)"
+        case .authenticationError: return "Authentication failed (Check API Key)."
+        case .rateLimitExceeded: return "Rate limit exceeded. Please wait."
+        case .emptyResponse: return "Empty response from provider (null content)."
+        case .timeout: return "Request timed out."
+        case .unknown(let msg): return "Unknown error: \(msg)"
+        case .modelNotLoaded: return "Model is not loaded."
         }
     }
 }
@@ -87,16 +95,18 @@ public struct CompletionResponse: Codable, Sendable {
     public let providerUsed: ProviderID
     public let content: String
     public let thinkBlock: String?
+    public let toolCalls: [ToolCall]?
     public let tokensUsed: TokenCount
     public let latencyMs: Int
     public let costUSD: Decimal
     public var error: ProviderError?
     
-    public init(taskID: String, providerUsed: ProviderID, content: String, thinkBlock: String? = nil, tokensUsed: TokenCount, latencyMs: Int, costUSD: Decimal, error: ProviderError? = nil) {
+    public init(taskID: String, providerUsed: ProviderID, content: String, thinkBlock: String? = nil, toolCalls: [ToolCall]? = nil, tokensUsed: TokenCount, latencyMs: Int, costUSD: Decimal, error: ProviderError? = nil) {
         self.taskID = taskID
         self.providerUsed = providerUsed
         self.content = content
         self.thinkBlock = thinkBlock
+        self.toolCalls = toolCalls
         self.tokensUsed = tokensUsed
         self.latencyMs = latencyMs
         self.costUSD = costUSD

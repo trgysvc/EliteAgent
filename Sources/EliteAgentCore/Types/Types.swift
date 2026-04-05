@@ -110,6 +110,8 @@ public struct InferenceConfig: Codable, Sendable {
     public var showResearchProgress: Bool = true
     public var autoSaveReports: Bool = false
     public var preferredSearchProvider: String = "Serper (Google)"
+    public var maxTokens: Int = 1024
+    public var systemPrompt: String? = nil
     
     public init(
         providerPriority: [ProviderID] = [.mlx, .openrouter, .bridge],
@@ -121,7 +123,9 @@ public struct InferenceConfig: Codable, Sendable {
         isDeepResearchEnabled: Bool = false,
         showResearchProgress: Bool = true,
         autoSaveReports: Bool = false,
-        preferredSearchProvider: String = "Serper (Google)"
+        preferredSearchProvider: String = "Serper (Google)",
+        maxTokens: Int = 1024,
+        systemPrompt: String? = nil
     ) {
         self.providerPriority = providerPriority
         self.strictLocal = strictLocal
@@ -133,6 +137,8 @@ public struct InferenceConfig: Codable, Sendable {
         self.showResearchProgress = showResearchProgress
         self.autoSaveReports = autoSaveReports
         self.preferredSearchProvider = preferredSearchProvider
+        self.maxTokens = maxTokens
+        self.systemPrompt = systemPrompt
     }
     
     public static let `default` = InferenceConfig(
@@ -150,7 +156,9 @@ public struct InferenceConfig: Codable, Sendable {
         isDeepResearchEnabled: false,
         showResearchProgress: true,
         autoSaveReports: false,
-        preferredSearchProvider: "Serper (Google)"
+        preferredSearchProvider: "Serper (Google)",
+        maxTokens: 1024,
+        systemPrompt: "You are EliteAgent, a high-performance AI assistant."
     )
 }
 

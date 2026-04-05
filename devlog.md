@@ -286,3 +286,29 @@ EliteAgent artık otonom araştırma yapabilen, bulgularını premium bir arayü
 
 ---
 *EliteAgent Core · v8.5 · Research & Autonomy Excellence.*
+
+## 📅 [2026-04-05] — Health Dashboard & Stress Simulator (v9.6)
+
+Bugün, EliteAgent'ın öz-denetim ve proaktif sağlık izleme yeteneklerini (Self-Healing) bir üst seviyeye taşıyan "v9.6 Integrity" güncellemesini tamamladık. Sistemin donanım kaynaklarını ve çıkarım kalitesini gerçek zamanlı olarak ölçen dinamik bir ekosistem kuruldu.
+
+### 🚀 Ana Başlıklar
+- **Health Dashboard (Swift Charts)**: Ayarlar menüsüne, VRAM (Bellek), TPS (Hız) ve Termal durumu zaman akışında görselleştiren yüksek performanslı bir izleme paneli eklendi.
+- **Stress Simulator (v9.6)**: Model kurulum arayüzüne, donanım baskısı (High VRAM/Thermal) simüle eden bir test butonu eklendi. Bu sayede "Auto-Recovery" ve "Cloud Fallback" mekanizmalarının doğruluğu anlık olarak test edilebiliyor.
+- **Inference Integrity (O(n) Validation)**: Model çıktılarını anlık olarak tarayan; boş yanıt, "gibberish" (saçma sapan karakterler) veya tekrarlayan blokları yakalayan düşük maliyetli bir validator katmanı (`InferenceValidator`) sisteme dahil edildi.
+- **Event Journal**: Sistemin ne zaman bağlam daralttığını veya ne zaman bulut yedeklemeye geçtiğini listeleyen kronolojik bir olay günlüğü devreye alındı.
+
+## 📅 [2026-04-05] — MLX Engine Hardening & Deep Self-Healing (v9.7)
+
+Günün ikinci yarısında, EliteAgent'ın "Derin Yürütme" katmanını (MLX/Titan Engine) fiziksel kilitlenmelere ve bellek sızıntılarına karşı koruma altına alan v9.7 sertleştirme operasyonunu başarıyla tamamladık.
+
+### 🚀 Ana Başlıklar
+- **MLX Engine Guardian**: Tüm yerel çıkarım (inference) çağrılarını saran; **60 Saniyelik Zaman Aşımı (Timeout)** ve proaktif **GPU Cache Clearing** (VRAM Sanitization) yapan bir koruma aktörü (`MLXEngineGuardian`) inşa edildi.
+- **Hard Reset & Session Preservation**: Kritik hatalarda (OOM/Hang) motoru tamamen sıfırlayan, ancak sistem istemini ve son sohbet mesajlarını kaybetmeden (Persistent Reset) oturumu devam ettiren bir kurtarma akışı kuruldu.
+- **Adaptive Thermal Throttling v2**: Cihaz termal baskı altındayken (`.serious`), çıkarım motorunun bağlam deryasını (context window) %75 oranında otomatik olarak küçülterek GPU yükünü düşürmesi sağlandı.
+- **Unified Loading State & HIG Spinner**: Motor yeniden başlatılırken veya optimize edilirken, Apple HIG standartlarına uygun bir "Titan Motoru Optimize Ediliyor..." overlay ve girdi kilidi geliştirildi.
+
+### 🏁 Mevcut Durum: **v9.7-IRONCLAD**
+EliteAgent artık sadece akıllı bir araştırma asistanı değil; kendi sağlığını izleyen, hatalardan ders çıkaran ve donanım sınırlarını profesyonelce yöneten sarsılmaz (ironclad) bir "Titan Engine"e sahip.
+
+---
+*EliteAgent Core · v9.7 · Integrity & Engine Hardening Excellence.*

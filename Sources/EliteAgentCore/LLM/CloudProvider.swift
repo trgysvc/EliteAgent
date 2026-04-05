@@ -95,7 +95,12 @@ public actor CloudProvider: LLMProvider {
         guard httpRes.statusCode == 200 else {
             let errStr = String(data: data, encoding: .utf8) ?? "Unknown HTTP Error"
             print("[CLOUD_PROVIDER ERROR] HTTP \(httpRes.statusCode): \(errStr)")
-            throw ProviderError.networkError("Status \(httpRes.statusCode): \(errStr)")
+            
+            switch httpRes.statusCode {
+            case 401: throw ProviderError.authenticationError
+            case 429: throw ProviderError.rateLimitExceeded
+            default: throw ProviderError.networkError("Status \(httpRes.statusCode): \(errStr)")
+            }
         }
         
         print("[DEBUG_TRACE] CloudProvider: Data size received: \(data.count) bytes")
@@ -104,24 +109,31 @@ public actor CloudProvider: LLMProvider {
             struct Choice: Codable {
                 struct ChatMessage: Codable {
                     let role: String
-                    let content: String?        // optional — can be null
-                    let reasoning: String?      // optional — reasoning models
+                    let content: String?
+                    let reasoning: String?
+                    let tool_calls: [ToolCallDetail]?
                     
-                    struct ReasoningDetail: Codable {
+                    struct ToolCallDetail: Codable {
+                        let id: String
                         let type: String
-                        let text: String?
+                        struct FunctionDetail: Codable {
+                            let name: String
+                            let arguments: String
+                        }
+                        let function: FunctionDetail
                     }
-                    let reasoningDetails: [ReasoningDetail]?
                     
                     enum CodingKeys: String, CodingKey {
                         case role, content, reasoning
-                        case reasoningDetails = "reasoning_details"
+                        case tool_calls
                     }
                     
-                    // Computed property — returns best available text
                     var bestContent: String {
-                        content ?? reasoning ?? 
-                        reasoningDetails?.compactMap(\.text).first ?? ""
+                        content ?? ""
+                    }
+                    
+                    var bestReasoning: String? {
+                        reasoning
                     }
                 }
                 let message: ChatMessage
@@ -139,20 +151,30 @@ public actor CloudProvider: LLMProvider {
         do {
             decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
         } catch {
-            let rawData = String(data: data, encoding: .utf8) ?? "unable to decode raw string"
             print("[CLOUD_PROVIDER ERROR] Failed to decode JSON. Error: \(error)")
-            print("[CLOUD_PROVIDER RAW RESP] \(rawData)")
             throw ProviderError.networkError("JSON parsing failed: \(error.localizedDescription)")
         }
         
-        let message = decoded.choices.first?.message
-        let text = message?.bestContent ?? ""
-        print("[DEBUG_TRACE] CloudProvider: Parsed text segment (first 50 chars): \(String(text.prefix(50)))")
+        guard let choice = decoded.choices.first else {
+            throw ProviderError.emptyResponse
+        }
         
-        guard !text.isEmpty else {
-            let rawData = String(data: data, encoding: .utf8) ?? "none"
-            print("[CLOUD_PROVIDER EMPTY TEXT] raw: \(rawData)")
-            throw ProviderError.networkError("Failed to parse completion text (bestContent empty)")
+        let message = choice.message
+        let text = message.bestContent
+        let toolCalls: [ToolCall]? = message.tool_calls?.compactMap { detail in
+            guard let jsonData = detail.function.arguments.data(using: .utf8),
+                  let params = try? JSONDecoder().decode([String: AnyCodable].self, from: jsonData) else {
+                return nil
+            }
+            return ToolCall(tool: detail.function.name, params: params)
+        }
+        
+        print("[DEBUG_TRACE] CloudProvider: Parsed text segment: \(String(text.prefix(50))) | ToolCalls: \(toolCalls?.count ?? 0)")
+        
+        // v8.5.5 Resilience: If content is null but we have tool calls or reasoning, it's NOT a terminal error
+        if text.isEmpty && (toolCalls == nil || toolCalls?.isEmpty == true) && message.bestReasoning == nil {
+            print("[CLOUD_PROVIDER EMPTY TEXT] No content, tools, or reasoning found.")
+            throw ProviderError.emptyResponse
         }
         
         let count = TokenCount(
@@ -168,6 +190,7 @@ public actor CloudProvider: LLMProvider {
 
         // Extract think block natively if model returned it inside <think> tags
         let parsed = LLMModel.parseThinkBlock(from: text)
+        let finalThink = (parsed.think ?? "") + (message.bestReasoning ?? "")
         
         AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "LLM Call completed | Model: \(modelName) | Latency: \(latency)ms | Tokens: \(count.total)")
         
@@ -175,7 +198,8 @@ public actor CloudProvider: LLMProvider {
             taskID: request.taskID,
             providerUsed: providerID,
             content: parsed.content,
-            thinkBlock: parsed.think,
+            thinkBlock: finalThink.isEmpty ? nil : finalThink,
+            toolCalls: toolCalls,
             tokensUsed: count,
             latencyMs: latency,
             costUSD: cost

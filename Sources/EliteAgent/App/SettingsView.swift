@@ -23,6 +23,7 @@ public struct SettingsView: View {
                 Label("Yapay Zekâ", systemImage: "sparkles").tag("AI")
                 Label("Analizler", systemImage: "chart.bar.xaxis").tag("Analytics")
                 Label("Veri ve Gizlilik", systemImage: "hand.raised.fill").tag("Privacy")
+                Label("Sistem Sağlığı", systemImage: "bolt.heart.fill").tag("Health")
                 Label("Gelişmiş", systemImage: "bolt.shield.fill").tag("Advanced")
             }
             .navigationTitle("Ayarlar")
@@ -41,6 +42,8 @@ public struct SettingsView: View {
                     UsageDashboardView(orchestrator: orchestrator)
                 case "Privacy":
                     DataPrivacySettingsView(orchestrator: orchestrator)
+                case "Health":
+                    LLMHealthDashboardView()
                 case "Advanced":
                     AdvancedSettingsView()
                 default:

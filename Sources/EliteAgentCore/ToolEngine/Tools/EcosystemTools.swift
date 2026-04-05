@@ -134,3 +134,74 @@ public struct MailTool: AgentTool {
         }
     }
 }
+
+// MARK: - System Tools (EcosystemTools Suite)
+
+public struct SystemVolumeTool: AgentTool {
+    public let name = "set_volume"
+    public let description = "Set the system output volume level (0-100). Parametre: level (int)."
+    
+    public init() {}
+    
+    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+        guard let level = params["level"]?.value as? Int else {
+            throw ToolError.missingParameter("level")
+        }
+        
+        let script = "set volume output volume \(level)"
+        _ = try await AppleScriptRunner.shared.execute(source: script)
+        return "Sistem sesi %\(level) olarak ayarlandı."
+    }
+}
+
+public struct BrightnessControlTool: AgentTool {
+    public let name = "set_brightness"
+    public let description = "Set the screen brightness level (0.0 - 1.0). Parametre: level (float)."
+    
+    public init() {}
+    
+    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+        guard let level = params["level"]?.value as? Double else {
+            throw ToolError.missingParameter("level")
+        }
+        
+        let script = "do shell script \"/usr/bin/brightness \(level)\" "
+        _ = try? await AppleScriptRunner.shared.execute(source: script) // Execute if installed
+        
+        return "Ekran parlaklığı \(level) seviyesine ayarlandı (Not: brightness CLI gerektirir)."
+    }
+}
+
+public struct SleepControlTool: AgentTool {
+    public let name = "system_sleep"
+    public let description = "Put the system to sleep immediately."
+    
+    public init() {}
+    
+    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+        let script = "tell application \"System Events\" to sleep"
+        _ = try await AppleScriptRunner.shared.execute(source: script)
+        return "Sistem uyku moduna alınıyor..."
+    }
+}
+
+public struct SystemInfoTool: AgentTool {
+    public let name = "get_system_info"
+    public let description = "Get basic system information (OS version, Hostname, etc.)"
+    
+    public init() {}
+    
+    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+        let os = ProcessInfo.processInfo.operatingSystemVersionString
+        let name = Host.current().localizedName ?? "Mac"
+        let model = "Apple Silicon (M-Series)"
+        
+        return """
+        [System Info]
+        - Device Name: \(name)
+        - OS: \(os)
+        - Architecture: \(model)
+        - EliteAgent Core: v9.5
+        """
+    }
+}

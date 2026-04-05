@@ -29,6 +29,8 @@ public struct ChatWindowView: View {
     @State private var showingFileImporter = false
     @State private var isScanningDocument = false
     @State private var isDraggingOver = false 
+    @State private var showingOnboarding = false
+    @State private var autoFallbackMessage: String? = nil
     
     public init(orchestrator: Orchestrator, modelPickerVM: ModelPickerViewModel) {
         self.orchestrator = orchestrator
@@ -124,9 +126,105 @@ public struct ChatWindowView: View {
                             fallbackApprovalModal
                         }
                     }
+                    .overlay {
+                        if sessionState.requiresPermissionAcknowledgement {
+                            permissionApprovalModal
+                        }
+                    }
+                    .overlay {
+                        if sessionState.isRestartingEngine {
+                            ZStack {
+                                Color.black.opacity(0.4)
+                                    .ignoresSafeArea()
+                                
+                                VStack(spacing: 20) {
+                                    ProgressView()
+                                        .controlSize(.large)
+                                    
+                                    VStack(spacing: 8) {
+                                        Text("Titan Motoru Optimize Ediliyor...")
+                                            .font(.headline)
+                                        Text("VRAM temizleniyor ve model yeniden yükleniyor.")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(30)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .stroke(.white.opacity(0.1), lineWidth: 1)
+                                )
+                                .shadow(radius: 20)
+                            }
+                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        }
+                    }
                     
                     // INPUT BAR
                     inputArea
+                }
+                
+                // v9.0.8: First-Run Hints Overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        FirstChatHintsView()
+                    }
+                    Spacer()
+                }
+                .allowsHitTesting(true)
+                
+                // v9.0.8: Empty State / Onboarding CTA
+                if ModelManager.shared.loadedModels.isEmpty && !VaultManager.shared.hasCloudProvider() {
+                    emptyStateOverlay
+                }
+            }
+            .sheet(isPresented: $showingOnboarding) {
+                OnboardingWizardView()
+            }
+            .overlay(alignment: .bottom) {
+                if let msg = autoFallbackMessage {
+                    HStack(spacing: 12) {
+                        Label(msg, systemImage: "cloud.rainbow.half")
+                            .font(.subheadline.bold())
+                        
+                        Button {
+                            AISessionState.shared.isFallbackActive = false
+                            withAnimation { autoFallbackMessage = nil }
+                        } label: {
+                            Text("↩️ Geri Al")
+                                .font(.caption.bold())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(.white.opacity(0.2), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding()
+                    .background(.orange, in: RoundedRectangle(cornerRadius: 16))
+                    .foregroundStyle(.white)
+                    .padding(.bottom, 100)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .onAppear {
+                        Task {
+                            try? await Task.sleep(nanoseconds: 10 * 1_000_000_000)
+                            withAnimation { autoFallbackMessage = nil }
+                        }
+                    }
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("app.eliteagent.autoFallbackTriggered"))) { note in
+                if let msg = note.userInfo?["message"] as? String {
+                    withAnimation { self.autoFallbackMessage = msg }
+                }
+            }
+            .onAppear {
+                let skipped = UserDefaults.standard.bool(forKey: "hasSkippedOnboarding")
+                let noModels = ModelManager.shared.loadedModels.isEmpty && !VaultManager.shared.hasCloudProvider()
+                
+                if noModels && !skipped {
+                    showingOnboarding = true
                 }
             }
             .sheet(isPresented: $showingSettings) {
@@ -181,6 +279,9 @@ public struct ChatWindowView: View {
                     isModelSelected: modelPickerVM.selected != nil,
                     hasMessages: !orchestrator.currentMessages.isEmpty
                 )
+                
+                // v9.6: Integrity System Badge
+                HealthStatusBadge()
             }
             
             Spacer()
@@ -220,6 +321,7 @@ public struct ChatWindowView: View {
                     .background(.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
                     .submitLabel(.send)
                     .onSubmit(submitTask)
+                    .disabled(sessionState.isRestartingEngine)
                 
                 Button(action: submitTask) {
                     Image(systemName: "arrow.up.circle.fill")
@@ -230,7 +332,7 @@ public struct ChatWindowView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Gönder")
                 .accessibilityHint("Giriş yapılan metni veya dosyayı işleme koyar")
-                .disabled((promptText.isEmpty && attachedFileURL == nil) || orchestrator.status == .working)
+                .disabled((promptText.isEmpty && attachedFileURL == nil) || orchestrator.status == .working || sessionState.isRestartingEngine)
                 .keyboardShortcut(.return, modifiers: .command)
             }
             .padding(.horizontal, 8)
@@ -271,6 +373,54 @@ public struct ChatWindowView: View {
         }
     }
     
+    // v9.0.8: Premium Setup CTA
+    private var emptyStateOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.4).ignoresSafeArea()
+            VStack(spacing: 32) {
+                VStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 64))
+                        .foregroundStyle(
+                            LinearGradient(colors: [.accentColor, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                    
+                    Text("EliteAgent Kurulumu")
+                        .font(.title.bold())
+                    
+                    Text("Sohbet etmeye başlamak için yerel bir model yükleyin veya bir bulut sağlayıcısı tanımlayın.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+                
+                VStack(spacing: 16) {
+                    Button {
+                        showingOnboarding = true
+                    } label: {
+                        Label("Kurulum Sihirbazını Başlat", systemImage: "wand.and.stars")
+                            .font(.headline)
+                            .frame(maxWidth: 280)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    
+                    Button("Kılavuzu Görüntüle") {
+                        if let url = URL(string: "https://eliteagent.ai/docs") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.link)
+                }
+            }
+            .padding(40)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 32))
+            .overlay(RoundedRectangle(cornerRadius: 32).stroke(.white.opacity(0.1), lineWidth: 1))
+            .shadow(color: .black.opacity(0.3), radius: 30)
+        }
+    }
+    
     // processOverlay logic is handled in ChatView+ProcessIntegration.swift
     
     private var fallbackApprovalModal: some View {
@@ -291,6 +441,35 @@ public struct ChatWindowView: View {
         }
         .padding(24).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20)).frame(width: 280)
     }
+    
+    private var permissionApprovalModal: some View {
+        ZStack {
+            Color.black.opacity(0.3).ignoresSafeArea()
+            VStack(spacing: 24) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.title).foregroundStyle(.blue)
+                Text("İzin Gerekli (\(sessionState.permissionAppTarget ?? "Uygulama"))").font(.headline)
+                Text("EliteAgent'ın işlemi tamamlayabilmesi için otomasyon izni gerekiyor:\n\nSistem Ayarları → Gizlilik → Otomasyon → EliteAgent → \(sessionState.permissionAppTarget ?? "Uygulama") ✓")
+                    .font(.caption).multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                VStack(spacing: 12) {
+                    Button("Ayarları Aç") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent).tint(.blue).frame(maxWidth: .infinity)
+                    
+                    Button("Tamam") {
+                        sessionState.requiresPermissionAcknowledgement = false
+                    }
+                    .buttonStyle(.bordered).frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .padding(24).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20)).frame(width: 320)
+    }
 }
 
 // MARK: - HIG Refined Subviews
@@ -304,7 +483,9 @@ struct ChatBubble: View {
             if message.role == .user { Spacer() }
             
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 8) {
-                if message.role == .assistant, let report = tryParseReport(message.content) {
+                if shouldHideMessage {
+                    EmptyView()
+                } else if let report = tryParseReport(message.content) {
                     ResearchReportView(report: report)
                         .frame(maxWidth: 600)
                 } else if parseError {
@@ -313,11 +494,31 @@ struct ChatBubble: View {
                     standardTextView
                 }
             }
-            .frame(maxWidth: 480, alignment: message.role == .user ? .trailing : .leading)
+            .frame(idealWidth: 480, alignment: message.role == .user ? .trailing : .leading)
             .accessibilityLabel("\(message.role == .user ? "Siz" : "Asistan"): \(message.content)")
             
             if message.role == .assistant { Spacer() }
         }
+    }
+    
+    private var shouldHideMessage: Bool {
+        let content = message.content.lowercased()
+        // 1. Hide </final> tags and tool_code blocks
+        if content.contains("</final>") || content.contains("```tool_code") {
+            return true
+        }
+        
+        // 2. Hide tool calls/actions
+        if content.contains("\"action\":") || content.contains("\"tool\"") {
+            // EXCEPTION: Show progress messages
+            let icons = ["🔍", "📡", "🧠", "📊", "🎯"]
+            for icon in icons {
+                if content.contains(icon) { return false }
+            }
+            return true
+        }
+        
+        return false
     }
     
     private var standardTextView: some View {
@@ -328,7 +529,7 @@ struct ChatBubble: View {
             .background(
                 message.role == .user ? 
                 AnyShapeStyle(Color.accentColor) : 
-                AnyShapeStyle(.ultraThickMaterial)
+                AnyShapeStyle(Color.secondary.opacity(0.1))
             )
             .foregroundStyle(message.role == .user ? .white : .primary)
             .cornerRadius(14, antialiased: true)
@@ -337,9 +538,11 @@ struct ChatBubble: View {
     private var fallbackView: some View {
         VStack(alignment: .leading, spacing: 10) {
             standardTextView
+                .font(.caption)
+                .foregroundStyle(.secondary)
             
             Button {
-                parseError = false
+                NotificationCenter.default.post(name: NSNotification.Name("RetryParse"), object: message.id)
             } label: {
                 Label("🔄 Yeniden Dene (JSON Parse Hatası)", systemImage: "arrow.clockwise")
                     .font(.caption.bold())
@@ -349,25 +552,25 @@ struct ChatBubble: View {
             .padding(.leading, 14)
         }
     }
-    
+
     private func tryParseReport(_ content: String) -> ResearchReport? {
-        guard content.contains("\"report\":") && content.contains("\"recommendation\":") else { return nil }
+        let jsonStr = ThinkParser.extractJSONrobustly(content)
         
-        // Clean markdown wrap if present
-        var jsonStr = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        if jsonStr.hasPrefix("```json") {
-            jsonStr = jsonStr.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
-        } else if jsonStr.hasPrefix("```") {
-            jsonStr = jsonStr.replacingOccurrences(of: "```", with: "")
-        }
+        // Final sanity check before attempting decode
+        guard jsonStr.contains("\"report\"") || jsonStr.contains("\"recommendation\"") else { return nil }
         
         guard let data = jsonStr.data(using: .utf8) else { return nil }
         
         do {
-            return try JSONDecoder().decode(ResearchReport.self, from: data)
+            let report = try JSONDecoder().decode(ResearchReport.self, from: data)
+            DispatchQueue.main.async { self.parseError = false }
+            return report
         } catch {
-            print("[CHAT] JSON Parse Failed: \(error)")
-            // self.parseError = true // Avoid state update during render
+            // Only set parse error if it definitely intended to be a report but failed
+            if content.contains("\"report\"") || content.contains("\"title\"") {
+                DispatchQueue.main.async { self.parseError = true }
+            }
+            print("[ResearchReportView] JSON parse failed: \(error)")
             return nil
         }
     }
@@ -436,6 +639,35 @@ struct ModelPickerMenu: View {
             .foregroundStyle(.primary)
         }
         .menuStyle(.button)
+    }
+}
+
+// MARK: - v9.6 Self-Healing UI Components
+
+struct HealthStatusBadge: View {
+    @StateObject private var watchdog = LocalModelWatchdog.shared
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: watchdog.status.icon)
+                .font(.caption2)
+            Text(watchdog.status.rawValue)
+                .font(.caption2.bold())
+                .textCase(.uppercase)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 2)
+        .background(statusColor.opacity(0.1), in: Capsule())
+        .foregroundStyle(statusColor)
+        .help(watchdog.metrics.diagnostic)
+    }
+    
+    private var statusColor: Color {
+        switch watchdog.status {
+        case .healthy: return .green
+        case .degraded: return .orange
+        case .critical: return .red
+        }
     }
 }
 
