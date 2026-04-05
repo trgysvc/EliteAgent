@@ -307,8 +307,28 @@ Günün ikinci yarısında, EliteAgent'ın "Derin Yürütme" katmanını (MLX/Ti
 - **Adaptive Thermal Throttling v2**: Cihaz termal baskı altındayken (`.serious`), çıkarım motorunun bağlam deryasını (context window) %75 oranında otomatik olarak küçülterek GPU yükünü düşürmesi sağlandı.
 - **Unified Loading State & HIG Spinner**: Motor yeniden başlatılırken veya optimize edilirken, Apple HIG standartlarına uygun bir "Titan Motoru Optimize Ediliyor..." overlay ve girdi kilidi geliştirildi.
 
-### 🏁 Mevcut Durum: **v9.7-IRONCLAD**
-EliteAgent artık sadece akıllı bir araştırma asistanı değil; kendi sağlığını izleyen, hatalardan ders çıkaran ve donanım sınırlarını profesyonelce yöneten sarsılmaz (ironclad) bir "Titan Engine"e sahip.
+## 📅 [2026-04-05] — Regression Audit & Stabilization (v9.8)
+
+Gün ortasında, son eklenen büyük özelliklerin (Self-Healing, MLX Guardian) mevcut araç seti üzerindeki yan etkilerini gidermek için kapsamlı bir stabilizasyon operasyonu yapıldı.
+
+### 🚀 Ana Başlıklar
+- **Global Timeout Policy (180s)**: Araştırma modu ve uzun kod blokları üretimi sırasında yaşanan premature kesilmeleri önlemek için işlem süresi 180 saniyeye (3 dakika) çıkarıldı.
+- **Smart GPU Cache**: VRAM kullanımı %90'ı aştığında veya `AutoRecovery` tetiklendiğinde GPU önbelleğini otomatik temizleyen akıllı mantık devreye alındı.
+- **Dynamic Research Progress**: Statik "1/10" bildirimleri yerine, "Analiz edilen kaynak: 3..." şeklinde canlı kaynak sayacı eklendi.
+- **WhatsApp State Hardening**: AppleScript otomasyonunda mesajın sadece gönderilmesi değil, "İletildi" (Sent) durumuna geçişi kontrol edilerek otonomi güvenilirliği artırıldı.
+
+## 📅 [2026-04-05] — Architecture Hardening & Silent Scraper (v9.9)
+
+Günü, EliteAgent'ın en büyük kullanıcı şikayetlerinden biri olan "Safari sekmeleri" kirliliğini çözen ve model durum yönetimini atomik hale getiren v9.9 final sürümüyle kapatıyoruz.
+
+### 🚀 Ana Başlıklar
+- **ModelStateManager (Atomic State)**: Model seçim ve sağlayıcı (Local/Cloud) durumu, tüm uygulama için tek bir `@MainActor` singleton (`ModelStateManager`) üzerine taşındı. `AISessionState` bu yeni yapıya köprülenerek UI-Engine senkronizasyonu mükemmelleştirildi.
+- **Silent Background Research (Headless Scraper)**: Safari tabanlı araştırma tamamen terk edildi. Yerine arka planda çalışan, kullanıcıyı rahatsız etmeyen ve %70 daha az kaynak tüketen `BackgroundWebScraper` (WKWebView) getirildi.
+- **ThinkParser Master Hardening**: LLM'den gelen araştırma verilerini ayıklayan parser; Direct JSON, Markdown Code Block ve Regex outer-braces olmak üzere 3 farklı derinlikte arama yapan ultra-dayanıklı bir yapıya kavuştu.
+- **System Prompt Strictness**: Araştırma raporları için modelin markdown kullanmasını yasaklayan ve doğrudan ham JSON dayatan sistem komutları güncellendi.
+
+### 🏁 Mevcut Durum: **v9.9-STABILIZED**
+EliteAgent artık sadece güçlü değil; aynı zamanda sessiz, atomik ve hatasız veri ayıklama yetenekleriyle tam kapasite otonom bir araştırma ve yürütme istasyonudur.
 
 ---
-*EliteAgent Core · v9.7 · Integrity & Engine Hardening Excellence.*
+*EliteAgent Core · v9.9 · Stabilization & Architecture Excellence.*

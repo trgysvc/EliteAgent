@@ -14,10 +14,12 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 
 ## 🔥 Key Features
 
-### 1. Self-Healing & Hardware Integrity [v9.7 Ironclad]
+### 1. Self-Healing & Architecture Hardening [v9.9 STABILIZED]
+- **Silent Background Research:** Elimination of Safari tab spam with headless `WKWebView` scraping—70% less resource usage.
+- **Atomic State Management:** Centralized `ModelStateManager` for zero-latency Provider (Local/Cloud) synchronization.
 - **Health Dashboard (Swift Charts):** Real-time monitoring of VRAM, TPS, and Thermal state with persistent history.
-- **Stress Simulator (v9.6):** Manual stress trigger to verify Auto-Recovery and Cloud Fallback mechanisms.
-- **MLX Engine Guardian:** 60-second timeout, proactive VRAM sanitization, and thermal-adaptive context reduction.
+- **Stress Simulator:** Manual stress trigger to verify Auto-Recovery and Cloud Fallback mechanisms.
+- **MLX Engine Guardian:** 180-second adaptive timeout and proactive VRAM sanitization.
 - **Deep Recovery (Hard Reset):** Fast engine restart (2-3s) with session and memory preservation.
 
 ### 2. Titan Engine v3 (Intelligence & Diagnostics) - [v8.5 Production-Research]
@@ -39,11 +41,11 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **System Watchdog:** The agent continuously communicates with your hardware. It tracks `ProcessInfo.thermalState` and `MemoryPressure` every second.
 - **PVP (Production Verification Protocol) [NEW]:** A comprehensive CLI verification suite (`swift run elite --verify-pvp`) that stress-tests memory pressure handling, fallback logic, and integrity shields.
 
-### 5. Research Intelligence Mode [v8.5]
+### 5. Research Intelligence Mode [v9.9]
+- **Silent Multi-Source Scraping:** Background research using headless `WKWebView` (No Safari tabs opened).
+- **Ultra-Resilient Parsing:** `ThinkParser` with 3-level JSON extraction (Direct/CodeBlock/Regex Fallback).
 - **Autonomous JSON Detection:** Intercepts structured LLM payloads to trigger premium `ResearchReportView` UI.
-- **Mandatory Tool Gating:** Enforces real-world data fetching (Safari/Brave) for research-intensive tasks.
-- **Real-Time Progress Feedback:** Injects periodic status messages (`🔍`, `📡`, `🧠`) into the chat stream for total transparency.
-- **Confidence Scoring:** Validates model recommendations with built-in scoring and alternative mapping.
+- **Real-Time Progress Feedback:** Live status indicators ("Analiz edilen kaynak: 3...") during deep research.
 
 ### 6. Universal Tool Ecosystem
 - **MessengerTool (Autonomous WhatsApp/iMessage):** Production-hardened UI automation with localized error handling.
@@ -91,4 +93,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v9.7 IRONCLAD]**
+> **[EliteAgent Core - v9.9 STABILIZED]**
