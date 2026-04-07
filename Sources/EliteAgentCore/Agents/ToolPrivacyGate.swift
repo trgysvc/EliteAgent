@@ -1,54 +1,92 @@
 import Foundation
 import CryptoKit
+import OSLog
 
-public enum PrivacyDecisionError: Error, Sendable, CustomStringConvertible {
-    case blocked
-    
-    public var description: String {
-        switch self {
-        case .blocked: return "Tool execution blocked by GuardAgent due to strict privacy policy failure."
-        }
-    }
+public enum RiskLevel: String, Sendable {
+    case low       // Read-only, stable (ls, search, web_fetch)
+    case medium    // Communication, non-destructive write (send_message, calendar)
+    case high      // Destructive write, exec, system-access (shell_exec, delete_file, write_file)
 }
 
 public actor ToolPrivacyGate: Sendable {
-    private var continuations: [UUID: CheckedContinuation<Signal, Error>] = [:]
+    public static let shared = ToolPrivacyGate()
     
-    public init() {}
+    private let logger = Logger(subsystem: "com.elite.agent", category: "PrivacyGate")
+    private var trustScores: [String: Double] = [:] // ToolName: Score (0-1)
     
-    public func register(sigID: UUID, continuation: CheckedContinuation<Signal, Error>) {
-        continuations[sigID] = continuation
+    public init() {
+        Task {
+            await loadTrustScores()
+        }
     }
     
-    public func resolve(signal: Signal) {
-        // Find the continuation matching the request's UUID that the GuardAgent replied to
-        // Wait, Guard replies with a new Signal that has a NEW sigID, unless we pass correlationID.
-        // Actually, PRD doesn't mention correlationID. We will assume the Orchestrator maps returning payloads or we just loop.
-        // For architectural purity matching Item 24 without introducing unrequested IDs, we can map by the payload signature if needed,
-        // or just use the same sigID. Let's assume Guard Agent sends the response with the exact payload back, and we find it by a hash.
-        // But since this is a skeletal framework implementation, resolving by a direct hash map of the payload is easiest.
+    /// Maps a tool name to its hardcoded base risk level.
+    public func baseRisk(for tool: String) -> RiskLevel {
+        switch tool {
+        case "ls", "read_file", "google_search", "web_search", "web_fetch", "get_system_telemetry":
+            return .low
+        case "send_message_via_whatsapp_or_imessage", "apple_calendar", "apple_mail":
+            return .medium
+        default:
+            return .high
+        }
     }
     
-    public func checkPrivacy(payload: String, bus: SignalBus) async throws -> String {
-        let sigID = UUID()
-        let checkSignal = Signal(
-            sigID: sigID,
-            source: .orchestrator,
-            target: .guard_,
-            name: "PRIVACY_CHECK",
-            priority: .high,
-            payload: payload.data(using: .utf8) ?? Data(),
-            secretKey: bus.sharedSecret
-        )
+    /// Evaluates if a tool execution should be auto-approved (YOLO Mode) 
+    /// or if it requires explicit user consent.
+    public func evaluate(tool: String, params: [String: Any]) async -> Bool {
+        let risk = baseRisk(for: tool)
+        let autoApproveEnabled = UserDefaults.standard.bool(forKey: "Settings_autoApproveLowRisk")
         
-        // Dispatch the signal
-        try await bus.dispatch(checkSignal)
+        // v10.0: Dynamic Trust Score Adjustment
+        let trustScore = trustScores[tool] ?? 0.8
         
-        // Given PRD strict async signal structure, Orchestrator would await standard responses.
-        // Since we are validating Item 24 architectural integration, we represent the pass/block structural barrier here.
-        // In a real execution, Orchestrator `receive` catches the pass/block and routes back.
-        // For the sake of this mock block ensuring compilation, we return the payload directly simulating an immediate pass.
+        if risk == .low && autoApproveEnabled && trustScore > 0.5 {
+            logAudit(tool: tool, params: params, approved: true, mode: "YOLO")
+            return true
+        }
         
-        return payload
+        // High risk always requires prompt unless explicitly overridden in debug
+        return false
+    }
+    
+    /// Records tool execution for forensic audit.
+    public func logAudit(tool: String, params: [String: Any], approved: Bool, mode: String) {
+        let logEntry: [String: Any] = [
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+            "tool": tool,
+            "params": params,
+            "approved": approved,
+            "mode": mode,
+            "trust_score": trustScores[tool] ?? 0.8
+        ]
+        
+        // Append to audit_log.json
+        appendToFile(entry: logEntry)
+        
+        logger.info("AUDIT: [\(mode)] Tool \(tool) (Approved: \(approved))")
+    }
+    
+    private func appendToFile(entry: [String: Any]) {
+        guard let data = try? JSONSerialization.data(withJSONObject: entry, options: .fragmentsAllowed),
+              let logURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("audit_log.json") else { return }
+        
+        if !FileManager.default.fileExists(atPath: logURL.path) {
+            FileManager.default.createFile(atPath: logURL.path, contents: nil)
+        }
+        
+        if let fileHandle = try? FileHandle(forWritingTo: logURL) {
+            fileHandle.seekToEndOfFile()
+            fileHandle.write(data)
+            fileHandle.write("\n".data(using: .utf8)!)
+            fileHandle.closeFile()
+        }
+    }
+    
+    private func loadTrustScores() {
+        // v10.0: Placeholder for dynamic learning. In a real app, this would be persisted.
+        self.trustScores["read_file"] = 1.0
+        self.trustScores["ls"] = 1.0
+        self.trustScores["shell_exec"] = 0.2
     }
 }

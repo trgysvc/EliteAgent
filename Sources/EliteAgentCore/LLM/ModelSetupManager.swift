@@ -56,7 +56,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         case failed 
     }
     
-    @Published public var activeModelID: String = "Qwen2.5-7B-Instruct-4bit"
+    @Published public var activeModelID: String = ""
     @Published public var state: ModelState = .idle
     @Published public var isDownloading = false
     @Published public var downloadProgress: Double = 0.0
@@ -66,9 +66,9 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     @Published public var loadState: ModelLoadState = .idle
     @Published public var errorMessage: String? = nil
     
-    private var lastKnownGoodModelID: String = "Qwen2.5-7B-Instruct-4bit"
+    private var lastKnownGoodModelID: String = ""
     private var rollbackAttempted = false
-    private let hardcodedFallbackID = "Qwen2.5-7B-Instruct-4bit"
+    private let hardcodedFallbackID = ""
     
     private var session: URLSession!
     private var downloadTask: URLSessionDownloadTask?
@@ -90,11 +90,12 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         self.session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
         
         // v7.8.6: Pulse check and sync with specialized state
-        self.activeModelID = AISessionState.shared.selectedModel
+        // v7.8.6: Pulse check and sync with specialized state
+        self.activeModelID = AISessionState.shared.selectedModel ?? ""
         
         // Initial setup for rollback
         // v7.8.6: Pulse check and sync with specialized state
-        self.activeModelID = AISessionState.shared.selectedModel
+        self.activeModelID = AISessionState.shared.selectedModel ?? ""
         
         verifyModelStatus()
     }
@@ -205,6 +206,13 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     }
     
     public func verifyModelStatus() {
+        guard !activeModelID.isEmpty else {
+            self.isModelReady = false
+            self.loadState = .idle
+            self.state = .idle
+            return
+        }
+        
         let path = getModelDirectory()
         let configURL = path.appendingPathComponent("config.json")
         

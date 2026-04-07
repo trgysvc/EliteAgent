@@ -6,7 +6,7 @@ import Metal
 public final class LocalModelWatchdog: ObservableObject {
     public static let shared = LocalModelWatchdog()
     
-    @Published public var status: ModelHealthStatus = .healthy
+    @Published public var status: ModelHealthStatus = .offline
     @Published public var metrics: InferenceMetrics = .zero
     @Published public var history: [MetricSample] = []
     
@@ -21,7 +21,7 @@ public final class LocalModelWatchdog: ObservableObject {
     
     public func startMonitoring() {
         healthTimer?.invalidate()
-        healthTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+        healthTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 await self?.runHealthCheck()
             }
@@ -29,6 +29,17 @@ public final class LocalModelWatchdog: ObservableObject {
     }
     
     public func runHealthCheck() async {
+        // v9.9.9: Data-Driven Availability Check
+        let isReady = ModelSetupManager.shared.isModelReady
+        
+        if !isReady {
+            if self.status != .offline {
+                self.status = .offline
+                AgentLogger.logInfo("WATCHDOG: Local model is not loaded. Status set to OFFLINE.")
+            }
+            return
+        }
+
         let currentMetrics = await collectMetrics()
         self.metrics = currentMetrics
         

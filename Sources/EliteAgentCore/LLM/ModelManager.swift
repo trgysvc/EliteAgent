@@ -50,12 +50,20 @@ public final class ModelManager: NSObject, ObservableObject {
     /// Automated setup for the local provider during onboarding.
     public func setupLocalProvider() async throws {
         let recommendation = AutoConfigManager.shared.recommendation
-        let modelID = recommendation.recommendedLocalModelID
         
-        AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Auto-Setup: Detected \(recommendation.ramDescription), recommending \(modelID)")
+        let tier = recommendation.recommendedTier
+        let modelID: String
+        
+        switch tier {
+        case .high: modelID = "qwen-3.5-7b-4bit"
+        case .balanced: modelID = "qwen-2.5-7b-4bit"
+        case .low: modelID = "qwen-2.5-3b-4bit"
+        }
+        
+        AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Auto-Setup: Detected \(recommendation.ramDescription), recommending \(modelID) for tier \(tier)")
         
         guard let model = ModelRegistry.availableModels.first(where: { $0.id == modelID }) else {
-            throw ModelError.unknown("Önerilen model katalogda bulunamadı: \(modelID)")
+            throw ModelError.unknown("Önerilen model catálogo'da bulunamadı: \(modelID)")
         }
         
         try await download(model)
@@ -137,6 +145,22 @@ public final class ModelManager: NSObject, ObservableObject {
         }
     }
     
+    /// Safety check for UI to verify model presence without throwing.
+    public func isModelComplete(id: String) -> Bool {
+        do {
+            try verifyModelComplete(id)
+            return true
+        } catch {
+            return false
+        }
+    }
+    
+    /// Utility for Resilient Self-Healing to distinguish between "Not Installed" and "Corrupted"
+    public func doesModelDirectoryExist(id: String) -> Bool {
+        let modelURL = modelsDirectory.appendingPathComponent(id)
+        return FileManager.default.fileExists(atPath: modelURL.path)
+    }
+    
     private func downloadModelMetadata(_ model: ModelCatalog) async throws {
         let baseRepoURL = URL(string: model.downloadURL)!.deletingLastPathComponent()
         let destinationDir = modelsDirectory.appendingPathComponent(model.id)
@@ -158,30 +182,29 @@ public final class ModelManager: NSObject, ObservableObject {
         }
     }
     
-    public func load(_ modelID: String) async throws {
-        let modelURL = modelsDirectory.appendingPathComponent(modelID)
+    public func resolveModelPath(_ modelID: String) -> URL {
+        let canonical = modelsDirectory.appendingPathComponent(modelID)
+        if FileManager.default.fileExists(atPath: canonical.path) {
+            return canonical
+        }
         
-        // v9.3 Migration: If canonical lowercase ID folder doesn't exist, check for legacy variants
-        if !FileManager.default.fileExists(atPath: modelURL.path) {
-            let legacyNames = [
-                "Qwen2.5-7B-Instruct-4bit",
-                "Qwen-2.5-7B-4bit",
-                "qwen2.5-7b-4bit"
-            ]
-            
-            for legacyName in legacyNames {
-                let legacyPath = modelsDirectory.appendingPathComponent(legacyName)
-                if FileManager.default.fileExists(atPath: legacyPath.path) {
-                    do {
-                        try FileManager.default.moveItem(at: legacyPath, to: modelURL)
-                        AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "✅ v9.3 Migrated legacy model folder: \(legacyName) -> \(modelID)")
-                        break
-                    } catch {
-                        AgentLogger.logAudit(level: .error, agent: "ModelManager", message: "Failed to migrate legacy folder \(legacyName): \(error)")
-                    }
-                }
+        // v9.9.1: Fallback to case-insensitive and legacy names
+        let legacyNames = [
+            modelID.lowercased()
+        ]
+        
+        for legacyName in legacyNames {
+            let path = modelsDirectory.appendingPathComponent(legacyName)
+            if FileManager.default.fileExists(atPath: path.path) {
+                return path
             }
         }
+        
+        return canonical // Return canonical even if missing to allow verifyModelComplete to catch it properly
+    }
+
+    public func load(_ modelID: String) async throws {
+        let modelURL = resolveModelPath(modelID)
         
         // 1. Verify completeness first
         do {
@@ -196,6 +219,9 @@ public final class ModelManager: NSObject, ObservableObject {
         
         try await InferenceActor.shared.loadModel(at: modelURL)
         self.loadedModels.insert(modelID)
+        
+        // v9.9.6: Notify observers that models have changed (Sync fix)
+        NotificationCenter.default.post(name: .modelsDidChange, object: nil)
     }
     
     public func switchTo(_ modelID: String) async throws {
@@ -223,6 +249,11 @@ public final class ModelManager: NSObject, ObservableObject {
     private func updateProgress(for modelID: String, progress: Double) {
         self.downloadProgress[modelID] = progress
     }
+}
+
+// v9.9.6: Notification Sync
+extension Notification.Name {
+    static let modelsDidChange = Notification.Name("modelsDidChange")
 }
 
 // MARK: - URLSessionDownloadDelegate

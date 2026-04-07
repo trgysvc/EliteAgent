@@ -18,8 +18,25 @@ struct AdvancedSettingsView: View {
                         .font(.caption2)
                         .foregroundStyle(.orange)
                 }
+                
+                Divider()
+                
+                // v9.9.1: Stability Toggles
+                Toggle("Stratejik Araştırma Modu (Deneysel)", isOn: Binding(
+                    get: { UserDefaults.standard.bool(forKey: "enableResearchMode") },
+                    set: { UserDefaults.standard.set($0, forKey: "enableResearchMode") }
+                ))
+                .help("Etkinleştirildiğinde, modelin ürettiği stratejik raporlar özel bir arayüz ile gösterilir.")
+                
+                Toggle("Parser Hata Ayıklama Günlükleri", isOn: Binding(
+                    get: { UserDefaults.standard.bool(forKey: "debugParser") },
+                    set: { UserDefaults.standard.set($0, forKey: "debugParser") }
+                ))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                
             } header: {
-                Label("Model Yönetimi", systemImage: "cpu.fill")
+                Label("Model ve Sistem Yönetimi", systemImage: "cpu.fill")
             } footer: {
                 Text("Cihazınız için önerilen: \(AutoConfigManager.shared.autoTune().preset == .performance ? "Performance Mode" : "Balanced Mode")")
             }

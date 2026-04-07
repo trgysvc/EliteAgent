@@ -105,9 +105,9 @@ public actor VaultManager {
             print("[VaultManager] Config missing at \(configURL.path). Creating default...")
             let defaultConfig = VaultConfig(
                 providers: [
-                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "qwen-2.5-7b-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-                    ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-2.0-flash-lite-preview-02-05", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
+                    ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                    ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
                 routingStrategy: .bridgeFirst,
                 inference: VaultInferenceConfig(pauseOnUserInteraction: true),
@@ -151,10 +151,9 @@ public actor VaultManager {
     private static func syncRequiredProviders(config: inout VaultConfig, configURL: URL) throws -> Bool {
         let requiredIds = ["mlx", "bridge", "openrouter"]
         let defaults: [String: ProviderConfig] = [
-            "mlx": ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "qwen-2.5-7b-4bit", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-            "bridge": ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "llama3.2:3b", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-            "openrouter": ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "google/gemini-flash-1.5", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
-
+            "mlx": ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+            "bridge": ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+            "openrouter": ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
         ]
         
         var missingAny = false

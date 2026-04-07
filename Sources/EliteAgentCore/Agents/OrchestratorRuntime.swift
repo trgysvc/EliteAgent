@@ -9,6 +9,7 @@ public actor OrchestratorRuntime {
     private let toolRegistry: ToolRegistry
     private let bus: SignalBus
     private let vaultManager: VaultManager
+    private var sessionContext: SessionContext
     
     private var onStepUpdate: (@Sendable (TaskStep) -> Void)?
     private var onChatMessage: (@Sendable (ChatMessage) -> Void)?
@@ -22,6 +23,9 @@ public actor OrchestratorRuntime {
     private var thoughtRepetitionCount = 0
     private var activeContextManager: DynamicContextManager?
     private var sourcesAnalyzed = 0
+    private var currentAction = "İşleniyor..." // v10.1: Real-time action tracking
+    
+    private var isResearchModeActive = false
     
     public init(
         planner: PlannerAgent,
@@ -41,12 +45,33 @@ public actor OrchestratorRuntime {
         self.toolRegistry = toolRegistry
         self.bus = bus
         self.vaultManager = vaultManager
+        self.sessionContext = SessionContext() // Initialized with defaults
         
-        NotificationCenter.default.addObserver(forName: NSNotification.Name("RetryParse"), object: nil, queue: .main) { [weak self] _ in
-            Task {
+        // v9.9.13: Parallel Notification Listening (AsyncSequence)
+        Task { [weak self] in
+            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("RetryParse")) {
                 await self?.handleRetryParse()
             }
         }
+        
+        Task { [weak self] in
+            for await note in NotificationCenter.default.notifications(named: .activeProviderChanged) {
+                if let model = note.userInfo?["model"] as? ModelSource {
+                    await self?.updateSessionModel(from: model)
+                }
+            }
+        }
+    }
+    
+    private func updateSessionModel(from source: ModelSource) async {
+        let providerID: ProviderID
+        switch source {
+        case .localMLX: providerID = .mlx
+        case .openRouter: providerID = .openrouter
+        case .bridge: providerID = .bridge
+        case .custom(let pid, _, _, _, _): providerID = ProviderID(rawValue: pid) ?? .mlx
+        }
+        self.sessionContext.updateModel(providerID)
     }
     
     private func handleRetryParse() async {
@@ -76,35 +101,53 @@ public actor OrchestratorRuntime {
         self.onStatusUpdate?(.working)
         self.isInterrupted = false
         
+        // v9.9.11: Universal Intent Detection (Action + Research)
+        let researchKeywords = ["araştır", "research", "deep analysis", "rapor oluştur", "incele", "analiz et"]
+        let actionKeywords = ["aç", "çal", "yaz", "oku", "sil", "bul", "analiz et", "göster", "çalıştır", "play", "open", "music", "safari"]
+        
+        self.isResearchModeActive = researchKeywords.contains { prompt.lowercased().contains($0) }
+        let isActionRequested = actionKeywords.contains { prompt.lowercased().contains($0) }
+        
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Mode: \(isResearchModeActive ? "RESEARCH" : "CHAT") | Action: \(isActionRequested)")
+        
         let contextManager = DynamicContextManager(maxTokens: 8000, provider: cloudProvider)
         self.activeContextManager = contextManager
         self.sourcesAnalyzed = 0 
         await contextManager.addMessage(Message(role: "user", content: prompt))
         
         let startTime = Date()
-        let isResearch = prompt.lowercased().contains(any: ["araştır", "incele", "analiz et", "rapor oluştur", "karşılaştır"])
         
         let progressTask = Task {
             var stepCounter = 1
             while !Task.isCancelled {
-                // v9.4: Increased interval from 30s to 60s to reduce UI clutter
-                try? await Task.sleep(nanoseconds: 60_000_000_000)
+                let interval = await self.calculateHeartbeatInterval()
+                try? await Task.sleep(nanoseconds: interval * 1_000_000_000)
+                
                 let elapsed = Int(Date().timeIntervalSince(startTime))
+                let emoji = isResearchModeActive ? (stepCounter % 2 == 0 ? "📡" : "🔍") : "⚙️"
                 
-                let emoji = isResearch ? (stepCounter % 2 == 0 ? "📡" : "🔍") : "⚙️"
-                let progressMsg = isResearch ? 
-                    "\(emoji) Analiz edilen kaynak: \(self.sourcesAnalyzed)... Veriler işleniyor (\(elapsed)s)" :
-                    "⚙️ İşleniyor: Adım \(stepCounter) devam ediyor... (\(elapsed)s)"
+                let progressMsg = isResearchModeActive ? 
+                    "\(emoji) Analiz edilen kaynak: \(self.sourcesAnalyzed)... (\(elapsed)s)" :
+                    "⚙️ \(self.currentAction) (\(elapsed)s)"
                 
-                self.onChatMessage?(ChatMessage(role: .assistant, content: progressMsg))
+                self.onChatMessage?(ChatMessage(role: .assistant, content: progressMsg, isStatus: true))
                 
-                let step = TaskStep(name: " İlerleme...", status: "Çalışıyor", latency: "\(elapsed)s", thought: progressMsg)
+                let step = TaskStep(name: "KAIROS Heartbeat", status: "Active", latency: "\(elapsed)s", thought: progressMsg)
                 self.onStepUpdate?(step)
                 stepCounter += 1
             }
         }
         
-        defer { progressTask.cancel() }
+        defer { 
+            progressTask.cancel() 
+            Task {
+                await TulparActor.shared.recordEvent(.taskCompleted(success: true)) // Simplification
+                await DreamActor.shared.consolidateIfNeeded(memoryAgent: self.memory, cloudProvider: self.cloudProvider)
+            }
+        }
+        
+        // v10.0: Signal Task Start
+        await TulparActor.shared.recordEvent(.taskStarted)
         
         do {
             for turn in 1...50 {
@@ -114,10 +157,26 @@ public actor OrchestratorRuntime {
                     break
                 }
                 
-                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Turn \(turn)")
+                // v10.0: Token Budget Guard
+                let approved = await TokenBudgetActor.shared.requestApproval(estimatedTokens: 1000)
+                if !approved {
+                    await session.setFinalAnswer("⚠️ Bütçe veya termal limitler nedeniyle işlem durduruldu.")
+                    break
+                }
                 
+                let provider = try resolveProvider(force: forceProviders, config: config)
                 let history = await contextManager.getMessages()
-                let systemPrompt = SystemPrompts.orchestrator(tools: toolRegistry.listTools())
+                
+                // v9.9.15: Local TTFT Optimization (Pruning)
+                if provider.providerID == .mlx || provider.providerID == .bridge {
+                    await contextManager.trimMessages(limit: 10)
+                }
+                
+                // v9.9.11: Universal Tool Awareness Logic
+                let allTools = toolRegistry.listTools()
+                let systemPrompt = isResearchModeActive ? 
+                    SystemPrompts.orchestrator(tools: allTools) : 
+                    SystemPrompts.chat(tools: allTools)
                 
                 let request = CompletionRequest(
                     taskID: UUID().uuidString,
@@ -127,8 +186,6 @@ public actor OrchestratorRuntime {
                     sensitivityLevel: .public,
                     complexity: complexity
                 )
-                
-                let provider = try resolveProvider(force: forceProviders, config: config)
                 
                 var response: CompletionResponse?
                 var retryCount = 0
@@ -174,8 +231,26 @@ public actor OrchestratorRuntime {
                 }
                 self.onTokenUpdate?(finalResponse.tokensUsed, finalResponse.costUSD)
                 
-                let sanitizedContent = finalResponse.content
+                // v10.0: Token Accounting (Async/Await compliant)
+                await TokenBudgetActor.shared.recordUsage(tokens: finalResponse.tokensUsed.total, cost: finalResponse.costUSD)
+                await TokenAccountant.shared.record(
+                    input: finalResponse.tokensUsed.prompt,
+                    output: finalResponse.tokensUsed.completion,
+                    cached: finalResponse.tokensUsed.cached
+                )
+                
+                let guardConfig = TokenGuardConfig.shared
+                let sanitizedContent = OutputSchemaGuard.sanitize(
+                    finalResponse.content, 
+                    inputTokens: finalResponse.tokensUsed.prompt, 
+                    config: guardConfig
+                )
+                
+                // v10.0: BriefMode Formatting handled via OutputSchemaGuard.sanitize
+                let displayContent = sanitizedContent
+                
                 await contextManager.addMessage(Message(role: "assistant", content: sanitizedContent))
+                self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent))
                 
                 var toolBlocks: [ToolCall] = finalResponse.toolCalls ?? []
                 let textBlocks = ThinkParser.parse(sanitizedContent)
@@ -207,12 +282,12 @@ public actor OrchestratorRuntime {
                         toolBlocks.append(tool)
                     } else if !block.thought.isEmpty {
                         // v9.4: Refined termination logic for simple tool results
-                        let isReportLike = block.thought.contains(any: ["# Araştırma Raporu", "Analiz Sonuçları", "Bulgular", "Research Report"])
+                        let isReportLike = block.thought.containsAny(["# Araştırma Raporu", "Analiz Sonuçları", "Bulgular", "Research Report"])
                         let noToolsCalled = toolBlocks.isEmpty && (finalResponse.toolCalls?.isEmpty ?? true)
                         
                         if noToolsCalled && !sanitizedContent.contains("```tool_code") {
                             // If just text output and no tool was requested in this turn
-                            if !isResearch || isReportLike || turn > 15 {
+                            if !isResearchModeActive || isReportLike || turn > 15 {
                                 foundFinalAnswer = true
                                 finalAnswerText = block.thought
                             }
@@ -221,18 +296,29 @@ public actor OrchestratorRuntime {
                 }
                 
                 if let think = finalResponse.thinkBlock, !think.isEmpty {
+                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [THOUGHT] \(think)")
                     let step = TaskStep(name: "Thinking...", status: "Analysis", latency: "\(finalResponse.latencyMs)ms", thought: think)
                     self.onStepUpdate?(step)
+                } else {
+                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [RESPONSE] \(sanitizedContent)")
                 }
                 
-                // v9.8: Intent-aware search forcing to prevent apology loops & Research Report priority fix
-                if turn == 1 && isResearch && toolBlocks.isEmpty {
-                    let hasSearchIntent = sanitizedContent.lowercased().contains(any: ["google", "safari", "arama", "search", "araştır", "bakayım", "bulayım", "inceleyim", "analiz edeyim"])
-                    let isMusicRequest = sanitizedContent.lowercased().contains(any: ["müzik", "çal", "play", "sezen", "music", "apple music"])
-                    
-                    if !hasSearchIntent && !isMusicRequest {
-                        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "No tools and no intent on Turn 1. Forcing search tools.")
-                        await contextManager.addMessage(Message(role: "user", content: "Observation: Lütfen araştırmaya başlamak için önce 'google_search' veya 'safari_automation' araçlarını kullanın. Sadece metinle cevap vermeyiniz."))
+                // v9.9.13: Universal Intent Alignment & Autonomous Choice Guardrails
+                if turn == 1 && isResearchModeActive && toolBlocks.isEmpty {
+                    AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "⚠️ [AUTONOMOUS NUDGE] No tools called on Turn 1. Forcing tool usage for \(provider.providerID).")
+                    let nudge = "Observation: Lütfen araştırmaya başlamak için önce uygun araçları (google_search, safari_automation, doceye vb.) kullanın. Modelinizden doğrudan cevap beklemiyorum; önce veri toplamanız gerekmektedir. Hangi aracı kullanacağınıza siz karar verin."
+                    await contextManager.addMessage(Message(role: "user", content: nudge))
+                    continue
+                }
+                
+                // v9.9.13: Mid-loop Nudge for Stall Prevention
+                if isResearchModeActive && toolBlocks.isEmpty && turn > 1 && !foundFinalAnswer {
+                    turnsWithoutProgress += 1
+                    if turnsWithoutProgress >= 2 {
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "⚠️ [STALL NUDGE] No tools called for 2 turns. Reminding model of its capabilities.")
+                        let nudge = "Observation: Hala araştırma aşamasındasınız. Lütfen elinizdeki araçları kullanarak derinlemesine inceleme yapın veya raporu finalize edin. Boş cevap vermeyiniz."
+                        await contextManager.addMessage(Message(role: "user", content: nudge))
+                        turnsWithoutProgress = 0 // Reset after nudge
                         continue
                     }
                 }
@@ -246,12 +332,14 @@ public actor OrchestratorRuntime {
                 } else {
                     turnsWithoutProgress = 0
                     for toolCall in toolBlocks {
-                        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Executing \(toolCall.tool)")
+                        self.currentAction = "\(toolCall.tool) çalıştırılıyor..."
+                        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [TOOL CALL] \(toolCall.tool) with params: \(toolCall.params)")
                         
                         let status = self.toolRegistry.getToolStatus(named: toolCall.tool)
                         let isEnabled = config.enabledTools[toolCall.tool] ?? true
                         
                         guard isEnabled && status.isAvailable else {
+                            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "❌ [TOOL ERROR] Tool \(toolCall.tool) is disabled or unavailable")
                             let obs = "Observation: Error - Tool '\(toolCall.tool)' is currently unavailable."
                             await contextManager.addMessage(Message(role: "user", content: obs))
                             continue
@@ -270,11 +358,14 @@ public actor OrchestratorRuntime {
                                 return result
                             }
                             
+                            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) returned \(observation.count) characters. Snippet: \(String(observation.prefix(200)))...")
+                            
                             if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) {
                                 self.sourcesAnalyzed += 1
                             }
                             await contextManager.addMessage(Message(role: "user", content: "Observation: \(observation)"))
                         } catch {
+                            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "❌ [TOOL ERROR] \(toolCall.tool) failed: \(error.localizedDescription)")
                             await contextManager.addMessage(Message(role: "user", content: "Observation: Error - \(error.localizedDescription)"))
                         }
                     }
@@ -292,22 +383,66 @@ public actor OrchestratorRuntime {
     }
     
     private func resolveProvider(force: [ProviderID]?, config: InferenceConfig) throws -> any LLMProvider {
+        // v9.9.13: Respect Model Persistence from SessionContext
+        let preferredModel = sessionContext.selectedModel
+        
         if let force = force?.first {
             if force == .mlx, let p = localProvider { return p }
             if force == .openrouter { return cloudProvider }
             if force == .bridge, let p = bridgeProvider { return p }
         }
+        
+        // Priority 1: Sticky Session Model
+        if preferredModel == .mlx, let p = localProvider { return p }
+        if preferredModel == .openrouter { return cloudProvider }
+        
+        // Priority 2: Config Priority
         for pid in config.providerPriority {
             if pid == .mlx, let p = localProvider { return p }
             if pid == .openrouter { return cloudProvider }
             if pid == .bridge, let p = bridgeProvider { return p }
         }
+        
+        // v10.1: Enforcement - If local requested but failed, don't silent fallback
+        if config.strictLocal {
+             throw InferenceError.localProviderUnavailable("Yerel model (Titan) şu an hazır değil. Lütfen ayarları kontrol edin.")
+        }
+
         throw InferenceError.localProviderUnavailable("No provider found.")
+    }
+    
+    private func calculateHeartbeatInterval() async -> UInt64 {
+        let thermal = ProcessInfo.processInfo.thermalState
+        // v10.0 KAIROS: Adaptive Heartbeat
+        switch thermal {
+        case .serious, .critical: return 15
+        case .fair, .nominal: return 60
+        @unknown default: return 30
+        }
+    }
+}
+
+/// Helper to format content for BriefMode (Bullet points only)
+public struct BriefFormatter {
+    public static func format(_ content: String) -> String {
+        let lines = content.components(separatedBy: .newlines)
+        let bulletLines = lines.filter { 
+            let t = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            return t.hasPrefix("-") || t.hasPrefix("*") || t.hasPrefix("•") 
+        }
+        
+        if bulletLines.isEmpty {
+            // Fallback: Take first two sentences
+            let sentences = content.components(separatedBy: ". ")
+            return sentences.prefix(2).joined(separator: ". ") + "..."
+        }
+        
+        return bulletLines.joined(separator: "\n")
     }
 }
 
 fileprivate extension String {
-    func contains(any substrings: [String]) -> Bool {
+    func containsAny(_ substrings: [String]) -> Bool {
         for s in substrings {
             if self.contains(s) { return true }
         }

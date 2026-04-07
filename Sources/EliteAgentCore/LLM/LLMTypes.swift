@@ -59,11 +59,13 @@ public struct CompletionRequest: Codable, Sendable {
 public struct TokenCount: Codable, Sendable {
     public let prompt: Int
     public let completion: Int
+    public let cached: Int // v10.0: Tokens served from KV-cache
     public let total: Int
     
-    public init(prompt: Int, completion: Int, total: Int) {
+    public init(prompt: Int, completion: Int, cached: Int = 0, total: Int) {
         self.prompt = prompt
         self.completion = completion
+        self.cached = cached
         self.total = total
     }
 }

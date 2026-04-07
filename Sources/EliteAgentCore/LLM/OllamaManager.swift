@@ -1,5 +1,6 @@
 // EliteAgent Ollama Bridge Manager - v7.9.0
 import Foundation
+import Network
 
 /// Manages dynamic discovery and interaction with a local Ollama instance.
 public actor OllamaManager {
@@ -9,22 +10,59 @@ public actor OllamaManager {
     
     private init() {}
     
-    /// Checks if the Ollama service is reachable on localhost.
-    public func isConnected() async -> Bool {
-        var request = URLRequest(url: baseURL)
-        request.httpMethod = "HEAD"
-        request.timeoutInterval = 1.0
+    /// Dynamic Reachability Check - v9.9.2
+    /// Returns true ONLY if the Ollama service is actually listening on localhost.
+    /// This prevents URLSession from spamming 'Connection refused' to the Xcode console.
+    public func canConnect() async -> Bool {
+        let host = NWEndpoint.Host("127.0.0.1")
+        let port = NWEndpoint.Port(integerLiteral: 11434)
+        let connection = NWConnection(host: host, port: port, using: .tcp)
         
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            return (response as? HTTPURLResponse)?.statusCode == 200
-        } catch {
-            return false
+        class ResponseState: @unchecked Sendable { 
+            var hasResponded = false 
+            let lock = NSLock()
+            func tryRespond() -> Bool {
+                lock.lock(); defer { lock.unlock() }
+                if hasResponded { return false }
+                hasResponded = true
+                return true
+            }
+        }
+        let state = ResponseState()
+        
+        return await withCheckedContinuation { continuation in
+            connection.stateUpdateHandler = { newState in
+                switch newState {
+                case .ready:
+                    if state.tryRespond() {
+                        connection.cancel()
+                        continuation.resume(returning: true)
+                    }
+                case .failed, .cancelled:
+                    if state.tryRespond() {
+                        continuation.resume(returning: false)
+                    }
+                default: break
+                }
+            }
+            
+            // Timeout to prevent hanging
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if state.tryRespond() {
+                    connection.cancel()
+                    continuation.resume(returning: false)
+                }
+            }
+            
+            connection.start(queue: .global())
         }
     }
     
     /// Fetches the list of locally installed models from Ollama.
     public func fetchModels() async -> [ModelSource] {
+        // v9.9.2: Silence console spam check
+        guard await canConnect() else { return [] }
+        
         let tagsURL = baseURL.appendingPathComponent("/api/tags")
         var request = URLRequest(url: tagsURL)
         request.timeoutInterval = 2.0
@@ -38,6 +76,7 @@ public actor OllamaManager {
                 .bridge(id: model.name, name: model.name)
             }
         } catch {
+            // Only log if connection was supposedly successful but fetch failed
             print("[Ollama] Model fetch failed: \(error.localizedDescription)")
             return []
         }

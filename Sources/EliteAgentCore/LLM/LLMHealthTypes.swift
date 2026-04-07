@@ -4,12 +4,14 @@ public enum ModelHealthStatus: String, Codable, Sendable {
     case healthy = "Stable"
     case degraded = "Slow"
     case critical = "Recovering"
+    case offline = "Offline"
     
     public var icon: String {
         switch self {
         case .healthy: return "checkmark.circle.fill"
         case .degraded: return "exclamationmark.triangle.fill"
         case .critical: return "arrow.clockwise.circle.fill"
+        case .offline: return "circlebadge"
         }
     }
     
@@ -18,6 +20,7 @@ public enum ModelHealthStatus: String, Codable, Sendable {
         case .healthy: return "green"
         case .degraded: return "orange"
         case .critical: return "red"
+        case .offline: return "gray"
         }
     }
 }

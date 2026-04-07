@@ -165,6 +165,7 @@ public struct LLMHealthDashboardView: View {
         case .healthy: return .green
         case .degraded: return .orange
         case .critical: return .red
+        case .offline: return .red
         }
     }
 }

@@ -226,10 +226,26 @@ struct ModelCard: View {
                         .foregroundStyle(.secondary)
                 }
             } else {
-                if isActive {
+                // v9.9.2: Double Check Presence
+                let isActuallyInstalled = isDownloaded && manager.isModelComplete(id: model.id)
+                let directoryExists = manager.doesModelDirectoryExist(id: model.id)
+                
+                if isActive && isActuallyInstalled {
                     Label("🟢 Aktif", systemImage: "checkmark.circle.fill")
                         .font(.caption2.bold())
                         .foregroundStyle(.green)
+                } else if isActive && directoryExists && !isActuallyInstalled {
+                    // GHOST STATE: Selected but files are CORRUPTED
+                    HStack {
+                        Label("⚠️ Eksik", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.red)
+                        Spacer()
+                        actionButton // This will be 'Onar/İndir'
+                    }
+                } else if isActive && !directoryExists {
+                    // FIRST INSTALL: Selected but directory doesn't exist yet
+                    actionButton // Show normal 'İndir' or 'Kur'
                 } else {
                     actionButton
                 }

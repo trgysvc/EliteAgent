@@ -87,8 +87,11 @@ public class Orchestrator: ObservableObject {
                 Task {
                     do {
                         let mlxConfig = vault.config.providers.first(where: { $0.id == "mlx" })
-                        let modelID = mlxConfig?.modelName ?? "qwen-2.5-7b-4bit"
-                        try await local.loadModel(modelID)
+                        if let modelID = mlxConfig?.modelName, !modelID.isEmpty {
+                            try await local.loadModel(modelID)
+                        } else {
+                            AgentLogger.logInfo("[ORCHESTRATOR] Local model not configured. Skipping initialization.")
+                        }
                     } catch {
                         print("[ORCHESTRATOR] Titan Priming Failed: \(error)")
                     }
@@ -101,6 +104,7 @@ public class Orchestrator: ObservableObject {
                 queue: .main
             ) { [weak self] note in
                 guard let self = self else { return }
+                // v9.9.16: Optimized NW check
                 guard let model = note.userInfo?["model"] as? ModelSource else { return }
                 
                 Task { @MainActor in
@@ -164,6 +168,8 @@ public class Orchestrator: ObservableObject {
         group.register(SystemInfoTool())
         group.register(SystemTelemetryTool())
         group.register(AppDiscoveryTool())
+        group.register(ShortcutDiscoveryTool())
+        group.register(ShortcutExecutionTool())
         
         // Productivity Tools
         group.register(ContactsTool())
@@ -184,6 +190,10 @@ public class Orchestrator: ObservableObject {
         group.register(GitTool())
         group.register(ImageAnalysisTool())
         group.register(MemoryTool(agent: self.memory))
+        
+        // v10.0: Architecture Evolution Tools
+        group.register(ChicagoVisionTool())
+        group.register(AccessibilityTool())
         
         let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
             Task { @MainActor [weak self] in
@@ -304,19 +314,23 @@ public class Orchestrator: ObservableObject {
         if let sl = strictLocal { effectiveConfig.strictLocal = sl }
         
         // 1. Reset status but KEEP the manually selected model if valid
-        let previouslySelected = ModelStateManager.shared.currentModelID ?? ""
+        let previouslySelected = sessionState.selectedModel ?? ""
         
         // Restore selection if it was explicitly set (not just default)
         if !previouslySelected.isEmpty {
-            ModelStateManager.shared.currentModelID = previouslySelected
+            sessionState.selectedModel = previouslySelected
         } else {
-            ModelStateManager.shared.currentModelID = (effectiveConfig.providerPriority.first?.rawValue ?? "qwen-2.5-7b-4bit")
+            if let firstProvider = effectiveConfig.providerPriority.first?.rawValue, !firstProvider.isEmpty {
+                sessionState.selectedModel = firstProvider
+            } else {
+                sessionState.selectedModel = nil
+            }
         }
         
         // If the user explicitly selected a non-local model, force that provider
         var finalForceProviders = forceProviders
         if finalForceProviders == nil {
-            let current = ModelStateManager.shared.currentModelID ?? ""
+            let current = sessionState.selectedModel ?? ""
             if current.contains("/") || current.contains(":") { // Likely OpenRouter or Ollama ID
                 if current.contains("/") {
                     finalForceProviders = [.openrouter]
@@ -383,7 +397,14 @@ public class Orchestrator: ObservableObject {
             }
             
             await runtime.setChatMessageUpdateHandler { [weak self] msg in
-                Task { @MainActor in self?.currentMessages.append(msg) }
+                Task { @MainActor in
+                    if msg.isStatus, let last = self?.currentMessages.last, last.isStatus {
+                        // Replace the last status message
+                        self?.currentMessages[self!.currentMessages.count - 1] = msg
+                    } else {
+                        self?.currentMessages.append(msg)
+                    }
+                }
             }
             
             await runtime.setTokenUpdateHandler { [weak self] count, cost in
@@ -422,9 +443,6 @@ public class Orchestrator: ObservableObject {
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle
             
-            let assistantMessage = ChatMessage(role: .assistant, content: finalAnswer)
-            self.currentMessages.append(assistantMessage)
-            
             // v8.1: Update existing session or create new one
             if let existingID = self.selectedSessionID,
                let index = self.pastSessions.firstIndex(where: { $0.id == existingID }) {
@@ -456,7 +474,7 @@ public class Orchestrator: ObservableObject {
         } catch let error as InferenceError {
             if case .localProviderUnavailable(let reason) = error {
                 sessionState.fallbackReason = reason
-                sessionState.activeProvider = "local_failed"
+                // sessionState.activeProvider is now derived from ModelStateManager.shared.activeProvider
                 
                 if effectiveConfig.fallbackPolicy == .promptBeforeSwitch && (promptOnFallback ?? true) {
                     sessionState.requiresUserAcknowledgement = true
@@ -521,7 +539,33 @@ public class Orchestrator: ObservableObject {
             }
             try await HistoryManager.shared.save(self.pastSessions)
         } catch {
-            print("[ORCHESTRATOR] Auto-summarization failed: \(error)")
+            print("[ORCHESTRATOR] Cloud summarization failed: \(error). Falling back to Titan.")
+            // Fallback to local model
+            if let local = self.localProvider {
+                do {
+                    let request = CompletionRequest(
+                        taskID: UUID().uuidString,
+                        systemPrompt: "Sen bir asistsansın. Konuşmayı özetle.",
+                        messages: [Message(role: "user", content: summaryPrompt)],
+                        maxTokens: 20,
+                        sensitivityLevel: .public,
+                        complexity: 1
+                    )
+                    let response = try await local.complete(request)
+                    let cleanSummary = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .replacingOccurrences(of: "\"", with: "")
+                    
+                    await MainActor.run {
+                        if let index = self.pastSessions.firstIndex(where: { $0.id == sessionID }) {
+                            self.pastSessions[index].title = cleanSummary
+                            self.currentTask = cleanSummary
+                        }
+                    }
+                    try await HistoryManager.shared.save(self.pastSessions)
+                } catch {
+                    print("[ORCHESTRATOR] Local summarization also failed: \(error)")
+                }
+            }
         }
     }
 }

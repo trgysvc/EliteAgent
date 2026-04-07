@@ -1,0 +1,20 @@
+{
+  "scenarios": {
+    "fix-bug-123": {
+      "net_tokens": 1250,
+      "description": "Analysis of 5 files for bug fix intervention."
+    },
+    "summarize-complex-doc": {
+      "net_tokens": 800,
+      "description": "Consolidation of 5000 chars into brief memory."
+    },
+    "system-scan": {
+      "net_tokens": 400,
+      "description": "Retrieval of system specs via shell tools."
+    }
+  },
+  "metadata": {
+    "version": "10.0",
+    "last_updated": "2026-04-06"
+  }
+}

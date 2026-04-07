@@ -155,12 +155,26 @@ struct AISettingsView: View {
             }
             
             Section("Motor Durumu") {
-                LabeledContent("Aktif Sağlayıcı", value: sessionState.activeProvider)
+                let providerStr: String = {
+                    switch sessionState.activeProvider {
+                    case "local": return "Yerel - Titan Engine"
+                    case "ollama": return "Yerel - Ollama"
+                    case "cloud": return "Bulut - OpenRouter"
+                    default: return "Kurulu Değil"
+                    }
+                }()
+                
+                LabeledContent("Aktif Sağlayıcı", value: providerStr)
+                    .foregroundStyle(sessionState.activeProvider == "none" ? .secondary : .primary)
                 
                 if sessionState.isFallbackActive {
                     Label("Bulut Fallback Aktif", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
+                } else if sessionState.activeProvider == "none" {
+                    Label("Model Yüklenmedi", systemImage: "offline.capsule")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             

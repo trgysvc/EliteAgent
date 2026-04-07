@@ -80,6 +80,12 @@ public actor MLXProvider: LocalLLMProvider {
             tokenCount += 1
         }
         
+        // v9.9.13: SILENCE FAILURE DETECTION
+        if fullContent.isEmpty {
+            AgentLogger.logAudit(level: .error, agent: "titan", message: "Titan: Silence failure detected - no tokens generated.")
+            throw ProviderError.emptyResponse
+        }
+        
         let totalTime = Date().timeIntervalSince(firstTokenTime ?? startTime)
         let tps = totalTime > 0 ? Double(tokenCount) / totalTime : 0
         AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Generation speed: \(Int(tps)) t/s")

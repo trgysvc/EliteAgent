@@ -12,6 +12,14 @@ public struct AgentLogger: Sendable {
         writeLog(fileName: "audit.log", level: level, agent: agent, message: message)
     }
     
+    public static func logInfo(_ message: String, agent: String = "Engine") {
+        writeLog(fileName: "audit.log", level: .info, agent: agent, message: message)
+    }
+
+    public static func logWarn(_ message: String, agent: String = "Engine") {
+        writeLog(fileName: "audit.log", level: .warn, agent: agent, message: message)
+    }
+
     public static func logSecurity(level: LogLevel, agent: String, message: String) {
         writeLog(fileName: "security.log", level: level, agent: agent, message: message)
     }

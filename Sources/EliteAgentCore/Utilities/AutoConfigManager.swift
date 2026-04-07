@@ -51,15 +51,19 @@ public final class AutoConfigManager: Sendable {
         public let cores: Int = ProcessInfo.processInfo.processorCount
         private let GB: UInt64 = 1024 * 1024 * 1024
 
-        public var recommendedLocalModelID: String {
+        public enum PerformanceTier {
+            case low      // < 12GB RAM
+            case balanced // 12GB - 24GB RAM
+            case high     // > 24GB RAM
+        }
+
+        public var recommendedTier: PerformanceTier {
             if ram >= 32 * GB {
-                return "qwen-3.5-7b-4bit" // High-end/Large context
-            } else if ram >= 16 * GB {
-                return "qwen-2.5-7b-4bit"  // Mid-range choice
+                return .high
             } else if ram >= 12 * GB {
-                return "qwen-2.5-7b-4bit"
+                return .balanced
             } else {
-                return "qwen-2.5-3b-4bit"  // Low-end (Note: Add this to registry if missing)
+                return .low
             }
         }
 

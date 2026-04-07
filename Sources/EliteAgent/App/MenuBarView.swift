@@ -263,11 +263,13 @@ public struct MenuBarView: View {
     }
     
     private var statusColor: Color {
-        guard let _ = modelPickerVM.selected else { return .red }
+        guard modelPickerVM.selected != nil else { return .secondary }
+        
         switch watchdog.status {
         case .healthy: return .green
         case .degraded: return .orange
         case .critical: return .red
+        case .offline: return .red
         }
     }
     
@@ -278,7 +280,15 @@ public struct MenuBarView: View {
     }
     
     private var modelLocationLabel: String {
-        guard let selected = modelPickerVM.selected else { return "Model Seçilmedi" }
+        guard let selected = modelPickerVM.selected else { 
+            return "Sistem Hazır Değil" 
+        }
+        
+        let provider = ModelStateManager.shared.activeProvider
+        if case .none = provider {
+            return "Kurulum Gerekli"
+        }
+        
         switch selected {
         case .localMLX: return "Local - Titan Engine"
         case .bridge: return "Local - Ollama"

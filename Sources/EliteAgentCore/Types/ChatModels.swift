@@ -10,13 +10,15 @@ public struct ChatMessage: Identifiable, Codable, Sendable {
     public let role: ChatRole
     public let content: String
     public let timestamp: Date
+    public let isStatus: Bool // v10.1: True if this is a transient status update
     public let audioAnalysis: MusicDNAAnalysis? // Librosa & Forensic data
     
-    public init(id: UUID = UUID(), role: ChatRole, content: String, timestamp: Date = Date(), audioAnalysis: MusicDNAAnalysis? = nil) {
+    public init(id: UUID = UUID(), role: ChatRole, content: String, timestamp: Date = Date(), isStatus: Bool = false, audioAnalysis: MusicDNAAnalysis? = nil) {
         self.id = id
         self.role = role
         self.content = content
         self.timestamp = timestamp
+        self.isStatus = isStatus
         self.audioAnalysis = audioAnalysis
     }
 }

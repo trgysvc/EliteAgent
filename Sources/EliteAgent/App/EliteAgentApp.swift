@@ -22,6 +22,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         
+        // v9.9.1: Register Defaults
+        UserDefaults.standard.register(defaults: [
+            "enableResearchMode": false,
+            "debugParser": false,
+            "stallThreshold": 3
+        ])
+        
         // STARTUP BIOMETRIC AUTH
         if AppSettings.shared.isBiometricEnabledForStartup {
             Task { @MainActor in

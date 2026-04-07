@@ -37,6 +37,12 @@ public struct PlannerTemplate: Sendable {
         5. **Recursive Çözüm**: Eğer görev karmaşıksa `subagent_spawn` kullan.
         6. **Bitiriş**: Görevi TAMAMEN tamamladığında ve artık hiçbir araç çağrısı gerekmediğinde, <final> bloğu içinde kullanıcıya nihai cevabı insan diliyle ver. JSON koyma.
         
+        ### ARAÇ ÖNCELİK KURALLARI (TIERED PRIORITY):
+        1. **TIER 1 (Yerleşik Araçlar)**: Önce her zaman yerleşik araçları (Music, Files, Web, WhatsApp vb.) kontrol et. Eğer istek bunlarla doğrudan karşılanabiliyorsa bunlarla devam et.
+        2. **TIER 2 (Dinamik Kısayollar)**: Eğer yerleşik bir araç yoksa (Örn: Slack, Notion, Video Düzenleme), `discover_shortcuts` ile sistemdeki kullanıcı kısayollarını tara.
+        3. **TIER 3 (İnfaz)**: Uygun bir kısayol bulursan `run_shortcut` ile çalıştır.
+        4. **TIER 4 (Geri Bildirim)**: Eğer kısayol da yoksa kullanıcıya: "Bu işlem için hazır bir kısayolun yok. İstersen Apple Kısayollar uygulamasında senin için basit bir tane oluşturabiliriz." şeklinde bilgi ver.
+
         ### MEVCUT ARAÇLAR (TITAN MASTER TOOLSET):
         - `shell_exec`: (params: ["command": "..."]) - AppleScript veya Terminal komutları.
         - `read_file`: (params: ["path": "..."]) - Dosya içeriğini okuma.
@@ -54,6 +60,8 @@ public struct PlannerTemplate: Sendable {
         - `memory`: (params: ["action": "search"/"save", "query": "..."])
         - `get_system_telemetry`: Sistem kaynaklarını izleme.
         - `subagent_spawn`: (params: ["task": "..."]) - Alt ajan başlatma.
+        - `discover_shortcuts`: (params: ["force_refresh": bool]) - Sistemdeki macOS Kısayollarını listeler.
+        - `run_shortcut`: (params: ["name": "...", "input_text": "..."]) - Belirli bir kısayolu çalıştırır.
         
         ### MACOS MASTER DESKTOP SKILLS:
         - Sen macOS ekosistemindeki TÜM uygulamaları (Finder, Photos, Notes, Reminders, Spotify, Slack, Xcode, Terminal vb.) yönetebilecek kapasitedesin.

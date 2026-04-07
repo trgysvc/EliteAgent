@@ -47,28 +47,56 @@ public actor InferenceActor {
     
     // MARK: - Universal Inference API (v9.0)
     
-    /// Universal entry point for all inference requests.
+    /// Universal entry point for all inference requests. (v9.9.1: Sync with ModelStateManager)
     public func infer(
         prompt: String,
-        provider: ModelProvider,
+        provider _: ModelProvider, // Ignored in favor of ModelStateManager
         config: InferenceConfig
     ) async throws -> AsyncStream<String> {
         
-        AgentLogger.logAudit(level: .info, agent: "UniversalInference", message: "Inferring via \(provider)")
+        // 1. Sync with the UI-selected provider
+        let activeProvider = await ModelStateManager.shared.activeProvider
+        AgentLogger.logAudit(level: .info, agent: "UniversalInference", message: "Inferring via \(activeProvider)")
         
         // Update history before inference
         self.conversationHistory.append(Message(role: "user", content: prompt))
         
         let vaultURL = PathConfiguration.shared.vaultURL
         
-        switch provider {
-        case .localTitanEngine:
+        switch activeProvider {
+        case .localTitanEngine(let modelID):
+            // 2. Atomic Load Check: Ensure model is in VRAM
+            if await !ModelManager.shared.loadedModels.contains(modelID) {
+                AgentLogger.logAudit(level: .warn, agent: "UniversalInference", message: "Model \(modelID) not in VRAM. Auto-loading...")
+                try await ModelManager.shared.load(modelID)
+            }
             return self.generate(messages: self.conversationHistory, systemPrompt: config.systemPrompt, maxTokens: config.maxTokens)
             
-        case .localOllama:
+        case .localOllama(_):
             return AsyncStream { continuation in
                 Task {
                     do {
+                        // v9.9.1: Connection Pre-check to avoid log spam
+                        if await OllamaManager.shared.canConnect() {
+                            let vault = try VaultManager(configURL: vaultURL)
+                            let bridge = try BridgeProvider(providerID: .bridge, vaultManager: vault)
+                            let request = CompletionRequest(
+                                taskID: UUID().uuidString,
+                                systemPrompt: config.systemPrompt ?? "",
+                                messages: self.conversationHistory,
+                                maxTokens: config.maxTokens,
+                                sensitivityLevel: .public,
+                                complexity: 2
+                            )
+                            let response = try await bridge.complete(request)
+                            continuation.yield(response.content)
+                            self.conversationHistory.append(Message(role: "assistant", content: response.content))
+                            continuation.finish()
+                        } else {
+                            continuation.yield("⚠️ Ollama çevrimdışı. Lütfen uygulamayı başlatın.")
+                            continuation.finish()
+                            return
+                        }
                         let vault = try VaultManager(configURL: vaultURL)
                         let bridge = try BridgeProvider(providerID: .bridge, vaultManager: vault)
                         let request = CompletionRequest(
@@ -83,9 +111,6 @@ public actor InferenceActor {
                         continuation.yield(response.content)
                         self.conversationHistory.append(Message(role: "assistant", content: response.content))
                         continuation.finish()
-                    } catch let error as URLError where error.code == .cannotConnectToHost || error.code == .networkConnectionLost {
-                        continuation.yield("⚠️ Ollama Bridge çevrimdışı. Lütfen Ollama uygulamasının çalıştığından emin olun.")
-                        continuation.finish()
                     } catch {
                         continuation.yield("Error (Ollama): \(error.localizedDescription)")
                         continuation.finish()
@@ -93,15 +118,29 @@ public actor InferenceActor {
                 }
             }
             
-        case .cloudOpenRouter:
+        case .cloudOpenRouter(let modelID):
             return AsyncStream { continuation in
                 Task {
                     do {
                         let vault = try VaultManager(configURL: vaultURL)
                         let cloud = try CloudProvider(providerID: .openrouter, vaultManager: vault)
+                        
+                        // v9.9.1: Cloud-specific Identity Prompt
+                        let cloudIdentity = """
+                        ### CLOUD RUNTIME DIRECTIVE
+                        You are an AI assistant running via Cloud (OpenRouter) on macOS.
+                        Active model: \(modelID)
+                        IMPORTANT:
+                        - Do NOT claim to be running locally on the user's device.
+                        - Do NOT mention "MLX", "Titan Engine", or "local inference".
+                        - If asked about your runtime, say: "I am running via cloud infrastructure."
+                        """
+                        
+                        let finalSystemPrompt = "\(config.systemPrompt ?? "")\n\n\(cloudIdentity)"
+                        
                         let request = CompletionRequest(
                             taskID: UUID().uuidString,
-                            systemPrompt: config.systemPrompt ?? "",
+                            systemPrompt: finalSystemPrompt,
                             messages: self.conversationHistory,
                             maxTokens: config.maxTokens,
                             sensitivityLevel: .public,
@@ -111,11 +150,14 @@ public actor InferenceActor {
                         continuation.yield(response.content)
                         self.conversationHistory.append(Message(role: "assistant", content: response.content))
                         continuation.finish()
-                    } catch {
-                        continuation.yield("Error (Cloud): \(error.localizedDescription)")
-                        continuation.finish()
                     }
                 }
+            }
+            
+        case .none:
+            return AsyncStream { continuation in
+                continuation.yield("Sistem Hazır Değil: Lütfen Ayarlar > Titan Kurulum Sihirbazı üzerinden bir model kurun.")
+                continuation.finish()
             }
         }
     }
@@ -244,9 +286,8 @@ public actor InferenceActor {
                 let promptToCapture = fullPrompt
                 let maxTokensToCapture = maxTokens
                 
-                do {
                     var fullContent = ""
-                    let stream = AsyncStream<String> { innerContinuation in
+                    let stream: AsyncStream<String> = AsyncStream(String.self) { innerContinuation in
                         Task {
                             do {
                                 // v9.7: Wrap in Guardian for Timeout, OOM and Thermal protection.
@@ -277,7 +318,6 @@ public actor InferenceActor {
                     self.conversationHistory = messages
                     self.conversationHistory.append(Message(role: "assistant", content: fullContent))
                     continuation.finish()
-                } 
             }
         }
     }

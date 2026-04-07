@@ -37,7 +37,11 @@ public actor LocalModelHealthMonitor {
     
     private init() {}
     
-    public func runDiagnostics(modelID: String) async -> HealthStatus {
+    public func runDiagnostics(modelID: String?) async -> HealthStatus {
+        guard let modelID = modelID, !modelID.isEmpty else {
+            return .modelFilesMissing
+        }
+        
         // PVP Override check
         if let override = self.debugPressureOverride {
             return override

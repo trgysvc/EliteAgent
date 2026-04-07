@@ -13,15 +13,24 @@ public final class AISessionState {
     private let fallbackPolicyKey = "elite.ai.fallbackPolicy"
     
     // UI-Bound Properties (Bridged with ModelStateManager)
-    public var selectedModel: String {
-        get { ModelStateManager.shared.currentModelID ?? "qwen-2.5-7b-4bit" }
+    public var selectedModel: String? {
+        get { ModelStateManager.shared.currentModelID }
         set { 
             ModelStateManager.shared.currentModelID = newValue
-            UserDefaults.standard.set(newValue, forKey: selectedModelKey) 
+            if let val = newValue {
+                UserDefaults.standard.set(val, forKey: selectedModelKey) 
+            }
         }
     }
     
-    public var activeProvider: String = "local"
+    public var activeProvider: String {
+        switch ModelStateManager.shared.activeProvider {
+        case .none: return "none"
+        case .localTitanEngine: return "local"
+        case .localOllama: return "ollama"
+        case .cloudOpenRouter: return "cloud"
+        }
+    }
     
     public var isFallbackActive: Bool {
         get { ModelStateManager.shared.isCloudFallback }

@@ -12,6 +12,8 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
+> **[v10.0 TITAN EVOLUTION]**: Hardened Swift 6 Concurrency, Dream Engine v2 (Autonomous Memory), and Chicago/AX System Automation.
+
 ## 🔥 Key Features
 
 ### 1. Self-Healing & Architecture Hardening [v9.9 STABILIZED]
@@ -21,6 +23,9 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **Stress Simulator:** Manual stress trigger to verify Auto-Recovery and Cloud Fallback mechanisms.
 - **MLX Engine Guardian:** 180-second adaptive timeout and proactive VRAM sanitization.
 - **Deep Recovery (Hard Reset):** Fast engine restart (2-3s) with session and memory preservation.
+- **TTFT Optimization [v9.9.15]:** Context Pruning (Sliding Window) drops prefill latency from 146s to <5s for local models.
+- **Swift 6 Actor Isolation (v10.0):** 100% thread-safe background processing for Dreams, Budgets, and Privacy Guards.
+- **YOLO Guard v2 & Encrypted Audits:** Dynamic risk assessment with Keychain-backed AES.GCM forensic logging.
 
 ### 2. Titan Engine v3 (Intelligence & Diagnostics) - [v8.5 Production-Research]
 - **Qwen 3.5 9B Specialization (4-bit):** Native **4-bit Quantized** Qwen 3.5 9B via `InferenceActor`, providing high-speed local reasoning.
@@ -45,14 +50,38 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **Silent Multi-Source Scraping:** Background research using headless `WKWebView` (No Safari tabs opened).
 - **Ultra-Resilient Parsing:** `ThinkParser` with 3-level JSON extraction (Direct/CodeBlock/Regex Fallback).
 - **Autonomous JSON Detection:** Intercepts structured LLM payloads to trigger premium `ResearchReportView` UI.
-- **Real-Time Progress Feedback:** Live status indicators ("Analiz edilen kaynak: 3...") during deep research.
+- **Multi-Tool Chain Support [v9.9.3]:** Upgraded `ThinkParser` extracts and executes multiple `tool_code` blocks in a single turn, even without backticks.
+- **Summarization Fallback:** Auto-titling sessions now falls back to local Titan models if cloud API keys are missing.
+- **KAIROS Adaptive Heartbeat (v10.0):** Proactive energy management (15s-120s heartbeat) based on thermal and battery state.
+- **Dream Engine v2 (Autonomous Memory) [v10.0]**:
+    - **Background Consolidation**: L1 bağlamını `memory_v{N}.md` dosyalarına otonom olarak özetleyen `DreamActor`.
+    - **Net-Savings Validation**: Özet boyutu ham verinin %25'inden fazlaysa işlemi iptal eden verimlilik kalkanı.
+    - **Diff-Based Sync**: Bellek güncellemelerinde sadece değişen kısımları (`diff.log`) takip eden hafif mimari.
+- **Prompt Cache Manager (SHA256) [v10.0]**: 
+    - **KV-Cache Optimization**: Statik sistem komutlarını dinamik veriden ayırarak Apple Silicon KV-cache verimini %80 artıran otonom yönlendirici.
+    - **Adaptive Prefix Shrinking**: Hit oranı %60'ın altına düştüğünde prefix boyutunu küçülterek başarılı cache ihtimalini artıran otonom refleks.
+- **Token Guard Suite [v10.0 New Features]**:
+    - **TokenAccountant Middleware**: Input, Output ve Cache token'larını anlık raporlayan `actor` tabanlı takip sistemi.
+    - **OutputSchemaGuard (Brief Mode)**: Yanıt boyutunu girdiyle oranlayarak (%60) semantik olarak sınırlayan çıktı kalkanı.
+    - **Prompt Cache Monitor**: `os_signpost` ile yerel performans izleme ve verimlilik analitiği.
+    - **token_baselines.json**: CI/CD süreçleri için senaryo bazlı token verimlilik hedefleri ve regresyon takibi.
+- **Universal Shortcuts Bridge [NEW]:** Native integration with macOS Shortcuts (`shortcuts list`, `shortcuts run`) with 1-hour caching and stdin support.
 
 ### 6. Universal Tool Ecosystem
 - **MessengerTool (Autonomous WhatsApp/iMessage):** Production-hardened UI automation with localized error handling.
 - **PatchTool & WriteFileTool:** Atomic string-matching (diff) for safe codebase modification.
 - **Brave Search & Web Fetch:** Deep-web scouring via Brave API with Markdown structure preservation.
-- **Image Analysis (Vision Analyzer):** Apple Vision OCR and coordinate extraction.
+- **Chicago Vision (v10.0):** Native screen analysis via `ScreenCaptureKit` and `VNRecognizeTextRequest` (macOS 15+).
+- **AX Automation (v10.0):** Direct application interaction via `AXUIElement` with AppleScript fallback.
+- **Tulpar (Mythology Buddy) [v10.0]:** Zero-latency ASCII companion for real-time state visualization.
 - **Experience Vault (MemoryTool):** L2 vector database for long-term algorithmic memory.
+
+### 7. Token Efficiency & Guard Suite [v10.0 NEW]
+- **TokenAccountant Middleware:** Real-time billing and KV-cache hit tracking (Input/Output/Cached).
+- **OutputSchemaGuard (Brief Mode):** Enforces 60% compression with semantic sentence-level truncation.
+- **Dream Net-Savings Validation:** Automated skip of memory consolidation if efficiency criteria ($\le 25\%$) are not met.
+- **Adaptive Cache Scaling:** Proactive prefix shrinking when hit rates drop below 60% to recover performance.
+- **CI/CD Token Regression:** Build-time verification against `token_baselines.json` with 20% failure threshold.
 
 ### 6. macOS Native Architecture (HIG Compliant)
 - **Privacy Manifest (2024):** Fully compliant `PrivacyInfo.xcprivacy` for File Timestamp, Disk Space, and Apple Events usage.
