@@ -1,19 +1,5 @@
 import Foundation
 
-public enum TaskCategory: String, Codable, Sendable, CaseIterable {
-    case research
-    case fileProcessing
-    case systemManagement
-    case codeGeneration
-    case dataProcessing
-    case multiStepWorkflow
-    case applicationAutomation
-    case computerUseAX
-    case conversation
-    case hardware
-    case status
-    case other
-}
 
 public struct TaskClassifier: Sendable {
     public init() {}
@@ -30,10 +16,6 @@ public struct TaskClassifier: Sendable {
         if p.contains("farklı") || p.contains("workflow") { return .multiStepWorkflow }
         if p.contains("safari") || p.contains("xcode") || p.contains("figma") || p.contains("app") { return .applicationAutomation }
         if p.contains("tıkla") || p.contains("click") || p.contains("ekran") { return .computerUseAX }
-        
-        // Conversational cues
-        let conversational = ["merhaba", "selam", "hello", "hi", "nasılsın", "how are you", "kimsin", "who are you"]
-        if conversational.contains(where: { p.contains($0) }) { return .conversation }
         
         return .other
     }

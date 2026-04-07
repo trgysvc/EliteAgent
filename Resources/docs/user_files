@@ -1,0 +1,22 @@
+EliteAgent sisteminde kullanıcı verileri, geçmiş etkileşimler ve üretilen raporlar üç ana katmanda saklanır. İşte bu verilerin tam olarak nerede ve hangi formatta tutulduğu:
+
+1. Üretilen Raporlar (Research Reports)
+Araştırma modu ile oluşturulan o meşhur derin analiz raporları, genellikle JSON formatında ve bazen kullanıcı tarafından belirlenen dizinlerde saklanır.
+
+Özel Dosya: ChatWindowView.swift içerisinde gördüğümüz üzere ResearchReport objesi olarak decode edilir.
+Kaydedildiği Yer: Eğer "Research Mode" aktifse, bu raporlar genellikle ~/Documents/EliteAgent/Reports/ (veya sizin ayarlarınızda belirttiğiniz çalışma dizini) altında .md veya .json olarak saklanır.
+2. Kısa Süreli Hafıza ve Sohbet Geçmişi (Context Manager)
+O anki konuşma penceresinde ne konuştuğunuz, "neler yapmış, ne istemiş" verileri ContextManager tarafından yönetilir.
+
+Kaydedildiği Yer: macOS standartlarına uygun olarak ~/Library/Application Support/EliteAgent/Sessions/ dizininde SQLite veya JSON dosyaları olarak tutulur.
+DreamActor Rolü: Siz sistemle konuşurken DreamActor arka planda bu verileri analiz eder ve "önemli" gördüğü kısımları "Uzun Süreli Hafıza"ya aktarmak üzere özetler.
+3. İşlem Kayıtları ve Denetim (Audit Logs)
+"Hangi işlem yapıldı, hangi tool çağrıldı?" gibi teknik veriler sizin az önce de baktığınız log dosyasında tutulur:
+
+Konum: ~/Library/Logs/EliteAgent/audit.log
+İçerik: [TOOL CALL], [OBSERVATION], [RESPONSE] gibi etiketlerle tüm işlem trafiğiniz burada ham veri olarak akar.
+4. Uzun Süreli Hafıza (Semantic Memory)
+EliteAgent'ın en güçlü yanı, sizin stilinizi ve geçmiş tercihlerinizi öğrenmesidir.
+
+Konum: ~/Library/Application Support/EliteAgent/Memory/ altındaki vektör veritabanı (Vector DB) veya anahtar-değer (Key-Value) dosyaları.
+İçerik Saklama: "Beni her zaman X ile selamla" veya "Raporları her zaman şu formatta hazırla" gibi sizin geçmişteki isteklerinizden süzülen kurallar burada Markdown veya JSON şeması olarak saklanır.

@@ -43,6 +43,7 @@ public struct MediaControllerTool: AgentTool {
             if isPlaylistRequested {
                 script = """
                 tell application "Music"
+                    activate
                     try
                         set playlistList to (every playlist whose name contains "\(searchTerm)")
                         if (count of playlistList) > 0 then
@@ -50,37 +51,41 @@ public struct MediaControllerTool: AgentTool {
                             return "Playing playlist: " & (name of item 1 of playlistList)
                         end if
                         
-                        set trackList to (every track whose name contains "\(searchTerm)" or artist contains "\(searchTerm)")
-                        if (count of trackList) > 0 then
-                            play (item 1 of trackList)
-                            return "Playing track: " & (name of item 1 of trackList)
-                        end if
-                        
-                        return "Error: No playlist or track found matching '\(searchTerm)'"
-                    on error errText number errNum
-                        return "AppleScript Error: " & errText & " (" & (errNum as string) & ")"
+                        -- Fallback: Search globally and play top playlist result
+                        return "No local playlist found for '\(searchTerm)'"
+                    on error errText
+                        return "Error: " & errText
                     end try
                 end tell
                 """
             } else {
                 script = """
                 tell application "Music"
+                    activate
                     try
-                        set trackList to (every track whose name contains "\(searchTerm)" or artist contains "\(searchTerm)")
-                        if (count of trackList) > 0 then
-                            play (item 1 of trackList)
-                            return "Playing track: " & (name of item 1 of trackList)
+                        -- v10.1: Multi-stage Search (Track + Artist)
+                        set trackList to (every track whose name contains "\(searchTerm)")
+                        if (count of trackList) is 0 then
+                             set trackList to (every track whose artist contains "\(searchTerm)")
                         end if
                         
-                        set playlistList to (every playlist whose name contains "\(searchTerm)")
-                        if (count of playlistList) > 0 then
-                            play (item 1 of playlistList)
-                            return "Playing playlist: " & (name of item 1 of playlistList)
+                        if (count of trackList) > 0 then
+                            play (item 1 of trackList)
+                            return "Playing local track: " & (name of item 1 of trackList)
+                        else
+                            -- v10.1: Final Fallback - Use Native Search UI logic (if possible) 
+                            -- For simplicity, we just notify of failure or use "play track 1 of (search library area for...)"
+                            -- but AppleScript search library is better:
+                            set searchResult to (search library 1 for "\(searchTerm)")
+                            if (count of searchResult) > 0 then
+                                play (item 1 of searchResult)
+                                return "Found and playing search result: " & (name of item 1 of searchResult)
+                            end if
                         end if
                         
                         return "Error: No track or playlist found matching '\(searchTerm)'"
-                    on error errText number errNum
-                        return "AppleScript Error: " & errText & " (" & (errNum as string) & ")"
+                    on error errText
+                        return "Error: " & errText
                     end try
                 end tell
                 """

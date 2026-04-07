@@ -1,6 +1,9 @@
 import Foundation
+import OSLog
 
 public actor OrchestratorRuntime {
+    private let logger = Logger(subsystem: "com.elite.agent", category: "Orchestrator")
+    
     private let planner: PlannerAgent
     private let memory: MemoryAgent
     private let cloudProvider: CloudProvider
@@ -19,13 +22,12 @@ public actor OrchestratorRuntime {
     private var turnsWithoutProgress = 0
     private let MAX_TURNS_WITHOUT_PROGRESS = 5
     private var isInterrupted = false
-    private var lastThought = ""
-    private var thoughtRepetitionCount = 0
     private var activeContextManager: DynamicContextManager?
     private var sourcesAnalyzed = 0
-    private var currentAction = "İşleniyor..." // v10.1: Real-time action tracking
-    
+    private var currentAction = "İşleniyor..."
     private var isResearchModeActive = false
+    
+    private var currentState: InferenceState = .idle
     
     public init(
         planner: PlannerAgent,
@@ -45,9 +47,8 @@ public actor OrchestratorRuntime {
         self.toolRegistry = toolRegistry
         self.bus = bus
         self.vaultManager = vaultManager
-        self.sessionContext = SessionContext() // Initialized with defaults
+        self.sessionContext = SessionContext()
         
-        // v9.9.13: Parallel Notification Listening (AsyncSequence)
         Task { [weak self] in
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("RetryParse")) {
                 await self?.handleRetryParse()
@@ -75,354 +76,250 @@ public actor OrchestratorRuntime {
     }
     
     private func handleRetryParse() async {
-        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "User requested a re-parse. Prompting model for valid JSON.")
-        let retryMsg = "Observation: JSON parse failed. Please provide the research report again in a simpler, valid JSON format. Ensure all quotes are escaped and the structure matches the schema."
+        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "User requested a re-parse.")
+        let retryMsg = "Observation: JSON parse failed. Please provide output again in valid JSON format."
         await activeContextManager?.addMessage(Message(role: "user", content: retryMsg))
     }
     
-    public func setStepUpdateHandler(_ handler: @escaping @Sendable (TaskStep) -> Void) {
-        self.onStepUpdate = handler
-    }
-    
-    public func setChatMessageUpdateHandler(_ handler: @escaping @Sendable (ChatMessage) -> Void) {
-        self.onChatMessage = handler
-    }
-    
-    public func setStatusUpdateHandler(_ handler: @escaping @Sendable (AgentStatus) -> Void) {
-        self.onStatusUpdate = handler
-    }
+    public func setStepUpdateHandler(_ handler: @escaping @Sendable (TaskStep) -> Void) { self.onStepUpdate = handler }
+    public func setChatMessageUpdateHandler(_ handler: @escaping @Sendable (ChatMessage) -> Void) { self.onChatMessage = handler }
+    public func setStatusUpdateHandler(_ handler: @escaping @Sendable (AgentStatus) -> Void) { self.onStatusUpdate = handler }
     public func setTokenUpdateHandler(_ handler: @escaping @Sendable (TokenCount, Decimal) -> Void) { self.onTokenUpdate = handler }
     
-    public func interrupt() {
-        self.isInterrupted = true
-    }
+    public func interrupt() { self.isInterrupted = true }
     
     public func executeTask(prompt: String, session: Session, complexity: Int, forceProviders: [ProviderID]? = nil, config: InferenceConfig) async throws {
         self.onStatusUpdate?(.working)
         self.isInterrupted = false
-        
-        // v9.9.11: Universal Intent Detection (Action + Research)
-        let researchKeywords = ["araştır", "research", "deep analysis", "rapor oluştur", "incele", "analiz et"]
-        let actionKeywords = ["aç", "çal", "yaz", "oku", "sil", "bul", "analiz et", "göster", "çalıştır", "play", "open", "music", "safari"]
-        
-        self.isResearchModeActive = researchKeywords.contains { prompt.lowercased().contains($0) }
-        let isActionRequested = actionKeywords.contains { prompt.lowercased().contains($0) }
-        
-        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Mode: \(isResearchModeActive ? "RESEARCH" : "CHAT") | Action: \(isActionRequested)")
+        self.currentState = .classifying
+        self.sourcesAnalyzed = 0 
         
         let contextManager = DynamicContextManager(maxTokens: 8000, provider: cloudProvider)
         self.activeContextManager = contextManager
-        self.sourcesAnalyzed = 0 
-        await contextManager.addMessage(Message(role: "user", content: prompt))
-        
         let startTime = Date()
         
         let progressTask = Task {
-            var stepCounter = 1
             while !Task.isCancelled {
                 let interval = await self.calculateHeartbeatInterval()
                 try? await Task.sleep(nanoseconds: interval * 1_000_000_000)
-                
+                if Task.isCancelled { break } // v10.5.2: Immediate drop out if cancelled
                 let elapsed = Int(Date().timeIntervalSince(startTime))
-                let emoji = isResearchModeActive ? (stepCounter % 2 == 0 ? "📡" : "🔍") : "⚙️"
-                
-                let progressMsg = isResearchModeActive ? 
-                    "\(emoji) Analiz edilen kaynak: \(self.sourcesAnalyzed)... (\(elapsed)s)" :
-                    "⚙️ \(self.currentAction) (\(elapsed)s)"
-                
-                self.onChatMessage?(ChatMessage(role: .assistant, content: progressMsg, isStatus: true))
-                
-                let step = TaskStep(name: "KAIROS Heartbeat", status: "Active", latency: "\(elapsed)s", thought: progressMsg)
-                self.onStepUpdate?(step)
-                stepCounter += 1
+                self.onChatMessage?(ChatMessage(role: .assistant, content: "⚙️ \(self.currentAction) (\(elapsed)s)", isStatus: true))
             }
         }
         
         defer { 
             progressTask.cancel() 
+            // v10.5.2: Force-clear transient status indicators on completion
+            self.onChatMessage?(ChatMessage(role: .assistant, content: "", isStatus: true))
             Task {
-                await TulparActor.shared.recordEvent(.taskCompleted(success: true)) // Simplification
+                await TulparActor.shared.recordEvent(.taskCompleted(success: true))
                 await DreamActor.shared.consolidateIfNeeded(memoryAgent: self.memory, cloudProvider: self.cloudProvider)
             }
         }
         
-        // v10.0: Signal Task Start
         await TulparActor.shared.recordEvent(.taskStarted)
         
         do {
-            for turn in 1...50 {
+            var turnCount = 0
+            while currentState != .completed && turnCount < 50 {
+                turnCount += 1
+                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🔄 [STATE: \(currentState.rawValue.uppercased())] Turn \(turnCount)")
+                
                 if isInterrupted {
-                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Task interrupted by user.")
+                    currentState = .completed
                     await session.setFinalAnswer("İşlem kullanıcı tarafından durduruldu.")
                     break
                 }
                 
-                // v10.0: Token Budget Guard
-                let approved = await TokenBudgetActor.shared.requestApproval(estimatedTokens: 1000)
-                if !approved {
-                    await session.setFinalAnswer("⚠️ Bütçe veya termal limitler nedeniyle işlem durduruldu.")
-                    break
-                }
-                
-                let provider = try resolveProvider(force: forceProviders, config: config)
-                let history = await contextManager.getMessages()
-                
-                // v9.9.15: Local TTFT Optimization (Pruning)
-                if provider.providerID == .mlx || provider.providerID == .bridge {
-                    await contextManager.trimMessages(limit: 10)
-                }
-                
-                // v9.9.11: Universal Tool Awareness Logic
-                let allTools = toolRegistry.listTools()
-                let systemPrompt = isResearchModeActive ? 
-                    SystemPrompts.orchestrator(tools: allTools) : 
-                    SystemPrompts.chat(tools: allTools)
-                
-                let request = CompletionRequest(
-                    taskID: UUID().uuidString,
-                    systemPrompt: systemPrompt,
-                    messages: history,
-                    maxTokens: 3000,
-                    sensitivityLevel: .public,
-                    complexity: complexity
-                )
-                
-                var response: CompletionResponse?
-                var retryCount = 0
-                let maxRetries = 2
-                
-                while retryCount <= maxRetries {
-                    do {
-                        response = try await provider.complete(request)
-                        break
-                    } catch ProviderError.emptyResponse {
-                        retryCount += 1
-                        if retryCount <= maxRetries {
-                            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "Empty response from provider, retrying (\(retryCount)/\(maxRetries))...")
-                            try await Task.sleep(nanoseconds: 1_000_000_000 * UInt64(retryCount))
-                            continue
-                        } else {
-                            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "Empty response persisted. Forcing completion.")
-                            let forcedPrompt = "Observation: Empty response received. Please provide your answer or call tools."
-                            await contextManager.addMessage(Message(role: "user", content: forcedPrompt))
-                            response = nil 
-                            break
-                        }
-                    } catch { throw error }
-                }
-                
-                guard let finalResponse = response else { continue }
-                
-                // v9.6: Inference Integrity Check (Async Post-Inference)
-                let validation = InferenceValidator.validate(finalResponse.content, format: .plainText)
-                if !validation.isValid {
-                    AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "Inference Integrity Check Failed: \(validation.reason ?? "Unknown"). Retrying...")
-                    
-                    // Trigger Recovery (Non-blocking)
-                    let metrics = await LocalModelWatchdog.shared.metrics
-                    Task { @MainActor in
-                        await AutoRecoveryEngine.shared.attemptFix(metrics)
-                    }
-                    
-                    if retryCount < maxRetries {
-                        retryCount += 1
-                        continue
-                    }
-                }
-                self.onTokenUpdate?(finalResponse.tokensUsed, finalResponse.costUSD)
-                
-                // v10.0: Token Accounting (Async/Await compliant)
-                await TokenBudgetActor.shared.recordUsage(tokens: finalResponse.tokensUsed.total, cost: finalResponse.costUSD)
-                await TokenAccountant.shared.record(
-                    input: finalResponse.tokensUsed.prompt,
-                    output: finalResponse.tokensUsed.completion,
-                    cached: finalResponse.tokensUsed.cached
-                )
-                
-                let guardConfig = TokenGuardConfig.shared
-                let sanitizedContent = OutputSchemaGuard.sanitize(
-                    finalResponse.content, 
-                    inputTokens: finalResponse.tokensUsed.prompt, 
-                    config: guardConfig
-                )
-                
-                // v10.0: BriefMode Formatting handled via OutputSchemaGuard.sanitize
-                let displayContent = sanitizedContent
-                
-                await contextManager.addMessage(Message(role: "assistant", content: sanitizedContent))
-                self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent))
-                
-                var toolBlocks: [ToolCall] = finalResponse.toolCalls ?? []
-                let textBlocks = ThinkParser.parse(sanitizedContent)
-                
-                // v9.4: Stall Detection (3 Turns)
-                let currentThought = finalResponse.thinkBlock ?? sanitizedContent
-                if currentThought == lastThought {
-                    thoughtRepetitionCount += 1
-                } else {
-                    lastThought = currentThought
-                    thoughtRepetitionCount = 0
-                }
+                let baseProvider = try resolveProvider(force: forceProviders, config: config)
+                let targetID = await PerformanceArbiter.shared.resolveModelScale(originalID: baseProvider.providerID)
+                let provider = targetID == baseProvider.providerID ? baseProvider : try resolveProvider(force: [targetID], config: config)
 
-                let stallThreshold = UserDefaults.standard.integer(forKey: "stallThreshold") > 0 
-                    ? UserDefaults.standard.integer(forKey: "stallThreshold") 
-                    : 3
-                
-                if thoughtRepetitionCount >= stallThreshold {
-                    AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "Stall detected (Turn \(turn)). Terminating to prevent loop.")
-                    await session.setFinalAnswer("⚠️ İşlem döngüye girdiği için durduruldu. Lütfen komutu daha açık şekilde tekrar verin veya sistem izinlerini kontrol edin.")
-                    break
-                }
-                
-                var foundFinalAnswer = false
-                var finalAnswerText = ""
-                
-                for block in textBlocks {
-                    if let tool = block.toolCall {
-                        toolBlocks.append(tool)
-                    } else if !block.thought.isEmpty {
-                        // v9.4: Refined termination logic for simple tool results
-                        let isReportLike = block.thought.containsAny(["# Araştırma Raporu", "Analiz Sonuçları", "Bulgular", "Research Report"])
-                        let noToolsCalled = toolBlocks.isEmpty && (finalResponse.toolCalls?.isEmpty ?? true)
-                        
-                        if noToolsCalled && !sanitizedContent.contains("```tool_code") {
-                            // If just text output and no tool was requested in this turn
-                            if !isResearchModeActive || isReportLike || turn > 15 {
-                                foundFinalAnswer = true
-                                finalAnswerText = block.thought
-                            }
-                        }
+                switch currentState {
+                case .classifying:
+                    let category = try await handleClassification(prompt: prompt, provider: provider, context: contextManager)
+                    currentState = (category == .chat || category == .conversation) ? .chatting : .planning
+                case .chatting:
+                    try await handleChatting(provider: provider, context: contextManager, session: session)
+                    currentState = .completed
+                case .planning:
+                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager)
+                    currentState = .executing
+                case .executing:
+                    let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config)
+                    if !shouldContinue {
+                        if let answer = finalAnswer { await session.setFinalAnswer(answer) }
+                        currentState = .reviewing
                     }
-                }
-                
-                if let think = finalResponse.thinkBlock, !think.isEmpty {
-                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [THOUGHT] \(think)")
-                    let step = TaskStep(name: "Thinking...", status: "Analysis", latency: "\(finalResponse.latencyMs)ms", thought: think)
-                    self.onStepUpdate?(step)
-                } else {
-                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [RESPONSE] \(sanitizedContent)")
-                }
-                
-                // v9.9.13: Universal Intent Alignment & Autonomous Choice Guardrails
-                if turn == 1 && isResearchModeActive && toolBlocks.isEmpty {
-                    AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "⚠️ [AUTONOMOUS NUDGE] No tools called on Turn 1. Forcing tool usage for \(provider.providerID).")
-                    let nudge = "Observation: Lütfen araştırmaya başlamak için önce uygun araçları (google_search, safari_automation, doceye vb.) kullanın. Modelinizden doğrudan cevap beklemiyorum; önce veri toplamanız gerekmektedir. Hangi aracı kullanacağınıza siz karar verin."
-                    await contextManager.addMessage(Message(role: "user", content: nudge))
-                    continue
-                }
-                
-                // v9.9.13: Mid-loop Nudge for Stall Prevention
-                if isResearchModeActive && toolBlocks.isEmpty && turn > 1 && !foundFinalAnswer {
-                    turnsWithoutProgress += 1
-                    if turnsWithoutProgress >= 2 {
-                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "⚠️ [STALL NUDGE] No tools called for 2 turns. Reminding model of its capabilities.")
-                        let nudge = "Observation: Hala araştırma aşamasındasınız. Lütfen elinizdeki araçları kullanarak derinlemesine inceleme yapın veya raporu finalize edin. Boş cevap vermeyiniz."
-                        await contextManager.addMessage(Message(role: "user", content: nudge))
-                        turnsWithoutProgress = 0 // Reset after nudge
-                        continue
-                    }
-                }
-                
-                if toolBlocks.isEmpty {
-                    turnsWithoutProgress += 1
-                    if turnsWithoutProgress >= MAX_TURNS_WITHOUT_PROGRESS {
-                        await session.setFinalAnswer("Üzgünüm, araştırmada ilerleme kaydedemedim.")
-                        break
-                    }
-                } else {
-                    turnsWithoutProgress = 0
-                    for toolCall in toolBlocks {
-                        self.currentAction = "\(toolCall.tool) çalıştırılıyor..."
-                        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [TOOL CALL] \(toolCall.tool) with params: \(toolCall.params)")
-                        
-                        let status = self.toolRegistry.getToolStatus(named: toolCall.tool)
-                        let isEnabled = config.enabledTools[toolCall.tool] ?? true
-                        
-                        guard isEnabled && status.isAvailable else {
-                            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "❌ [TOOL ERROR] Tool \(toolCall.tool) is disabled or unavailable")
-                            let obs = "Observation: Error - Tool '\(toolCall.tool)' is currently unavailable."
-                            await contextManager.addMessage(Message(role: "user", content: obs))
-                            continue
-                        }
-                        
-                        // Tool Timeout (60s)
-                        do {
-                            let observation = try await withThrowingTaskGroup(of: String.self) { group in
-                                group.addTask { try await self.toolRegistry.execute(toolCall: toolCall, session: session) }
-                                group.addTask {
-                                    try await Task.sleep(nanoseconds: 60_000_000_000)
-                                    throw ToolError.executionError("Timeout (60s)")
-                                }
-                                guard let result = try await group.next() else { throw ToolError.executionError("No result") }
-                                group.cancelAll()
-                                return result
-                            }
-                            
-                            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) returned \(observation.count) characters. Snippet: \(String(observation.prefix(200)))...")
-                            
-                            if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) {
-                                self.sourcesAnalyzed += 1
-                            }
-                            await contextManager.addMessage(Message(role: "user", content: "Observation: \(observation)"))
-                        } catch {
-                            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "❌ [TOOL ERROR] \(toolCall.tool) failed: \(error.localizedDescription)")
-                            await contextManager.addMessage(Message(role: "user", content: "Observation: Error - \(error.localizedDescription)"))
-                        }
-                    }
-                }
-                
-                if foundFinalAnswer {
-                    await session.setFinalAnswer(finalAnswerText)
+                case .reviewing:
+                    let passed = try await handleReview(prompt: prompt, provider: provider, context: contextManager)
+                    currentState = passed ? .completed : .planning
+                case .completed, .idle:
                     break
                 }
             }
         } catch {
+            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "Critical failure: \(error.localizedDescription)")
             await session.setFinalAnswer("⚠️ Kritik hata: \(error.localizedDescription)")
         }
+        
+        self.currentState = .idle
         self.onStatusUpdate?(.idle)
     }
     
-    private func resolveProvider(force: [ProviderID]?, config: InferenceConfig) throws -> any LLMProvider {
-        // v9.9.13: Respect Model Persistence from SessionContext
-        let preferredModel = sessionContext.selectedModel
+    private func handleClassification(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> TaskCategory {
+        self.currentAction = "İstek Sınıflandırılıyor..."
+        let systemPrompt = PromptRegistry.getPrompt(for: .classifier)
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [Message(role: "user", content: prompt)], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
+        let response = try await provider.complete(request)
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY RESPONSE] \(response.content)")
         
+        let cleaned = ThinkParser.extractJSONRobustly(response.content)
+        if let data = cleaned.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let catString = json["category"] as? String,
+           let category = TaskCategory(rawValue: catString) {
+            return category
+        }
+        return .chat // Varsayılan: Güvenli sohbet modu
+    }
+    
+    private func handleChatting(provider: any LLMProvider, context: DynamicContextManager, session: Session) async throws {
+        self.currentAction = "Cevap Veriliyor..."
+        let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "General Conversation"))
+        let history = await context.getMessages()
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: 2000, sensitivityLevel: .public, complexity: 1)
+        let response = try await provider.complete(request)
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT INPUT] \(history.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT RESPONSE] \(response.content)")
+        self.onTokenUpdate?(response.tokensUsed, response.costUSD)
+        self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
+        await context.addMessage(Message(role: "assistant", content: response.content))
+        await session.setFinalAnswer(response.content)
+    }
+    
+    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws {
+        self.currentAction = "Plan Hazırlanıyor..."
+        let allTools = toolRegistry.listTools().map { $0.name }
+        let systemPrompt = PromptRegistry.getPrompt(for: .planner(tools: allTools, projectState: "Active", context: "N/A"))
+        let history = await context.getMessages()
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: 4000, sensitivityLevel: .public, complexity: 3)
+        let response = try await provider.complete(request)
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
+        if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
+        await context.addMessage(Message(role: "assistant", content: response.content))
+    }
+    
+    private func handleExecution(provider: any LLMProvider, context: DynamicContextManager, session: Session, config: InferenceConfig) async throws -> (Bool, String?) {
+        let history = await context.getMessages()
+        let lastMessage = history.last?.content ?? ""
+        let parsedOutputs = try ThinkParser.parseOutputs(from: lastMessage)
+        
+        var toolBlocks: [ToolCall] = []
+        var finalAnswer: String? = nil
+        
+        for output in parsedOutputs {
+            // v10.5.6: Priority for structured steps array
+            if let steps = output.steps {
+                toolBlocks.append(contentsOf: steps)
+            } 
+            
+            // Legacy compatibility for single tool calls
+            if output.type == .tool_call, let action = output.action {
+                toolBlocks.append(ToolCall(tool: action, params: output.params ?? [:]))
+            } else if output.type == .response, let text = output.content {
+                finalAnswer = text
+            }
+        }
+        
+        if toolBlocks.isEmpty { 
+            // If no tools but we have a final answer, return it.
+            if let answer = finalAnswer { return (false, answer) }
+            // If no tools and no answer, the model might have failed to plan.
+            throw ParserError.emptyJSON("Model geçerli bir plan veya yanıt üretmedi.")
+        }
+        
+        for toolCall in toolBlocks {
+            let actionName = self.getFriendlyActionName(for: toolCall.tool)
+            self.currentAction = actionName
+            self.onStepUpdate?(TaskStep(name: actionName, status: "Executing", latency: "0ms", thought: "Parametreler: \(toolCall.params)"))
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [ACTION] \(toolCall.tool)")
+            let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
+            await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
+            if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) { self.sourcesAnalyzed += 1 }
+        }
+        
+        let systemPrompt = PromptRegistry.getPrompt(for: .executor(plan: "In Progress", forbiddenPatterns: []))
+        let newHistory = await context.getMessages()
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: newHistory, maxTokens: 4000, sensitivityLevel: .public, complexity: 2)
+        let response = try await provider.complete(request)
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC INPUT] \(newHistory.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC RESPONSE] \(response.content)")
+        self.onTokenUpdate?(response.tokensUsed, response.costUSD)
+        await TokenBudgetActor.shared.recordUsage(tokens: response.tokensUsed.total, cost: response.costUSD)
+        self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
+        await context.addMessage(Message(role: "assistant", content: response.content))
+        return (true, nil)
+    }
+    
+    private func handleReview(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> Bool {
+        self.currentAction = "Sonuç Denetleniyor..."
+        let lastHistory = await context.getMessages()
+        let lastResponse = lastHistory.last?.content ?? ""
+        let systemPrompt = PromptRegistry.getPrompt(for: .critic(task: prompt, output: lastResponse, criteria: "Accuracy"))
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
+        let response = try await provider.complete(request)
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚖️ [REVIEW] \(response.content)")
+        return response.content.contains("\"passed\": true") || response.content.contains("passed: true")
+    }
+    
+    private func resolveProvider(force: [ProviderID]?, config: InferenceConfig) throws -> any LLMProvider {
+        let preferredModel = sessionContext.selectedModel
         if let force = force?.first {
             if force == .mlx, let p = localProvider { return p }
             if force == .openrouter { return cloudProvider }
             if force == .bridge, let p = bridgeProvider { return p }
         }
-        
-        // Priority 1: Sticky Session Model
         if preferredModel == .mlx, let p = localProvider { return p }
         if preferredModel == .openrouter { return cloudProvider }
-        
-        // Priority 2: Config Priority
         for pid in config.providerPriority {
             if pid == .mlx, let p = localProvider { return p }
             if pid == .openrouter { return cloudProvider }
             if pid == .bridge, let p = bridgeProvider { return p }
         }
-        
-        // v10.1: Enforcement - If local requested but failed, don't silent fallback
-        if config.strictLocal {
-             throw InferenceError.localProviderUnavailable("Yerel model (Titan) şu an hazır değil. Lütfen ayarları kontrol edin.")
-        }
-
-        throw InferenceError.localProviderUnavailable("No provider found.")
+        if config.strictLocal { throw InferenceError.localProviderUnavailable("Titan hazır değil.") }
+        throw InferenceError.localProviderUnavailable("No provider.")
     }
     
     private func calculateHeartbeatInterval() async -> UInt64 {
         let thermal = ProcessInfo.processInfo.thermalState
-        // v10.0 KAIROS: Adaptive Heartbeat
         switch thermal {
-        case .serious, .critical: return 15
-        case .fair, .nominal: return 60
-        @unknown default: return 30
+        case .serious, .critical: return 5
+        case .fair, .nominal: return 2
+        @unknown default: return 3
+        }
+    }
+    
+    private func getFriendlyActionName(for tool: String) -> String {
+        switch tool {
+        case "google_search", "web_search", "native_browser": return "İnternette Arama Yapılıyor..."
+        case "safari_automation", "web_fetch", "read_file": return "İçerik Okunuyor..."
+        case "media_control", "music_dna": return "Medya Ayarlanıyor..."
+        case "system_volume", "brightness_control", "sleep_control": return "Sistem Ayarlanıyor..."
+        case "app_discovery", "shortcut_discovery", "shortcut_execution": return "Sistem Komutları Taranıyor..."
+        case "file_manager", "write_file": return "Dosya İşlemi Yapılıyor..."
+        case "shell_tool", "patch_tool", "git_tool": return "Sistem Komutu Çalıştırılıyor..."
+        case "whatsapp", "messenger", "email", "mail": return "Mesaj İletişimi Kuruluyor..."
+        case "weather", "calculator", "timer": return "Uygulama Verisi Sorgulanıyor..."
+        case "vision", "chicago_vision": return "Görüntü Analizi Yapılıyor..."
+        default: return "Sistem Çağrısı Yapılıyor..."
         }
     }
 }
 
-/// Helper to format content for BriefMode (Bullet points only)
 public struct BriefFormatter {
     public static func format(_ content: String) -> String {
         let lines = content.components(separatedBy: .newlines)
@@ -430,22 +327,10 @@ public struct BriefFormatter {
             let t = $0.trimmingCharacters(in: .whitespacesAndNewlines)
             return t.hasPrefix("-") || t.hasPrefix("*") || t.hasPrefix("•") 
         }
-        
         if bulletLines.isEmpty {
-            // Fallback: Take first two sentences
             let sentences = content.components(separatedBy: ". ")
             return sentences.prefix(2).joined(separator: ". ") + "..."
         }
-        
         return bulletLines.joined(separator: "\n")
-    }
-}
-
-fileprivate extension String {
-    func containsAny(_ substrings: [String]) -> Bool {
-        for s in substrings {
-            if self.contains(s) { return true }
-        }
-        return false
     }
 }

@@ -15,8 +15,16 @@ public actor AppleScriptRunner {
             throw AppleScriptError.initializationFailed
         }
         
+        // v10.5.5: Full Transparency - Log Script Source
+        AgentLogger.logAudit(level: .info, agent: "AppleScript", message: "📜 Executing Script: \nBEGIN SCRIPT\n\(source)\nEND SCRIPT")
+        
         var errorDict: NSDictionary?
         let result = script.executeAndReturnError(&errorDict)
+        
+        // v10.5.5: Full Transparency - Log Raw Result
+        if let output = result.stringValue {
+            AgentLogger.logAudit(level: .info, agent: "AppleScript", message: "✅ Script Result: \(output)")
+        }
         
         if let error = errorDict {
             let message = error["NSAppleScriptErrorMessage"] as? String ?? "Unknown AppleScript error"

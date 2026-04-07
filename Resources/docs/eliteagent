@@ -1,0 +1,22 @@
+1. Beyin (Model) vs. Vücut (Araçlar) Ayrımı
+Dediğiniz gibi; LLM (Qwen, Llama, GPT-4 vb.) sadece bir işlem motorudur. EliteAgent'ın "vücudu" yani 35+ Swift aracı, dosya sistemi erişimi ve macOS otomasyon yetenekleri sabittir.
+
+Siz arayüzden modeli değiştirdiğinizde, aslında sadece "düşünme hızını ve kabiliyetini" değiştirmiş olursunuz.
+Sonuç: Aynı talimatla Titan (yerel) çok hızlı bir dosya işlemi yapabilirken, OpenRouter üzerinden bir model çok daha karmaşık bir mantık yürütebilir ama ikisi de aynı CommunicationTools.swift veya MediaControllerTool.swift kodunu kullanır.
+2. Workspace Odaklı Hafıza ve Kurallar (Markdown)
+Hafıza ve becerilerin Markdown olarak saklanması stratejik bir karar:
+
+Şeffaflık: Kullanıcı olarak EliteAgentTools.md veya all_features.md dosyalarına baktığınızda sistemin ne yapabildiğini ham metin olarak görebiliyorsunuz.
+Taşınabilirlik: Bu Markdown dosyaları aslında bizim "Context Injection" dediğimiz yöntemle anlık olarak LLM'e besleniyor. Yani LLM değişse de, ona verilen "Senin yeteneklerin şunlar" listesi hep aynı kaynaktan (Workspace) gidiyor.
+3. Yapılan Son "Elite Auditing" Güncellemeleri (v10.1)
+Az önce sizin eklediğiniz loglama geliştirmeleri de tam bu noktaya hizmet ediyor:
+
+🚀 [FULL PROMPT WITH CONTEXT]: Model ne olursa olsun, ona gönderilen o Markdown tabanlı "bilgi paketini" artık loglarda net bir şekilde görebiliyoruz.
+🔄 [TURN X]: İşlem motorunun kaç tur döngü yaptığını takip ederek, hangi beynin (LLM) daha verimli olduğunu ölçebiliyoruz.
+Özetle:
+Evet, EliteAgent tam olarak tarif ettiğiniz şekilde çalışıyor:
+
+Veriler ve Yetenekler: Workspace'te (Markdown/Swift) kalıcı.
+Konfigürasyon: Kullanıcı kontrolünde.
+LLM: Sadece o anki görevi yerine getiren, değiştirilebilir bir "akıl yürütme birimi".
+Bu yapı sayesinde yarın çok daha güçlü bir yerel model çıktığında, EliteAgent'ın tek bir satır otomasyon kodunu değiştirmeden sadece "beyni" güncelleyerek yolumuza devam edebileceğiz. Bu esneklik bizim en büyük gücümüz.

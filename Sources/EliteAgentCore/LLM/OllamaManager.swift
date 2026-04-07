@@ -7,6 +7,8 @@ public actor OllamaManager {
     public static let shared = OllamaManager()
     
     private let baseURL = URL(string: "http://localhost:11434")!
+    private var lastFailure: Date = .distantPast
+    private let discoveryCooldown: TimeInterval = 300 // 5 minutes
     
     private init() {}
     
@@ -14,8 +16,18 @@ public actor OllamaManager {
     /// Returns true ONLY if the Ollama service is actually listening on localhost.
     /// This prevents URLSession from spamming 'Connection refused' to the Xcode console.
     public func canConnect() async -> Bool {
+        // v10.4: Discovery Lock - Silent skip if we failed recently
+        let now = Date()
+        if now.timeIntervalSince(lastFailure) < discoveryCooldown {
+            AgentLogger.logAudit(level: .info, agent: "Ollama", message: "Discovery skipped (cooldown active). Next check in \(Int(discoveryCooldown - now.timeIntervalSince(lastFailure)))s")
+            return false
+        }
+        
         let host = NWEndpoint.Host("127.0.0.1")
         let port = NWEndpoint.Port(integerLiteral: 11434)
+        
+        // v10.5: Use .quiet to prevent system log pollution if possible, 
+        // but since NWConnection is inherently noisy, we just enforce a strict lock.
         let connection = NWConnection(host: host, port: port, using: .tcp)
         
         class ResponseState: @unchecked Sendable { 
@@ -30,7 +42,7 @@ public actor OllamaManager {
         }
         let state = ResponseState()
         
-        return await withCheckedContinuation { continuation in
+        let success = await withCheckedContinuation { continuation in
             connection.stateUpdateHandler = { newState in
                 switch newState {
                 case .ready:
@@ -46,8 +58,8 @@ public actor OllamaManager {
                 }
             }
             
-            // Timeout to prevent hanging
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // v10.5: Ultra-short timeout (200ms) for local loopback
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 if state.tryRespond() {
                     connection.cancel()
                     continuation.resume(returning: false)
@@ -56,6 +68,15 @@ public actor OllamaManager {
             
             connection.start(queue: .global())
         }
+        
+        if !success {
+            self.markFailure()
+        }
+        return success
+    }
+    
+    private func markFailure() {
+        self.lastFailure = Date()
     }
     
     /// Fetches the list of locally installed models from Ollama.
@@ -75,9 +96,10 @@ public actor OllamaManager {
                 // v7.9.0: Map to bridge case for unified model handling
                 .bridge(id: model.name, name: model.name)
             }
-        } catch {
-            // Only log if connection was supposedly successful but fetch failed
-            print("[Ollama] Model fetch failed: \(error.localizedDescription)")
+        } catch let err {
+            // v10.5.5: Full Transparency - Log Failure
+            AgentLogger.logAudit(level: .warn, agent: "Ollama", message: "Model fetch failed: \(err.localizedDescription)")            // v10.5.6: Lower noise - Ollama is optional for this user
+            print("🔍 [DEBUG] Ollama is not active on 11434 (Connection Refused). Use MLX/Titan for local inference.")
             return []
         }
     }

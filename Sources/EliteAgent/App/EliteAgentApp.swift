@@ -20,6 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var modelPickerVM: ModelPickerViewModel?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AgentLogger.logAudit(level: .info, agent: "system", message: "🚀 EliteAgent v10.5.5 Starting Up...")
         NSApp.setActivationPolicy(.accessory)
         
         // v9.9.1: Register Defaults
@@ -31,12 +32,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // STARTUP BIOMETRIC AUTH
         if AppSettings.shared.isBiometricEnabledForStartup {
+            AgentLogger.logAudit(level: .info, agent: "system", message: "🔐 Biometric Auth Triggered")
             Task { @MainActor in
                 let success = await SecuritySentinel.shared.authenticateUser(reason: "EliteAgent Erişimi İçin Onay Gerekiyor")
                 if !success {
+                    AgentLogger.logAudit(level: .security, agent: "system", message: "❌ Biometric Auth Failed. Terminating.")
                     NSApp.terminate(nil)
                     return
                 }
+                AgentLogger.logAudit(level: .info, agent: "system", message: "✅ Biometric Auth Success")
                 finishLaunching()
             }
         } else {

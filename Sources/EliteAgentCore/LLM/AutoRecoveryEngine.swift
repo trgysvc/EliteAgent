@@ -10,6 +10,13 @@ public final class AutoRecoveryEngine: ObservableObject {
     private init() {}
     
     public func attemptFix(_ metrics: InferenceMetrics) async {
+        // v10.4: DO NOT clear cache if the model is currently generating a response!
+        // This prevents the "Recovery Loop of Death" during simple greetings.
+        if await InferenceActor.shared.isBusy {
+            AgentLogger.logAudit(level: .info, agent: "RECOVERY", message: "⏭ Skipping soft recovery: Model is busy generating.")
+            return
+        }
+
         AgentLogger.logAudit(level: .warn, agent: "RECOVERY", message: "🔧 Soft Recovery Triggered: \(metrics.diagnostic)")
         
         // Step 1: Soft retry (clear KV cache / reduce context for NEXT request)

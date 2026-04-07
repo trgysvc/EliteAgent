@@ -57,6 +57,9 @@ public actor MLXProvider: LocalLLMProvider {
     public func complete(_ request: CompletionRequest) async throws -> CompletionResponse {
         let startTime = Date()
         
+        // v10.5.5: Full Transparency - Log Input
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan Request | System: \(request.systemPrompt) | Last Msg: \(request.messages.last?.content ?? "")")
+        
         // v9.2: Pass full message context from Orchestrator to InferenceActor
         let messages = request.messages.map { Message(role: $0.role, content: $0.content) }
         
@@ -98,6 +101,10 @@ public actor MLXProvider: LocalLLMProvider {
             completion: fullContent.count / 4,
             total: (request.messages.map { $0.content.count }.reduce(0, +) + fullContent.count) / 4
         )
+        
+        // v10.5.5: Full Transparency - Log Output
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan Response | Raw: \(fullContent)")
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Inference Complete | Model: Local Titan | Tokens: \(count.total) (\(count.prompt)p/\(count.completion)c) | Latency: \(latency)ms")
         
         return CompletionResponse(
             taskID: request.taskID,

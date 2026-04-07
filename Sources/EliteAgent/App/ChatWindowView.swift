@@ -333,7 +333,9 @@ struct ChatBubble: View {
             if message.role == .user { Spacer() }
             
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 8) {
-                if let report = tryParseReport(message.content) {
+                if message.isStatus {
+                    StatusAnimationBubble(content: message.content)
+                } else if let report = tryParseReport(message.content) {
                     ResearchReportView(report: report).frame(maxWidth: 600)
                 } else {
                     Text(message.content)
@@ -351,9 +353,38 @@ struct ChatBubble: View {
     
     private func tryParseReport(_ content: String) -> ResearchReport? {
         guard UserDefaults.standard.bool(forKey: "enableResearchMode") else { return nil }
-        let jsonStr = ThinkParser.extractJSONrobustly(content)
+        let jsonStr = ThinkParser.extractJSONRobustly(content)
         guard jsonStr.contains("\"report\""), let data = jsonStr.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(ResearchReport.self, from: data)
+    }
+}
+
+struct StatusAnimationBubble: View {
+    let content: String
+    @State private var isAnimating = false
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(content)
+                .font(.subheadline.italic())
+            
+            HStack(spacing: 4) {
+                Circle().frame(width: 5, height: 5).scaleEffect(isAnimating ? 1 : 0.5).opacity(isAnimating ? 1 : 0.3)
+                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(0), value: isAnimating)
+                Circle().frame(width: 5, height: 5).scaleEffect(isAnimating ? 1 : 0.5).opacity(isAnimating ? 1 : 0.3)
+                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(0.2), value: isAnimating)
+                Circle().frame(width: 5, height: 5).scaleEffect(isAnimating ? 1 : 0.5).opacity(isAnimating ? 1 : 0.3)
+                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(0.4), value: isAnimating)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color.secondary.opacity(0.15))
+        .foregroundStyle(Color.secondary)
+        .cornerRadius(16)
+        .onAppear {
+            isAnimating = true
+        }
     }
 }
 

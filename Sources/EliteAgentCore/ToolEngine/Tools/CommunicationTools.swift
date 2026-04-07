@@ -17,22 +17,27 @@ public struct WhatsAppTool: AgentTool {
             activate
             reopen
         end tell
-        delay 1.5
+        delay 2.0
         tell application "System Events"
-            if (count (processes whose name is "WhatsApp")) > 0 then
-                keystroke "n" using command down
+            tell process "WhatsApp"
+                -- v10.1: Force Search Focus
+                keystroke "f" using command down
                 delay 1.0
+                -- Clear field
+                keystroke "a" using command down
+                keystroke (ASCII character 8) -- Backspace
+                delay 0.5
+                -- Type recipient
                 keystroke "\(recipient)"
-                delay 2.0
+                delay 2.5
                 keystroke return
-                delay 1.0
+                delay 1.5
+                -- Type message
                 keystroke "\(message)"
                 delay 0.5
                 keystroke return
                 return "SUCCESS"
-            else
-                return "ERROR: WhatsApp process not found"
-            end if
+            end tell
         end tell
         """
         

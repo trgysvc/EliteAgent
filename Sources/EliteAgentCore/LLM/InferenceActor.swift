@@ -214,6 +214,11 @@ public actor InferenceActor {
     public func getAverageTPS() -> Double { return lastTPS }
     public func getLastLatency() -> Int { return lastLatency }
     
+    /// Returns true if the model is currently busy with an inference task.
+    public var isBusy: Bool {
+        return self.currentGenerationTask != nil
+    }
+    
     public func setNextRequestConfig(reducedContext: Bool) {
         self.nextRequestReducedContext = reducedContext
     }
@@ -249,6 +254,7 @@ public actor InferenceActor {
     public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 500) -> AsyncStream<String> {
         return AsyncStream(String.self) { continuation in
             self.currentGenerationTask = Task { [self] in
+                defer { Task { await self.setGenerationTaskNil() } }
                 // Use the last message content for language detection
                 let lastContent = messages.last?.content ?? ""
                 let languageInstruction = InferenceActor.buildLanguageInstruction(for: lastContent)
@@ -284,6 +290,7 @@ public actor InferenceActor {
                 }
                 
                 let promptToCapture = fullPrompt
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "🧠 Full Formatted Prompt: \nBEGIN PROMPT\n\(promptToCapture)\nEND PROMPT")
                 let maxTokensToCapture = maxTokens
                 
                     var fullContent = ""
@@ -297,7 +304,7 @@ public actor InferenceActor {
                             } catch let error as EngineError {
                                 innerContinuation.yield("⚠️ Engine Error: \(error.localizedDescription)")
                                 if case .timeout = error {
-                                    handleEngineTimeout()
+                                    await MainActor.run { self.handleEngineTimeout() }
                                 } else if case .outOfMemory = error {
                                     Task { await self.restart() }
                                 }
@@ -377,8 +384,9 @@ public actor InferenceActor {
         }
     }
     
+    @MainActor
     private func handleEngineTimeout() {
-        AgentLogger.logAudit(level: .error, agent: "titan", message: "Critical: Engine Hang (60s). Switching to Cloud fallback.")
+        AgentLogger.logAudit(level: .error, agent: "titan", message: "Titan: Inference timed out. Engine guardian triggered.")
         Task { @MainActor in
             AISessionState.shared.isFallbackActive = true
             NotificationCenter.default.post(
@@ -387,5 +395,9 @@ public actor InferenceActor {
                 userInfo: ["message": "Yerel model yanıt vermedi (60s). Bulut modele geçildi."]
             )
         }
+    }
+    
+    private func setGenerationTaskNil() {
+        self.currentGenerationTask = nil
     }
 }

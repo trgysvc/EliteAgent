@@ -29,7 +29,7 @@ public struct PathConfiguration: Sendable {
     /// ~/Library/Logs/EliteAgent
     public var logsURL: URL {
         let url = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Logs", isDirectory: false)
+            .appendingPathComponent("Logs", isDirectory: true)
             .appendingPathComponent(bundleName, isDirectory: true)
         ensureDirectoryExists(at: url)
         return url

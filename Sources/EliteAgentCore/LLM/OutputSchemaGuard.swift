@@ -11,21 +11,23 @@ public struct OutputSchemaGuard {
     ///   - content: Raw response from LLM.
     ///   - inputTokens: Token count of the input prompt.
     ///   - config: Guard configuration.
-    /// - Returns: Sanitized content.
     public static func sanitize(_ content: String, inputTokens: Int, config: TokenGuardConfig) -> String {
-        guard config.isBriefMode else { return content }
+        // v10.0: Mandatory UI Sealing (Remove JSON Tool Calls and <think> Blocks)
+        let uiCleaned = ThinkParser.cleanForUI(text: content)
         
-        let outputTokens = estimateTokens(for: content)
+        guard config.isBriefMode else { return uiCleaned }
+        
+        let outputTokens = estimateTokens(for: uiCleaned)
         let ratio = Double(outputTokens) / Double(max(1, inputTokens))
         
         // v10.0: Strict Compression Ratio (60% Threshold)
         if ratio > 0.60 {
             logger.warning("Output tokens exceed 60% of input. Truncating to maintain brief mode.")
             let targetTokens = Int(Double(inputTokens) * 0.60)
-            return truncateSemantically(content, targetTokens: targetTokens)
+            return truncateSemantically(uiCleaned, targetTokens: targetTokens)
         }
         
-        return content
+        return uiCleaned
     }
     
     /// Truncates content while maintaining semantic integrity (complete sentences).

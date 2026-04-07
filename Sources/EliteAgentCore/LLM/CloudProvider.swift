@@ -70,6 +70,11 @@ public actor CloudProvider: LLMProvider {
         urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
         urlRequest.timeoutInterval = 60.0 // Strict 60s Timeout for Stability
         
+        // v10.5.5: Full Transparency - Log Request Body (Sanitized)
+        if let bodyData = urlRequest.httpBody, let bodyStr = String(data: bodyData, encoding: .utf8) {
+            AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ Request Body: \(bodyStr)")
+        }
+        
         let startTime = Date()
         print("[TRACE] CloudProvider: Starting URLSession data task to \(endpointURL)...")
         
@@ -101,6 +106,11 @@ public actor CloudProvider: LLMProvider {
             case 429: throw ProviderError.rateLimitExceeded
             default: throw ProviderError.networkError("Status \(httpRes.statusCode): \(errStr)")
             }
+        }
+        
+        // v10.5.5: Full Transparency - Log Raw Response Data
+        if let rawRes = String(data: data, encoding: .utf8) {
+            AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ Raw Response: \(rawRes)")
         }
         
         print("[DEBUG_TRACE] CloudProvider: Data size received: \(data.count) bytes")
@@ -192,7 +202,7 @@ public actor CloudProvider: LLMProvider {
         let parsed = LLMModel.parseThinkBlock(from: text)
         let finalThink = (parsed.think ?? "") + (message.bestReasoning ?? "")
         
-        AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "LLM Call completed | Model: \(modelName) | Latency: \(latency)ms | Tokens: \(count.total)")
+        AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ LLM Call completed | Model: \(modelName) | Latency: \(latency)ms | Tokens: \(count.total) (\(count.prompt)p/\(count.completion)c) | Cost: $\(cost)")
         
         return CompletionResponse(
             taskID: request.taskID,

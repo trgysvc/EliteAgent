@@ -74,7 +74,14 @@ public final class ToolRegistry {
         updateStatus(named: tool.name) { $0.callCount += 1 }
         
         do {
+            // v10.5.5: Full Transparency - Log Dispatch
+            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🛠 Executing Tool: \(tool.name) | Params: \(toolCall.params)")
+            
             let result = try await tool.execute(params: toolCall.params, session: session)
+            
+            // v10.5.5: Full Transparency - Log Result Size
+            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "✅ Tool Result: \(tool.name) | Output Size: \(result.count) chars")
+            
             // Reset crash count on success if it was healthy
             updateStatus(named: tool.name) { status in
                 if status.crashCount < 3 { status.crashCount = 0 }
@@ -82,6 +89,9 @@ public final class ToolRegistry {
             }
             return result
         } catch {
+            // v10.5.5: Full Transparency - Log Error
+            AgentLogger.logAudit(level: .error, agent: "ToolRegistry", message: "❌ Tool Error: \(tool.name) | Error: \(error.localizedDescription)")
+            
             updateStatus(named: tool.name) { status in
                 status.crashCount += 1
                 status.lastError = error.localizedDescription

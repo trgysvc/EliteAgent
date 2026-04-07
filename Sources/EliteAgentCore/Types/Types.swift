@@ -58,6 +58,84 @@ public struct TaskStep: Identifiable, Codable, Sendable {
     }
 }
 
+public enum EliteOutputType: String, Codable, Sendable {
+    case tool_call
+    case response
+    case unknown
+}
+
+public enum TaskCategory: String, Codable, Sendable, CaseIterable {
+    case research
+    case fileProcessing
+    case systemManagement
+    case codeGeneration
+    case dataProcessing
+    case multiStepWorkflow
+    case applicationAutomation
+    case computerUseAX
+    case conversation
+    case hardware
+    case status
+    case chat
+    case task
+    case other
+}
+
+public enum InferenceState: String, Codable, Sendable {
+    case idle
+    case classifying
+    case chatting
+    case planning
+    case executing
+    case reviewing
+    case completed
+}
+
+public struct EliteAgentOutput: Codable, Sendable {
+    public var type: EliteOutputType?    // v10.5.7: Optional to handle LLMs that skip the type field
+    public var thought: String?          // Akıl yürütme süreci (reasoning)
+    public var content: String?          // type == .response ise
+    public var action: String?           // type == .tool_call ise
+    public var params: [String: AnyCodable]? // type == .tool_call ise
+    public var steps: [ToolCall]?        // v10.5.6: Çok adımlı plan desteği
+    
+    public init(type: EliteOutputType?, thought: String? = nil, content: String? = nil, action: String? = nil, params: [String: AnyCodable]? = nil, steps: [ToolCall]? = nil) {
+        self.type = type
+        self.thought = thought
+        self.content = content
+        self.action = action
+        self.params = params
+        self.steps = steps
+    }
+    
+    // v10.5.7: Custom decoding to infer type if missing
+    enum CodingKeys: String, CodingKey {
+        case type, thought, content, action, params, steps
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.thought = try container.decodeIfPresent(String.self, forKey: .thought)
+        self.content = try container.decodeIfPresent(String.self, forKey: .content)
+        self.action = try container.decodeIfPresent(String.self, forKey: .action)
+        self.params = try container.decodeIfPresent([String: AnyCodable].self, forKey: .params)
+        self.steps = try container.decodeIfPresent([ToolCall].self, forKey: .steps)
+        
+        if let explicitType = try container.decodeIfPresent(EliteOutputType.self, forKey: .type) {
+            self.type = explicitType
+        } else {
+            // Infer type based on content structure
+            if steps != nil || action != nil {
+                self.type = EliteOutputType.tool_call
+            } else if content != nil {
+                self.type = EliteOutputType.response
+            } else {
+                self.type = EliteOutputType.unknown
+            }
+        }
+    }
+}
+
 public struct ToolCall: Codable, Sendable {
     public let tool: String
     public let params: [String: AnyCodable]

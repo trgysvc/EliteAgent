@@ -364,9 +364,15 @@ public class Orchestrator: ObservableObject {
                 let fileName = URL(fileURLWithPath: filePath).lastPathComponent
                 promptWithContext = "### DOCUMENT CONTEXT (File: \(fileName))\n\(content)\n------------------------------------------\nUSER TASK: \(prompt)"
                 self.steps.append(TaskStep(name: "DocEye", status: "done", latency: "ANE", thought: "Injected context from \(fileName)"))
+                
+                // v10.1: Log full initial prompt with context for Elite Auditing
+                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [FULL PROMPT WITH CONTEXT]\n\(promptWithContext)")
             } catch {
                 print("[ORCHESTRATOR] DocEye failed: \(error)")
             }
+        } else {
+            // v10.1: Elite Auditing - Log initial raw prompt if no DocEye context added
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [USER PROMPT] \(prompt)")
         }
         
         do {
@@ -398,10 +404,16 @@ public class Orchestrator: ObservableObject {
             
             await runtime.setChatMessageUpdateHandler { [weak self] msg in
                 Task { @MainActor in
-                    if msg.isStatus, let last = self?.currentMessages.last, last.isStatus {
-                        // Replace the last status message
-                        self?.currentMessages[self!.currentMessages.count - 1] = msg
+                    if msg.isStatus {
+                        if let last = self?.currentMessages.last, last.isStatus {
+                            // Replace the last status message
+                            self?.currentMessages[(self?.currentMessages.count ?? 1) - 1] = msg
+                        } else {
+                            self?.currentMessages.append(msg)
+                        }
                     } else {
+                        // An actual message arrived: remove transient status indicators!
+                        self?.currentMessages.removeAll { $0.isStatus }
                         self?.currentMessages.append(msg)
                     }
                 }
@@ -439,6 +451,9 @@ public class Orchestrator: ObservableObject {
             
             let finalAnswer = await session.finalAnswer ?? "Task completed."
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
+            
+            // Clean any trailing status messages
+            self.currentMessages.removeAll { $0.isStatus }
             
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle
@@ -584,9 +599,18 @@ extension Orchestrator: ProjectObserverDelegate {
 
     public func projectDidDetectChange(at path: String, flags: FSEventStreamEventFlags) {
         guard let workspacePath = currentWorkspaceURL?.path, path.hasPrefix(workspacePath) else { return }
-        if path.contains(".build") || path.contains(".git") || path.contains("DerivedData") { return }
+        
+        let fileName = URL(fileURLWithPath: path).lastPathComponent
+        let ignoredExtensions = ["xcuserstate", "DS_Store", "xcworkspace", "xcuserdatad", "tmp"]
+        let isIgnored = ignoredExtensions.contains { fileName.contains($0) } || 
+                        path.contains(".build") || 
+                        path.contains(".git") || 
+                        path.contains("DerivedData")
+        
+        if isIgnored { return }
+        
         Task { @MainActor in
-            self.steps.append(TaskStep(name: "Proactive Change: \(URL(fileURLWithPath: path).lastPathComponent)", status: "done", latency: "ANE", thought: "Workspace modification detected."))
+            self.steps.append(TaskStep(name: "Proactive Change: \(fileName)", status: "done", latency: "ANE", thought: "Workspace modification detected."))
         }
     }
 }

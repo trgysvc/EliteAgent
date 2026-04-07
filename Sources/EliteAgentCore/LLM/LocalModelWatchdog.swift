@@ -12,6 +12,7 @@ public final class LocalModelWatchdog: ObservableObject {
     
     private var healthTimer: Timer?
     private var lastMetricsFetch: Date = .distantPast
+    private var lastRecoveryAttempt: Date = .distantPast
     private var cachedMetrics: InferenceMetrics = .zero
     private var isSimulatingStress: Bool = false
     
@@ -54,15 +55,29 @@ public final class LocalModelWatchdog: ObservableObject {
         self.history.append(sample)
         if self.history.count > 30 { self.history.removeFirst() }
         
+        // v10.4: Cooldown and Busy-Safety
+        let now = Date()
+        let isBusy = await InferenceActor.shared.isBusy
+        let isOnCooldown = now.timeIntervalSince(lastRecoveryAttempt) < 30.0
+        
         // Threshold Logic
         if currentMetrics.vramUsage > 0.95 || currentMetrics.thermalState == 3 {
             self.status = .critical
-            AgentLogger.logAudit(level: .error, agent: "WATCHDOG", message: "CRITICAL: Model performance severely degraded. Triggering immediate recovery.")
-            await AutoRecoveryEngine.shared.forceRecovery(currentMetrics)
-        } else if currentMetrics.vramUsage > 0.85 || currentMetrics.thermalState == 2 || currentMetrics.tokensPerSec < 5 && currentMetrics.tokensPerSec > 0 {
+            if !isOnCooldown && !isBusy {
+                AgentLogger.logAudit(level: .error, agent: "WATCHDOG", message: "CRITICAL: Model performance severely degraded. Triggering immediate recovery.")
+                await AutoRecoveryEngine.shared.forceRecovery(currentMetrics)
+                self.lastRecoveryAttempt = now
+            }
+        } else if currentMetrics.vramUsage > 0.85 || currentMetrics.thermalState == 2 || (currentMetrics.tokensPerSec < 2.0 && currentMetrics.tokensPerSec > 0) {
+            // v10.4: Lowered TPS threshold from 5 to 2.0 to be less aggressive.
             self.status = .degraded
-            AgentLogger.logAudit(level: .warn, agent: "WATCHDOG", message: "DEGRADED: High resource usage / low TPS. Triggering soft optimization.")
-            await AutoRecoveryEngine.shared.attemptFix(currentMetrics)
+            if !isOnCooldown && !isBusy {
+                AgentLogger.logAudit(level: .warn, agent: "WATCHDOG", message: "DEGRADED: High resource usage / low TPS (\(currentMetrics.tokensPerSec) tok/s). Triggering soft optimization.")
+                await AutoRecoveryEngine.shared.attemptFix(currentMetrics)
+                self.lastRecoveryAttempt = now
+            } else if isBusy {
+                AgentLogger.logAudit(level: .info, agent: "WATCHDOG", message: "System is busy but TPS is low (\(currentMetrics.tokensPerSec) tok/s). Supportively waiting...")
+            }
         } else {
             if self.status != .healthy {
                 self.status = .healthy
