@@ -241,7 +241,9 @@ public class ModelPickerViewModel: ObservableObject {
         
         guard let decoded = try? JSONDecoder().decode(ORResponse.self, from: data) else { return [] }
         
-        return decoded.data.map { model in
+        return decoded.data
+            .sorted { $0.name.lowercased() < $1.name.lowercased() }
+            .map { model in
             .openRouter(
                 id: model.id,
                 name: model.name,

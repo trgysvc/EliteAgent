@@ -17,11 +17,10 @@ public enum ShortcutError: Error, LocalizedError {
 public struct ShortcutExecutionTool: AgentTool {
     public let name = "run_shortcut"
     public let description = """
-    Belirli bir macOS Kısayolunu seçilen parametrelerle çalıştırır. 
-    İpucu: 'discover_shortcuts' ile bulduğun kısayol adlarını kullan.
+    Belirli bir macOS Kısayolunu seçilen parametrelerle çalıştırır. Sadece kullanıcı net bir şekilde kısayol (shortcut) komutu verirse kullan.
     Parametre:
     - name (string - zorunlu)
-    - input_text (string - isteğe bağlı, kısayola girdi olarak gönderilir)
+    - input_text (string - isteğe bağlı)
     """
     
     public init() {}

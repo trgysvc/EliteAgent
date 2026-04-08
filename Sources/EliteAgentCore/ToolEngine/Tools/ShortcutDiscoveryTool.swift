@@ -5,10 +5,9 @@ import Foundation
 public struct ShortcutDiscoveryTool: AgentTool {
     public let name = "discover_shortcuts"
     public let description = """
-    macOS sistemindeki tüm yüklü Kısayolları (Shortcuts) listeler. 
-    Eğer kullanıcı belirli bir uygulama için (örneğin Slack, Notion) bir işlem yapmak istiyorsa 
-    ve sistemde hazır bir araç yoksa bu araçla ilgili kısayolun olup olmadığını kontrol edebilirsin.
-    Parametre: force_refresh (bool - isteğe bağlı, listeyi güncel sistemden çeker).
+    Sistemdeki macOS Kısayollarını (Shortcuts) listeler. 
+    SADECE kullanıcı doğrudan bir kısayol aranması talep ettiğinde KULLANILMALIDIR. Aksi halde başka işlemler için ASLA KULLANMA.
+    Parametre: force_refresh (bool)
     """
     
     public init() {}
@@ -25,8 +24,6 @@ public struct ShortcutDiscoveryTool: AgentTool {
         let result = """
         [Shortcut Discovery] Sistemde \(shortcuts.count) adet kısayol bulundu:
         - \(shortcuts.joined(separator: "\n- "))
-        
-        İpucu: Bir kısayolu çalıştırmak için 'run_shortcut' aracını kullanabilirsin.
         """
         
         return result

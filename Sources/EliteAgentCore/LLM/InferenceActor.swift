@@ -255,17 +255,7 @@ public actor InferenceActor {
         return AsyncStream(String.self) { continuation in
             self.currentGenerationTask = Task { [self] in
                 defer { Task { await self.setGenerationTaskNil() } }
-                // Use the last message content for language detection
-                let lastContent = messages.last?.content ?? ""
-                let languageInstruction = InferenceActor.buildLanguageInstruction(for: lastContent)
-                
-                let finalSystemPrompt = """
-                \(systemPrompt ?? "You are EliteAgent, a powerful AI assistant running locally on Apple Silicon.")
-                \(languageInstruction)
-                ### SYSTEM DIRECTIVE: SÖYLEME, YAP!
-                Döküman okuduğunda veya dosya yazdığında kullanıcıya \"Yaptım\" demek yerine ÖNCE mutlaka ilgili aracı (tool) çağır.
-                """
-                
+                let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
                 // v9.2: Accurate Multi-turn ChatML Construction
                 var fullPrompt = "<|im_start|>system\n\(finalSystemPrompt)<|im_end|>\n"
                 
@@ -370,11 +360,7 @@ public actor InferenceActor {
         continuation.finish()
     }
     
-    private static func buildLanguageInstruction(for prompt: String) -> String {
-        let turkishChars = CharacterSet(charactersIn: "şğüöçıŞĞÜÖÇİ")
-        let hasTurkish = prompt.unicodeScalars.contains { turkishChars.contains($0) }
-        return hasTurkish ? "CRITICAL: Respond ONLY in Turkish." : "CRITICAL: Match user's language."
-    }
+    
     
     private func updateSharedBuffer(with activationValue: Int) {
         guard let buffer = sharedBuffer.buffer else { return }

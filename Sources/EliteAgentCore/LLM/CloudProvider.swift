@@ -22,12 +22,15 @@ public actor CloudProvider: LLMProvider {
             throw ProviderError.networkError("Provider config not found in vault.plist")
         }
         self.providerConf = conf
-        var urlStr = conf.endpoint ?? "https://openrouter.ai/api/v1"
+        let urlStrRaw = conf.endpoint ?? "https://openrouter.ai/api/v1"
+        var urlStr = urlStrRaw.trimmingCharacters(in: .whitespacesAndNewlines)
         if !urlStr.hasSuffix("/chat/completions") && !urlStr.contains("/messages") {
             urlStr = urlStr.hasSuffix("/") ? urlStr + "chat/completions" : urlStr + "/chat/completions"
         }
         self.endpointURL = URL(string: urlStr)!
-        self.modelName = conf.modelName ?? "google/gemini-3-flash-preview"
+        
+        let m = conf.modelName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        self.modelName = m.isEmpty ? "google/gemini-2.5-flash" : m
     }
     
     public func healthCheck() async -> Bool {

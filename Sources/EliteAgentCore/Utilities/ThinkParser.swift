@@ -52,7 +52,15 @@ public final class ThinkParser {
             }
         }
         
-        // Fallback: If no clean brackets, try lines that look like JSON
+        // Fallback: Repair incomplete JSON by appending missing brackets
+        if startIndex != -1 && bracketCount > 0 {
+            let extracted = nsString.substring(from: startIndex)
+            let closer = opener == "{" ? "}" : "]"
+            let repaired = extracted + String(repeating: closer, count: bracketCount)
+            return repaired
+        }
+        
+        // Final Fallback: Return as is
         return raw.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 

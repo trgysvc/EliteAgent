@@ -137,12 +137,41 @@ public struct EliteAgentOutput: Codable, Sendable {
 }
 
 public struct ToolCall: Codable, Sendable {
-    public let tool: String
-    public let params: [String: AnyCodable]
+    public var tool: String
+    public var params: [String: AnyCodable]
     
     public init(tool: String, params: [String: AnyCodable]) {
         self.tool = tool
         self.params = params
+    }
+    
+    // v10.5.8: Ultra-resilient decoding for local model variations
+    private struct DynamicCodingKeys: CodingKey {
+        var stringValue: String
+        init?(stringValue: String) { self.stringValue = stringValue }
+        var intValue: Int? { return nil }
+        init?(intValue: Int) { return nil }
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
+        
+        // Match permutations of tool name
+        if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "tool")!) { self.tool = t }
+        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "toolID")!) { self.tool = t }
+        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "action")!) { self.tool = t }
+        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "name")!) { self.tool = t }
+        else {
+            self.tool = "unknown_tool"
+        }
+        
+        // Match permutations of parameters
+        if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "params")!) { self.params = p }
+        else if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "parameters")!) { self.params = p }
+        else if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "arguments")!) { self.params = p }
+        else {
+            self.params = [:]
+        }
     }
 }
 

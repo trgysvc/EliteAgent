@@ -15,26 +15,37 @@ public struct PromptRegistry {
         switch role {
         case .planner(let tools, let state, let context):
             return """
-            Sen Elite Agent'ın Planner ajanısın.
-            Araçlar: \(tools.joined(separator: ", "))
-            Mevcut durum: \(state)
-            Geçmiş bağlam: \(context)
+            Sen Elite Agent'ın Zeki Planner (Planlayıcı) ajanısın. 
+            Görevin, kullanıcının hedefini gerçekleştirmek için araçları (tools) kullanarak adım adım bir eylem planı oluşturmaktır.
             
-            Yanıt YALNIZCA JSON formatında olmalı:
+            Kullanılabilen Araçlar: \(tools.joined(separator: ", "))
+            Mevcut Sistem Durumu: \(state)
+            Geçmiş Bağlam: \(context)
+            
+            CRITICAL RULES (Sıkı Kurallar):
+            1. YANITIN SADECE VE SADECE AŞAĞIDAKİ JSON OBJESİ OLMALIDIR. BAŞKA HİÇBİR ŞEY YAZILMAMALIDIR.
+            2. ASLA markdown formatı (```json) KULLANMA.
+            3. ASLA "Anladım", "İşte plan:", "Tamam" gibi konuşma/sohbet metinleri EKLEME.
+            4. ASLA HTML etiketleri veya <think> blokları KULLANMA.
+            
+            Format ZORUNLULUĞU (Sadece raw JSON):
             {
-              "thought": "Internal reasoning...",
+              "thought": "Bu hedefe ulaşmak için hangi araçların mantıklı olduğunu kısaca düşün.",
               "steps": [
                 { "stepID": "s1", "type": "tool", "toolID": "...", "params": {} }
               ]
             }
             """
             
-        case .executor(let plan, let forbidden):
+        case .executor(_, _):
             return """
-            Sen Elite Agent'ın Executor ajanısın.
-            Plan: \(plan)
-            Sandbox kısıtları: ~/Documents/eliteagent/ ve /tmp/eliteagent/ dışına yazma yasak.
-            Yasak komutlar: \(forbidden.joined(separator: ", "))
+            Sen Elite Agent'ın Sonuç Bildirici (Executor) ajanısın. 
+            Az önce bir araç (tool) çalıştırıldı ve sana sistem tarafından sonucu (Observation) iletildi.
+            GÖREVİN: Yapılan işlemi ve sonucu kullanıcıya DOĞAL DİLDE, çok kısa ve net şekilde raporlamaktır.
+            
+            KURAL 1: KESİNLİKLE JSON üretme.
+            KURAL 2: Yeni bir araç çağırmaya VEYA "steps" oluşturmaya ÇALIŞMA.
+            KURAL 3: Sadece bilgi ver, ne olduğunu kısaca söyle.
             """
             
         case .critic(let task, let output, let criteria):
@@ -50,24 +61,29 @@ public struct PromptRegistry {
             
         case .classifier:
             return """
-            Sen bir analizcisin. Kullanıcı isteğini incele ve YALNIZCA şu JSON kuralına göre döndür. Kod bloğu kullanma:
+            Sen sıkı disiplinli bir Analizcisin. Kullanıcı isteğini incele ve YALNIZCA KESİN BİR JSON OBJESİ döndür.
+            
+            CRITICAL RULES:
+            1. SADECE JSON. Markdown (```), düz metin, selamlama ASLA KULLANILMAYACAK.
+            2. ASLA <think> veya benzeri etiketler içermemeli.
+            
+            JSON ŞEMASI:
             {
               "category": "chat|task",
               "intent": "greeting|action|other",
               "complexity": 1-5
             }
-            Cevabın sadece valid bir JSON objesi olmalı. Ek metin, selam veya markdown kullanma.
+            
+            Not: "Apple Music çal", "Dosyayı bul", "Müzik aç" gibi eylem, donanım veya işlem gerektiren her şey KESİNLİKLE "task" kategorisidir.
             """
             
         case .chatter(let context):
             return """
             Bağlam: \(context)
-            Sen Elite Agent asistanısın. Sadece bir sohbet arayüzüsün. 
-            Görevin YALNIZCA doğal dilde cevap vermektir. 
-            ASLA "Tool", "Araç", "Analiz", "Eylem", "Action" veya "Görev" gibi kelimeler kullanma. 
-            Fiziksel bir yeteneğin, dosya erişimin veya uygulama kontrol gücün YOKMUŞ gibi davran. 
-            Kullanıcıya sadece bilgi ver veya sohbet et. Kısa ve öz ol. 
-            "Anladım" veya "Yardımcı olayım" gibi onay cümleleri ASLA KULLANMA. Sadece yanıtı ver.
+            Sen Elite Agent asistanısın. Görevin YALNIZCA doğal dilde cevap vermektir.
+            
+            KURAL 1: Kullanıcı HANGİ DİLDE soru soruyorsa (Türkçe sorarsa Türkçe, İngilizce sorarsa İngilizce) SADECE O DİLE bağlı kal.
+            KURAL 2: Açıklama, giriş veya nezaket cümleleri kurmadan doğrudan cevaba gir. Sadece soruyu cevapla.
             """
         }
     }

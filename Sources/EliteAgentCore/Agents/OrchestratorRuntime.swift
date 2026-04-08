@@ -141,16 +141,24 @@ public actor OrchestratorRuntime {
                     let category = try await handleClassification(prompt: prompt, provider: provider, context: contextManager)
                     currentState = (category == .chat || category == .conversation) ? .chatting : .planning
                 case .chatting:
-                    try await handleChatting(provider: provider, context: contextManager, session: session)
+                    try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session)
                     currentState = .completed
                 case .planning:
                     try await handlePlanning(prompt: prompt, provider: provider, context: contextManager)
                     currentState = .executing
                 case .executing:
-                    let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config)
-                    if !shouldContinue {
-                        if let answer = finalAnswer { await session.setFinalAnswer(answer) }
-                        currentState = .reviewing
+                    do {
+                        let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config)
+                        if !shouldContinue {
+                            if let answer = finalAnswer { await session.setFinalAnswer(answer) }
+                            currentState = .reviewing
+                        } else {
+                            currentState = .planning
+                        }
+                    } catch let parserError as ParserError {
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Tetiklendi: \(parserError.localizedDescription)")
+                        await contextManager.addMessage(Message(role: "user", content: "SİSTEM UYARISI: Gönderdiğin formattaki JSON geçersizdi. ASLA markdown (```json), düz metin veya <think> bloğu kullanma. YALNIZCA KURALA UYGUN TEK BİR RAW JSON OBJESİ GÖNDER. HATA DETAYI: \(parserError.localizedDescription)"))
+                        currentState = .planning // Self-heal: Retry planning
                     }
                 case .reviewing:
                     let passed = try await handleReview(prompt: prompt, provider: provider, context: contextManager)
@@ -183,13 +191,25 @@ public actor OrchestratorRuntime {
            let category = TaskCategory(rawValue: catString) {
             return category
         }
+        
+        // v10.5.8: Kaba kuvvet sınıflandırması (Heuristic Override)
+        let lowerPrompt = prompt.lowercased()
+        if lowerPrompt.contains("çal") || lowerPrompt.contains("aç") || lowerPrompt.contains("yaz") || lowerPrompt.contains("bul") || lowerPrompt.contains("göster") || lowerPrompt.contains("kapat") || lowerPrompt.contains("müzik") {
+            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🏷 [CLASSIFY HEURISTIC] JSON kırılamadı ama eylem kelimesi bulundu. .task (planning) zorlanıyor.")
+            return .task
+        }
+        
         return .chat // Varsayılan: Güvenli sohbet modu
     }
     
-    private func handleChatting(provider: any LLMProvider, context: DynamicContextManager, session: Session) async throws {
+    private func handleChatting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session) async throws {
         self.currentAction = "Cevap Veriliyor..."
-        let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "General Conversation"))
-        let history = await context.getMessages()
+        let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Kullanıcı ile saf sohbet"))
+        var history = await context.getMessages()
+        if !history.contains(where: { $0.role == "user" && $0.content == prompt }) {
+            history.append(Message(role: "user", content: prompt))
+            await context.addMessage(Message(role: "user", content: prompt))
+        }
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: 2000, sensitivityLevel: .public, complexity: 1)
         let response = try await provider.complete(request)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT INPUT] \(history.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
@@ -202,9 +222,13 @@ public actor OrchestratorRuntime {
     
     private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws {
         self.currentAction = "Plan Hazırlanıyor..."
-        let allTools = toolRegistry.listTools().map { $0.name }
-        let systemPrompt = PromptRegistry.getPrompt(for: .planner(tools: allTools, projectState: "Active", context: "N/A"))
-        let history = await context.getMessages()
+        let allTools = toolRegistry.listTools().map { "- \($0.name): \($0.description)" }
+        let systemPrompt = PromptRegistry.getPrompt(for: .planner(tools: allTools, projectState: "Active", context: prompt))
+        var history = await context.getMessages()
+        if !history.contains(where: { $0.role == "user" && $0.content == prompt }) {
+            history.append(Message(role: "user", content: prompt))
+            await context.addMessage(Message(role: "user", content: prompt))
+        }
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: 4000, sensitivityLevel: .public, complexity: 3)
         let response = try await provider.complete(request)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
@@ -260,7 +284,12 @@ public actor OrchestratorRuntime {
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC RESPONSE] \(response.content)")
         self.onTokenUpdate?(response.tokensUsed, response.costUSD)
         await TokenBudgetActor.shared.recordUsage(tokens: response.tokensUsed.total, cost: response.costUSD)
-        self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
+        
+        let cleanedResponse = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !cleanedResponse.hasPrefix("{") && !cleanedResponse.hasPrefix("```json") {
+            self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
+        }
+        
         await context.addMessage(Message(role: "assistant", content: response.content))
         return (true, nil)
     }
