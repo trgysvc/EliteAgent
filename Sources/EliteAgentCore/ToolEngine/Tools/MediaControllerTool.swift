@@ -2,7 +2,7 @@ import Foundation
 
 public struct MediaControllerTool: AgentTool {
     public let name = "media_control"
-    public let description = "Control Apple Music and system sound. Actions: play, pause, next, volume (0-100), play_content (search and play tracks/artists/playlists). Params for play_content: searchTerm (String), contentType (Optional: 'track' or 'playlist'). Use this for any music related requests on macOS."
+    public let description = "Control Apple Music and system sound. CRITICAL: The toolID MUST be 'media_control'. Pass action via 'params'. Actions: 'play', 'pause', 'next', 'volume' (requires 'level' 0-100), 'play_content' (requires 'searchTerm' String, optional 'contentType' as 'track' or 'playlist'). Example: {\"toolID\": \"media_control\", \"params\": {\"action\": \"play_content\", \"searchTerm\": \"Coffee playlist\"}}"
     
     public init() {}
     

@@ -183,6 +183,13 @@ public actor OrchestratorRuntime {
         let response = try await provider.complete(request)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY RESPONSE] \(response.content)")
+        // v10.5.8: Kaba kuvvet sınıflandırması (Heuristic Override) - En Yüksek Öncelik
+        let lowerPrompt = prompt.lowercased()
+        let taskKeywords = ["çal", "aç", "yaz", "bul", "göster", "kapat", "müzik", "hava", "mesafe", "ara", "nedir", "kilometre", "km", "kimdir", "özet"]
+        if taskKeywords.contains(where: { lowerPrompt.contains($0) }) {
+            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🏷 [CLASSIFY HEURISTIC] Anahtar kelime bulundu. .task (planning) zorlanıyor.")
+            return .task
+        }
         
         let cleaned = ThinkParser.extractJSONRobustly(response.content)
         if let data = cleaned.data(using: .utf8),
@@ -190,13 +197,6 @@ public actor OrchestratorRuntime {
            let catString = json["category"] as? String,
            let category = TaskCategory(rawValue: catString) {
             return category
-        }
-        
-        // v10.5.8: Kaba kuvvet sınıflandırması (Heuristic Override)
-        let lowerPrompt = prompt.lowercased()
-        if lowerPrompt.contains("çal") || lowerPrompt.contains("aç") || lowerPrompt.contains("yaz") || lowerPrompt.contains("bul") || lowerPrompt.contains("göster") || lowerPrompt.contains("kapat") || lowerPrompt.contains("müzik") {
-            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🏷 [CLASSIFY HEURISTIC] JSON kırılamadı ama eylem kelimesi bulundu. .task (planning) zorlanıyor.")
-            return .task
         }
         
         return .chat // Varsayılan: Güvenli sohbet modu

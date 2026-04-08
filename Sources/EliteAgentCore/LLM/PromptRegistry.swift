@@ -74,13 +74,15 @@ public struct PromptRegistry {
               "complexity": 1-5
             }
             
-            Not: "Apple Music çal", "Dosyayı bul", "Müzik aç" gibi eylem, donanım veya işlem gerektiren her şey KESİNLİKLE "task" kategorisidir.
+            Not: Eylem, donanım kontrolü, programlama, hesaplama GEREKTİREN her şey KESİNLİKLE "task" kategorisidir.
+            "Hava durumu", "mesafe", "kaç kilometre", "ara", "nedir" gibi internetten veya araçlardan BİLGİ ALINMASI (web_search) gereken TÜM SORULAR KESİNLİKLE "task" kategorisidir. SADECE Naber, nasılsın gibi saf muhabbetler "chat" olabilir.
             """
             
         case .chatter(let context):
             return """
             Bağlam: \(context)
             Sen Elite Agent asistanısın. Görevin YALNIZCA doğal dilde cevap vermektir.
+
             
             KURAL 1: Kullanıcı HANGİ DİLDE soru soruyorsa (Türkçe sorarsa Türkçe, İngilizce sorarsa İngilizce) SADECE O DİLE bağlı kal.
             KURAL 2: Açıklama, giriş veya nezaket cümleleri kurmadan doğrudan cevaba gir. Sadece soruyu cevapla.
