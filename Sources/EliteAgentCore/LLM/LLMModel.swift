@@ -25,6 +25,8 @@ public actor LLMModel {
     }
     
     public func generate(systemPrompt: String, messages: [Message], maxTokens: Int, temperature: Double) async throws -> LLMOutput {
+        let startTime = Date()
+        
         // Execute real-time reasoning via the InferenceActor (Neural Sight & SLM)
         let stream = await InferenceActor.shared.generate(messages: messages, maxTokens: maxTokens)
         var fullResponse = ""
@@ -33,11 +35,22 @@ public actor LLMModel {
             fullResponse += token
         }
         
+        let endTime = Date()
+        let latencyMs = Int(endTime.timeIntervalSince(startTime) * 1000)
+        
+        // v11.0: Real latency and calibrated character-based token estimation (BPE approximation)
+        let promptChars = messages.map { $0.content.count }.reduce(0, +)
+        let completionChars = fullResponse.count
+        
         return LLMOutput(
             text: fullResponse,
             thinkBlock: "Local Titan reasoning completed (MLX Engine).",
-            tokenCount: TokenCount(prompt: 15, completion: 45, total: 60),
-            latencyMs: 120 // Stable local latency
+            tokenCount: TokenCount(
+                prompt: Int(Double(promptChars) / 4.0), 
+                completion: Int(Double(completionChars) / 4.0), 
+                total: Int(Double(promptChars + completionChars) / 4.0)
+            ),
+            latencyMs: max(latencyMs, 1)
         )
     }
     

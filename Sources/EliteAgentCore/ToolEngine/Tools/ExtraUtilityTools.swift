@@ -1,4 +1,6 @@
 import Foundation
+import WeatherKit
+import CoreLocation
 
 public struct CalculatorTool: AgentTool {
     public let name = "calculator_op"
@@ -21,16 +23,46 @@ public struct CalculatorTool: AgentTool {
 
 public struct WeatherTool: AgentTool {
     public let name = "get_weather"
-    public let description = "Get weather for a location. Parametre: location (string)."
+    public let description = "Get weather for a location using native macOS services. Parametre: location (string)."
     
     public init() {}
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
-        guard let _ = params["location"]?.value as? String else {
+        guard let locationName = params["location"]?.value as? String else {
             throw ToolError.missingParameter("location")
         }
         
-        return "Not implemented: Weather require API Keys (WeatherKit). (Mock: İstanbul - 21°C - Sunny)"
+        let geocoder = CLGeocoder()
+        let placemarks = try? await geocoder.geocodeAddressString(locationName)
+        
+        guard let location = placemarks?.first?.location else {
+            return "Üzgünüm, '\(locationName)' konumu bulunamadı."
+        }
+        
+        if #available(macOS 13.0, *) {
+            do {
+                let weather = try await WeatherService.shared.weather(for: location)
+                let current = weather.currentWeather
+                let temp = Int(current.temperature.value)
+                let condition = current.condition.description
+                
+                return "\(locationName) için gerçek zamanlı hava durumu: \(temp)°C, \(condition)."
+            } catch {
+                AgentLogger.logAudit(level: .warn, agent: "WeatherTool", message: "WeatherKit failed (\(error.localizedDescription)). Falling back to web-based provider.")
+                
+                // v11.1 Fallback: Use wttr.in for reliability when WeatherKit entitlements are not fully propagated
+                let urlString = "https://wttr.in/\(locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")?format=%t+%C"
+                if let url = URL(string: urlString),
+                   let data = try? await URLSession.shared.data(from: url).0,
+                   let weatherInfo = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    return "\(locationName) için hava durumu (Yedek Servis): \(weatherInfo)"
+                }
+                
+                return "macOS sisteminden hava durumu bilgisi alınamadı: \(error.localizedDescription)"
+            }
+        } else {
+            return "Hava durumu servisi için macOS 13.0 veya üzeri gereklidir."
+        }
     }
 }
 
@@ -47,10 +79,11 @@ public struct TimerTool: AgentTool {
         
         let message = params["message"]?.value as? String ?? "Timer finished!"
         
-        // v9.5 Mock implementation for timer:
+        // v11.0: Native macOS async timer task
         Task {
+            AgentLogger.logAudit(level: .info, agent: "TimerTool", message: "Timer started for \(seconds) seconds: \(message)")
             try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
-            print("🚀 Timer finished: \(message)")
+            AgentLogger.logAudit(level: .info, agent: "TimerTool", message: "🚀 Timer triggered: \(message)")
         }
         
         return "\(seconds) saniyelik zamanlayıcı ayarlandı."

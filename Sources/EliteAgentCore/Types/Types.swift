@@ -108,29 +108,53 @@ public struct EliteAgentOutput: Codable, Sendable {
         self.steps = steps
     }
     
-    // v10.5.7: Custom decoding to infer type if missing
-    enum CodingKeys: String, CodingKey {
-        case type, thought, content, action, params, steps
+    // v10.5.8: Ultra-resilient decoding for LLM variations
+    private struct DynamicCodingKeys: CodingKey {
+        var stringValue: String
+        init?(stringValue: String) { self.stringValue = stringValue }
+        var intValue: Int? { return nil }
+        init?(intValue: Int) { return nil }
     }
     
     public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.thought = try container.decodeIfPresent(String.self, forKey: .thought)
-        self.content = try container.decodeIfPresent(String.self, forKey: .content)
-        self.action = try container.decodeIfPresent(String.self, forKey: .action)
-        self.params = try container.decodeIfPresent([String: AnyCodable].self, forKey: .params)
-        self.steps = try container.decodeIfPresent([ToolCall].self, forKey: .steps)
+        let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
         
-        if let explicitType = try container.decodeIfPresent(EliteOutputType.self, forKey: .type) {
+        // Decode fields with alias support
+        self.thought = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "thought")!)
+        
+        // v10.5.8: Match 'content', 'result', 'message', 'text', 'final_answer', or 'observation'
+        if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "content")!) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "result")!) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "message")!) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "text")!) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "final_answer")!) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "observation")!) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "weather")!) { self.content = c }
+        else {
+            // v10.5.9: Ultra-catch-all. If no standard key is found, look for any String field.
+            for key in container.allKeys {
+                if let val = try? container.decode(String.self, forKey: key), !val.isEmpty, key.stringValue != "thought", key.stringValue != "type" {
+                    self.content = val
+                    break
+                }
+            }
+        }
+        
+        self.action = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "action")!)
+        self.params = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "params")!)
+        self.steps = try? container.decodeIfPresent([ToolCall].self, forKey: DynamicCodingKeys(stringValue: "steps")!)
+        
+        // Infer type if missing
+        if let typeStr = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "type")!),
+           let explicitType = EliteOutputType(rawValue: typeStr) {
             self.type = explicitType
         } else {
-            // Infer type based on content structure
             if steps != nil || action != nil {
-                self.type = EliteOutputType.tool_call
+                self.type = .tool_call
             } else if content != nil {
-                self.type = EliteOutputType.response
+                self.type = .response
             } else {
-                self.type = EliteOutputType.unknown
+                self.type = .unknown
             }
         }
     }

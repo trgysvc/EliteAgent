@@ -10,6 +10,8 @@ public struct MessengerTool: AgentTool {
     For iMessage: recipient can be phone number OR Apple ID email.
     If you only have a name, use shell_exec with osascript to look up the number in Contacts first.
     Parameters: platform ('whatsapp' or 'imessage'), recipient (phone/email), message (text).
+    CRITICAL: The 'message' parameter is ONLY for the raw content to be sent to the recipient. 
+    Do NOT include task status, system reports, or your own results (e.g., 'İşlem tamamlandı') here.
     """
     
     public init() {}

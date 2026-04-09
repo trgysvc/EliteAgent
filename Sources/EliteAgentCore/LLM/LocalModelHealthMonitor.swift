@@ -53,7 +53,7 @@ public actor LocalModelHealthMonitor {
         }
         
         // 2. Unified Memory Diagnostics (v7.8.5)
-        let diag = diagnoseMemory()
+        let diag = await diagnoseMemory()
         if diag.pressureLevel == .critical {
             return .criticalPressure
         }
@@ -110,18 +110,23 @@ public actor LocalModelHealthMonitor {
         enum PressureLevel { case normal, warning, critical, unknown }
     }
 
-    private func diagnoseMemory() -> MemoryDiagnostics {
-        // v8.4: Final removal of 'mach_host_self' to avoid 0x5 Sandbox errors.
-        // On modern macOS, we rely on ProcessInfo for baseline and memory pressure monitoring.
-        let totalRAM = Double(ProcessInfo.processInfo.physicalMemory) / (1024 * 1024 * 1024)
+    private func diagnoseMemory() async -> MemoryDiagnostics {
+        // v11.0: Using HardwareMonitor for real Mach Host statistics
+        let stats = await HardwareMonitor.shared.getMemoryStats()
+        let availableBytes = UInt64((stats.total - stats.used) * 1024 * 1024 * 1024)
         
-        // Memory Pressure Check (Safe API)
-        let isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
-        let pressureLevel: MemoryDiagnostics.PressureLevel = isLowPower ? .warning : .normal
+        let processInfo = ProcessInfo.processInfo
+        let state = processInfo.thermalState
         
-        // We report a safe heuristic for availableBytes
-        let availableGB: Double = isLowPower ? 2.0 : (totalRAM * 0.4) 
-        let availableBytes = UInt64(availableGB * 1024 * 1024 * 1024)
+        // Termal durum ve bellek baskısını birleştirerek gerçek bir risk seviyesi belirliyoruz
+        let pressureLevel: MemoryDiagnostics.PressureLevel
+        if state == .critical || state == .serious {
+            pressureLevel = .critical
+        } else if stats.used / stats.total > 0.85 {
+            pressureLevel = .warning
+        } else {
+            pressureLevel = .normal
+        }
         
         return MemoryDiagnostics(availableBytes: availableBytes, pressureLevel: pressureLevel)
     }

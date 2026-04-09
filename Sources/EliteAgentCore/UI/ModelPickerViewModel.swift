@@ -69,10 +69,14 @@ public class ModelPickerViewModel: ObservableObject {
         NotificationCenter.default.publisher(for: .activeProviderChanged)
             .receive(on: RunLoop.main)
             .sink { [weak self] note in
-                Task { [weak self] in
-                    await self?.loadModels()
-                    if let modelID = note.object as? String {
-                        self?.selected = self?.models.first(where: { $0.id == modelID })
+                // v10.0.1: Only reload if the notification came from an external source 
+                // to prevent the self-triggering loop during loadModels() -> selectModel()
+                if note.userInfo?["source"] as? String != "ModelPickerViewModel" {
+                    Task { [weak self] in
+                        await self?.loadModels()
+                        if let modelID = note.object as? String {
+                            self?.selected = self?.models.first(where: { $0.id == modelID })
+                        }
                     }
                 }
             }
@@ -206,7 +210,7 @@ public class ModelPickerViewModel: ObservableObject {
                     NotificationCenter.default.post(
                         name: .activeProviderChanged,
                         object: nil,
-                        userInfo: ["model": model]
+                        userInfo: ["model": model, "source": "ModelPickerViewModel"]
                     )
                 }
         }

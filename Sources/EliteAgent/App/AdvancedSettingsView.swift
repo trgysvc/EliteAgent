@@ -47,7 +47,7 @@ struct AdvancedSettingsView: View {
                         .font(.headline)
                         .foregroundStyle(.red)
                     
-                    Text("Bu işlem; indirilen tüm yerel modelleri (\(modelDirSize)), keychain üzerindeki API anahtarlarınızı ve uygulama ayarlarını kalıcı olarak siler.")
+                    Text("Bu işlem; indirilen tüm yerel modelleri (\(modelDirSize)), keychain üzerindeki API anahtarlarınızı, günlük dosyalarını ve uygulama ayarlarını kalıcı olarak siler.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                     
@@ -122,6 +122,7 @@ struct AdvancedSettingsView: View {
     private func performFactoryReset() {
         let appSupport = PathConfiguration.shared.applicationSupportURL
         let caches = PathConfiguration.shared.cachesURL
+        let logs = PathConfiguration.shared.logsURL
         
         // 1. Wipe In-Memory State
         AISessionState.shared.selectedModel = ""
@@ -131,6 +132,7 @@ struct AdvancedSettingsView: View {
         // 2. Wipe Local Filesystem
         try? FileManager.default.removeItem(at: appSupport)
         try? FileManager.default.removeItem(at: caches)
+        try? FileManager.default.removeItem(at: logs)
         
         // 3. Clear Keychain
         let keychain = KeychainHelper()

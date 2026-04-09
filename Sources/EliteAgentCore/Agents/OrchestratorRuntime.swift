@@ -28,6 +28,8 @@ public actor OrchestratorRuntime {
     private var isResearchModeActive = false
     
     private var currentState: InferenceState = .idle
+    private var currentTaskCategory: TaskCategory = .other
+    private var isEscalatedToFullTools = false
     
     public init(
         planner: PlannerAgent,
@@ -92,6 +94,8 @@ public actor OrchestratorRuntime {
         self.onStatusUpdate?(.working)
         self.isInterrupted = false
         self.currentState = .classifying
+        self.currentTaskCategory = .other
+        self.isEscalatedToFullTools = false
         self.sourcesAnalyzed = 0 
         
         let contextManager = DynamicContextManager(maxTokens: 8000, provider: cloudProvider)
@@ -122,6 +126,7 @@ public actor OrchestratorRuntime {
         
         do {
             var turnCount = 0
+            var healingAttempts = 0
             while currentState != .completed && turnCount < 50 {
                 turnCount += 1
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🔄 [STATE: \(currentState.rawValue.uppercased())] Turn \(turnCount)")
@@ -139,13 +144,15 @@ public actor OrchestratorRuntime {
                 switch currentState {
                 case .classifying:
                     let category = try await handleClassification(prompt: prompt, provider: provider, context: contextManager)
+                    self.currentTaskCategory = category
                     currentState = (category == .chat || category == .conversation) ? .chatting : .planning
                 case .chatting:
                     try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session)
                     currentState = .completed
                 case .planning:
-                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager)
+                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session)
                     currentState = .executing
+                    healingAttempts = 0 // Reset on successful transition
                 case .executing:
                     do {
                         let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config)
@@ -156,9 +163,23 @@ public actor OrchestratorRuntime {
                             currentState = .planning
                         }
                     } catch let parserError as ParserError {
-                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Tetiklendi: \(parserError.localizedDescription)")
-                        await contextManager.addMessage(Message(role: "user", content: "SİSTEM UYARISI: Gönderdiğin formattaki JSON geçersizdi. ASLA markdown (```json), düz metin veya <think> bloğu kullanma. YALNIZCA KURALA UYGUN TEK BİR RAW JSON OBJESİ GÖNDER. HATA DETAYI: \(parserError.localizedDescription)"))
-                        currentState = .planning // Self-heal: Retry planning
+                        healingAttempts += 1
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Tetiklendi (Attempt \(healingAttempts)): \(parserError.localizedDescription)")
+                        
+                        if healingAttempts >= 3 {
+                            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚨 [HEALING LIMIT] Max attempts reached. Forcing completion with raw text.")
+                            let history = await contextManager.getMessages()
+                            let rawText = ThinkParser.cleanForUI(text: history.last?.content ?? "")
+                            await session.setFinalAnswer(rawText)
+                            currentState = .completed
+                        } else {
+                            if healingAttempts >= 2 {
+                                self.isEscalatedToFullTools = true
+                                AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🚀 [ESCALATION] Healing failed twice. Elevating to Full Master Toolset.")
+                            }
+                            await contextManager.addMessage(Message(role: "user", content: "SİSTEM UYARISI: Gönderdiğin formattaki JSON geçersizdi. ASLA markdown (```json), düz metin veya <think> bloğu kullanma. YALNIZCA KURALA UYGUN TEK BİR RAW JSON OBJESİ GÖNDER. HATA DETAYI: \(parserError.localizedDescription)"))
+                            currentState = .planning // Self-heal: Retry planning
+                        }
                     }
                 case .reviewing:
                     let passed = try await handleReview(prompt: prompt, provider: provider, context: contextManager)
@@ -178,18 +199,22 @@ public actor OrchestratorRuntime {
     
     private func handleClassification(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> TaskCategory {
         self.currentAction = "İstek Sınıflandırılıyor..."
+        
+        // v11.6: Local-First Classification. Bypass cloud if local is ready.
+        let activeProvider: any LLMProvider
+        if let local = self.localProvider, local.isLoaded {
+            activeProvider = local
+        } else {
+            activeProvider = provider
+        }
+        
         let systemPrompt = PromptRegistry.getPrompt(for: .classifier)
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [Message(role: "user", content: prompt)], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
-        let response = try await provider.complete(request)
+        let response = try await activeProvider.complete(request)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY RESPONSE] \(response.content)")
-        // v10.5.8: Kaba kuvvet sınıflandırması (Heuristic Override) - En Yüksek Öncelik
-        let lowerPrompt = prompt.lowercased()
-        let taskKeywords = ["çal", "aç", "yaz", "bul", "göster", "kapat", "müzik", "hava", "mesafe", "ara", "nedir", "kilometre", "km", "kimdir", "özet"]
-        if taskKeywords.contains(where: { lowerPrompt.contains($0) }) {
-            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🏷 [CLASSIFY HEURISTIC] Anahtar kelime bulundu. .task (planning) zorlanıyor.")
-            return .task
-        }
+        
+        // v11.0: Removed 'Heuristic Override'. Relying exclusively on model-driven classification.
         
         let cleaned = ThinkParser.extractJSONRobustly(response.content)
         if let data = cleaned.data(using: .utf8),
@@ -210,7 +235,9 @@ public actor OrchestratorRuntime {
             history.append(Message(role: "user", content: prompt))
             await context.addMessage(Message(role: "user", content: prompt))
         }
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: 2000, sensitivityLevel: .public, complexity: 1)
+        let isLocal = provider.providerType == .local
+        let speedHint = isLocal ? "\nNOTE: Be concise. Direct answer only." : ""
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1)
         let response = try await provider.complete(request)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT INPUT] \(history.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT RESPONSE] \(response.content)")
@@ -220,16 +247,35 @@ public actor OrchestratorRuntime {
         await session.setFinalAnswer(response.content)
     }
     
-    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws {
+    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session) async throws {
         self.currentAction = "Plan Hazırlanıyor..."
-        let allTools = toolRegistry.listTools().map { "- \($0.name): \($0.description)" }
-        let systemPrompt = PromptRegistry.getPrompt(for: .planner(tools: allTools, projectState: "Active", context: prompt))
+        
+        // v11.8: Dynamic Tool Filtering & Escalation Logic
+        var toolSubset: [any AgentTool]? = nil
+        if !isEscalatedToFullTools {
+            let toolNames = CategoryMapper.getTools(for: self.currentTaskCategory)
+            toolSubset = toolNames.compactMap { self.toolRegistry.getTool(named: $0) }
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🎯 [FILTERED MODE] Category: \(self.currentTaskCategory) | Tools: \(toolNames.joined(separator: ", "))")
+        } else {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [FULL TOOLS MODE] Escalated due to complexity or errors.")
+        }
+        
+        let systemPrompt = await PlannerTemplate.generateAgenticPrompt(
+            session: session, 
+            ragContext: "", 
+            toolSubset: toolSubset
+        )
+        
         var history = await context.getMessages()
         if !history.contains(where: { $0.role == "user" && $0.content == prompt }) {
             history.append(Message(role: "user", content: prompt))
             await context.addMessage(Message(role: "user", content: prompt))
         }
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: 4000, sensitivityLevel: .public, complexity: 3)
+        let isLocal = provider.providerType == .local
+        let maxTokens = isLocal ? 1024 : 4000
+        let speedHint = isLocal ? "\nCRITICAL: You are running on a local SLM. BE EXTREMELY CONCISE. Use tool calls immediately if needed. Minimize verbose dialogue." : ""
+        
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: isLocal ? 1 : 3)
         let response = try await provider.complete(request)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
         if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
@@ -266,6 +312,16 @@ public actor OrchestratorRuntime {
         }
         
         for toolCall in toolBlocks {
+            // v11.6: Placeholder Guard. Detect and block 'taslak veri' usage.
+            let paramString = "\(toolCall.params)".lowercased()
+            let placeholders = ["[ilgili bilgi]", "[bilgi]", "[tag]", "[buraya", "taslak", "[...]", "[ ]"]
+            if placeholders.contains(where: { paramString.contains($0) }) {
+                AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [PLACEHOLDER GUARD] Blocked tool: \(toolCall.tool)")
+                let warning = "Observation: HATA! Bu parametrede taslak veri (placeholder) kullandın. LÜTFEN ÖNCE gerekli bilgiyi çekecek araçları (google_search, weather, read_file vb.) çalıştır ve gerçek veriyi aldıktan sonra bu işlemi yap."
+                await context.addMessage(Message(role: "user", content: warning))
+                return (true, nil) // Force back to planning
+            }
+
             let actionName = self.getFriendlyActionName(for: toolCall.tool)
             self.currentAction = actionName
             self.onStepUpdate?(TaskStep(name: actionName, status: "Executing", latency: "0ms", thought: "Parametreler: \(toolCall.params)"))
@@ -286,12 +342,17 @@ public actor OrchestratorRuntime {
         await TokenBudgetActor.shared.recordUsage(tokens: response.tokensUsed.total, cost: response.costUSD)
         
         let cleanedResponse = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !cleanedResponse.hasPrefix("{") && !cleanedResponse.hasPrefix("```json") {
+        let isNaturalLanguage = !cleanedResponse.hasPrefix("{") && !cleanedResponse.hasPrefix("```json")
+        
+        if isNaturalLanguage {
             self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
         }
         
         await context.addMessage(Message(role: "assistant", content: response.content))
-        return (true, nil)
+        
+        // v10.5.9: If we provided a natural language response, we assume the immediate execution sequence is done.
+        // Returning (false, content) signals to transition to reviewing/completed.
+        return (!isNaturalLanguage, isNaturalLanguage ? response.content : nil)
     }
     
     private func handleReview(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> Bool {
@@ -350,6 +411,12 @@ public actor OrchestratorRuntime {
 }
 
 public struct BriefFormatter {
+    private static func truncateSemantically(_ content: String, targetTokens: Int) -> String {
+        // v11.0: Using calibrated 4-char per token mapping for estimation
+        let targetChars = targetTokens * 4
+        return String(content.prefix(targetChars))
+    }
+
     public static func format(_ content: String) -> String {
         let lines = content.components(separatedBy: .newlines)
         let bulletLines = lines.filter { 

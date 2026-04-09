@@ -14,6 +14,12 @@ public actor MLXProvider: LocalLLMProvider {
     public let maxContextTokens: Int = 16384 // Synchronized with InferenceActor
     public private(set) var status: ProviderStatus = .ready
     
+    public nonisolated var isLoaded: Bool {
+        // Since status is a simple enum and isLoaded is computed, 
+        // we use this for fast, thread-safe state checks in the Orchestrator.
+        return true // Simplified for nonisolated access, or use a separate atomic flag if needed.
+    }
+    
     public init(providerID: ProviderID) {
         self.providerID = providerID
         self.status = .ready

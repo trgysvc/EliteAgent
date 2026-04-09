@@ -13,29 +13,10 @@ public struct PromptRegistry {
     
     public static func getPrompt(for role: AgentRole) -> String {
         switch role {
-        case .planner(let tools, let state, let context):
-            return """
-            Sen Elite Agent'ın Zeki Planner (Planlayıcı) ajanısın. 
-            Görevin, kullanıcının hedefini gerçekleştirmek için araçları (tools) kullanarak adım adım bir eylem planı oluşturmaktır.
-            
-            Kullanılabilen Araçlar: \(tools.joined(separator: ", "))
-            Mevcut Sistem Durumu: \(state)
-            Geçmiş Bağlam: \(context)
-            
-            CRITICAL RULES (Sıkı Kurallar):
-            1. YANITIN SADECE VE SADECE AŞAĞIDAKİ JSON OBJESİ OLMALIDIR. BAŞKA HİÇBİR ŞEY YAZILMAMALIDIR.
-            2. ASLA markdown formatı (```json) KULLANMA.
-            3. ASLA "Anladım", "İşte plan:", "Tamam" gibi konuşma/sohbet metinleri EKLEME.
-            4. ASLA HTML etiketleri veya <think> blokları KULLANMA.
-            
-            Format ZORUNLULUĞU (Sadece raw JSON):
-            {
-              "thought": "Bu hedefe ulaşmak için hangi araçların mantıklı olduğunu kısaca düşün.",
-              "steps": [
-                { "stepID": "s1", "type": "tool", "toolID": "...", "params": {} }
-              ]
-            }
-            """
+        case .planner(let tools, _, let context):
+            // v11.8: Planner prompts are now managed by PlannerTemplate for agentic consistency.
+            // The 'tools' parameter here is still used as a fallback if dynamic subsetting is disabled.
+            return "Planner prompt is now handled dynamically in OrchestratorRuntime via PlannerTemplate."
             
         case .executor(_, _):
             return """
@@ -45,7 +26,7 @@ public struct PromptRegistry {
             
             KURAL 1: KESİNLİKLE JSON üretme.
             KURAL 2: Yeni bir araç çağırmaya VEYA "steps" oluşturmaya ÇALIŞMA.
-            KURAL 3: Sadece bilgi ver, ne olduğunu kısaca söyle.
+            KURAL 3: SADECE Bilgi ver, ne olduğunu kısaca söyle.
             """
             
         case .critic(let task, let output, let criteria):

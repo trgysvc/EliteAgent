@@ -8,14 +8,5 @@
 	</array>
 	<key>com.apple.security.inherit</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.apple-events</key>
-	<array>
-		<string>com.apple.mail</string>
-		<string>com.apple.Calendar</string>
-		<string>com.apple.systemevents</string>
-		<string>net.whatsapp.WhatsApp</string>
-		<string>com.apple.MobileSMS</string>
-		<string>com.apple.iChat</string>
-	</array>
 </dict>
 </plist>

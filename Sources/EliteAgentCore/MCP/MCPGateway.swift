@@ -134,13 +134,22 @@ public actor MCPGateway: AgentProtocol {
                 return
             }
             
-            // Execute mock standard RPC resolution limit passing raw PRD Madde 9.2 markers natively
-            responsePayload = "{\"result\": \"MCP Execution bounds evaluated natively via JSON-RPC struct payload\"}".data(using: .utf8) ?? Data()
+            // v11.0: Real connectivity check for MCP Gateway
+            let isConnected = process?.isRunning ?? false || ssePostURL != nil
+            let activeTools = manifest?.count ?? 0
+            
+            responsePayload = """
+            {
+                "status": "\(isConnected ? "CONNECTED" : "DISCONNECTED")",
+                "active_tools": \(activeTools),
+                "gateway": "MCP-1.0-Native"
+            }
+            """.data(using: .utf8) ?? Data()
             
             let resSignal = Signal(
                 source: .mcpGateway,
                 target: signal.source,
-                name: "MCP_RESULT",
+                name: "MCP_STATUS",
                 priority: .high,
                 payload: responsePayload,
                 secretKey: bus.sharedSecret

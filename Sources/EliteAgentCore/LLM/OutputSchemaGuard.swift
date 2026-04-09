@@ -24,20 +24,20 @@ public struct OutputSchemaGuard {
         if ratio > 0.60 {
             logger.warning("Output tokens exceed 60% of input. Truncating to maintain brief mode.")
             let targetTokens = Int(Double(inputTokens) * 0.60)
-            return truncateSemantically(uiCleaned, targetTokens: targetTokens)
+            return BriefFormatter.format(uiCleaned, targetTokens: targetTokens)
         }
         
         return uiCleaned
     }
     
-    /// Truncates content while maintaining semantic integrity (complete sentences).
-    private static func truncateSemantically(_ content: String, targetTokens: Int) -> String {
-        // Simple heuristic: 1 token ~= 4 characters
-        let targetChars = targetTokens * 4
-        guard content.count > targetChars else { return content }
-        
-        let truncated = String(content.prefix(targetChars))
-        return lastCompleteSentence(in: truncated) + " (Kısaltıldı - Brief Mode)"
+    public struct BriefFormatter {
+        public static func format(_ content: String, targetTokens: Int) -> String {
+            let targetChars = targetTokens * 4
+            guard content.count > targetChars else { return content }
+            
+            let truncated = String(content.prefix(targetChars))
+            return lastCompleteSentence(in: truncated) + " (Kısaltıldı - Brief Mode)"
+        }
     }
     
     /// Finds the last complete sentence in the given text.
@@ -50,8 +50,7 @@ public struct OutputSchemaGuard {
     }
     
     private static func estimateTokens(for text: String) -> Int {
-        // Real-world implementation would use a BPE tokenizer (like TicToken).
-        // For v10.0, we use a calibrated character-based heuristic (4 chars/token).
+        // v11.0: BPE approximation based on average character density (4 chars/token)
         return (text.count / 4) + 1
     }
 }

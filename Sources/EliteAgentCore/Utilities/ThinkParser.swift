@@ -81,7 +81,36 @@ public final class ThinkParser {
                 let single = try decoder.decode(EliteAgentOutput.self, from: data)
                 return [single]
             } catch let decodeError {
-                // Attempt 3: Heuristic Repair if it's almost JSON
+                // Attempt 3: Heuristic Repair (Regex recovery for 'result' field)
+                let str = String(data: data, encoding: .utf8) ?? ""
+                
+                // v11.7: Aggressive Tool Call Recovery
+                if let toolMatch = str.range(of: "\"toolID\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
+                    let pattern = "\"toolID\"\\s*:\\s*\"([^\"]*)\""
+                    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+                       let match = regex.firstMatch(in: str, options: [], range: NSRange(location: 0, length: str.utf16.count)) {
+                        let toolID = (str as NSString).substring(with: match.range(at: 1))
+                        // Try to find params as well (crude but effective fallback)
+                        var params: [String: AnyCodable] = [:]
+                        if let paramsMatch = str.range(of: "\"params\"\\s*:\\s*(\\{[^}]*\\})", options: .regularExpression) {
+                            let pStr = String(str[paramsMatch].split(separator: ":", maxSplits: 1).last ?? "{}")
+                            if let pData = pStr.data(using: .utf8), let pJson = try? JSONSerialization.jsonObject(with: pData) as? [String: Any] {
+                                params = pJson.mapValues { AnyCodable($0) }
+                            }
+                        }
+                        return [EliteAgentOutput(type: .tool_call, thought: "Heuristic Recovery", action: toolID, params: params)]
+                    }
+                }
+
+                if let resultMatch = str.range(of: "\"result\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
+                    let pattern = "\"result\"\\s*:\\s*\"([^\"]*)\""
+                    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+                       let match = regex.firstMatch(in: str, options: [], range: NSRange(location: 0, length: str.utf16.count)) {
+                        let content = (str as NSString).substring(with: match.range(at: 1))
+                        return [EliteAgentOutput(type: .response, thought: "Heuristic Recovery", content: content)]
+                    }
+                }
+                
                  AgentLogger.logAudit(level: .warn, agent: "Parser", message: "JSON Decode failed. Details: \(decodeError.localizedDescription)")
                  throw ParserError.invalidSchema("JSON şeması EliteAgent protokolüne (PRD v17.1) uymuyor: \(decodeError.localizedDescription)")
             }

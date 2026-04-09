@@ -201,12 +201,10 @@ public class Orchestrator: ObservableObject {
             }
         }
         
-        let safeProvider: CloudProvider
-        if let p = self.cloudProvider {
-            safeProvider = p
-        } else {
-            let dummyVault = try! VaultManager(configURL: PathConfiguration.shared.vaultURL)
-            safeProvider = try! CloudProvider(providerID: .openrouter, vaultManager: dummyVault)
+        guard let safeProvider = self.cloudProvider else {
+            // v11.0: Realized self.cloudProvider should always be active if the app reached this state.
+            // If it's nil, the init flow has a critical failure that should be bubbled up, not masked.
+            fatalError("CloudProvider not initialized in vault-ready environment.")
         }
         
         let local = self.localProvider
@@ -530,15 +528,22 @@ public class Orchestrator: ObservableObject {
         let conversationText = session.messages.prefix(2).map { "\($0.role): \($0.content)" }.joined(separator: "\n")
         let summaryPrompt = "Conversational history:\n\(conversationText)\n\nSummarize this conversation in exactly 3-5 words in Turkish. Output ONLY the summary text, no quotes or punctuation."
         
-        // We use the cloud provider for better quality summarization if available
-        guard let provider = self.cloudProvider else { return }
+        // v11.5: Local-First summarization. Use Titan if available, else fallback to cloud.
+        let provider: any LLMProvider
+        if let local = self.localProvider, local.isLoaded {
+            provider = local
+        } else if let cloud = self.cloudProvider {
+            provider = cloud
+        } else {
+            return
+        }
         
         do {
             let request = CompletionRequest(
                 taskID: UUID().uuidString,
-                systemPrompt: "Sen bir asistsansın. Konuşmayı özetle.",
+                systemPrompt: "Sen bir asistsansın. Konuşmayı özetle. Yalnızca 2-3 kelimelik bir başlık dön.",
                 messages: [Message(role: "user", content: summaryPrompt)],
-                maxTokens: 20,
+                maxTokens: 50,
                 sensitivityLevel: .public,
                 complexity: 1
             )
