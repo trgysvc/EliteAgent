@@ -29,10 +29,7 @@ public final class ModelManager: NSObject, ObservableObject {
     ]
     
     private override init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        self.modelsDirectory = appSupport.appendingPathComponent("EliteAgent/Models")
-        
-        try? FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
+        self.modelsDirectory = PathConfiguration.shared.modelsURL
         
         super.init()
         

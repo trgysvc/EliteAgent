@@ -55,8 +55,11 @@ public struct PromptRegistry {
               "complexity": 1-5
             }
             
-            Not: Eylem, donanım kontrolü, programlama, hesaplama GEREKTİREN her şey KESİNLİKLE "task" kategorisidir.
-            "Hava durumu", "mesafe", "kaç kilometre", "ara", "nedir" gibi internetten veya araçlardan BİLGİ ALINMASI (web_search) gereken TÜM SORULAR KESİNLİKLE "task" kategorisidir. SADECE Naber, nasılsın gibi saf muhabbetler "chat" olabilir.
+            DISCIPLINE RULES:
+            1. Eylem, donanım kontrolü, programlama, hesaplama GEREKTİREN her şey KESİNLİKLE "task" kategorisidir.
+            2. "Hava durumu", "mesafe", "kaç kilometre", "ara", "nedir", "mesaj gönder" gibi BİLGİ veya EYLEM gerektiren TÜM sorular KESİNLİKLE "task" kategorisidir. 
+            3. Çok adımlı istekler (Ör: Hava durumunu al ve WhatsApp ile gönder) en yüksek öncelikli "task" kategorisidir.
+            4. SADECE "Naber", "Nasılsın", "Kimsin" gibi hiçbir sistem aracı gerektirmeyen saf sohbetler "chat" olabilir.
             """
             
         case .chatter(let context):

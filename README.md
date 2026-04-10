@@ -2,7 +2,7 @@
 
 <p align="center">
   <b>A fully autonomous and hardware-aware Hybrid Intelligence Agent running on your desktop.</b><br>
-  <i>An end-to-end intelligence bridge built specifically for Apple Silicon (M-Series), featuring the "Titan" architecture.</i>
+  <i>Powered by the <b>UNO (Unified Native Orchestration)</b> architecture, featuring distributed actors and Apple Silicon optimization.</i>
 </p>
 
 ---
@@ -12,7 +12,7 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v10.0 TITAN EVOLUTION]**: Hardened Swift 6 Concurrency, Dream Engine v2 (Autonomous Memory), and Chicago/AX System Automation.
+> **[v13.9 FORTRESS STABLE]**: XPC Hardening, Weather Intelligence, and Biometric Secured Communication.
 
 ## 🔥 Key Features
 
@@ -26,14 +26,35 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **TTFT Optimization [v9.9.15]:** Context Pruning (Sliding Window) drops prefill latency from 146s to <5s for local models.
 - **Swift 6 Actor Isolation (v10.0):** 100% thread-safe background processing for Dreams, Budgets, and Privacy Guards.
 - **YOLO Guard v2 & Encrypted Audits:** Dynamic risk assessment with Keychain-backed AES.GCM forensic logging.
+- **XPC Architecture Hardening [v13.7]:** Deterministic C-module resolution (`yyjson`, `Cmlx`, `_NumericsShims`) with absolute path enforcement.
 
-### 2. Titan Engine v3 (Intelligence & Diagnostics) - [v8.5 Production-Research]
+### 2. UNO (Unified Native Orchestration) [v13.9]
+- **Distributed Actor System:** Type-safe, high-concurrency orchestration for native tools.
+- **Biometric Guard:** Secured WhatsApp/iMessage communication with mandatory TouchID/Apple ID verification.
+- **WeatherKit Integration:** Hardware-native meteorological data retrieval with zero-tab Safari fallback.
+
+### 3. Purpose Lock & Cognitive Isolation [v14.0 - CORE PRINCIPLE]
+- **Intent Persistence:** Mission-bound intelligence that prevents task-switching during failures.
+- **Cognitive Guardrails:** Workspace-aware but objective-locked reasoning, separating developer activity from user commands.
+- **Disciplinary Classification:** Hardened intent mapping ensures high-priority tasks are isolated from general chat context.
+
+### 4. Apple-Native Standards & Data Protection [v14.0 - PRODUCTION]
+- **Standard Directory Compliance:** Fully adheres to Apple's macOS FileSystem standards (`~/Library/Logs`, `~/Library/Application Support`).
+- **Smart Data Preservation:** Factory reset logic explicitly excludes the `EliteAgentWorkspace`, ensuring user-generated work is never lost.
+- **Persistent Model Safety:** LLM models are stored in non-volatile `Application Support` directories to prevent automatic system cache sweeps.
+
+### 2. Titan Engine v3 (Intelligence & Diagnostics) - [v13.9 HARDENED]
 - **Qwen 3.5 9B Specialization (4-bit):** Native **4-bit Quantized** Qwen 3.5 9B via `InferenceActor`, providing high-speed local reasoning.
+- **Hallucination Protection Shield:** Integrated **1.4x Repetition Penalty** and token-loop detection for s-tier stability.
 - **GGUF Integrity Shield:** Mandatory verification (Magic bytes, Version v3+, and Tensors) to prevent memory corruption.
-- **Unified Memory Diagnostics [HARDENED]:** Fully Sandbox-compliant memory management using heuristics and `ProcessInfo`, eliminating legacy Mach errors.
-- **Advanced Diagnostics:** Detailed Hugging Face **401 (Gated)** and **404 (Not Found)** error detection.
+- **Unified Memory Diagnostics:** Fully Sandbox-compliant memory management using heuristics and `ProcessInfo`.
 
-### 2. Audio Intelligence & Music DNA (Librosa Killer) - [v7.1]
+### 3. Meteorological & Communication Intelligence [v13.9 NEW]
+- **Weather Intelligence (WeatherKit):** Native integration with Apple's `WeatherKit` and `CoreLocation` for precise meteorology with `wttr.in` fallback.
+- **Biometric Communication Guard:** Secura Mode implementation for WhatsApp/iMessage, requiring TouchID/Password confirmation for all transmissions.
+- **Multi-Step Tool Sync:** Advanced intent-mapping allowing seamless weather-to-messaging data flow without planning latency.
+
+### 4. Audio Intelligence & Music DNA (Librosa Killer) - [v7.1]
 - **Chroma CENS (Energy Normalized Statistics):** Native implementation of the Librosa `chroma_cens` algorithm for superior cover-song and harmonic fingerprinting.
 - **Multi-Band PLP (Predominant Local Pulse):** Advanced rhythm tracking using frequency-band splitting (**Sub, Low, Mid, High**). 
 - **Hardware-Native DSP:** All spectral analysis (STFT, Mel, CQT, YIN, Chroma, PLP) is vectorized via the **Accelerate** (vDSP) framework.
@@ -68,7 +89,7 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **Universal Shortcuts Bridge [NEW]:** Native integration with macOS Shortcuts (`shortcuts list`, `shortcuts run`) with 1-hour caching and stdin support.
 
 ### 6. Universal Tool Ecosystem
-- **MessengerTool (Autonomous WhatsApp/iMessage):** Production-hardened UI automation with localized error handling.
+- **MessengerTool (Autonomous WhatsApp/iMessage):** Biometric-secured communication with localized error handling and Multi-Step synchronization.
 - **PatchTool & WriteFileTool:** Atomic string-matching (diff) for safe codebase modification.
 - **Brave Search & Web Fetch:** Deep-web scouring via Brave API with Markdown structure preservation.
 - **Chicago Vision (v10.0):** Native screen analysis via `ScreenCaptureKit` and `VNRecognizeTextRequest` (macOS 15+).
@@ -122,4 +143,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v9.9 STABILIZED]**
+> **[EliteAgent Core - v13.9 FORTRESS STABLE]**

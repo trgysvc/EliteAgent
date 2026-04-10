@@ -181,7 +181,12 @@ public actor OrchestratorRuntime {
                                 self.isEscalatedToFullTools = true
                             }
                             
-                            let errorMsg = "SİSTEM UYARISI: Bir hata oluştu. Lütfen hatayı gidererek tekrar dene.\nHATA: \(error.localizedDescription)"
+                            let errorMsg = """
+                            SİSTEM UYARISI: Bir hata oluştu. 
+                            HATA: \(error.localizedDescription)
+                            
+                            TALİMAT: Yukarıdaki hatayı gidererek asıl hedefine (**\(prompt)**) ulaşmak için yeni bir yol/plan oluştur. Workspace içindeki ilgisiz dosya değişikliklerine sapma, sadece orijinal görevi tamamla.
+                            """
                             await contextManager.addMessage(Message(role: "user", content: errorMsg))
                             currentState = .planning // Retry planning with knowledge of the error
                         }

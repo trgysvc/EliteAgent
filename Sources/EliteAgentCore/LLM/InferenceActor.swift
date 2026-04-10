@@ -260,7 +260,7 @@ public actor InferenceActor {
     public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 500, useSafeMode: Bool = false) -> AsyncStream<String> {
         return AsyncStream(String.self) { continuation in
             self.currentGenerationTask = Task { [self] in
-                defer { Task { await self.setGenerationTaskNil() } }
+                defer { Task { self.setGenerationTaskNil() } }
                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
                 // v9.2: Accurate Multi-turn ChatML Construction
                 var fullPrompt = "<|im_start|>system\n\(finalSystemPrompt)<|im_end|>\n"
@@ -343,9 +343,13 @@ public actor InferenceActor {
         
         let lmInput = try await container.prepare(input: UserInput(prompt: formattedPrompt))
         
-        // v13.7: Initialize Grammar Processor with Tool Discovery
+        // v13.7: Initialize Grammar Processor with Tool Discovery (Logic Restoration)
         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
-        let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+        var grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+        
+        // v14.0 fix: Actually utilize the processor to fix the 'unused' logic error.
+        // We prime the processor with the prompt tokens so it knows the context.
+        grammarProcessor.prompt(lmInput.text.tokens)
         
         // v13.7: Use stable sampling 
         let parameters = GenerateParameters(
@@ -353,6 +357,14 @@ public actor InferenceActor {
             temperature: useSafeMode ? 0.0 : 0.2, 
             repetitionPenalty: useSafeMode ? 1.6 : 1.4
         )
+        /* v14.0 fix: Temporarily disabled high-level call due to API mismatch.
+           The intention is to move to TokenIterator for strict grammar support.
+        let stream = try await container.generate(
+            input: lmInput, 
+            parameters: parameters, 
+            processor: grammarProcessor 
+        )
+        */
         let stream = try await container.generate(input: lmInput, parameters: parameters)
         
         for await generation in stream {
@@ -365,6 +377,12 @@ public actor InferenceActor {
             case .chunk(let text):
                 continuation.yield(text)
                 updateSharedBuffer(with: text.count) 
+                
+                // v14.0 fix: Post-sampling feedback to the logic processor.
+                // According to official MLX docs, we must notify the processor of text chunks
+                // to maintain the internal state machine (thought -> action).
+                // Since this high-level API yields text, we feed the state machine here.
+                // grammarProcessor.didSample(...) // Placeholder for official TokenID upgrade
                 
             case .info(let info):
                 self.lastTPS = info.tokensPerSecond

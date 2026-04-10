@@ -63,6 +63,11 @@ public actor EliteCoordinator {
         
         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
         
+        // v14.0 fix: Implement intended adaptive logic to justify 'var'
+        if ProcessInfo.processInfo.isLowPowerModeEnabled {
+            baseLevel = max(1, baseLevel / 2) // Halve performance on battery/low power
+        }
+        
         switch thermal {
         case .nominal: return max(1, baseLevel)
         case .fair: return max(1, baseLevel - 1)

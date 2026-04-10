@@ -90,8 +90,7 @@ struct AdvancedSettingsView: View {
     }
     
     private func calculateSize() {
-        let appSupport = PathConfiguration.shared.applicationSupportURL
-        let modelsURL = appSupport.appendingPathComponent("Models")
+        let modelsURL = PathConfiguration.shared.modelsURL
         
         Task.detached(priority: .userInitiated) {
             guard FileManager.default.fileExists(atPath: modelsURL.path) else {
@@ -129,7 +128,7 @@ struct AdvancedSettingsView: View {
         AISessionState.shared.isInputLocked = false
         ModelManager.shared.loadedModels.removeAll()
         
-        // 2. Wipe Local Filesystem
+        // 2. Wipe Local Filesystem (v14.0 SMART RESET: Does NOT touch Workspace in Documents)
         try? FileManager.default.removeItem(at: appSupport)
         try? FileManager.default.removeItem(at: caches)
         try? FileManager.default.removeItem(at: logs)

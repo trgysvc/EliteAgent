@@ -35,6 +35,21 @@ public struct PathConfiguration: Sendable {
         return url
     }
     
+    /// ~/Library/Application Support/EliteAgent/Models (v14.0: Persist models during cache sweeps)
+    public var modelsURL: URL {
+        let url = applicationSupportURL.appendingPathComponent("Models", isDirectory: true)
+        ensureDirectoryExists(at: url)
+        return url
+    }
+    
+    /// ~/Documents/EliteAgentWorkspace (v14.0: User workspace, excluded from factory resets)
+    public var workspaceURL: URL {
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("EliteAgentWorkspace", isDirectory: true)
+        ensureDirectoryExists(at: url)
+        return url
+    }
+    
     // MARK: - Specific Files
     
     public var vaultURL: URL {

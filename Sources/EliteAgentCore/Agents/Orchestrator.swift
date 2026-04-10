@@ -355,7 +355,7 @@ public class Orchestrator: ObservableObject {
             do {
                 let reader = ReadFileTool()
                 let tempSession = Session(
-                    workspaceURL: URL(fileURLWithPath: "/Users/trgysvc/Developer/EliteAgent"),
+                    workspaceURL: PathConfiguration.shared.workspaceURL,
                     config: effectiveConfig,
                     complexity: 1
                 )
@@ -375,7 +375,7 @@ public class Orchestrator: ObservableObject {
         }
         
         do {
-            let workspaceURL = URL(fileURLWithPath: "/Users/trgysvc/Developer/EliteAgent")
+            let workspaceURL = PathConfiguration.shared.workspaceURL
             self.currentWorkspaceURL = workspaceURL
             
             let runtime = OrchestratorRuntime(

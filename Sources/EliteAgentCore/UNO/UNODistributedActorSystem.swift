@@ -73,11 +73,6 @@ public final class UNODistributedActorSystem: DistributedActorSystem, @unchecked
             return res
         }
         
-        // Handle String fallback cleanly to avoid redundant cast warnings
-        if Res.self == String.self, let resString = response.result as? String {
-            return resString as! Res
-        }
-        
         throw NSError(domain: "UNO-Distributed", code: 404, userInfo: [NSLocalizedDescriptionKey: "Result type mismatch for \(target.identifier)"])
     }
     

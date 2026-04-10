@@ -25,6 +25,11 @@ public struct PlannerTemplate: Sendable {
         return """
         Sen Elite Agent Runtime'sın. Donanım seviyesinde macOS otomasyonu yaparsın.
         
+        ### ANA HEDEF (MISSION):
+        Aşağıdaki "USER_TASK" senin tek ve sarsılmaz görevindir. Workspace içindeki dosyalar veya hafıza kayıtları bu görevle doğrudan ilgili değilse onları sadece arka plan gürültüsü olarak kabul et ve asıl hedefine odaklan.
+        
+        TASLAK VERİ KULLANMA. Eğer bir bilgi (hava durumu, dosya içeriği vb.) eksikse, o bilgiyi getirecek araçları çalıştır.
+        
         ### KURALLAR:
         1. **Düşünme**: <think>...</think> bloğu ile başla.
         2. **Gözlem**: Her araç (tool) çıktısını (Observation) görmeden "başardım" deme.
@@ -37,8 +42,6 @@ public struct PlannerTemplate: Sendable {
         
         ### MEVCUT ARAÇLAR (Dinamik Toolset):
         \(toolsToDisplay.joined(separator: "\n"))
-        
-        ### STRATEJİ:
         
         ### STRATEJİ:
         - Apple Silicon mimarisini (UMA, Metal) optimize kullan.

@@ -1,0 +1,1415 @@
+[0/1] Planning build
+Building for debugging...
+[0/204] Write sources
+[0/205] Write EliteAgentXPC-entitlement.plist
+[0/204] Write EliteAgent-entitlement.plist
+[5/205] Compiling _AtomicsShims.c
+[6/205] Write swift-version--58304C5D6DBC2206.txt
+[7/205] Compiling utils.cpp
+[8/205] Compiling scheduler.cpp
+[9/205] Compiling no_gguf.cpp
+[10/222] Compiling yyjson.c
+[12/241] Compiling _NIOBase64 Base64.swift
+[13/241] Emitting module _NIOBase64
+[14/241] Compiling RealModule Real.swift
+[15/241] Compiling RealModule RealFunctions.swift
+[16/241] Compiling InternalCollectionsUtilities Span+Extras.swift
+[17/241] Compiling InternalCollectionsUtilities String+Padding.swift
+[18/241] Compiling RealModule AugmentedArithmetic.swift
+[19/241] Compiling RealModule ElementaryFunctions.swift
+[20/241] Compiling RealModule Float+Real.swift
+[21/241] Compiling RealModule Float80+Real.swift
+[22/328] Compiling RealModule RelaxedArithmetic.swift
+[23/328] Emitting module RealModule
+[24/328] Compiling RealModule Float16+Real.swift
+[25/328] Compiling RealModule Double+Real.swift
+[25/328] Compiling linalg.cpp
+[27/339] Compiling ComplexModule Complex+AdditiveArithmetic.swift
+[28/339] Compiling ComplexModule Complex+AlgebraicField.swift
+[29/339] Compiling Crypto XWing.swift
+[30/339] Compiling Crypto ECDH_boring.swift
+[31/339] Compiling Crypto GeneralizedTime.swift
+[32/339] Compiling Crypto ObjectIdentifier.swift
+[33/339] Compiling Crypto ECDSASignature.swift
+[34/339] Compiling Crypto PEMDocument.swift
+[35/339] Compiling Crypto ASN1Strings.swift
+[36/339] Compiling Crypto ArraySliceBigint.swift
+[37/340] Compiling Crypto KEM.swift
+[38/340] Compiling Crypto MLKEM.swift
+[39/340] Compiling Crypto XWing_boring.swift
+[40/340] Compiling Crypto KEM-Errors.swift
+[41/340] Compiling Crypto MLKEM_boring.swift
+[42/340] Compiling Crypto MLKEM_wrapper.swift
+[43/340] Compiling Crypto ASN1Null.swift
+[44/340] Compiling Crypto ASN1OctetString.swift
+[45/340] Emitting module InternalCollectionsUtilities
+[46/340] Compiling InternalCollectionsUtilities _UniqueCollection.swift
+[47/340] Compiling ComplexModule Complex.swift
+[48/340] Compiling ComplexModule Polar.swift
+[48/341] Compiling random.cpp
+[50/341] Compiling ComplexModule Scale.swift
+[51/341] Compiling ComplexModule Complex+Hashable.swift
+[52/341] Compiling ComplexModule Complex+ElementaryFunctions.swift
+[53/341] Compiling ComplexModule Complex+IntegerLiteral.swift
+[54/341] Compiling ComplexModule Complex+Numeric.swift
+[55/341] Compiling ComplexModule Complex+StringConvertible.swift
+[58/341] Compiling ComplexModule Complex+Codable.swift
+[59/341] Emitting module ComplexModule
+[60/397] Compiling _NIODataStructures Heap.swift
+[61/397] Compiling _NIODataStructures _TinyArray.swift
+[62/397] Emitting module _NIODataStructures
+[63/397] Compiling _NIODataStructures PriorityQueue.swift
+[64/433] Compiling ContainersPreview Producer+Filter.swift
+[65/433] Compiling ContainersPreview Producer+Map.swift
+[66/433] Compiling ContainersPreview Producer+Reduce.swift
+[67/433] Compiling ContainersPreview Drain+Reduce.swift
+[68/433] Compiling ContainersPreview Drain.swift
+[69/433] Compiling ContainersPreview Producer+Collect.swift
+[70/436] Compiling ContainersPreview RandomAccessContainer.swift
+[71/436] Compiling ContainersPreview RangeExpression2.swift
+[72/436] Compiling ContainersPreview RangeReplaceableContainer.swift
+[73/436] Compiling ContainersPreview Drain+Map.swift
+[74/436] Compiling ContainersPreview BorrowingIteratorProtocol.swift
+[75/436] Compiling ContainersPreview BorrowingSequence+Standard Conformances.swift
+[76/436] Compiling ContainersPreview BorrowingSequence+Utilities.swift
+[77/436] Compiling ContainersPreview BorrowingSequence.swift
+[78/436] Emitting module Numerics
+[79/436] Compiling Numerics Numerics.swift
+[80/436] Compiling ContainersPreview Inout.swift
+[81/436] Compiling ContainersPreview InputSpan.swift
+[82/436] Compiling ContainersPreview Shared.swift
+[83/436] Compiling ContainersPreview BidirectionalContainer.swift
+[84/436] Compiling ContainersPreview Container+Filter.swift
+[85/436] Compiling ContainersPreview Container+SpanwiseZip.swift
+[86/436] Compiling ContainersPreview Container.swift
+[87/436] Compiling ContainersPreview ContainerIterator.swift
+[88/436] Compiling ContainersPreview DynamicContainer.swift
+[89/436] Compiling ContainersPreview MutableContainer.swift
+[90/436] Compiling ContainersPreview PermutableContainer.swift
+[91/436] Compiling ContainersPreview Producer.swift
+[92/436] Compiling ContainersPreview Borrow.swift
+[93/436] Compiling ContainersPreview Box.swift
+[94/436] Compiling ContainersPreview BorrowingIteratorProtocol+Filter.swift
+[95/436] Compiling ContainersPreview BorrowingIteratorProtocol+Map.swift
+[96/436] Compiling ContainersPreview BorrowingIteratorProtocol+Reduce.swift
+[97/436] Compiling ContainersPreview BorrowingIteratorProtocol+SpanwiseZip.swift
+[98/436] Emitting module ContainersPreview
+[99/436] Compiling OrderedCollections OrderedSet+Codable.swift
+[100/436] Compiling OrderedCollections OrderedSet+CustomReflectable.swift
+[101/436] Compiling OrderedCollections OrderedSet+Descriptions.swift
+[102/436] Compiling OrderedCollections OrderedSet+Diffing.swift
+[103/436] Compiling OrderedCollections OrderedSet+Equatable.swift
+[104/436] Compiling OrderedCollections OrderedSet+ExpressibleByArrayLiteral.swift
+[105/442] Compiling ContainersPreview OutputSpan+Extras.swift
+[106/442] Compiling ContainersPreview TemporaryAllocation.swift
+[107/442] Compiling ContainersPreview BorrowingIteratorProtocol+Copy.swift
+[108/442] Compiling ContainersPreview BorrowingIteratorProtocol+ElementsEqual.swift
+[109/442] Compiling OrderedCollections OrderedSet+Partial SetAlgebra isStrictSubset.swift
+[110/442] Compiling OrderedCollections OrderedSet+Partial SetAlgebra isStrictSuperset.swift
+[111/442] Compiling OrderedCollections OrderedSet+Partial SetAlgebra isSubset.swift
+[112/442] Compiling OrderedCollections OrderedSet+Partial SetAlgebra isSuperset.swift
+[113/442] Compiling OrderedCollections OrderedSet+Partial SetAlgebra subtract.swift
+[114/442] Compiling OrderedCollections OrderedSet+Partial SetAlgebra subtracting.swift
+[133/442] Compiling OrderedCollections OrderedSet+Hashable.swift
+[134/442] Compiling OrderedCollections OrderedSet+Initializers.swift
+[135/442] Compiling OrderedCollections OrderedSet+Insertions.swift
+[136/442] Compiling OrderedCollections OrderedSet+Invariants.swift
+[137/442] Compiling OrderedCollections OrderedSet+Partial MutableCollection.swift
+[138/442] Compiling OrderedCollections OrderedSet+Partial RangeReplaceableCollection.swift
+[144/442] Compiling OrderedCollections OrderedDictionary.swift
+[145/442] Emitting module Crypto
+[153/451] Compiling OrderedCollections OrderedSet+SubSequence.swift
+[154/451] Compiling OrderedCollections OrderedSet+Testing.swift
+[155/451] Compiling OrderedCollections OrderedSet+UnorderedView.swift
+[156/451] Compiling OrderedCollections OrderedSet+UnstableInternals.swift
+[157/451] Compiling OrderedCollections OrderedSet.swift
+[158/451] Compiling OrderedCollections _UnsafeBitset.swift
+[158/451] Compiling transforms.cpp
+[160/492] Compiling DequeModule UniqueDeque+Append.swift
+[161/492] Compiling DequeModule UniqueDeque+Consumption.swift
+[162/492] Compiling DequeModule UniqueDeque+Container.swift
+[163/492] Compiling DequeModule UniqueDeque+Descriptions.swift
+[164/496] Compiling DequeModule Deque+Codable.swift
+[165/496] Compiling DequeModule Deque+Collection.swift
+[166/496] Compiling DequeModule Deque+CustomReflectable.swift
+[167/496] Compiling DequeModule Deque+Descriptions.swift
+[168/496] Compiling DequeModule Deque+Equatable.swift
+[169/496] Compiling DequeModule Deque+ExpressibleByArrayLiteral.swift
+[170/496] Emitting module OrderedCollections
+[170/496] Compiling primitives.cpp
+[171/496] Compiling safetensors.cpp
+[173/496] Compiling DequeModule RigidDeque+Consumption.swift
+[174/496] Compiling DequeModule RigidDeque+Container.swift
+[175/496] Compiling DequeModule RigidDeque+Descriptions.swift
+[176/496] Compiling DequeModule RigidDeque+Equatable.swift
+[177/496] Compiling DequeModule RigidDeque+Experimental.swift
+[178/496] Compiling DequeModule RigidDeque+Hashable.swift
+[179/496] Compiling DequeModule RigidDeque+Initializers.swift
+[180/496] Compiling DequeModule RigidDeque+Insertions.swift
+[181/496] Compiling DequeModule RigidDeque+Prepend.swift
+[182/510] Compiling DequeModule RigidDeque+Removals.swift
+[183/510] Compiling DequeModule RigidDeque+Replacements.swift
+[184/510] Compiling DequeModule RigidDeque+Testing.swift
+[185/510] Compiling DequeModule RigidDeque.swift
+[186/510] Compiling DequeModule UniqueDeque+Equatable.swift
+[187/510] Compiling DequeModule UniqueDeque+Experimental.swift
+[188/510] Compiling DequeModule UniqueDeque+Hashable.swift
+[189/510] Compiling DequeModule UniqueDeque+Initializers.swift
+[190/510] Compiling DequeModule UniqueDeque+Insertions.swift
+[191/510] Compiling DequeModule UniqueDeque+Prepend.swift
+[192/510] Compiling DequeModule UniqueDeque+Removals.swift
+[193/510] Compiling DequeModule UniqueDeque+Replacements.swift
+[194/510] Compiling Jinja Macro.swift
+[195/510] Compiling Jinja Parser.swift
+[196/510] Compiling Jinja AST.swift
+[197/510] Compiling Jinja Error.swift
+[198/510] Compiling Jinja Filters.swift
+[199/510] Compiling Jinja Globals.swift
+[200/510] Compiling Jinja Interpreter.swift
+[201/510] Compiling Jinja Lexer.swift
+[202/510] Compiling DequeModule Deque+Testing.swift
+[203/510] Compiling DequeModule Deque._Storage.swift
+[213/510] Compiling DequeModule Deque._UnsafeHandle.swift
+[214/510] Compiling DequeModule Deque.swift
+[215/510] Compiling DequeModule _DequeBuffer.swift
+[216/510] Compiling DequeModule _DequeBufferHeader.swift
+[217/510] Compiling DequeModule RigidDeque+Append.swift
+[232/510] Compiling Crypto PKCS8PrivateKey.swift
+[233/510] Compiling Crypto SEC1PrivateKey.swift
+[234/510] Compiling Crypto SubjectPublicKeyInfo.swift
+[235/510] Compiling Crypto CryptoError_boring.swift
+[236/510] Compiling Crypto CryptoKitErrors.swift
+[237/510] Compiling Crypto Digest_boring.swift
+[238/510] Compiling Crypto Digest.swift
+[239/510] Compiling Crypto Digests.swift
+[240/510] Compiling Crypto HashFunctions.swift
+[241/510] Compiling Crypto HashFunctions_SHA2.swift
+[242/510] Compiling Crypto Ed25519Keys.swift
+[243/510] Compiling Crypto NISTCurvesKeys.swift
+[244/510] Compiling Crypto X25519Keys.swift
+[245/510] Compiling Crypto SymmetricKeys.swift
+[246/510] Compiling Crypto HMAC.swift
+[247/510] Compiling Crypto MACFunctions.swift
+[248/510] Compiling Crypto MessageAuthenticationCode.swift
+[249/510] Compiling Crypto AES.swift
+[250/510] Compiling Crypto ECDSASignature_boring.swift
+[263/510] Compiling DequeModule UniqueDeque.swift
+[264/510] Compiling DequeModule _DequeSlot.swift
+[265/510] Compiling DequeModule _UnsafeDequeHandle.swift
+[266/510] Compiling DequeModule _UnsafeDequeSegments.swift
+[274/510] Compiling Crypto HPKE-Context.swift
+[275/510] Compiling Crypto HPKE-KeySchedule.swift
+[276/510] Compiling Crypto HPKE-Modes.swift
+[277/510] Compiling Crypto Insecure.swift
+[278/510] Compiling Crypto Insecure_HashFunctions.swift
+[294/510] Compiling Crypto Optional+withUnsafeBytes_boring.swift
+[295/510] Compiling Crypto RNG_boring.swift
+[296/510] Compiling Crypto SafeCompare_boring.swift
+[297/510] Compiling Crypto Zeroization_boring.swift
+[298/510] Compiling Crypto PrettyBytes.swift
+[299/510] Compiling Crypto SafeCompare.swift
+[300/510] Compiling Crypto SecureBytes.swift
+[301/510] Compiling Crypto Zeroization.swift
+[302/510] Compiling Crypto resource_bundle_accessor.swift
+[302/510] Compiling fft.cpp
+[303/510] Compiling graph_utils.cpp
+[304/510] Compiling load.cpp
+[305/510] Compiling no_ring.cpp
+[305/510] Compiling dtype.cpp
+[307/510] Compiling fast.cpp
+[308/510] Compiling utils.cpp
+[309/510] Compiling dtype_utils.cpp
+[311/510] Emitting module DequeModule
+[315/510] Compiling einsum.cpp
+[317/510] Compiling Jinja PropertyMembers.swift
+[317/511] Compiling ops.cpp
+[318/511] Compiling no_nccl.cpp
+[319/511] Compiling no_mpi.cpp
+[320/511] Compiling no_jaccl.cpp
+[322/511] Compiling Jinja Utilities.swift
+[323/511] Compiling Jinja Template.swift
+[324/511] Compiling Jinja Token.swift
+[327/511] Compiling Jinja Tests.swift
+[329/511] Compiling device.cpp
+[331/511] Compiling Jinja Value.swift
+[331/511] Compiling ops.cpp
+[332/511] Compiling primitives.cpp
+[333/511] Compiling distributed.cpp
+[337/511] Emitting module Jinja
+[339/511] Compiling utils.cpp
+[340/511] Compiling unary.cpp
+[341/511] Compiling ternary.cpp
+[342/511] Compiling sort.cpp
+[343/511] Compiling compile.cpp
+[344/511] Compiling scan.cpp
+[345/511] Compiling softmax.cpp
+[346/511] Compiling slicing.cpp
+[347/511] Compiling scaled_dot_product_attention.cpp
+[348/511] Compiling resident.cpp
+[349/511] Compiling rope.cpp
+[350/511] Compiling reduce.cpp
+[351/511] Compiling metal.cpp
+[352/511] Compiling primitives.cpp
+[353/511] Compiling quantized.cpp
+[354/511] Compiling export.cpp
+[355/511] Compiling normalization.cpp
+[356/511] Compiling matmul.cpp
+[357/511] Compiling logsumexp.cpp
+[358/511] Compiling jit_kernels.cpp
+[359/511] Compiling fence.cpp
+[360/511] Compiling indexing.cpp
+[361/511] Compiling event.cpp
+[362/511] Compiling hadamard.cpp
+[363/511] Compiling distributed.cpp
+[364/511] Compiling device_info.cpp
+[365/511] Compiling eval.cpp
+[366/511] Compiling fft.cpp
+[367/511] Compiling slicing.cpp
+[368/511] Compiling primitives.cpp
+[369/511] Compiling device.cpp
+[370/511] Compiling threefry.cpp
+[371/511] Compiling copy.cpp
+[372/511] Compiling allocator.cpp
+[373/511] Compiling binary.cpp
+[374/511] Compiling compiled.cpp
+[375/511] Compiling conv.cpp
+[376/511] Compiling no_cuda.cpp
+[377/511] Compiling copy.cpp
+[378/511] Compiling custom_kernel.cpp
+[379/511] Compiling select.cpp
+[380/511] Compiling softmax.cpp
+[381/511] Compiling scan.cpp
+[382/511] Compiling svd.cpp
+[383/511] Compiling primitives.cpp
+[384/511] Compiling quantized.cpp
+[385/511] Compiling qrf.cpp
+[386/511] Compiling sort.cpp
+[387/511] Compiling unary.cpp
+[388/511] Compiling reduce.cpp
+[389/511] Compiling jit_compiler.cpp
+[390/511] Compiling matmul.cpp
+[391/511] Compiling logsumexp.cpp
+[392/511] Compiling hadamard.cpp
+[393/511] Compiling masked_mm.cpp
+[394/511] Compiling luf.cpp
+[395/511] Compiling cblas.cpp
+[396/511] Compiling bnns.cpp
+[397/511] Compiling inverse.cpp
+[398/511] Compiling encoder.cpp
+[399/511] Compiling eval.cpp
+[400/511] Compiling fft.cpp
+[401/511] Compiling device_info.cpp
+[402/511] Compiling distributed.cpp
+[403/511] Compiling utils.cpp
+[404/511] Compiling indexing.cpp
+[405/511] Compiling arg_reduce.cpp
+[406/511] Compiling slicing.cpp
+[407/511] Compiling eig.cpp
+[407/511] Compiling eigh.cpp
+[409/511] Compiling reduce.cpp
+[410/511] Compiling cholesky.cpp
+[411/511] Compiling utils.cpp
+[412/511] Compiling unary_ops.cpp
+[413/511] Compiling unary.cpp
+[414/511] Compiling ternary_ops.cpp
+[415/511] Compiling ternary.cpp
+[416/511] Compiling steel_gemm_splitk_nax.cpp
+[417/511] Compiling steel_gemm_splitk.cpp
+[418/511] Compiling steel_gemm_segmented.cpp
+[419/511] Compiling steel_gemm_masked.cpp
+[420/511] Compiling steel_gemm_gather.cpp
+[421/511] Compiling steel_gemm_gather_nax.cpp
+[422/511] Compiling steel_gemm_fused_nax.cpp
+[423/511] Compiling steel_gemm_fused.cpp
+[424/511] Compiling steel_conv_general.cpp
+[425/511] Compiling steel_conv_3d.cpp
+[426/511] Compiling steel_conv.cpp
+[427/511] Compiling steel_attention_nax.cpp
+[428/511] Compiling steel_attention.cpp
+[429/511] Compiling sort.cpp
+[430/511] Compiling softmax.cpp
+[431/511] Compiling scatter.cpp
+[432/511] Compiling scatter_axis.cpp
+[433/511] Compiling scan.cpp
+[434/511] Compiling reduce_utils.cpp
+[435/511] Compiling reduce.cpp
+[436/511] Compiling quantized_utils.cpp
+[437/511] Compiling broadcasting.cpp
+[438/511] Compiling quantized_nax.cpp
+[439/511] Compiling quantized.cpp
+[440/511] Compiling masked_scatter.cpp
+[441/511] Compiling logsumexp.cpp
+[442/511] Compiling hadamard.cpp
+[443/511] Compiling gemv_masked.cpp
+[444/511] Compiling gemm.cpp
+[445/511] Compiling conv.cpp
+[446/511] Compiling gemm_nax.cpp
+[447/511] Compiling gather_front.cpp
+[448/511] Compiling fp_quantized_nax.cpp
+[449/511] Compiling gather_axis.cpp
+[450/511] Compiling gather.cpp
+[451/511] Compiling fft.cpp
+[451/511] Compiling fp_quantized.cpp
+[453/511] Compiling copy.cpp
+[454/511] Compiling conv.cpp
+[455/511] Compiling compiled_preamble.cpp
+[456/511] Compiling binary_two.cpp
+[457/511] Compiling binary_ops.cpp
+[458/511] Compiling binary.cpp
+[459/511] Compiling arange.cpp
+[460/511] Compiling compiled.cpp
+[461/511] Compiling load.cpp
+[462/511] Compiling common.cpp
+[463/511] Compiling array.cpp
+[464/511] Compiling copy.cpp
+[465/511] Compiling version.cpp
+[466/511] Compiling transforms_impl.cpp
+[467/511] Compiling string.cpp
+[468/511] Compiling transforms.cpp
+[469/511] Compiling stream.cpp
+[470/511] Compiling vector.cpp
+[471/511] Compiling random.cpp
+[472/511] Compiling compiled_conditional.cpp
+[473/511] Compiling memory.cpp
+[474/511] Compiling ops.cpp
+[475/511] Compiling metal.cpp
+[476/511] Compiling io_types.cpp
+[477/511] Compiling linalg.cpp
+[478/511] Compiling map.cpp
+[479/511] Compiling io.cpp
+[480/511] Compiling error.cpp
+[481/511] Compiling fft.cpp
+[482/511] Compiling fast.cpp
+[483/511] Compiling CNIOWindows shim.c
+[484/511] Compiling CNIOWindows WSAStartup.c
+[485/511] Compiling CNIOWASI CNIOWASI.c
+[486/511] Compiling CNIOOpenBSD shim.c
+[487/511] Compiling CNIOLinux shim.c
+[488/511] Compiling CNIOLinux liburing_shims.c
+[489/511] Compiling cuda.cpp
+[490/511] Compiling export.cpp
+[491/511] Compiling device.cpp
+[492/511] Write sources
+[493/511] Compiling compile.cpp
+[494/511] Compiling CNIODarwin shim.c
+[495/511] Compiling format.cc
+[496/530] Compiling closure.cpp
+[497/530] Compiling Cmlx.m
+[499/530] Compiling Atomics ManagedAtomicLazyReference.swift
+[500/530] Compiling Atomics UnsafeAtomic.swift
+[501/530] Compiling Atomics DoubleWord.swift
+[502/530] Compiling Atomics ManagedAtomic.swift
+[503/530] Compiling Atomics AtomicReference.swift
+[504/530] Compiling Atomics AtomicStorage.swift
+[505/531] Compiling Atomics Unmanaged extensions.swift
+[505/531] Compiling array.cpp
+[506/531] Compiling binary.cpp
+[508/545] Compiling MLX MLXArray+Normalizer.swift
+[509/545] Compiling MLX MLXArray+Ops.swift
+[510/545] Compiling MLX ErrorHandler.swift
+[511/545] Compiling MLX Export.swift
+[512/545] Compiling MLX DType.swift
+[513/545] Compiling MLX Device.swift
+[514/545] Emitting module Atomics
+[515/546] Compiling MLX FFT.swift
+[516/546] Compiling MLX Factory.swift
+[517/547] Compiling MLX MLXArray.swift
+[518/547] Compiling MLX MLXCustomFunction.swift
+[519/548] Compiling MLX Transforms+Eval.swift
+[520/548] Compiling MLX Transforms+Grad.swift
+[520/567] Compiling c-nioatomics.c
+[521/567] Compiling c-atomics.c
+[523/574] Compiling NIOConcurrencyHelpers NIOLockedValueBox.swift
+[524/574] Compiling NIOConcurrencyHelpers lock.swift
+[525/574] Emitting module NIOConcurrencyHelpers
+[526/574] Compiling NIOConcurrencyHelpers NIOThreadPoolWorkAvailable.swift
+[527/574] Compiling NIOConcurrencyHelpers NIOLock.swift
+[528/574] Compiling NIOConcurrencyHelpers atomics.swift
+[529/574] Compiling NIOConcurrencyHelpers NIOAtomic.swift
+[530/639] Compiling NIOCore ByteBuffer-views.swift
+[531/639] Compiling NIOCore Channel.swift
+[532/639] Compiling NIOCore NIOPooledRecvBufferAllocator.swift
+[533/642] Compiling NIOCore ChannelHandler.swift
+[534/642] Compiling NIOCore ChannelHandlers.swift
+[535/642] Compiling NIOCore ChannelInvoker.swift
+[536/642] Compiling NIOCore ChannelOption.swift
+[538/642] Compiling NIOCore NIOScheduledCallback.swift
+[539/642] Compiling NIOCore NIOSendable.swift
+[540/642] Compiling NIOCore NIOSplitLinesMessageDecoder.swift
+[541/642] Compiling NIOCore NIOTransportAccessibleChannelCore.swift
+[542/642] Compiling NIOCore RecvByteBufferAllocator.swift
+[543/642] Compiling NIOCore SingleStepByteToMessageDecoder.swift
+[544/649] Compiling NIOCore IO.swift
+[545/649] Compiling NIOCore IOData.swift
+[546/649] Compiling NIOCore IPProtocol.swift
+[547/649] Compiling NIOCore IntegerBitPacking.swift
+[548/649] Compiling NIOCore IntegerTypes.swift
+[549/649] Compiling NIOCore Interfaces.swift
+[550/649] Compiling NIOCore Linux.swift
+[551/649] Compiling NIOCore AddressedEnvelope.swift
+[552/649] Compiling NIOCore AsyncAwaitSupport.swift
+[553/649] Compiling NIOCore AsyncChannel.swift
+[554/649] Compiling NIOCore AsyncChannelHandler.swift
+[555/649] Compiling NIOCore AsyncChannelInboundStream.swift
+[556/649] Compiling NIOCore AsyncChannelOutboundWriter.swift
+[557/649] Compiling NIOCore NIOAsyncSequenceProducer.swift
+[558/649] Compiling NIOCore NIOAsyncSequenceProducerStrategies.swift
+[559/649] Compiling NIOCore EventLoopFuture+Deprecated.swift
+[560/649] Compiling NIOCore EventLoopFuture+WithEventLoop.swift
+[561/649] Compiling NIOCore EventLoopFuture.swift
+[562/649] Compiling NIOCore FileDescriptor.swift
+[563/649] Compiling NIOCore FileHandle.swift
+[564/649] Compiling NIOCore FileRegion.swift
+[565/649] Compiling MLX Transforms+Vmap.swift
+[570/649] Emitting module MLX
+[572/649] Compiling MLX Transforms.swift
+[573/649] Compiling MLX WiredMemory.swift
+[574/649] Compiling NIOCore ChannelPipeline.swift
+[575/649] Compiling NIOCore CircularBuffer.swift
+[576/649] Compiling NIOCore Codec.swift
+[577/649] Compiling NIOCore ByteBuffer-hex.swift
+[578/649] Compiling NIOCore ByteBuffer-int.swift
+[579/649] Compiling NIOCore ByteBuffer-lengthPrefix.swift
+[580/649] Compiling NIOCore ByteBuffer-multi-int.swift
+[581/649] Compiling NIOCore ByteBuffer-quicBinaryEncodingStrategy.swift
+[594/649] Compiling NIOCore SocketAddresses.swift
+[595/649] Compiling NIOCore SocketOptionProvider.swift
+[596/649] Compiling NIOCore SystemCallHelpers.swift
+[597/649] Compiling NIOCore TimeAmount+Duration.swift
+[598/649] Compiling NIOCore TypeAssistedChannelHandler.swift
+[599/649] Compiling NIOCore UniversalBootstrapSupport.swift
+[600/649] Compiling NIOCore Utilities.swift
+[612/674] Compiling MLXLinalg Linalg.swift
+[613/674] Emitting module MLXLinalg
+[614/674] Compiling MLXFast MLXFast.swift
+[615/674] Compiling MLXFast MLXFastKernel.swift
+[616/674] Emitting module MLXFast
+[617/674] Emitting module MLXRandom
+[618/674] Compiling MLXRandom Random.swift
+[621/674] Compiling NIOCore DispatchQueue+WithFuture.swift
+[622/674] Compiling NIOCore EventLoop+Deprecated.swift
+[623/674] Compiling NIOCore EventLoop+SerialExecutor.swift
+[624/674] Compiling NIOCore EventLoop.swift
+[625/674] Compiling NIOCore EventLoopFuture+AssumeIsolated.swift
+[626/674] Compiling NIOCore MarkedCircularBuffer.swift
+[627/674] Compiling NIOCore MulticastChannel.swift
+[628/674] Compiling NIOCore NIOAny.swift
+[629/674] Compiling NIOCore NIOCloseOnErrorHandler.swift
+[630/674] Compiling NIOCore NIOCoreSendableMetatype.swift
+[631/674] Compiling NIOCore NIODecodedAsyncSequence.swift
+[632/674] Compiling NIOCore NIOLoopBound.swift
+[633/674] Compiling NIOCore NIOAsyncWriter.swift
+[634/674] Compiling NIOCore NIOThrowingAsyncSequenceProducer.swift
+[635/674] Compiling NIOCore BSDSocketAPI.swift
+[636/674] Compiling NIOCore ByteBuffer-aux.swift
+[637/674] Compiling NIOCore ByteBuffer-binaryEncodedLengthPrefix.swift
+[638/674] Compiling NIOCore ByteBuffer-conversions.swift
+[639/674] Compiling NIOCore ByteBuffer-core.swift
+[640/674] Compiling MLXNN Containers.swift
+[641/674] Compiling MLXNN Convolution.swift
+[642/674] Compiling MLXNN ConvolutionTransposed.swift
+[643/674] Compiling MLXNN Dropout.swift
+[644/675] Compiling MLXNN Normalization.swift
+[645/675] Compiling MLXNN Pooling.swift
+[646/675] Compiling MLXNN ValueAndGrad.swift
+[647/675] Compiling MLXNN Activations.swift
+[648/675] Compiling MLXNN Cache.swift
+[649/675] Emitting module MLXNN
+[650/675] Compiling MLXNN PositionalEncoding.swift
+[651/675] Compiling MLXNN Quantized.swift
+[652/675] Compiling MLXNN Recurrent.swift
+[653/675] Compiling MLXNN Transformer.swift
+[654/675] Compiling MLXNN Upsample.swift
+[655/675] Compiling MLXNN Embedding.swift
+[656/675] Compiling MLXNN Linear.swift
+[657/675] Compiling MLXNN Losses.swift
+[658/675] Compiling MLXNN Module.swift
+[659/677] Emitting module MLXOptimizers
+[660/677] Compiling MLXOptimizers Optimizers.swift
+[661/677] Emitting module NIOCore
+[669/682] Compiling EventSource EventSource+AsyncHTTPClient.swift
+[670/682] Compiling EventSource EventSource.swift
+[671/682] Compiling EventSource AsyncSequence+Events.swift
+[672/682] Compiling EventSource AsyncEventsSequence.swift
+[673/682] Emitting module EventSource
+[674/732] Compiling HuggingFace OAuth.swift
+[675/732] Compiling HuggingFace Organization.swift
+[676/732] Compiling HuggingFace Pagination.swift
+[677/732] Compiling HuggingFace Paper.swift
+[678/732] Compiling HuggingFace Repo.swift
+[679/737] Compiling HuggingFace File.swift
+[680/737] Compiling HuggingFace Git.swift
+[681/737] Compiling HuggingFace HubCache.swift
+[682/737] Compiling HuggingFace HubClient+Collections.swift
+[683/737] Compiling HuggingFace HubClient+Datasets.swift
+[684/737] Compiling HuggingFace HubClient+Discussions.swift
+[685/737] Compiling HuggingFace CacheLocationProvider.swift
+[686/737] Compiling HuggingFace Data+Extensions.swift
+[687/737] Compiling HuggingFace JSONDecoder+Extensions.swift
+[688/737] Compiling HuggingFace URL+Extensions.swift
+[689/737] Compiling HuggingFace URLSession+Linux.swift
+[690/737] Compiling HuggingFace ResourceGroup.swift
+[691/737] Compiling HuggingFace Space.swift
+[692/737] Compiling HuggingFace Tags.swift
+[693/737] Compiling HuggingFace User.swift
+[694/737] Compiling HuggingFace ChatCompletion.swift
+[695/737] Compiling HuggingFace AccessRequest.swift
+[696/737] Compiling HuggingFace Billing.swift
+[697/737] Compiling HuggingFace Collection.swift
+[698/737] Compiling HuggingFace CommaSeparatedList.swift
+[699/737] Compiling HuggingFace Dataset.swift
+[700/737] Compiling HuggingFace Discussion.swift
+[701/737] Compiling HuggingFace FileLock.swift
+[702/737] Compiling HuggingFace HTTPClient.swift
+[703/737] Compiling HuggingFace MultipartBuilder.swift
+[704/737] Compiling HuggingFace TokenProvider.swift
+[705/737] Compiling HuggingFace Value.swift
+[706/737] Compiling HuggingFace HubClient+Files.swift
+[707/737] Compiling HuggingFace HubClient+Git.swift
+[708/737] Compiling HuggingFace HubClient+Models.swift
+[709/737] Compiling HuggingFace HubClient+OAuth.swift
+[710/737] Compiling HuggingFace HubClient+Organizations.swift
+[711/737] Compiling HuggingFace HubClient+Pagination.swift
+[712/737] Emitting module HuggingFace
+[713/737] Compiling HuggingFace TextToImage.swift
+[714/737] Compiling HuggingFace TextToVideo.swift
+[715/737] Compiling HuggingFace HuggingFaceAuthenticationManager.swift
+[716/737] Compiling HuggingFace OAuthClient.swift
+[717/737] Compiling HuggingFace TokenStorage.swift
+[718/737] Compiling HuggingFace FeatureExtraction.swift
+[719/737] Compiling HuggingFace InferenceClient.swift
+[720/737] Compiling HuggingFace Message.swift
+[721/737] Compiling HuggingFace Provider.swift
+[722/737] Compiling HuggingFace SpeechToText.swift
+[723/737] Compiling HuggingFace HubClient+Papers.swift
+[724/737] Compiling HuggingFace HubClient+Repos.swift
+[725/737] Compiling HuggingFace HubClient+Spaces.swift
+[726/737] Compiling HuggingFace HubClient+User.swift
+[727/737] Compiling HuggingFace HubClient.swift
+[728/737] Compiling HuggingFace Model.swift
+[729/744] Compiling Hub HubApi.swift
+[730/744] Compiling Hub Hub.swift
+[731/744] Compiling Hub BinaryDistinct.swift
+[732/744] Emitting module Hub
+[733/744] Compiling Hub YYJSONParser.swift
+[734/744] Compiling Hub Config.swift
+[735/744] Compiling Hub resource_bundle_accessor.swift
+[736/756] Emitting module Tokenizers
+[737/756] Compiling Tokenizers BPETokenizer.swift
+[738/756] Compiling Tokenizers BertTokenizer.swift
+[739/756] Compiling Tokenizers ByteEncoder.swift
+[740/756] Compiling Tokenizers Decoder.swift
+[741/756] Compiling Tokenizers Tokenizer.swift
+[742/756] Compiling Tokenizers String+PreTokenization.swift
+[743/756] Compiling Tokenizers Normalizer.swift
+[744/756] Compiling Tokenizers Trie.swift
+[745/756] Compiling Tokenizers PostProcessor.swift
+[746/756] Compiling Tokenizers TokenLattice.swift
+[747/756] Compiling Tokenizers PreTokenizer.swift
+[748/757] Compiling Tokenizers UnigramTokenizer.swift
+[749/767] Compiling Generation TopKLogitsWarper.swift
+[750/767] Compiling Generation TemperatureLogitsWarper.swift
+[751/767] Compiling Generation TopPLogitsWarper.swift
+[752/767] Compiling Generation RepetitionPenaltyLogitsProcessor.swift
+[753/767] Compiling Generation MinPLogitsWarper.swift
+[754/767] Compiling Generation GenerationConfig.swift
+[755/767] Compiling Generation LogitsProcessor.swift
+[756/767] Compiling Generation Decoders.swift
+[757/767] Emitting module Generation
+[758/767] Compiling Generation Generation.swift
+[759/771] Compiling Models LanguageModelTypes.swift
+[760/771] Compiling Models Weights.swift
+[761/771] Compiling Models LanguageModel.swift
+[762/771] Emitting module Models
+[763/818] Compiling MLXLMCommon Tokenizer.swift
+[764/818] Compiling MLXLMCommon GLM4ToolCallParser.swift
+[765/818] Compiling MLXLMCommon GemmaFunctionParser.swift
+[766/818] Compiling MLXLMCommon JSONToolCallParser.swift
+[767/818] Compiling MLXLMCommon KimiK2ToolCallParser.swift
+[768/823] Compiling MLXLMCommon Tool.swift
+[769/823] Compiling MLXLMCommon ToolCall.swift
+[770/823] Compiling MLXLMCommon ToolCallFormat.swift
+[771/823] Compiling MLXLMCommon ToolCallProcessor.swift
+[772/823] Compiling MLXLMCommon ToolParameter.swift
+[773/823] Compiling MLXLMCommon ModelContainer.swift
+[774/823] Compiling MLXLMCommon ModelFactory.swift
+[775/823] Compiling MLXLMCommon Gemma.swift
+[776/823] Compiling MLXLMCommon Module+Extensions.swift
+[777/823] Compiling MLXLMCommon AbstractModelRegistry.swift
+[778/823] Compiling MLXLMCommon DoRA+Layers.swift
+[779/823] Compiling MLXLMCommon LoRA+Layers.swift
+[780/823] Compiling MLXLMCommon LoRAContainer.swift
+[781/823] Compiling MLXLMCommon LoRAModel.swift
+[782/823] Compiling MLXLMCommon ModelAdapter.swift
+[783/823] Compiling MLXLMCommon ModelAdapterFactory.swift
+[784/823] Compiling MLXLMCommon MiniMaxM2ToolCallParser.swift
+[785/823] Compiling MLXLMCommon MistralToolCallParser.swift
+[786/823] Compiling MLXLMCommon ParserUtilities.swift
+[787/823] Compiling MLXLMCommon PythonicToolCallParser.swift
+[788/823] Compiling MLXLMCommon XMLFunctionParser.swift
+[789/823] Emitting module MLXLMCommon
+[790/823] Compiling MLXLMCommon ModelTypeRegistry.swift
+[791/823] Compiling MLXLMCommon ProcessorTypeRegistry.swift
+[792/823] Compiling MLXLMCommon RoPEUtils.swift
+[793/823] Compiling MLXLMCommon SuScaledRoPE.swift
+[794/823] Compiling MLXLMCommon SwitchLayers.swift
+[795/823] Compiling MLXLMCommon Evaluate.swift
+[796/823] Compiling MLXLMCommon Encodable+toolResult.swift
+[797/823] Compiling MLXLMCommon JSONDecoder+JSON5.swift
+[798/823] Compiling MLXLMCommon GenerationConfigFile.swift
+[799/823] Compiling MLXLMCommon InterpolationUtils.swift
+[800/823] Compiling MLXLMCommon JSONDecodingTypes.swift
+[801/823] Compiling MLXLMCommon KVCache.swift
+[802/823] Compiling MLXLMCommon LanguageModel.swift
+[803/823] Compiling MLXLMCommon Load.swift
+[804/823] Compiling MLXLMCommon ModelConfiguration.swift
+[805/823] Compiling MLXLMCommon ModelAdapterTypeRegistry.swift
+[806/823] Compiling MLXLMCommon AttentionUtils.swift
+[807/823] Compiling MLXLMCommon BaseConfiguration.swift
+[808/823] Compiling MLXLMCommon Chat.swift
+[809/823] Compiling MLXLMCommon ChatSession.swift
+[810/823] Compiling MLXLMCommon Value.swift
+[811/823] Compiling MLXLMCommon UserInput.swift
+[812/823] Compiling MLXLMCommon SerialAccessContainer.swift
+[813/823] Compiling MLXLMCommon WiredMemoryPolicies.swift
+[814/823] Compiling MLXLMCommon WiredMemoryUtils.swift
+[815/873] Compiling MLXLLM MiniMax.swift
+[816/873] Compiling MLXLLM Mistral3Text.swift
+[817/873] Compiling MLXLLM NanoChat.swift
+[818/873] Compiling MLXLLM NemotronH.swift
+[819/873] Compiling MLXLLM Olmo2.swift
+[820/878] Compiling MLXLLM LLMModel.swift
+[821/878] Compiling MLXLLM LLMModelFactory.swift
+[822/878] Compiling MLXLLM Lora+Data.swift
+[823/878] Compiling MLXLLM LoraTrain.swift
+[824/878] Compiling MLXLLM AfMoE.swift
+[825/878] Compiling MLXLLM Apertus.swift
+[826/878] Compiling MLXLLM Lille130m.swift
+[827/878] Compiling MLXLLM Llama.swift
+[828/878] Compiling MLXLLM MiMo.swift
+[829/878] Compiling MLXLLM MiMoV2Flash.swift
+[830/878] Compiling MLXLLM MiniCPM.swift
+[831/878] Compiling MLXLLM Olmo3.swift
+[832/878] Compiling MLXLLM OlmoE.swift
+[833/878] Compiling MLXLLM OpenELM.swift
+[834/878] Compiling MLXLLM Phi.swift
+[835/878] Compiling MLXLLM Phi3.swift
+[836/878] Emitting module MLXLLM
+[837/878] Compiling MLXLLM PhiMoE.swift
+[838/878] Compiling MLXLLM Qwen2.swift
+[839/878] Compiling MLXLLM Qwen3.swift
+[840/878] Compiling MLXLLM Qwen35.swift
+[841/878] Compiling MLXLLM Qwen35MoE.swift
+[842/878] Compiling MLXLLM GraniteMoeHybrid.swift
+[843/878] Compiling MLXLLM Internlm2.swift
+[844/878] Compiling MLXLLM Jamba.swift
+[845/878] Compiling MLXLLM LFM2.swift
+[846/878] Compiling MLXLLM LFM2MoE.swift
+[847/878] Compiling MLXLLM GatedDelta.swift
+[848/878] Compiling MLXLLM Gemma.swift
+[849/878] Compiling MLXLLM Gemma2.swift
+[850/878] Compiling MLXLLM Gemma3Text.swift
+[851/878] Compiling MLXLLM Gemma3nText.swift
+[852/878] Compiling MLXLLM Granite.swift
+[853/878] Compiling MLXLLM BaichuanM1.swift
+[854/878] Compiling MLXLLM BailingMoe.swift
+[855/878] Compiling MLXLLM Bitnet.swift
+[856/878] Compiling MLXLLM Cohere.swift
+[857/878] Compiling MLXLLM DeepseekV3.swift
+[858/878] Compiling MLXLLM Ernie4_5.swift
+[859/878] Compiling MLXLLM Exaone4.swift
+[860/878] Compiling MLXLLM FalconH1.swift
+[861/878] Compiling MLXLLM GLM4.swift
+[862/878] Compiling MLXLLM GLM4MOE.swift
+[863/878] Compiling MLXLLM GLM4MOELite.swift
+[864/878] Compiling MLXLLM GPTOSS.swift
+[865/878] Compiling MLXLLM Qwen3MoE.swift
+[866/878] Compiling MLXLLM Qwen3Next.swift
+[867/878] Compiling MLXLLM SSM.swift
+[868/878] Compiling MLXLLM SmolLM3.swift
+[869/878] Compiling MLXLLM Starcoder2.swift
+[870/1025] Emitting module EliteAgentCore
+[871/1041] Compiling EliteAgentCore OllamaManager.swift
+[872/1041] Compiling EliteAgentCore OllamaProvider.swift
+[873/1041] Compiling EliteAgentCore OpenRouterProvider.swift
+[874/1041] Compiling EliteAgentCore OutputSchemaGuard.swift
+[875/1041] Compiling EliteAgentCore PerformanceArbiter.swift
+[876/1041] Compiling EliteAgentCore PromptCacheManager.swift
+[877/1041] Compiling EliteAgentCore PromptCacheMonitor.swift
+[878/1041] Compiling EliteAgentCore PromptRegistry.swift
+[879/1041] Compiling EliteAgentCore SessionContext.swift
+[880/1041] Compiling EliteAgentCore SystemPrompts.swift
+[881/1041] Compiling EliteAgentCore TokenAccountant.swift
+[882/1041] Compiling EliteAgentCore TokenBudgetActor.swift
+[883/1041] Compiling EliteAgentCore TokenGuardConfig.swift
+[884/1041] Compiling EliteAgentCore Tokenizer.swift
+[885/1041] Compiling EliteAgentCore UNOGrammarLogitProcessor.swift
+[886/1041] Compiling EliteAgentCore MCPGateway.swift
+[887/1041] Compiling EliteAgentCore TulparActor.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[888/1041] Compiling EliteAgentCore BrowserAgent.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[889/1041] Compiling EliteAgentCore BrowserEngine.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[890/1041] Compiling EliteAgentCore CoordinateBridge.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[891/1041] Compiling EliteAgentCore SafariJSBridge.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[892/1041] Compiling EliteAgentCore AppSettings.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[893/1041] Compiling EliteAgentCore ConfigManager.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[894/1041] Compiling EliteAgentCore KeychainHelper.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[895/1041] Compiling EliteAgentCore VaultManager.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[896/1041] Compiling EliteAgentCore Exports.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[897/1041] Compiling EliteAgentCore SystemWatchdog.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[898/1041] Compiling EliteAgentCore AutoRecoveryEngine.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[899/1041] Compiling EliteAgentCore BridgeProvider.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[900/1041] Compiling EliteAgentCore ChatProcessState.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[901/1041] Compiling EliteAgentCore CloudProvider.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[902/1041] Compiling EliteAgentCore HarpsichordBridge.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[903/1041] Compiling EliteAgentCore InferenceActor.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:263:32: warning: no 'async' operations occur within 'await' expression
+261 |         return AsyncStream(String.self) { continuation in
+262 |             self.currentGenerationTask = Task { [self] in
+263 |                 defer { Task { await self.setGenerationTaskNil() } }
+    |                                `- warning: no 'async' operations occur within 'await' expression
+264 |                 let finalSystemPrompt = systemPrompt ?? "You are EliteAgent, a powerful AI assistant."
+265 |                 // v9.2: Accurate Multi-turn ChatML Construction
+
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift:348:13: warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+346 |         // v13.7: Initialize Grammar Processor with Tool Discovery
+347 |         let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+348 |         let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+    |             `- warning: initialization of immutable value 'grammarProcessor' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+349 |         
+350 |         // v13.7: Use stable sampling 
+[904/1041] Compiling EliteAgentCore ToolRegistry.swift
+[905/1041] Compiling EliteAgentCore ToolSignature.swift
+[906/1041] Compiling EliteAgentCore AppDiscoveryTool.swift
+[907/1041] Compiling EliteAgentCore BackgroundWebScraper.swift
+[908/1041] Compiling EliteAgentCore CommunicationTools.swift
+[909/1041] Compiling EliteAgentCore EcosystemTools.swift
+[910/1041] Compiling EliteAgentCore ExtraUtilityTools.swift
+[911/1041] Compiling EliteAgentCore FileTools.swift
+[912/1041] Compiling EliteAgentCore GitTool.swift
+[913/1041] Compiling EliteAgentCore ImageAnalysisTool.swift
+[914/1041] Compiling EliteAgentCore MediaControllerTool.swift
+[915/1041] Compiling EliteAgentCore MemoryTool.swift
+[916/1041] Compiling EliteAgentCore MessengerTool.swift
+[917/1041] Compiling EliteAgentCore MusicDNATool.swift
+[918/1041] Compiling EliteAgentCore NativeBrowserTool.swift
+[919/1041] Compiling EliteAgentCore PatchTool.swift
+[920/1041] Compiling EliteAgentCore AudioLoader.swift
+[921/1041] Compiling EliteAgentCore CQTEngine.swift
+[922/1041] Compiling EliteAgentCore ChromaEngine.swift
+[923/1041] Compiling EliteAgentCore DNAReportBuilder.swift
+[924/1041] Compiling EliteAgentCore DSPHelpers.swift
+[925/1041] Compiling EliteAgentCore FilterbankEngine.swift
+[926/1041] Compiling EliteAgentCore ForensicDNAEngine.swift
+[927/1041] Compiling EliteAgentCore HPSSEngine.swift
+[928/1041] Compiling EliteAgentCore MFCCEngine.swift
+[929/1041] Compiling EliteAgentCore MelFilterBank.swift
+[930/1041] Compiling EliteAgentCore MelSpectrogramEngine.swift
+[931/1041] Compiling EliteAgentCore MusicDNAReporter.swift
+[932/1041] Compiling EliteAgentCore OnsetEngine.swift
+[933/1041] Compiling EliteAgentCore RhythmEngine.swift
+[934/1041] Compiling EliteAgentCore STFTEngine.swift
+[935/1041] Compiling EliteAgentCore SpectralEngine.swift
+[936/1041] Compiling EliteAgentCore ProductivityTools.swift
+[937/1041] Compiling EliteAgentCore ReadFileTool.swift
+[938/1041] Compiling EliteAgentCore ResearchReportTool.swift
+[939/1041] Compiling EliteAgentCore SafariAutomationTool.swift
+[940/1041] Compiling EliteAgentCore ShellTool.swift
+[941/1041] Compiling EliteAgentCore ShortcutDiscoveryTool.swift
+[942/1041] Compiling EliteAgentCore ShortcutExecutionTool.swift
+[943/1041] Compiling EliteAgentCore SubagentTool.swift
+[944/1041] Compiling EliteAgentCore SystemTelemetryTool.swift
+[945/1041] Compiling EliteAgentCore UtilityTools.swift
+[946/1041] Compiling EliteAgentCore WebFetchTool.swift
+[947/1041] Compiling EliteAgentCore WebSearchTool.swift
+[948/1041] Compiling EliteAgentCore WebTools.swift
+[949/1041] Compiling EliteAgentCore WriteFileTool.swift
+[950/1041] Compiling EliteAgentCore AccessibilityTool.swift
+[951/1041] Compiling EliteAgentCore ChicagoVisionTool.swift
+[952/1041] Compiling EliteAgentCore AISessionState.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[953/1041] Compiling EliteAgentCore ChatModels.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[954/1041] Compiling EliteAgentCore ModelSource.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[955/1041] Compiling EliteAgentCore SignalBus.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[956/1041] Compiling EliteAgentCore Types.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[957/1041] Compiling EliteAgentCore ModelPickerViewModel.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[958/1041] Compiling EliteAgentCore VisualizerView.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[959/1041] Compiling EliteAgentCore UNODistributedActorSystem.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[960/1041] Compiling EliteAgentCore UNOTransport.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[961/1041] Compiling EliteAgentCore UsageTracker.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[962/1041] Compiling EliteAgentCore AgentLogger.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[963/1041] Compiling EliteAgentCore AppleScriptRunner.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[964/1041] Compiling EliteAgentCore AsyncUtils.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[965/1041] Compiling EliteAgentCore AudioArchitect.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[966/1041] Compiling EliteAgentCore AutoConfigManager.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[967/1041] Compiling EliteAgentCore LogicGate.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift:77:69: warning: conditional cast from 'String' to 'String' always succeeds
+ 75 |         
+ 76 |         // Handle String fallback cleanly to avoid redundant cast warnings
+ 77 |         if Res.self == String.self, let resString = response.result as? String {
+    |                                                                     `- warning: conditional cast from 'String' to 'String' always succeeds
+ 78 |             return resString as! Res
+ 79 |         }
+[968/1041] Compiling EliteAgentCore AgentProtocol.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[969/1041] Compiling EliteAgentCore CriticAgent.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[970/1041] Compiling EliteAgentCore CriticTemplate.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[971/1041] Compiling EliteAgentCore EliteCoordinator.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[972/1041] Compiling EliteAgentCore ExecutorAgent.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[973/1041] Compiling EliteAgentCore GuardAgent.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[974/1041] Compiling EliteAgentCore InternalMonologueActor.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[975/1041] Compiling EliteAgentCore MemoryAgent.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[976/1041] Compiling EliteAgentCore Orchestrator.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[977/1041] Compiling EliteAgentCore OrchestratorRuntime.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[978/1041] Compiling EliteAgentCore PlannerAgent.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[979/1041] Compiling EliteAgentCore PlannerTemplate.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[980/1041] Compiling EliteAgentCore ProjectObserver.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[981/1041] Compiling EliteAgentCore SelfHealingEngine.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[982/1041] Compiling EliteAgentCore Session.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[983/1041] Compiling EliteAgentCore TaskClassifier.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[984/1041] Compiling EliteAgentCore ToolPrivacyGate.swift
+/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Agents/EliteCoordinator.swift:64:13: warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+62 |         let physicalMemGB = ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)
+63 |         
+64 |         var baseLevel = Int(physicalMemGB / 8) // 1 worker per 8GB RAM
+   |             `- warning: variable 'baseLevel' was never mutated; consider changing to 'let' constant
+65 |         
+66 |         switch thermal {
+[985/1041] Compiling EliteAgentCore InferenceValidator.swift
+[986/1041] Compiling EliteAgentCore LLMConnectionTestService.swift
+[987/1041] Compiling EliteAgentCore LLMHealthTypes.swift
+[988/1041] Compiling EliteAgentCore LLMModel.swift
+[989/1041] Compiling EliteAgentCore LLMProvider.swift
+[990/1041] Compiling EliteAgentCore LLMTypes.swift
+[991/1041] Compiling EliteAgentCore LocalModelHealthMonitor.swift
+[992/1041] Compiling EliteAgentCore LocalModelWatchdog.swift
+[993/1041] Compiling EliteAgentCore MLXEngineGuardian.swift
+[994/1041] Compiling EliteAgentCore MLXProvider.swift
+[995/1041] Compiling EliteAgentCore ModelCatalog.swift
+[996/1041] Compiling EliteAgentCore ModelError.swift
+[997/1041] Compiling EliteAgentCore ModelLoader.swift
+[998/1041] Compiling EliteAgentCore ModelManager.swift
+[999/1041] Compiling EliteAgentCore ModelSetupManager.swift
+[1000/1041] Compiling EliteAgentCore ModelStateManager.swift
+[1001/1041] Compiling EliteAgentCore DreamActor.swift
+[1002/1041] Compiling EliteAgentCore DynamicContextManager.swift
+[1003/1041] Compiling EliteAgentCore EmbeddingService.swift
+[1004/1041] Compiling EliteAgentCore ExperienceVault.swift
+[1005/1041] Compiling EliteAgentCore GitStateEngine.swift
+[1006/1041] Compiling EliteAgentCore MetricsStore.swift
+[1007/1041] Compiling EliteAgentCore MusicDNAModels.swift
+[1008/1041] Compiling EliteAgentCore AuditLoggerActor.swift
+[1009/1041] Compiling EliteAgentCore PromptSanitizer.swift
+[1010/1041] Compiling EliteAgentCore SecuritySentinel.swift
+[1011/1041] Compiling EliteAgentCore WorkspaceManager.swift
+[1012/1041] Compiling EliteAgentCore AgentTool.swift
+[1013/1041] Compiling EliteAgentCore ApplicationIntelligence.swift
+[1014/1041] Compiling EliteAgentCore CategoryMapper.swift
+[1015/1041] Compiling EliteAgentCore PluginManager.swift
+[1016/1041] Compiling EliteAgentCore ToolEngine.swift
+[1017/1041] Compiling EliteAgentCore SpectralFeatureEngine.swift
+[1018/1041] Compiling EliteAgentCore StructureEngine.swift
+[1019/1041] Compiling EliteAgentCore UtilityEngine.swift
+[1020/1041] Compiling EliteAgentCore WaveformRenderer.swift
+[1021/1041] Compiling EliteAgentCore YINEngine.swift
+[1022/1041] Compiling EliteAgentCore Notifications.swift
+[1023/1041] Compiling EliteAgentCore PathConfiguration.swift
+[1024/1041] Compiling EliteAgentCore RegressionAudit.swift
+[1025/1041] Compiling EliteAgentCore ShortcutCache.swift
+[1026/1041] Compiling EliteAgentCore HardwareMonitor.swift
+[1027/1041] Compiling EliteAgentCore UXTelemetryManager.swift
+[1028/1041] Compiling EliteAgentCore ThinkParser.swift
+[1029/1041] Compiling EliteAgentCore UpdaterService.swift
+[1030/1041] Compiling EliteAgentCore VisionAnalyzer.swift
+[1031/1041] Compiling EliteAgentCore XPCManager.swift
+[1032/1041] Compiling EliteAgentCore resource_bundle_accessor.swift
+[1033/1065] Compiling EliteAgentXPC main.swift
+[1034/1065] Emitting module EliteAgentXPC
+[1034/1065] Write Objects.LinkFileList
+[1036/1065] Emitting module elite
+[1037/1065] Compiling elite main.swift
+[1037/1065] Write Objects.LinkFileList
+[1039/1065] Compiling EliteAgent SettingsView.swift
+[1040/1065] Compiling EliteAgent ToolsSettingsView.swift
+[1041/1065] Compiling EliteAgent DebugDashboard.swift
+[1042/1065] Compiling EliteAgent EliteAgentApp.swift
+[1043/1065] Compiling EliteAgent FileUploadZone.swift
+[1044/1065] Compiling EliteAgent FirstChatHintsView.swift
+[1045/1067] Compiling EliteAgent LLMHealthDashboardView.swift
+[1046/1067] Compiling EliteAgent MenuBarController.swift
+[1047/1067] Compiling EliteAgent OnboardingWizardView.swift
+[1048/1067] Compiling EliteAgent SelfHealingOverlay.swift
+[1049/1067] Compiling EliteAgent MusicDNACard.swift
+[1050/1067] Compiling EliteAgent WaveformView.swift
+[1051/1067] Compiling EliteAgent MenuBarView.swift
+[1052/1067] Compiling EliteAgent ModelSetupView.swift
+[1053/1067] Emitting module EliteAgent
+[1054/1067] Compiling EliteAgent ChatWindowController.swift
+[1055/1067] Compiling EliteAgent ChatWindowView.swift
+[1056/1067] Compiling EliteAgent AdvancedSettingsView.swift
+[1057/1067] Compiling EliteAgent AgentProcessTimeline.swift
+[1058/1067] Compiling EliteAgent ChatView+ProcessIntegration.swift
+[1059/1067] Compiling EliteAgent UsageDashboardView.swift
+[1060/1067] Compiling EliteAgent ResearchReportView.swift
+[1060/1067] Write Objects.LinkFileList
+[1061/1067] Linking EliteAgentXPC
+[1062/1067] Linking elite
+[1063/1067] Applying elite
+[1064/1067] Applying EliteAgentXPC
+[1065/1067] Linking EliteAgent
+[1066/1067] Applying EliteAgent
+Build complete! (70.68s)
