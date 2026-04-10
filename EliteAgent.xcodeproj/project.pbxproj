@@ -8,6 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		AE7BBEDA2F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
+		AE7BD8C72F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8C82F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8C92F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8CA2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8CB2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8CC2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8CD2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8CE2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8CF2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8D02F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8D12F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE7BD8D22F895B6D00FDE202 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
+		AE7BD8D32F895B6D00FDE202 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
+		AE7BD8D42F895B6D00FDE202 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
+		AE7BD8D52F895B6D00FDE202 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
+		AE7BD8D62F895B6D00FDE202 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
+		AE7BD8D72F895B6D00FDE202 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
+		AE7BD8D82F895B6D00FDE202 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
+		AE7BD8D92F895B6D00FDE202 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
+		AE7BD8DA2F895B6D00FDE202 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
+		AE7BD8DB2F895B6D00FDE202 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
+		AE7BD8DC2F895B6D00FDE202 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
+		AE7BD8DD2F895B6D00FDE202 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
 		AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
 		AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
 		AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
@@ -116,19 +139,30 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE7BD8DD2F895B6D00FDE202 /* Numerics in Frameworks */,
+				AE7BD8DA2F895B6D00FDE202 /* MLXLLM in Frameworks */,
 				AE7BBEDA2F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */,
-				AE7BBEE12F885C0100FDE204 /* Numerics in Frameworks */,
-				AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */,
-				AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */,
-				AEB132EF2F79F6D900626F70 /* MLXVLM in Frameworks */,
-				AEB132E02F79F4FC00626F70 /* MLXLinalg in Frameworks */,
-				AEB132ED2F79F6D900626F70 /* MLXLMCommon in Frameworks */,
-				AEB132E92F79F6D900626F70 /* MLXEmbedders in Frameworks */,
-				AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */,
-				AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */,
-				AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */,
-				AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */,
-				AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */,
+				AE7BD8D52F895B6D00FDE202 /* MLXLinalg in Frameworks */,
+				AE7BD8C72F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8C82F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8D92F895B6D00FDE202 /* MLXEmbedders in Frameworks */,
+				AE7BD8D42F895B6D00FDE202 /* MLXFast in Frameworks */,
+				AE7BD8C92F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8D72F895B6D00FDE202 /* MLXOptimizers in Frameworks */,
+				AE7BD8CA2F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8CB2F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8D82F895B6D00FDE202 /* MLXRandom in Frameworks */,
+				AE7BD8D62F895B6D00FDE202 /* MLXNN in Frameworks */,
+				AE7BD8CC2F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8DB2F895B6D00FDE202 /* MLXLMCommon in Frameworks */,
+				AE7BD8CD2F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8CE2F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8CF2F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8D22F895B6D00FDE202 /* MLX in Frameworks */,
+				AE7BD8D32F895B6D00FDE202 /* MLXFFT in Frameworks */,
+				AE7BD8DC2F895B6D00FDE202 /* MLXVLM in Frameworks */,
+				AE7BD8D02F895B6D00FDE202 /* (null) in Frameworks */,
+				AE7BD8D12F895B6D00FDE202 /* (null) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -612,37 +646,22 @@
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_INCLUDE_PATHS = (
-					"$(inherited)",
-					"$(CONFIGURATION_BUILD_DIR)",
-					"$(SYMROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/include",
-					"/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include",
-					"/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include",
-					"/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src",
-				);
-				OTHER_SWIFT_FLAGS = (
-					"$(inherited)",
-					"-Xcc",
-					"-fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap",
-					"-Xcc",
-					"-fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap",
-					"-Xcc",
-					"-fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap",
-				);
-				SWIFT_VERSION = 6.0;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) $(SYMROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+				SWIFT_VERSION = 6.0;
 				XPC_SERVICE_JOIN_EXISTING_SESSION = YES;
 			};
 			name = Debug;
@@ -670,12 +689,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_INCLUDE_PATHS = (
-					"$(inherited)",
-					"$(CONFIGURATION_BUILD_DIR)",
-				);
-				SWIFT_VERSION = 6.0;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -721,6 +737,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-numerics.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.2;
+			};
+		};
 		AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
@@ -745,17 +769,14 @@
 				minimumVersion = 2.6.4;
 			};
 		};
-		AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-numerics.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.2;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AE7BBEDE2F885C0100FDE204 /* Numerics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = Numerics;
+		};
 		AEB132D92F79F4FC00626F70 /* MLX */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
@@ -815,11 +836,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
-		};
-		AE7BBEDE2F885C0100FDE204 /* Numerics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
-			productName = Numerics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
