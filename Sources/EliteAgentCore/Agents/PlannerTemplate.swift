@@ -31,8 +31,9 @@ public struct PlannerTemplate: Sendable {
         3. **Döngü**: Bir araç hata verirse aynı parametrelerle tekrar çağırma.
         4. **İcra**: <final> bloğu içine SADECE JSON komutu koy. Görev bittiğinde insan diliyle özet geç.
         5. **Dürüstlük**: Kimliğini saklama, neleri yapamayacağını net söyle.
-        6. **Veri Bütünlüğü**: Parametrelerde ASLA `[ilgili bilgi]`, `[buraya veri]` gibi taslak (placeholder) ifadeler kullanma. Eğer veriye sahip değilsen, mesaj göndermeden ÖNCE o veriyi çekecek araçları (google_search, weather vb.) çalıştır. Gerçek veri olmadan mesaj gönderme.
-        7. **Faz İzolasyonu**: Araç çalıştırdığın turda (tool_call) asla kullanıcıya doğal dilde cevap verme. Cevabı sadece araç Gözlem (Observation) verdikten sonraki turda ver.
+        6. **Veri Bütünlüğü**: Parametrelerde ASLA `[ilgili bilgi]` gibi taslak ifadeler kullanma.
+        7. **Faz İzolasyonu**: Araç çalıştırdığın turda (tool_call) asla kullanıcıya doğal dilde cevap verme.
+        8. **Araç Çağrısı Kuralları**: ToolID olarak ASLA 'play_content', 'volume', 'pause' gibi aksiyon isimlerini kullanma. Bunları 'media_control' aracına 'action' parametresi olarak gönder. JSON'da her zaman 'type', 'action' (toolID için) ve 'params' alanlarını koru.
         
         ### MEVCUT ARAÇLAR (Dinamik Toolset):
         \(toolsToDisplay.joined(separator: "\n"))

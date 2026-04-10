@@ -13,7 +13,7 @@ public struct PromptRegistry {
     
     public static func getPrompt(for role: AgentRole) -> String {
         switch role {
-        case .planner(let tools, _, let context):
+        case .planner(_, _, _):
             // v11.8: Planner prompts are now managed by PlannerTemplate for agentic consistency.
             // The 'tools' parameter here is still used as a fallback if dynamic subsetting is disabled.
             return "Planner prompt is now handled dynamically in OrchestratorRuntime via PlannerTemplate."

@@ -49,7 +49,7 @@ public struct UtilityTools: Sendable {
             sensitivityLevel: .public,
             complexity: 2
         )
-        let res = try await provider.complete(req)
+        let res = try await provider.complete(req, useSafeMode: false)
         return res.content
     }
 }

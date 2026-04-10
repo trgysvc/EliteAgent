@@ -60,7 +60,7 @@ public actor MLXProvider: LocalLLMProvider {
         return appSupport.appendingPathComponent("EliteAgent/Models/\(name)")
     }
     
-    public func complete(_ request: CompletionRequest) async throws -> CompletionResponse {
+    public func complete(_ request: CompletionRequest, useSafeMode: Bool) async throws -> CompletionResponse {
         let startTime = Date()
         
         // v10.5.5: Full Transparency - Log Input
@@ -72,7 +72,8 @@ public actor MLXProvider: LocalLLMProvider {
         let stream = await InferenceActor.shared.generate(
             messages: messages, 
             systemPrompt: request.systemPrompt,
-            maxTokens: request.maxTokens
+            maxTokens: request.maxTokens,
+            useSafeMode: useSafeMode
         )
         
         var fullContent = ""

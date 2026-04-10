@@ -13,6 +13,7 @@ public struct CategoryMapper {
         .fileProcessing: ["read_file", "write_file", "path_tool", "file_manager", "patch_tool"],
         .codeGeneration: ["read_file", "write_file", "shell_exec", "git_action", "patch_tool"],
         .hardware: ["get_system_telemetry", "system_status"],
+        .weather: ["get_weather"],
         .conversation: ["memory", "whatsapp", "email"],
         .chat: ["memory"]
     ]

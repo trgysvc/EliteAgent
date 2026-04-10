@@ -54,7 +54,7 @@ public actor DreamActor {
                 complexity: 2
             )
             
-            let response = try await cloudProvider.complete(request)
+            let response = try await cloudProvider.complete(request, useSafeMode: false)
             
             // v10.0: Net-Savings Validation (25% Threshold)
             let rawLogTokens = l1Text.count / 4

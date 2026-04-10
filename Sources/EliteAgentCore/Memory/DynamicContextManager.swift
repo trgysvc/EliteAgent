@@ -60,7 +60,7 @@ public actor DynamicContextManager {
                 complexity: 2
             )
             
-            let response = try await provider.complete(summaryRequest)
+            let response = try await provider.complete(summaryRequest, useSafeMode: false)
             let summaryMessage = Message(role: "system", content: "### GEÇMİŞ ÖZETİ (HISTORICAL SUMMARY):\n\(response.content)")
             
             self.messages = immutableHead + [summaryMessage] + tail

@@ -6,18 +6,18 @@ public final class ThinkParser {
 
     public static func cleanForUI(text: String) -> String {
         var cleaned = text
-        // v10.5.7: More aggressive thinking/markdown removal
+        // v11.9: Better balance between cleaning and preserving data
         cleaned = cleaned.replacingOccurrences(of: "<think>[\\s\\S]*?</think>", with: "", options: .regularExpression, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "<think>[\\s\\S]*?$", with: "", options: .regularExpression, range: nil) // Handle partial streaming
+        cleaned = cleaned.replacingOccurrences(of: "<think>[\\s\\S]*?$", with: "", options: .regularExpression, range: nil)
         cleaned = cleaned.replacingOccurrences(of: "```(?:json)?[\\s\\S]*?```", with: "", options: .regularExpression, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "```tool_code[\\s\\S]*?```", with: "", options: .regularExpression, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "\\[\\s*\\{[\\s\\S]*?\\}\\s*\\]", with: "", options: .regularExpression, range: nil)
+        
+        // Only strip arrays from UI if they look like ToolCall steps (v11.9 refinement)
+        cleaned = cleaned.replacingOccurrences(of: "\\[\\s*\\{[\\s\\S]*?\"(toolID|action|stepID)\"[\\s\\S]*?\\}\\s*\\]", with: "", options: .regularExpression, range: nil)
+        
+        // Strip single tool call objects from UI
+        cleaned = cleaned.replacingOccurrences(of: "\\{\\s*\"(type|toolID|action)\"\\s*:\\s*\"(tool_call|[^\"]+)\"[\\s\\S]*?\\}", with: "", options: .regularExpression, range: nil)
+        
         cleaned = cleaned.replacingOccurrences(of: "<[\\|｜][^|｜]*[\\|｜]>", with: "", options: .regularExpression, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "<\\/?invoke[^>]*>", with: "", options: .regularExpression, range: nil)
-        
-        // Standard markdown cleanup if any left
-        cleaned = cleaned.replacingOccurrences(of: "```[\\s\\S]*?```", with: "", options: .regularExpression, range: nil)
-        
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -85,7 +85,7 @@ public final class ThinkParser {
                 let str = String(data: data, encoding: .utf8) ?? ""
                 
                 // v11.7: Aggressive Tool Call Recovery
-                if let toolMatch = str.range(of: "\"toolID\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
+                if let _ = str.range(of: "\"toolID\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
                     let pattern = "\"toolID\"\\s*:\\s*\"([^\"]*)\""
                     if let regex = try? NSRegularExpression(pattern: pattern, options: []),
                        let match = regex.firstMatch(in: str, options: [], range: NSRange(location: 0, length: str.utf16.count)) {
@@ -102,7 +102,7 @@ public final class ThinkParser {
                     }
                 }
 
-                if let resultMatch = str.range(of: "\"result\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
+                if let _ = str.range(of: "\"result\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
                     let pattern = "\"result\"\\s*:\\s*\"([^\"]*)\""
                     if let regex = try? NSRegularExpression(pattern: pattern, options: []),
                        let match = regex.firstMatch(in: str, options: [], range: NSRange(location: 0, length: str.utf16.count)) {

@@ -32,7 +32,7 @@ public struct SystemTelemetryTool: AgentTool {
         let activeProcessorCount = processInfo.activeProcessorCount
         let upTime = processInfo.systemUptime
         
-        let report = "[TELEMETRY] Thermal:\(thermalState.rawValue)(\(currentTemp != nil ? "\(Int(currentTemp!))C" : "NA")), Cores:\(activeProcessorCount)/\(processorCount), RAM:\(String(format: "%.1f", memoryStats.used))/\(String(format: "%.1f", memoryStats.total))GB, Uptime:\(Int(upTime / 3600))h, M-Series:\(isAppleSilicon())"
+        let report = "[TELEMETRY] Thermal:\(thermalDescription), Cores:\(activeProcessorCount)/\(processorCount), RAM:\(String(format: "%.1f", memoryStats.used))/\(String(format: "%.1f", memoryStats.total))GB, Uptime:\(Int(upTime / 3600))h, M-Series:\(isAppleSilicon())"
         
         return report
     }

@@ -21,6 +21,8 @@ public struct CalculatorTool: AgentTool {
     }
 }
 
+import MapKit
+
 public struct WeatherTool: AgentTool {
     public let name = "get_weather"
     public let description = "Get weather for a location using native macOS services. Parametre: location (string)."
@@ -32,11 +34,16 @@ public struct WeatherTool: AgentTool {
             throw ToolError.missingParameter("location")
         }
         
-        let geocoder = CLGeocoder()
-        let placemarks = try? await geocoder.geocodeAddressString(locationName)
+        // v13.8: Using modern MapKit geocoding (macOS 15 standard)
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = locationName
+        request.resultTypes = .address
         
-        guard let location = placemarks?.first?.location else {
-            return "Üzgünüm, '\(locationName)' konumu bulunamadı."
+        let search = MKLocalSearch(request: request)
+        let response = try? await search.start()
+        
+        guard let location = response?.mapItems.first?.placemark.location else {
+            return "Üzgünüm, '\(locationName)' konumu bulunamadı (MapKit)."
         }
         
         if #available(macOS 13.0, *) {

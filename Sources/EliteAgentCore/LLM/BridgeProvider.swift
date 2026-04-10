@@ -85,7 +85,7 @@ public actor BridgeProvider: LLMProvider {
         }
     }
     
-    public func complete(_ request: CompletionRequest) async throws -> CompletionResponse {
+    public func complete(_ request: CompletionRequest, useSafeMode: Bool) async throws -> CompletionResponse {
         // 1. Pre-flight check
         try await preFlightCheck()
         
@@ -106,7 +106,7 @@ public actor BridgeProvider: LLMProvider {
             "model": modelName,
             "messages": openAIMessages,
             "max_tokens": request.maxTokens,
-            "temperature": request.temperature ?? 0.7
+            "temperature": useSafeMode ? 0.0 : (request.temperature ?? 0.7)
         ]
         
         urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)

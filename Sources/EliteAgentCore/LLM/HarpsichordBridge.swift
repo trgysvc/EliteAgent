@@ -64,7 +64,7 @@ public actor HarpsichordBridge {
                 throw InferenceError.localProviderUnavailable("Strict local mode: \(health.displayString)")
             }
             
-            return try await provider.complete(request)
+            return try await provider.complete(request, useSafeMode: false)
         }
         
         // 3. Normal Routing
@@ -96,7 +96,7 @@ public actor HarpsichordBridge {
             if await provider.healthCheck() {
                 self.lastProviderID = pID
                 self.lastRouteTime = Date()
-                return try await provider.complete(request)
+                return try await provider.complete(request, useSafeMode: false)
             }
         }
         
@@ -135,7 +135,7 @@ public actor HarpsichordBridge {
                 do {
                     // For now, most providers use routeAndComplete bridge.
                     // In v7.9, we will implement native AsyncStream for each provider.
-                    let result = try await provider.complete(request)
+                    let result = try await provider.complete(request, useSafeMode: false)
                     
                     // Simulate stream for immediate UI feedback
                     let words = result.content.split(separator: " ", omittingEmptySubsequences: false)

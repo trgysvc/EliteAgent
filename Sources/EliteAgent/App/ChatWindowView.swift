@@ -141,6 +141,12 @@ public struct ChatWindowView: View {
                         }
                     }
                     
+                    if let statusMsg = orchestrator.overlayMessage {
+                        StatusOverlayView(message: statusMsg)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .padding(.bottom, 8)
+                    }
+                    
                     inputArea
                 }
                 
@@ -333,9 +339,7 @@ struct ChatBubble: View {
             if message.role == .user { Spacer() }
             
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 8) {
-                if message.isStatus {
-                    StatusAnimationBubble(content: message.content)
-                } else if let report = tryParseReport(message.content) {
+                if let report = tryParseReport(message.content) {
                     ResearchReportView(report: report).frame(maxWidth: 600)
                 } else {
                     Text(message.content)
@@ -359,34 +363,7 @@ struct ChatBubble: View {
     }
 }
 
-struct StatusAnimationBubble: View {
-    let content: String
-    @State private var isAnimating = false
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(content)
-                .font(.subheadline.italic())
-            
-            HStack(spacing: 4) {
-                Circle().frame(width: 5, height: 5).scaleEffect(isAnimating ? 1 : 0.5).opacity(isAnimating ? 1 : 0.3)
-                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(0), value: isAnimating)
-                Circle().frame(width: 5, height: 5).scaleEffect(isAnimating ? 1 : 0.5).opacity(isAnimating ? 1 : 0.3)
-                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(0.2), value: isAnimating)
-                Circle().frame(width: 5, height: 5).scaleEffect(isAnimating ? 1 : 0.5).opacity(isAnimating ? 1 : 0.3)
-                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(0.4), value: isAnimating)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color.secondary.opacity(0.15))
-        .foregroundStyle(Color.secondary)
-        .cornerRadius(16)
-        .onAppear {
-            isAnimating = true
-        }
-    }
-}
+
 
 struct WorkflowView: View {
     @ObservedObject var orchestrator: Orchestrator
@@ -461,4 +438,34 @@ struct FooterButton: View {
 struct StepIcon: View {
     let status: String
     var body: some View { Image(systemName: status == "done" ? "checkmark.circle.fill" : "circle").foregroundColor(status == "done" ? .green : .secondary) }
+}
+struct StatusOverlayView: View {
+    let message: String
+    @State private var rotation: Double = 0
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "gearshape.fill")
+                .rotationEffect(.degrees(rotation))
+                .onAppear {
+                    withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+                        rotation = 360
+                    }
+                }
+                .foregroundStyle(Color.accentColor)
+            
+            Text(message)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.accentColor.opacity(0.2), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
+        .padding(.horizontal)
+    }
 }

@@ -77,6 +77,10 @@ public struct AgentLogger: Sendable {
         logAudit(level: .warn, agent: agent, message: message)
     }
 
+    public static func logError(_ message: String, agent: String = "Engine") {
+        logAudit(level: .error, agent: agent, message: message)
+    }
+
     public static func logSecurity(level: LogLevel, agent: String, message: String) {
         let isoFormatter = ISO8601DateFormatter()
         let timestamp = isoFormatter.string(from: Date())

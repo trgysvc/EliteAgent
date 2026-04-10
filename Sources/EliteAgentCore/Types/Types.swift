@@ -1,5 +1,9 @@
-import Foundation
 import CryptoKit
+
+public protocol UNOAction: Codable, Sendable {
+    var toolID: String { get }
+    var params: [String: AnyCodable] { get }
+}
 
 public enum AgentID: String, Codable, Sendable {
     case orchestrator
@@ -76,6 +80,7 @@ public enum TaskCategory: String, Codable, Sendable, CaseIterable {
     case conversation
     case hardware
     case status
+    case weather
     case chat
     case task
     case other
@@ -206,6 +211,31 @@ public struct ThinkBlock: Sendable {
     public init(thought: String, toolCall: ToolCall? = nil) {
         self.thought = thought
         self.toolCall = toolCall
+    }
+}
+
+public struct UNOResponse: Codable, Sendable {
+    public let result: String
+    public let error: String?
+    
+    public init(result: String, error: String? = nil) {
+        self.result = result
+        self.error = error
+    }
+}
+
+public protocol UNOToolExecutor {
+    func execute(action: UNOActionWrapper) async throws -> UNOResponse
+}
+
+// Wrapper for passing any UNOAction over the wire
+public struct UNOActionWrapper: Codable, Sendable {
+    public let toolID: String
+    public let params: [String: AnyCodable]
+    
+    public init(toolID: String, params: [String: AnyCodable]) {
+        self.toolID = toolID
+        self.params = params
     }
 }
 

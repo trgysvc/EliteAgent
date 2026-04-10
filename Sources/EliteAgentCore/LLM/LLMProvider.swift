@@ -9,7 +9,7 @@ public protocol LLMProvider: Actor {
     var status: ProviderStatus { get }
 
     func healthCheck() async -> Bool
-    func complete(_ request: CompletionRequest) async throws -> CompletionResponse
+    func complete(_ request: CompletionRequest, useSafeMode: Bool) async throws -> CompletionResponse
 }
 
 public protocol LocalLLMProvider: LLMProvider {}

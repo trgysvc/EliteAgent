@@ -42,12 +42,12 @@ public actor InternalMonologueActor {
             complexity: 5
         )
         
-        let response = try await provider.complete(request)
+        let response = try await provider.complete(request, useSafeMode: false)
         
         // Extract raw JSON — LLMs often wrap output in ```json ... ``` fences
         let rawJSON = Self.extractJSON(from: response.content)
         
-        guard let data = rawJSON.data(using: .utf8),
+        guard let data = rawJSON.data(using: String.Encoding.utf8),
               let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let strategies = result["strategies"] as? [[String: Any]],
               let selectedName = result["selected"] as? String,

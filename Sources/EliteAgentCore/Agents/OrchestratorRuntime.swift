@@ -18,6 +18,7 @@ public actor OrchestratorRuntime {
     private var onChatMessage: (@Sendable (ChatMessage) -> Void)?
     private var onStatusUpdate: (@Sendable (AgentStatus) -> Void)?
     private var onTokenUpdate: (@Sendable (TokenCount, Decimal) -> Void)?
+    private var onOverlayUpdate: (@Sendable (String?) -> Void)? // v13.4: Dedicated overlay channel
     
     private var turnsWithoutProgress = 0
     private let MAX_TURNS_WITHOUT_PROGRESS = 5
@@ -87,6 +88,7 @@ public actor OrchestratorRuntime {
     public func setChatMessageUpdateHandler(_ handler: @escaping @Sendable (ChatMessage) -> Void) { self.onChatMessage = handler }
     public func setStatusUpdateHandler(_ handler: @escaping @Sendable (AgentStatus) -> Void) { self.onStatusUpdate = handler }
     public func setTokenUpdateHandler(_ handler: @escaping @Sendable (TokenCount, Decimal) -> Void) { self.onTokenUpdate = handler }
+    public func setOverlayUpdateHandler(_ handler: @escaping @Sendable (String?) -> Void) { self.onOverlayUpdate = handler }
     
     public func interrupt() { self.isInterrupted = true }
     
@@ -108,14 +110,16 @@ public actor OrchestratorRuntime {
                 try? await Task.sleep(nanoseconds: interval * 1_000_000_000)
                 if Task.isCancelled { break } // v10.5.2: Immediate drop out if cancelled
                 let elapsed = Int(Date().timeIntervalSince(startTime))
-                self.onChatMessage?(ChatMessage(role: .assistant, content: "⚙️ \(self.currentAction) (\(elapsed)s)", isStatus: true))
+                
+                // v13.4: Move status from Chat Stream to Overlay
+                self.onOverlayUpdate?("⚙️ \(self.currentAction) (\(elapsed)s)")
             }
         }
         
         defer { 
             progressTask.cancel() 
             // v10.5.2: Force-clear transient status indicators on completion
-            self.onChatMessage?(ChatMessage(role: .assistant, content: "", isStatus: true))
+            self.onOverlayUpdate?(nil)
             Task {
                 await TulparActor.shared.recordEvent(.taskCompleted(success: true))
                 await DreamActor.shared.consolidateIfNeeded(memoryAgent: self.memory, cloudProvider: self.cloudProvider)
@@ -150,35 +154,36 @@ public actor OrchestratorRuntime {
                     try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session)
                     currentState = .completed
                 case .planning:
-                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session)
+                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session, useSafeMode: healingAttempts > 0)
                     currentState = .executing
                     healingAttempts = 0 // Reset on successful transition
                 case .executing:
                     do {
-                        let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config)
+                        let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0)
                         if !shouldContinue {
                             if let answer = finalAnswer { await session.setFinalAnswer(answer) }
                             currentState = .reviewing
                         } else {
                             currentState = .planning
                         }
-                    } catch let parserError as ParserError {
+                    } catch {
                         healingAttempts += 1
-                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Tetiklendi (Attempt \(healingAttempts)): \(parserError.localizedDescription)")
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Tetiklendi (Attempt \(healingAttempts)): \(error.localizedDescription)")
                         
                         if healingAttempts >= 3 {
-                            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚨 [HEALING LIMIT] Max attempts reached. Forcing completion with raw text.")
+                            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚨 [HEALING LIMIT] Max attempts reached.")
                             let history = await contextManager.getMessages()
-                            let rawText = ThinkParser.cleanForUI(text: history.last?.content ?? "")
-                            await session.setFinalAnswer(rawText)
+                            let lastResponse = history.last?.content ?? ""
+                            await session.setFinalAnswer(ThinkParser.cleanForUI(text: lastResponse))
                             currentState = .completed
                         } else {
                             if healingAttempts >= 2 {
                                 self.isEscalatedToFullTools = true
-                                AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🚀 [ESCALATION] Healing failed twice. Elevating to Full Master Toolset.")
                             }
-                            await contextManager.addMessage(Message(role: "user", content: "SİSTEM UYARISI: Gönderdiğin formattaki JSON geçersizdi. ASLA markdown (```json), düz metin veya <think> bloğu kullanma. YALNIZCA KURALA UYGUN TEK BİR RAW JSON OBJESİ GÖNDER. HATA DETAYI: \(parserError.localizedDescription)"))
-                            currentState = .planning // Self-heal: Retry planning
+                            
+                            let errorMsg = "SİSTEM UYARISI: Bir hata oluştu. Lütfen hatayı gidererek tekrar dene.\nHATA: \(error.localizedDescription)"
+                            await contextManager.addMessage(Message(role: "user", content: errorMsg))
+                            currentState = .planning // Retry planning with knowledge of the error
                         }
                     }
                 case .reviewing:
@@ -210,7 +215,7 @@ public actor OrchestratorRuntime {
         
         let systemPrompt = PromptRegistry.getPrompt(for: .classifier)
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [Message(role: "user", content: prompt)], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
-        let response = try await activeProvider.complete(request)
+        let response = try await activeProvider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY RESPONSE] \(response.content)")
         
@@ -238,7 +243,7 @@ public actor OrchestratorRuntime {
         let isLocal = provider.providerType == .local
         let speedHint = isLocal ? "\nNOTE: Be concise. Direct answer only." : ""
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1)
-        let response = try await provider.complete(request)
+        let response = try await provider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT INPUT] \(history.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT RESPONSE] \(response.content)")
         self.onTokenUpdate?(response.tokensUsed, response.costUSD)
@@ -247,7 +252,7 @@ public actor OrchestratorRuntime {
         await session.setFinalAnswer(response.content)
     }
     
-    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session) async throws {
+    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, useSafeMode: Bool = false) async throws {
         self.currentAction = "Plan Hazırlanıyor..."
         
         // v11.8: Dynamic Tool Filtering & Escalation Logic
@@ -276,13 +281,13 @@ public actor OrchestratorRuntime {
         let speedHint = isLocal ? "\nCRITICAL: You are running on a local SLM. BE EXTREMELY CONCISE. Use tool calls immediately if needed. Minimize verbose dialogue." : ""
         
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: isLocal ? 1 : 3)
-        let response = try await provider.complete(request)
+        let response = try await provider.complete(request, useSafeMode: useSafeMode)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
         if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
         await context.addMessage(Message(role: "assistant", content: response.content))
     }
     
-    private func handleExecution(provider: any LLMProvider, context: DynamicContextManager, session: Session, config: InferenceConfig) async throws -> (Bool, String?) {
+    private func handleExecution(provider: any LLMProvider, context: DynamicContextManager, session: Session, config: InferenceConfig, useSafeMode: Bool = false) async throws -> (Bool, String?) {
         let history = await context.getMessages()
         let lastMessage = history.last?.content ?? ""
         let parsedOutputs = try ThinkParser.parseOutputs(from: lastMessage)
@@ -335,7 +340,7 @@ public actor OrchestratorRuntime {
         let systemPrompt = PromptRegistry.getPrompt(for: .executor(plan: "In Progress", forbiddenPatterns: []))
         let newHistory = await context.getMessages()
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: newHistory, maxTokens: 4000, sensitivityLevel: .public, complexity: 2)
-        let response = try await provider.complete(request)
+        let response = try await provider.complete(request, useSafeMode: useSafeMode)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC INPUT] \(newHistory.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC RESPONSE] \(response.content)")
         self.onTokenUpdate?(response.tokensUsed, response.costUSD)
@@ -361,7 +366,7 @@ public actor OrchestratorRuntime {
         let lastResponse = lastHistory.last?.content ?? ""
         let systemPrompt = PromptRegistry.getPrompt(for: .critic(task: prompt, output: lastResponse, criteria: "Accuracy"))
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
-        let response = try await provider.complete(request)
+        let response = try await provider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚖️ [REVIEW] \(response.content)")
         return response.content.contains("\"passed\": true") || response.content.contains("passed: true")
     }

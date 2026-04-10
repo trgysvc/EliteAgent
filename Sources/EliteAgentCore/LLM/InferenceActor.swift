@@ -41,7 +41,13 @@ public actor InferenceActor {
         let buffer = device?.makeBuffer(length: size, options: .storageModeShared)
         self.sharedBuffer = MetalBufferWrapper(buffer)
         
-        MLX.Memory.cacheLimit = Int(ProcessInfo.processInfo.physicalMemory / 2)
+        // v13.9: Official MLX Unified Memory Optimization (PRD v17.4)
+        // Set GPU cache limit to 70% of physical memory for zero-copy inference
+        let memoryInfo = ProcessInfo.processInfo.physicalMemory
+        let cacheLimit = Int(Double(memoryInfo) * 0.7)
+        MLX.Memory.cacheLimit = cacheLimit
+        
+        AgentLogger.logInfo("[MLX-Opt] Unified Memory GPU Cache set to \(cacheLimit / 1024 / 1024) MB")
         _ = LLMModelFactory.shared
     }
     
@@ -88,7 +94,7 @@ public actor InferenceActor {
                                 sensitivityLevel: .public,
                                 complexity: 2
                             )
-                            let response = try await bridge.complete(request)
+                            let response = try await bridge.complete(request, useSafeMode: false)
                             continuation.yield(response.content)
                             self.conversationHistory.append(Message(role: "assistant", content: response.content))
                             continuation.finish()
@@ -107,7 +113,7 @@ public actor InferenceActor {
                             sensitivityLevel: .public,
                             complexity: 2
                         )
-                        let response = try await bridge.complete(request)
+                        let response = try await bridge.complete(request, useSafeMode: false)
                         continuation.yield(response.content)
                         self.conversationHistory.append(Message(role: "assistant", content: response.content))
                         continuation.finish()
@@ -146,7 +152,7 @@ public actor InferenceActor {
                             sensitivityLevel: .public,
                             complexity: 3
                         )
-                        let response = try await cloud.complete(request)
+                        let response = try await cloud.complete(request, useSafeMode: false)
                         continuation.yield(response.content)
                         self.conversationHistory.append(Message(role: "assistant", content: response.content))
                         continuation.finish()
@@ -251,7 +257,7 @@ public actor InferenceActor {
         }
     }
     
-    public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 500) -> AsyncStream<String> {
+    public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 500, useSafeMode: Bool = false) -> AsyncStream<String> {
         return AsyncStream(String.self) { continuation in
             self.currentGenerationTask = Task { [self] in
                 defer { Task { await self.setGenerationTaskNil() } }
@@ -289,7 +295,12 @@ public actor InferenceActor {
                             do {
                                 // v9.7: Wrap in Guardian for Timeout, OOM and Thermal protection.
                                 try await MLXEngineGuardian.shared.execute { [self] in
-                                    try await self.internalGenerate(formattedPrompt: promptToCapture, maxTokens: maxTokensToCapture, continuation: innerContinuation)
+                                    try await self.internalGenerate(
+                                        formattedPrompt: promptToCapture, 
+                                        maxTokens: maxTokensToCapture, 
+                                        continuation: innerContinuation,
+                                        useSafeMode: useSafeMode
+                                    )
                                 }
                             } catch let error as EngineError {
                                 innerContinuation.yield("⚠️ Engine Error: \(error.localizedDescription)")
@@ -323,18 +334,25 @@ public actor InferenceActor {
         self.conversationHistory.append(Message(role: "assistant", content: content))
     }
     
-    private func internalGenerate(formattedPrompt: String, maxTokens: Int, continuation: AsyncStream<String>.Continuation) async throws {
+    private func internalGenerate(formattedPrompt: String, maxTokens: Int, continuation: AsyncStream<String>.Continuation, useSafeMode: Bool = false) async throws {
         guard let container = self.modelContainer else {
             continuation.yield("Error: Engine not primed. Please load a model.")
             continuation.finish()
             return
         }
         
-        let bucketSize = 512 * 4 
-        let paddedPrompt = formattedPrompt.padding(toLength: ((formattedPrompt.count / bucketSize) + 1) * bucketSize, withPad: " ", startingAt: 0)
+        let lmInput = try await container.prepare(input: UserInput(prompt: formattedPrompt))
         
-        let lmInput = try await container.prepare(input: UserInput(prompt: paddedPrompt))
-        let parameters = GenerateParameters(maxTokens: maxTokens)
+        // v13.7: Initialize Grammar Processor with Tool Discovery
+        let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
+        let grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+        
+        // v13.7: Use stable sampling 
+        let parameters = GenerateParameters(
+            maxTokens: maxTokens,
+            temperature: useSafeMode ? 0.0 : 0.2, 
+            repetitionPenalty: useSafeMode ? 1.5 : 1.3
+        )
         let stream = try await container.generate(input: lmInput, parameters: parameters)
         
         for await generation in stream {

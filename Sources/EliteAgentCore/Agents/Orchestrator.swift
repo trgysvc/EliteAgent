@@ -20,6 +20,7 @@ public class Orchestrator: ObservableObject {
     @Published public var currentTask: String = ""
     @Published public var providerUsed: String = "Select Model"
     @Published public var config: InferenceConfig = .default
+    @Published public var overlayMessage: String? = nil
     
     // v7.8.0 Centralized State
     public var sessionState = AISessionState.shared
@@ -400,18 +401,18 @@ public class Orchestrator: ObservableObject {
                 Task { @MainActor in self?.status = status }
             }
             
+            await runtime.setOverlayUpdateHandler { [weak self] message in
+                Task { @MainActor in self?.overlayMessage = message }
+            }
+            
             await runtime.setChatMessageUpdateHandler { [weak self] msg in
                 Task { @MainActor in
                     if msg.isStatus {
-                        if let last = self?.currentMessages.last, last.isStatus {
-                            // Replace the last status message
-                            self?.currentMessages[(self?.currentMessages.count ?? 1) - 1] = msg
-                        } else {
-                            self?.currentMessages.append(msg)
-                        }
+                        // v13.4: Reroute status to overlay exclusively
+                        self?.overlayMessage = msg.content
                     } else {
-                        // An actual message arrived: remove transient status indicators!
-                        self?.currentMessages.removeAll { $0.isStatus }
+                        // An actual message arrived: remove transient overlay!
+                        self?.overlayMessage = nil
                         self?.currentMessages.append(msg)
                     }
                 }
@@ -451,7 +452,7 @@ public class Orchestrator: ObservableObject {
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
             
             // Clean any trailing status messages
-            self.currentMessages.removeAll { $0.isStatus }
+
             
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle
@@ -547,7 +548,7 @@ public class Orchestrator: ObservableObject {
                 sensitivityLevel: .public,
                 complexity: 1
             )
-            let response = try await provider.complete(request)
+            let response = try await provider.complete(request, useSafeMode: false)
             let cleanSummary = response.content.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                 .replacingOccurrences(of: "\"", with: "")
             
@@ -571,8 +572,8 @@ public class Orchestrator: ObservableObject {
                         sensitivityLevel: .public,
                         complexity: 1
                     )
-                    let response = try await local.complete(request)
-                    let cleanSummary = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let response = try await local.complete(request, useSafeMode: false)
+                    let cleanSummary = response.content.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                         .replacingOccurrences(of: "\"", with: "")
                     
                     await MainActor.run {

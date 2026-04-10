@@ -37,7 +37,7 @@ public actor CloudProvider: LLMProvider {
         return (try? await vaultManager.getAPIKey(for: providerConf)) != nil
     }
     
-    public func complete(_ request: CompletionRequest) async throws -> CompletionResponse {
+    public func complete(_ request: CompletionRequest, useSafeMode: Bool) async throws -> CompletionResponse {
         let apiKey: String
         do {
             print("[TRACE] CloudProvider: Retrieving API Key...")
@@ -67,7 +67,7 @@ public actor CloudProvider: LLMProvider {
             "model": modelName,
             "messages": openAIMessages,
             "max_tokens": request.maxTokens,
-            "temperature": request.temperature ?? 0.2
+            "temperature": useSafeMode ? 0.0 : (request.temperature ?? 0.2)
         ]
         
         urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)

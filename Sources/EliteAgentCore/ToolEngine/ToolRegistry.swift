@@ -68,6 +68,11 @@ public final class ToolRegistry {
     
     public func execute(toolCall: ToolCall, session: Session) async throws -> String {
         guard let tool = getTool(named: toolCall.tool) else {
+            // v11.9: Smart Feedback for miscalled sub-actions
+            let miscalledActions = ["play_content", "volume", "pause", "play", "next", "stop"]
+            if miscalledActions.contains(toolCall.tool) {
+                throw ToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' aracının bir aksiyonudur. Doğru kullanım: {\"toolID\": \"media_control\", \"params\": {\"action\": \"\(toolCall.tool)\", ...}}")
+            }
             throw ToolError.executionError("Tool not found: \(toolCall.tool)")
         }
         
