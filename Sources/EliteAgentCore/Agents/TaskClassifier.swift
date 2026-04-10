@@ -17,6 +17,7 @@ public struct TaskClassifier: Sendable {
         if p.contains("safari") || p.contains("xcode") || p.contains("figma") || p.contains("app") { return .applicationAutomation }
         if p.contains("tıkla") || p.contains("click") || p.contains("ekran") { return .computerUseAX }
         if p.contains("hava") || p.contains("sıcaklık") || p.contains("derece") || p.contains("forecast") || p.contains("weather") { return .weather }
+        if p.contains("whatsapp") || p.contains("mesaj") || p.contains("gönder") || p.contains("ileti") || p.contains("send message") { return .applicationAutomation }
         
         return .other
     }

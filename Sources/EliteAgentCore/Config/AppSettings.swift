@@ -29,7 +29,11 @@ public final class AppSettings: ObservableObject, Sendable {
     }
     
     private init() {
-        // Varsayılan olarak hepsi kapalı
+        // v13.9: Sensitive actions default to SECURE (true)
+        if UserDefaults.standard.object(forKey: "isBiometricEnabledForActions") == nil {
+            UserDefaults.standard.set(true, forKey: "isBiometricEnabledForActions")
+        }
+        
         self.isBiometricEnabledForStartup = UserDefaults.standard.bool(forKey: "isBiometricEnabledForStartup")
         self.isBiometricEnabledForActions = UserDefaults.standard.bool(forKey: "isBiometricEnabledForActions")
         self.isQuietModeEnabled = UserDefaults.standard.bool(forKey: "isQuietModeEnabled")

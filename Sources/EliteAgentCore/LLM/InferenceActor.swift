@@ -351,7 +351,7 @@ public actor InferenceActor {
         let parameters = GenerateParameters(
             maxTokens: maxTokens,
             temperature: useSafeMode ? 0.0 : 0.2, 
-            repetitionPenalty: useSafeMode ? 1.5 : 1.3
+            repetitionPenalty: useSafeMode ? 1.6 : 1.4
         )
         let stream = try await container.generate(input: lmInput, parameters: parameters)
         
