@@ -410,7 +410,8 @@ public actor InferenceActor {
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "Generation Complete: \(info.tokensPerSecond.formatted()) t/s")
                 stepContinuation?.finish()
             } else if case .toolCall(let call) = generation {
-                AgentLogger.logAudit(level: .info, agent: "titan", message: "Tool Call: \(call.function.name)")
+                // v16.2: Log detailed tool call info for performance auditing
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "⚡️ UNO Protocol Detected Tool: \(call.function.name)")
             }
         }
         continuation.finish()

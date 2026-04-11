@@ -26,6 +26,12 @@ public struct SystemPrompts {
         Senaryo B - [NİYET: İŞLEM VE ARAÇ KULLANIMI]:
         {"type":"tool_call", "thought":"Kullanıcı müzik çalmamı istedi, media_control aracını play aksiyonu ile tetikleyeceğim.", "action":"media_control", "params":{"action":"play"}}
         
+        Senaryo C - [BELLEK VE SİSTEM]:
+        {"type":"tool_call", "thought":"Sistem kaynaklarını kaydetmem istendi.", "action":"memory", "params":{"action":"save", "task":"Resource Monitor", "solution":"CPU: 20%, MEM: 50%"}}
+        
+        Senaryo D - [KAYNAK İZLEME]:
+        {"type":"tool_call", "thought":"Kullanıcı CPU ve bellek durumunu sordu, get_system_telemetry aracını kullanacağım.", "action":"get_system_telemetry", "params":{}}
+        
         ### 🛠 3. ARAÇ LİSTESİ (TOOLS)
         \(toolList)
         

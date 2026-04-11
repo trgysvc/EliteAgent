@@ -100,10 +100,18 @@ public final class ToolRegistry {
         updateStatus(named: tool.name) { $0.callCount += 1 }
         
         do {
-            // v10.5.5: Full Transparency - Log Dispatch
-            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🛠 Executing Tool: \(tool.name) | Params: \(toolCall.params)")
+            // v16.2: Global Parameter Normalization
+            // If the model hallucinates 'param' instead of 'action', normalize it here 
+            // to protect all tools from SLM-specific calling slips.
+            var normalizedParams = toolCall.params
+            if normalizedParams["action"] == nil, let paramValue = normalizedParams["param"] {
+                normalizedParams["action"] = paramValue
+            }
             
-            let result = try await tool.execute(params: toolCall.params, session: session)
+            // v10.5.5: Full Transparency - Log Dispatch
+            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🛠 Executing Tool: \(tool.name) | Params: \(normalizedParams)")
+            
+            let result = try await tool.execute(params: normalizedParams, session: session)
             
             // v10.5.5: Full Transparency - Log Result Size
             AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "✅ Tool Result: \(tool.name) | Output Size: \(result.count) chars")

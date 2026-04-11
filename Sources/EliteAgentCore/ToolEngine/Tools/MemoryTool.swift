@@ -13,7 +13,11 @@ public struct MemoryTool: AgentTool, Sendable {
     }
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
-        guard let action = params["action"]?.value as? String else {
+        // v16.2: Universal Parameter Normalization
+        // Accept 'param' or 'action' aliasing to handle SLM hallucinations gracefully
+        let action = (params["action"]?.value as? String) ?? (params["param"]?.value as? String)
+        
+        guard let action = action else {
             throw ToolError.missingParameter("action")
         }
         
