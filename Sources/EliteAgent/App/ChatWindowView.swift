@@ -142,9 +142,12 @@ public struct ChatWindowView: View {
                     }
                     
                     if let statusMsg = orchestrator.overlayMessage {
-                        StatusOverlayView(message: statusMsg)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .padding(.bottom, 8)
+                        StatusOverlayView(
+                            message: statusMsg, 
+                            onCancel: orchestrator.status == .working ? { orchestrator.cancelCurrentTask() } : nil
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 8)
                     }
                     
                     inputArea
@@ -233,13 +236,21 @@ public struct ChatWindowView: View {
                 Image(systemName: "arrow.up.circle.fill").font(.title).foregroundStyle(Color.accentColor)
             }
             .buttonStyle(.plain)
-            .disabled(promptText.isEmpty || orchestrator.status == .working)
+            .disabled(promptText.isEmpty)
+            
+            if orchestrator.queuedTasksCount > 0 {
+                Text("\(orchestrator.queuedTasksCount)")
+                    .font(.caption2.bold())
+                    .padding(4)
+                    .background(.orange, in: Circle())
+                    .foregroundStyle(.white)
+            }
         }
         .padding(16)
     }
     
     private func submitTask() {
-        guard !promptText.isEmpty && orchestrator.status != .working else { return }
+        guard !promptText.isEmpty else { return }
         let text = promptText
         promptText = ""
         Task {
@@ -441,6 +452,7 @@ struct StepIcon: View {
 }
 struct StatusOverlayView: View {
     let message: String
+    var onCancel: (() -> Void)? = nil
     @State private var rotation: Double = 0
     
     var body: some View {
@@ -457,6 +469,14 @@ struct StatusOverlayView: View {
             Text(message)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.primary)
+            
+            if let onCancel = onCancel {
+                Button(action: onCancel) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

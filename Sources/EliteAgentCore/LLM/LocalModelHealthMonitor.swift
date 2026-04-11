@@ -113,7 +113,8 @@ public actor LocalModelHealthMonitor {
     private func diagnoseMemory() async -> MemoryDiagnostics {
         // v11.0: Using HardwareMonitor for real Mach Host statistics
         let stats = await HardwareMonitor.shared.getMemoryStats()
-        let availableBytes = UInt64((stats.total - stats.used) * 1024 * 1024 * 1024)
+        let freeGB = stats.total - stats.used
+        let availableBytes = UInt64(freeGB * 1024 * 1024 * 1024)
         
         let processInfo = ProcessInfo.processInfo
         let state = processInfo.thermalState

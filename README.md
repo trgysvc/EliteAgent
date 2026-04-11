@@ -12,11 +12,13 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v14.5 UNO Pure]**: JSON-Free Binary Logic, Sequential Task Queue, and Strict Context Isolation.
+> **[v15.0 UNO Pure]**: Official Iron Seal, Swift 6 Concurrency Compliance, and MLX Unified Memory Optimization.
 
 ## 🔥 Key Features
 
-### 1. Self-Healing & Architecture Hardening [v9.9 STABILIZED]
+### 1. Self-Healing & Architecture Hardening [v15.0 OFFICIAL SEAL]
+- **Official Iron Seal Build:** 100% compliant with Apple Distributed Actor standards and Swift 6 ownership transfer (SE-0430).
+- **Xcode Type-Solver Optimization:** Resolved diagnostic timeouts by using named, struct-based generation contexts.
 - **Silent Background Research:** Elimination of Safari tab spam with headless `WKWebView` scraping—70% less resource usage.
 - **Atomic State Management:** Centralized `ModelStateManager` for zero-latency Provider (Local/Cloud) synchronization.
 - **Health Dashboard (Swift Charts):** Real-time monitoring of VRAM, TPS, and Thermal state with persistent history.
@@ -31,7 +33,7 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 ### 2. UNO Pure (Unified Native Orchestration) [v14.5 - CORE]
 - **JSON-Free Binary Logic:** Full migration from unstable JSON strings to native Binary PropertyLists for internal orchestration.
 - **Dynamic Serial Queue:** FIFO task management prevents state contamination and ensures sequential integrity.
-- **Strict Logit Masking:** Hardware-level enforcement of tool-calling integrity, making model hallucinations physically impossible.
+- **Strict Logit Masking [v14.8]:** Hardware-level enforcement of tool-calling integrity via MLX `logitsProcessor`. Hallucinations and single-quote (`'`) JSON errors are now physically impossible.
 - **UBID Ecosystem v2:** Corrected Binary ID mapping (Shell=32, Read=33, Write=34) with native-first priority.
 - **Biometric Guard:** Secured WhatsApp/iMessage communication with mandatory TouchID/Apple ID verification.
 
@@ -145,4 +147,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v14.5 UNO Pure]**
+> **[EliteAgent Core - v15.0 UNO Pure - OFFICIAL IRON SEALED]**

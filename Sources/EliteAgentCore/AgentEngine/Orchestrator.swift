@@ -29,6 +29,7 @@ public class Orchestrator: ObservableObject {
     @Published public var providerUsed: String = "Select Model"
     @Published public var config: InferenceConfig = .default
     @Published public var overlayMessage: String? = nil
+    @Published public var queuedTasksCount: Int = 0
     
     // v7.8.0 Centralized State
     public var sessionState = AISessionState.shared
@@ -313,8 +314,13 @@ public class Orchestrator: ObservableObject {
     }
 
     public func submitTask(prompt: String, forceProviders: [ProviderID]? = nil, strictLocal: Bool? = nil, promptOnFallback: Bool? = nil) async throws {
+        // v14.7: Immediate Feedback - Add user prompt to history before queuing
+        let userMsg = ChatMessage(role: .user, content: prompt)
+        self.currentMessages.append(userMsg)
+        
         let newTask = QueuedTask(prompt: prompt, forceProviders: forceProviders, strictLocal: strictLocal, promptOnFallback: promptOnFallback)
         self.taskQueue.append(newTask)
+        self.queuedTasksCount = self.taskQueue.count
         
         AgentLogger.logInfo("[ORCHESTRATOR] Task Queued: \(prompt). Queue depth: \(taskQueue.count)")
         
@@ -328,8 +334,8 @@ public class Orchestrator: ObservableObject {
     private func processNextQueuedTask() async {
         guard !taskQueue.isEmpty && !isProcessingTask else { return }
         
-        // v14.4: Pure Serial Model - FIFO processing without artificial gating.
         let task = taskQueue.removeFirst()
+        self.queuedTasksCount = self.taskQueue.count
         self.isProcessingTask = true
         
         do {
@@ -344,6 +350,18 @@ public class Orchestrator: ObservableObject {
         if !taskQueue.isEmpty {
             await processNextQueuedTask()
         }
+    }
+    
+    public func cancelCurrentTask() {
+        // Interruption logic 
+        self.isProcessingTask = false
+        self.status = .idle
+        self.overlayMessage = "İşlem Durduruldu"
+        
+        // If we had a running runtime, we would interrupt it here.
+        // For now, resetting flags to allow the next queued task or new ones.
+        self.taskQueue.removeAll()
+        self.queuedTasksCount = 0
     }
 
     private func executeActualTask(task: QueuedTask) async throws {
@@ -395,13 +413,13 @@ public class Orchestrator: ObservableObject {
         
         // Precedence logic: If forceProviders is set (e.g. from fallback buttons), it overrides priority
         // v14.5: Strict Context Isolation - Clear previous task transient state
-        self.currentMessages = [ChatMessage(role: .user, content: prompt)]
+        // self.currentMessages = [ChatMessage(role: .user, content: prompt)] // v14.7: REMOVED - History is now managed across queue steps
         self.currentTask = prompt
         self.steps = []
         self.thinkBlocks = []
         
         // Signal InternalMonologue to reset for the new atomic task
-        bus.post(.init(type: "elite.monologue.reset"))
+        try? await bus.post(name: "elite.monologue.reset")
         
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Starting task: \(prompt)")
         

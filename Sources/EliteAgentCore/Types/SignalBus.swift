@@ -14,8 +14,20 @@ public actor SignalBus {
         self.sharedSecret = secretKey
     }
     
-    /// Publishes a signal to the bus.
     public func dispatch(_ signal: Signal) throws {
+        try publish(signal)
+    }
+
+    /// Convenience method for posting simple signals.
+    public func post(name: String, source: AgentID = .orchestrator, target: AgentID = .orchestrator, priority: SignalPriority = .normal, payload: Data = Data()) throws {
+        let signal = Signal(
+            source: source,
+            target: target,
+            name: name,
+            priority: priority,
+            payload: payload,
+            secretKey: self.sharedSecret
+        )
         try publish(signal)
     }
 

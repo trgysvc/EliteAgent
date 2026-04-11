@@ -89,7 +89,7 @@ extension ChatWindowView {
 struct IntegratedChatView: View {
     @StateObject private var viewModel = ChatProcessViewModel()
     @StateObject private var orchestrator = Orchestrator()
-    @StateObject private var modelPickerVM = ModelPickerViewModel(orchestrator: Orchestrator())
+    @StateObject private var modelPickerVM = ModelPickerViewModel()
     
     var body: some View {
         ZStack {

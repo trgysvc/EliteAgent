@@ -60,6 +60,8 @@ public actor HardwareMonitor {
         case .critical: return 85.0 // Acil durum ısı seviyesi
         @unknown default: return nil
         }
+    }
+
     /// M-Serisi donanım durumuna göre yeni bir ağır (heavy) görevin başlatılıp başlatılamayacağını döner.
     public func canAcceptHeavyTask() -> (canProceed: Bool, reason: String?) {
         let stats = getMemoryStats()

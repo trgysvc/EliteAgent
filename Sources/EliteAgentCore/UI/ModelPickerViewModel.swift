@@ -11,7 +11,6 @@ public class ModelPickerViewModel: ObservableObject {
     @Published public var alertMessage: String?
     
     private var cancellables = Set<AnyCancellable>()
-    private let orchestrator: Orchestrator
     
     @Published public var filteredLocalModels: [ModelCatalog] = []
     @Published public var installedLocalModels: [ModelCatalog] = []
@@ -23,9 +22,7 @@ public class ModelPickerViewModel: ObservableObject {
     @Published public var hasOllama: Bool = false
     @Published public var hasOpenRouter: Bool = false
     
-    public init(orchestrator: Orchestrator) {
-        self.orchestrator = orchestrator
-        
+    public init() {
         // v9.9.8: Immediate load on startup (Atomic Sync)
         Task {
             await loadModels()

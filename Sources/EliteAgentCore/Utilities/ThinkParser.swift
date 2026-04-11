@@ -66,8 +66,9 @@ public final class ThinkParser {
 
     public static func parseOutputs(from text: String) throws -> [EliteAgentOutput] {
         // v13.8: UNO Pure - Priority parsing for Binary Action Format
-        if let binaryOutput = tryParseUNOBinary(text) {
-            return [binaryOutput]
+        let binaryOutputs = tryParseUNOBinary(text)
+        if !binaryOutputs.isEmpty {
+            return binaryOutputs
         }
         
         let cleanJSON = extractJSONRobustly(text)
@@ -86,36 +87,6 @@ public final class ThinkParser {
                 let single = try decoder.decode(EliteAgentOutput.self, from: data)
                 return [single]
             } catch let decodeError {
-                // Attempt 3: Heuristic Repair (Regex recovery for 'result' field)
-                let str = String(data: data, encoding: .utf8) ?? ""
-                
-                // v11.7: Aggressive Tool Call Recovery
-                if let _ = str.range(of: "\"toolID\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
-                    let pattern = "\"toolID\"\\s*:\\s*\"([^\"]*)\""
-                    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-                       let match = regex.firstMatch(in: str, options: [], range: NSRange(location: 0, length: str.utf16.count)) {
-                        let toolID = (str as NSString).substring(with: match.range(at: 1))
-                        // Try to find params as well (crude but effective fallback)
-                        var params: [String: AnyCodable] = [:]
-                        if let paramsMatch = str.range(of: "\"params\"\\s*:\\s*(\\{[^}]*\\})", options: .regularExpression) {
-                            let pStr = String(str[paramsMatch].split(separator: ":", maxSplits: 1).last ?? "{}")
-                            if let pData = pStr.data(using: .utf8), let pJson = try? JSONSerialization.jsonObject(with: pData) as? [String: Any] {
-                                params = pJson.mapValues { AnyCodable($0) }
-                            }
-                        }
-                        return [EliteAgentOutput(type: .tool_call, thought: "Heuristic Recovery", action: toolID, params: params)]
-                    }
-                }
-
-                if let _ = str.range(of: "\"result\"\\s*:\\s*\"([^\"]*)\"", options: .regularExpression) {
-                    let pattern = "\"result\"\\s*:\\s*\"([^\"]*)\""
-                    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-                       let match = regex.firstMatch(in: str, options: [], range: NSRange(location: 0, length: str.utf16.count)) {
-                        let content = (str as NSString).substring(with: match.range(at: 1))
-                        return [EliteAgentOutput(type: .response, thought: "Heuristic Recovery", content: content)]
-                    }
-                }
-                
                  AgentLogger.logAudit(level: .warn, agent: "Parser", message: "JSON Decode failed. Details: \(decodeError.localizedDescription)")
                  throw ParserError.invalidSchema("JSON şeması EliteAgent protokolüne (PRD v17.1) uymuyor: \(decodeError.localizedDescription)")
             }
@@ -123,29 +94,59 @@ public final class ThinkParser {
     }
 
     /// v13.8: UNO Pure Binary Parser
-    /// Extracts CALL([UBID]) WITH { ... } format directly.
-    private static func tryParseUNOBinary(_ text: String) -> EliteAgentOutput? {
-        let pattern = "CALL\\(\\[(\\d+)\\]\\)\\s*WITH\\s*(\\{[\\s\\S]*?\\})"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
-              let match = regex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count)) else {
-            return nil
-        }
-        
+    /// Extracts ALL CALL([UBID]) WITH { ... } blocks directly, handling nested braces.
+    private static func tryParseUNOBinary(_ text: String) -> [EliteAgentOutput] {
+        var results: [EliteAgentOutput] = []
         let nsString = text as NSString
-        let ubidStr = nsString.substring(with: match.range(at: 1))
-        let paramsStr = nsString.substring(with: match.range(at: 2))
+        let pattern = "CALL\\(\\[(\\d+)\\]\\)\\s*WITH\\s*\\{"
         
-        guard let ubid = Int(ubidStr) else { return nil }
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return [] }
+        let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count))
         
-        // Handle parameters 
-        var params: [String: AnyCodable] = [:]
-        if let data = paramsStr.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            params = json.mapValues { AnyCodable($0) }
+        for match in matches {
+            let ubidStr = nsString.substring(with: match.range(at: 1))
+            guard let ubid = Int(ubidStr) else { continue }
+            
+            // Start scanning for the balancing brace from the start of the '{'
+            let paramsStart = match.range.lowerBound + (nsString.substring(with: match.range).range(of: "{")?.upperBound.utf16Offset(in: nsString.substring(with: match.range)) ?? 0) - 1
+            
+            var bracketCount = 0
+            var foundEnd = false
+            var paramsStr = ""
+            
+            if paramsStart < nsString.length {
+                for j in paramsStart..<nsString.length {
+                    let char = nsString.substring(with: NSRange(location: j, length: 1))
+                    if char == "{" {
+                        bracketCount += 1
+                    } else if char == "}" {
+                        bracketCount -= 1
+                        if bracketCount == 0 {
+                            paramsStr = nsString.substring(with: NSRange(location: paramsStart, length: j - paramsStart + 1))
+                            foundEnd = true
+                            break
+                        }
+                    }
+                }
+            }
+            
+            if foundEnd {
+                var params: [String: AnyCodable] = [:]
+                if let data = paramsStr.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    params = json.mapValues { AnyCodable($0) }
+                } else {
+                    AgentLogger.logAudit(level: .warn, agent: "Parser", message: "Failed to parse JSON params for UBID \(ubid): \(paramsStr)")
+                }
+                
+                results.append(EliteAgentOutput(type: .tool_call, thought: "UNO Binary Action Triggered", ubid: ubid, params: params))
+            }
         }
         
-        AgentLogger.logInfo("[UNO-Pure] Binary Action Found: UBID \(ubid)")
-        return EliteAgentOutput(type: .tool_call, thought: "UNO Binary Action Triggered", ubid: ubid, params: params)
+        if !results.isEmpty {
+            AgentLogger.logInfo("[UNO-Pure] Binary Action Found: \(results.count) steps")
+        }
+        return results
     }
 }
 

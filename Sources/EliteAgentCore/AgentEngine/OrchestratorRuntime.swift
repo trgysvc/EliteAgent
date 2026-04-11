@@ -22,6 +22,7 @@ public actor OrchestratorRuntime {
     
     private var turnsWithoutProgress = 0
     private let MAX_TURNS_WITHOUT_PROGRESS = 5
+    private let MAX_PHASE_DURATION: TimeInterval = 120 // 2 minutes 
     private var isInterrupted = false
     private var activeContextManager: DynamicContextManager?
     private var sourcesAnalyzed = 0
@@ -108,8 +109,14 @@ public actor OrchestratorRuntime {
             while !Task.isCancelled {
                 let interval = await self.calculateHeartbeatInterval()
                 try? await Task.sleep(nanoseconds: interval * 1_000_000_000)
-                if Task.isCancelled { break } // v10.5.2: Immediate drop out if cancelled
+                if Task.isCancelled { break } 
                 let elapsed = Int(Date().timeIntervalSince(startTime))
+                
+                // v14.6: Global Safety Timeout
+                if Double(elapsed) > self.MAX_PHASE_DURATION {
+                    AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚨 [TIMEOUT] Phase stuck for \(elapsed)s. Force interrupting.")
+                    self.isInterrupted = true
+                }
                 
                 // v13.4: Move status from Chat Stream to Overlay
                 self.onOverlayUpdate?("⚙️ \(self.currentAction) (\(elapsed)s)")

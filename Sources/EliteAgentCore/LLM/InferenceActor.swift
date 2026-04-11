@@ -1,8 +1,8 @@
-// EliteAgent Titan Engine - v9.0.2 (Universal & Fixed)
 import Foundation
-import MLX
+@preconcurrency import MLX
 import MLXLLM
 import MLXLMCommon
+import Tokenizers
 import Metal
 
 /// The Universal Brain of EliteAgent. 
@@ -341,31 +341,58 @@ public actor InferenceActor {
             return
         }
         
-        let lmInput = try await container.prepare(input: UserInput(prompt: formattedPrompt))
         
-        // v13.7: Initialize Grammar Processor with Tool Discovery (Logic Restoration)
+        // v13.7: Initialize Grammar Processor with Tool Discovery
         let toolUBIDs = ToolRegistry.shared.listTools().map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
-        var grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedTokenIDs: toolUBIDs)
         
-        // v14.0 fix: Actually utilize the processor to fix the 'unused' logic error.
-        // We prime the processor with the prompt tokens so it knows the context.
-        grammarProcessor.prompt(lmInput.text.tokens)
+        // v14.1: Retrieve Structural JSON Tokens & Alphanumeric for Qwen 2.5
+        let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\"
+        var allowedTokens: [Int] = []
+        for char in allowedChars {
+            let ids = await container.tokenizer.encode(text: String(char))
+            if let first = ids.first {
+                allowedTokens.append(first)
+            }
+        }
         
-        // v13.7: Use stable sampling 
+        // UNOGrammarLogitProcessor is @unchecked Sendable — safe to capture in @Sendable closure
+        let grammarProcessor = UNOGrammarLogitProcessor(
+            tokenizer: await container.tokenizer, 
+            allowedTokenIDs: toolUBIDs + allowedTokens
+        )
+        
+        // GenerateParameters is Sendable — safe to capture in @Sendable closure
         let parameters = GenerateParameters(
             maxTokens: maxTokens,
             temperature: useSafeMode ? 0.0 : 0.2, 
             repetitionPenalty: useSafeMode ? 1.6 : 1.4
         )
-        /* v14.0 fix: Temporarily disabled high-level call due to API mismatch.
-           The intention is to move to TokenIterator for strict grammar support.
-        let stream = try await container.generate(
-            input: lmInput, 
-            parameters: parameters, 
-            processor: grammarProcessor 
-        )
-        */
-        let stream = try await container.generate(input: lmInput, parameters: parameters)
+        
+        // v16.1: DEFINITIVE FIX — Use simple perform(_:) overload
+        // By preparing LMInput INSIDE the isolation boundary, we avoid transferring 
+        // any non-Sendable types across actor boundaries. This completely bypasses 
+        // the perform(nonSendable:) API that triggers the Xcode type-solver crash.
+        // Captured values: formattedPrompt (String/Sendable), grammarProcessor (@unchecked Sendable), parameters (Sendable)
+        let stream: AsyncStream<Generation> = try await container.perform { context in
+            let lmInput = try await context.processor.prepare(input: UserInput(prompt: formattedPrompt))
+            
+            let iterator = try TokenIterator(
+                input: lmInput, 
+                model: context.model, 
+                processor: grammarProcessor, 
+                sampler: parameters.sampler(),
+                maxTokens: parameters.maxTokens
+            )
+            
+            let (resultStream, _) = MLXLMCommon.generateTask(
+                promptTokenCount: lmInput.text.tokens.size,
+                modelConfiguration: context.configuration,
+                tokenizer: context.tokenizer,
+                iterator: iterator
+            )
+            
+            return resultStream
+        }
         
         for await generation in stream {
             if Task.isCancelled {
@@ -373,23 +400,16 @@ public actor InferenceActor {
                 return
             }
             
-            switch generation {
-            case .chunk(let text):
+            // v14.1: Update grammar processor state machine
+            if case .chunk(let text) = generation {
+                grammarProcessor.didSample(tokenText: text)
                 continuation.yield(text)
-                updateSharedBuffer(with: text.count) 
-                
-                // v14.0 fix: Post-sampling feedback to the logic processor.
-                // According to official MLX docs, we must notify the processor of text chunks
-                // to maintain the internal state machine (thought -> action).
-                // Since this high-level API yields text, we feed the state machine here.
-                // grammarProcessor.didSample(...) // Placeholder for official TokenID upgrade
-                
-            case .info(let info):
+                updateSharedBuffer(with: text.count)
+            } else if case .info(let info) = generation {
                 self.lastTPS = info.tokensPerSecond
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "Generation Complete: \(info.tokensPerSecond.formatted()) t/s")
                 stepContinuation?.finish()
-                
-            case .toolCall(let call):
+            } else if case .toolCall(let call) = generation {
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "Tool Call: \(call.function.name)")
             }
         }

@@ -49,7 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func finishLaunching() {
-        let vm = ModelPickerViewModel(orchestrator: orchestrator)
+        let vm = ModelPickerViewModel()
         self.modelPickerVM = vm
         
         chatController = ChatWindowController(orchestrator: orchestrator, modelPickerVM: vm)
