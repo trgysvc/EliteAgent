@@ -5,7 +5,9 @@ import Cocoa
 /// Supports both background (URL scheme/AppleScript) and foreground (window focus) modes.
 public struct SafariAutomationTool: AgentTool {
     public let name = "safari_automation"
-    public let description = "Safari tarayıcısını kullanarak arama yapar, sayfa içeriğini çeker veya sekmeleri yönetir. Parametreler: action ('search', 'scrape', 'open', 'close'), query (arama terimi), url (target URL)."
+    public let summary = "Control Safari via Native AppleScript protocols (Search, Scrape, Open)."
+    public let description = "MANDATORY: Use this for ALL web-related tasks (search, open URL, scrape content). Native AppleScript automation is superior to shell 'open' commands. Parametreler: action ('search', 'scrape', 'open', 'close'), query (arama terimi), url (target URL)."
+    public let ubid = 40 // Token 'I' in Qwen 2.5
 
     public init() {}
 

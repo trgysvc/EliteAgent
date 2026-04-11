@@ -19,6 +19,7 @@ public final class ToolRegistry {
     
     private let queue = DispatchQueue(label: "com.eliteagent.toolregistry", attributes: .concurrent)
     private var tools: [String: any AgentTool] = [:]
+    private var ubidMap: [Int: any AgentTool] = [:] // v13.8: Binary ID Map
     private var statusMap: [String: ToolStatus] = [:]
     
     public init() {}
@@ -26,6 +27,7 @@ public final class ToolRegistry {
     public func register(_ tool: any AgentTool) {
         queue.async(flags: .barrier) {
             self.tools[tool.name] = tool
+            self.ubidMap[tool.ubid] = tool
             if self.statusMap[tool.name] == nil {
                 self.statusMap[tool.name] = ToolStatus()
             }
@@ -52,6 +54,18 @@ public final class ToolRegistry {
         }
     }
     
+    public func getTool(ubid: Int) -> (any AgentTool)? {
+        queue.sync {
+            return ubidMap[ubid]
+        }
+    }
+    
+    public func getToolIndices() -> [Int] {
+        queue.sync {
+            return Array(ubidMap.keys)
+        }
+    }
+    
     public func listTools() -> [any AgentTool] {
         queue.sync {
             return Array(tools.values)
@@ -67,13 +81,20 @@ public final class ToolRegistry {
     }
     
     public func execute(toolCall: ToolCall, session: Session) async throws -> String {
-        guard let tool = getTool(named: toolCall.tool) else {
+        let tool: any AgentTool
+        
+        // v13.8: Direct UBID Lookup (UNO Pure)
+        if let ubid = toolCall.ubid, let t = getTool(ubid: ubid) {
+            tool = t
+        } else if let t = getTool(named: toolCall.tool) {
+            tool = t
+        } else {
             // v11.9: Smart Feedback for miscalled sub-actions
             let miscalledActions = ["play_content", "volume", "pause", "play", "next", "stop"]
             if miscalledActions.contains(toolCall.tool) {
-                throw ToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' aracının bir aksiyonudur. Doğru kullanım: {\"toolID\": \"media_control\", \"params\": {\"action\": \"\(toolCall.tool)\", ...}}")
+                throw ToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' aracının bir aksiyonudur. Doğru kullanım: CALL([18]) WITH {\"action\": \"\(toolCall.tool)\", ...}")
             }
-            throw ToolError.executionError("Tool not found: \(toolCall.tool)")
+            throw ToolError.executionError("Tool not found: \(toolCall.tool) / UBID \(toolCall.ubid ?? 0)")
         }
         
         updateStatus(named: tool.name) { $0.callCount += 1 }

@@ -6,7 +6,9 @@ import OSLog
 /// Uses AXUIElement for clicking, typing, and reading UI state.
 public actor AccessibilityTool: AgentTool {
     public let name = "apple_accessibility"
+    public let summary = "Direct AXUIElement interaction with native apps."
     public let description = "Interacts with macOS applications using the Accessibility API."
+    public let ubid = 24 // Token '9' in Qwen 2.5
     
     private let logger = Logger(subsystem: "com.elite.agent", category: "AX")
     

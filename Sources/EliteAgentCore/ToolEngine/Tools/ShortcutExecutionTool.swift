@@ -16,12 +16,14 @@ public enum ShortcutError: Error, LocalizedError {
 /// Girdi (input) parametresi ile işlem bağlamını kısayola aktarabilir.
 public struct ShortcutExecutionTool: AgentTool {
     public let name = "run_shortcut"
+    public let summary = "Execute native macOS Shortcuts."
     public let description = """
     Belirli bir macOS Kısayolunu seçilen parametrelerle çalıştırır. Sadece kullanıcı net bir şekilde kısayol (shortcut) komutu verirse kullan.
     Parametre:
     - name (string - zorunlu)
     - input_text (string - isteğe bağlı)
     """
+    public let ubid = 49 // Token 'R' in Qwen 2.5
     
     public init() {}
     

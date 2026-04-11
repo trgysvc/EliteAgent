@@ -4,7 +4,9 @@ import CoreLocation
 
 public struct CalculatorTool: AgentTool {
     public let name = "calculator_op"
+    public let summary = "Fast native arithmetic solver."
     public let description = "Perform basic math. Parametre: expression (string)."
+    public let ubid = 51 // Token 'T' in Qwen 2.5
     
     public init() {}
     
@@ -25,7 +27,9 @@ import MapKit
 
 public struct WeatherTool: AgentTool {
     public let name = "get_weather"
+    public let summary = "Live WeatherKit/Apple weather data."
     public let description = "Get weather for a location using native macOS services. Parametre: location (string)."
+    public let ubid = 52 // Token 'U' in Qwen 2.5
     
     public init() {}
     
@@ -75,7 +79,9 @@ public struct WeatherTool: AgentTool {
 
 public struct TimerTool: AgentTool {
     public let name = "set_timer"
+    public let summary = "Background macOS async timers."
     public let description = "Set a timer/reminder. Parametre: seconds (int), message (string)."
+    public let ubid = 53 // Token 'V' in Qwen 2.5
     
     public init() {}
     

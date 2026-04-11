@@ -11,7 +11,7 @@ public actor ConfigManager {
     private init() {
         let home = fileManager.homeDirectoryForCurrentUser
         let eliteDir = home.appendingPathComponent(".eliteagent")
-        self.configURL = eliteDir.appendingPathComponent("config.json")
+        self.configURL = eliteDir.appendingPathComponent("config.plist")
         
         // Ensure directory exists
         try? fileManager.createDirectory(at: eliteDir, withIntermediateDirectories: true)
@@ -31,11 +31,11 @@ public actor ConfigManager {
         
         do {
             let data = try Data(contentsOf: configURL)
-            let config = try JSONDecoder().decode(InferenceConfig.self, from: data)
+            let config = try PropertyListDecoder().decode(InferenceConfig.self, from: data)
             self.cachedConfig = config
             return config
         } catch {
-            print("[CONFIG] Error decoding config.json, returning default. Error: \(error)")
+            print("[CONFIG] Error decoding config.plist, returning default. Error: \(error)")
             // Backup the corrupted file
             let backupURL = configURL.appendingPathExtension("bak")
             try? fileManager.moveItem(at: configURL, to: backupURL)
@@ -56,8 +56,8 @@ public actor ConfigManager {
     
     public func save(_ config: InferenceConfig) async {
         do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
             let data = try encoder.encode(config)
             try data.write(to: configURL)
         } catch {

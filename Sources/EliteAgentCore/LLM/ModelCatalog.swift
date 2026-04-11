@@ -78,16 +78,16 @@ public struct ModelRegistry {
         ),
         
         ModelCatalog(
-            id: "qwen-2.5-3b-4bit",
-            name: "Qwen 2.5 3B",
-            size: "1.9 GB",
+            id: "gemma-4-e4b-it-4bit",
+            name: "Gemma 4 4B",
+            size: "2.8 GB",
             quantization: "4-bit",
-            minRAM: "4 GB",
-            recommendedContext: "4K",
-            downloadURL: "https://huggingface.co/mlx-community/Qwen2.5-3B-Instruct-4bit/resolve/main/model.safetensors",
-            sha256: "6d2f...", 
+            minRAM: "8 GB",
+            recommendedContext: "64K",
+            downloadURL: "https://huggingface.co/mlx-community/gemma-4-e4b-it-4bit/resolve/main/model.safetensors",
+            sha256: "339409bd18494955556e1fde6ccc15faaa9f707b911b74791fe290b9d722beed",
             estimatedSpeed: "~75 tok/s on M4",
-            provider: .localTitanEngine(modelID: "qwen-2.5-3b-4bit")
+            provider: .localTitanEngine(modelID: "gemma-4-e4b-it-4bit")
         ),
         
         ModelCatalog(

@@ -3,7 +3,9 @@ import Foundation
 /// WebSearchToolWrapper: DuckDuckGo tabanlı web aramalarını AgentTool protokolüne bağlar.
 public struct WebSearchToolWrapper: AgentTool {
     public let name = "web_search"
+    public let summary = "Search Google/Brave for live data."
     public let description = "Mevcut bilgilerle yanıtlanamayan sorular için internette arama yapar. Parametre: query (arama metni)."
+    public let ubid = 45 // Token 'N' in Qwen 2.5
     private let engine = WebSearchTool()
     
     public init() {}
@@ -22,7 +24,9 @@ public struct WebSearchToolWrapper: AgentTool {
 /// WebFetchToolWrapper: Belirli bir URL'nin içeriğini okur ve metne dönüştürür.
 public struct WebFetchToolWrapper: AgentTool {
     public let name = "web_fetch"
+    public let summary = "Extract text from any public URL."
     public let description = "Belirli bir web sayfasının içeriğini okur. Parametre: url (URL adresi)."
+    public let ubid = 46 // Token 'O' in Qwen 2.5
     private let engine = WebFetchTool()
     
     public init() {}

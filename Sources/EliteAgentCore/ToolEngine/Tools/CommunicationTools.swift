@@ -2,7 +2,9 @@ import Foundation
 
 public struct WhatsAppTool: AgentTool {
     public let name = "whatsapp_send"
+    public let summary = "Legacy WhatsApp sender (System Events)."
     public let description = "Send a message via WhatsApp. Parametreler: recipient (phone number or name), message (text)."
+    public let ubid = 17 // Token '2' in Qwen 2.5
     
     public init() {}
     
@@ -52,7 +54,9 @@ public struct WhatsAppTool: AgentTool {
 
 public struct EmailTool: AgentTool {
     public let name = "send_email"
+    public let summary = "Legacy Apple Mail sender."
     public let description = "Send an email via Apple Mail. Parametreler: recipient, subject, body."
+    public let ubid = 22 // Token '7' in Qwen 2.5
     
     public init() {}
     

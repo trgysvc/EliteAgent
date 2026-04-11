@@ -239,7 +239,7 @@ public struct ChatWindowView: View {
     }
     
     private func submitTask() {
-        guard !promptText.isEmpty else { return }
+        guard !promptText.isEmpty && orchestrator.status != .working else { return }
         let text = promptText
         promptText = ""
         Task {

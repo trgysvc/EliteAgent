@@ -65,6 +65,11 @@ public final class ThinkParser {
     }
 
     public static func parseOutputs(from text: String) throws -> [EliteAgentOutput] {
+        // v13.8: UNO Pure - Priority parsing for Binary Action Format
+        if let binaryOutput = tryParseUNOBinary(text) {
+            return [binaryOutput]
+        }
+        
         let cleanJSON = extractJSONRobustly(text)
         guard !cleanJSON.isEmpty, let data = cleanJSON.data(using: .utf8) else {
             throw ParserError.emptyJSON("Resmi JSON bloğu bulunamadı.")
@@ -115,6 +120,32 @@ public final class ThinkParser {
                  throw ParserError.invalidSchema("JSON şeması EliteAgent protokolüne (PRD v17.1) uymuyor: \(decodeError.localizedDescription)")
             }
         }
+    }
+
+    /// v13.8: UNO Pure Binary Parser
+    /// Extracts CALL([UBID]) WITH { ... } format directly.
+    private static func tryParseUNOBinary(_ text: String) -> EliteAgentOutput? {
+        let pattern = "CALL\\(\\[(\\d+)\\]\\)\\s*WITH\\s*(\\{[\\s\\S]*?\\})"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+              let match = regex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count)) else {
+            return nil
+        }
+        
+        let nsString = text as NSString
+        let ubidStr = nsString.substring(with: match.range(at: 1))
+        let paramsStr = nsString.substring(with: match.range(at: 2))
+        
+        guard let ubid = Int(ubidStr) else { return nil }
+        
+        // Handle parameters 
+        var params: [String: AnyCodable] = [:]
+        if let data = paramsStr.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            params = json.mapValues { AnyCodable($0) }
+        }
+        
+        AgentLogger.logInfo("[UNO-Pure] Binary Action Found: UBID \(ubid)")
+        return EliteAgentOutput(type: .tool_call, thought: "UNO Binary Action Triggered", ubid: ubid, params: params)
     }
 }
 

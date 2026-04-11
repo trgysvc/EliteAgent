@@ -344,8 +344,8 @@ public actor InferenceActor {
         let lmInput = try await container.prepare(input: UserInput(prompt: formattedPrompt))
         
         // v13.7: Initialize Grammar Processor with Tool Discovery (Logic Restoration)
-        let toolIDs = ToolRegistry.shared.listTools().map { $0.name } + Array(PluginManager.shared.loadedPlugins.keys)
-        var grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedToolIDs: toolIDs)
+        let toolUBIDs = ToolRegistry.shared.listTools().map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
+        var grammarProcessor = UNOGrammarLogitProcessor(tokenizer: await container.tokenizer, allowedTokenIDs: toolUBIDs)
         
         // v14.0 fix: Actually utilize the processor to fix the 'unused' logic error.
         // We prime the processor with the prompt tokens so it knows the context.

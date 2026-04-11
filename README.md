@@ -12,7 +12,7 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v13.9 FORTRESS STABLE]**: XPC Hardening, Weather Intelligence, and Biometric Secured Communication.
+> **[v14.5 UNO Pure]**: JSON-Free Binary Logic, Sequential Task Queue, and Strict Context Isolation.
 
 ## 🔥 Key Features
 
@@ -28,14 +28,16 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **YOLO Guard v2 & Encrypted Audits:** Dynamic risk assessment with Keychain-backed AES.GCM forensic logging.
 - **XPC Architecture Hardening [v13.7]:** Deterministic C-module resolution (`yyjson`, `Cmlx`, `_NumericsShims`) with absolute path enforcement.
 
-### 2. UNO (Unified Native Orchestration) [v13.9]
-- **Distributed Actor System:** Type-safe, high-concurrency orchestration for native tools.
+### 2. UNO Pure (Unified Native Orchestration) [v14.5 - CORE]
+- **JSON-Free Binary Logic:** Full migration from unstable JSON strings to native Binary PropertyLists for internal orchestration.
+- **Dynamic Serial Queue:** FIFO task management prevents state contamination and ensures sequential integrity.
+- **Strict Logit Masking:** Hardware-level enforcement of tool-calling integrity, making model hallucinations physically impossible.
+- **UBID Ecosystem v2:** Corrected Binary ID mapping (Shell=32, Read=33, Write=34) with native-first priority.
 - **Biometric Guard:** Secured WhatsApp/iMessage communication with mandatory TouchID/Apple ID verification.
-- **WeatherKit Integration:** Hardware-native meteorological data retrieval with zero-tab Safari fallback.
 
-### 3. Purpose Lock & Cognitive Isolation [v14.0 - CORE PRINCIPLE]
+### 3. Purpose Lock & Context Isolation [v14.5 - CORE]
+- **Strict Context Isolation:** Each task in the queue starts with a "Tabula Rasa" (clean page), preventing previous errors from leaking into new prompts.
 - **Intent Persistence:** Mission-bound intelligence that prevents task-switching during failures.
-- **Cognitive Guardrails:** Workspace-aware but objective-locked reasoning, separating developer activity from user commands.
 - **Disciplinary Classification:** Hardened intent mapping ensures high-priority tasks are isolated from general chat context.
 
 ### 4. Apple-Native Standards & Data Protection [v14.0 - PRODUCTION]
@@ -143,4 +145,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v13.9 FORTRESS STABLE]**
+> **[EliteAgent Core - v14.5 UNO Pure]**

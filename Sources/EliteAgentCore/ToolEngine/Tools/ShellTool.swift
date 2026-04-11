@@ -2,7 +2,9 @@ import Foundation
 
 public struct ShellTool: AgentTool, Sendable {
     public let name = "shell_exec"
+    public let summary = "Directly execute zsh/osascript commands."
     public let description = "Execute a shell command directly via /bin/zsh. Supports osascript for AppleScript."
+    public let ubid = 32 // Token 'A' in Qwen 2.5
     
     public init() {}
     

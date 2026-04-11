@@ -9,6 +9,14 @@ public struct PendingTask: Sendable {
     public let complexity: Int
 }
 
+public struct QueuedTask: Sendable {
+    public let id = UUID()
+    public let prompt: String
+    public let forceProviders: [ProviderID]?
+    public let strictLocal: Bool?
+    public let promptOnFallback: Bool?
+}
+
 @MainActor
 public class Orchestrator: ObservableObject {
     @Published public var status: AgentStatus = .idle
@@ -42,7 +50,11 @@ public class Orchestrator: ObservableObject {
     private let toolRegistry: ToolRegistry
     private var vaultManager: VaultManager?
     private var observer: ProjectObserver?
-    private var currentWorkspaceURL: URL? 
+    private var currentWorkspaceURL: URL?
+    
+    // v14.0 Serial Queue State
+    private var taskQueue: [QueuedTask] = []
+    private var isProcessingTask = false
     
     public init() {
         let busKey = SymmetricKey(data: SHA256.hash(data: "ELITE_BUS_SECRET".data(using: .utf8)!))
@@ -301,6 +313,48 @@ public class Orchestrator: ObservableObject {
     }
 
     public func submitTask(prompt: String, forceProviders: [ProviderID]? = nil, strictLocal: Bool? = nil, promptOnFallback: Bool? = nil) async throws {
+        let newTask = QueuedTask(prompt: prompt, forceProviders: forceProviders, strictLocal: strictLocal, promptOnFallback: promptOnFallback)
+        self.taskQueue.append(newTask)
+        
+        AgentLogger.logInfo("[ORCHESTRATOR] Task Queued: \(prompt). Queue depth: \(taskQueue.count)")
+        
+        if !isProcessingTask {
+            await processNextQueuedTask()
+        } else {
+            self.overlayMessage = "Görev Kuyruğa Alındı (\(taskQueue.count))"
+        }
+    }
+    
+    private func processNextQueuedTask() async {
+        guard !taskQueue.isEmpty && !isProcessingTask else { return }
+        
+        // v14.4: Pure Serial Model - FIFO processing without artificial gating.
+        let task = taskQueue.removeFirst()
+        self.isProcessingTask = true
+        
+        do {
+            try await executeActualTask(task: task)
+        } catch {
+            AgentLogger.logError("[ORCHESTRATOR] Task Execution Failed: \(error)")
+        }
+        
+        self.isProcessingTask = false
+        
+        // Process next automatically
+        if !taskQueue.isEmpty {
+            await processNextQueuedTask()
+        }
+    }
+
+    private func executeActualTask(task: QueuedTask) async throws {
+        let prompt = task.prompt
+        let forceProviders = task.forceProviders
+        let strictLocal = task.strictLocal
+        let promptOnFallback = task.promptOnFallback
+        
+        // v14.3: Reset UI flags (Cloud icon, Throttling labels) before starting
+        sessionState.resetForNewTask()
+        
         let taskStart = CFAbsoluteTimeGetCurrent()
         self.status = .working
         
@@ -340,13 +394,14 @@ public class Orchestrator: ObservableObject {
         }
         
         // Precedence logic: If forceProviders is set (e.g. from fallback buttons), it overrides priority
-        if pendingTask == nil {
-            let userMessage = ChatMessage(role: .user, content: prompt)
-            self.currentMessages.append(userMessage)
-            self.currentTask = prompt
-            self.steps = []
-            self.thinkBlocks = []
-        }
+        // v14.5: Strict Context Isolation - Clear previous task transient state
+        self.currentMessages = [ChatMessage(role: .user, content: prompt)]
+        self.currentTask = prompt
+        self.steps = []
+        self.thinkBlocks = []
+        
+        // Signal InternalMonologue to reset for the new atomic task
+        bus.post(.init(type: "elite.monologue.reset"))
         
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Starting task: \(prompt)")
         

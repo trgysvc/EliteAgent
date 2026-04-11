@@ -4,6 +4,7 @@ import Cocoa
 
 public struct MessengerTool: AgentTool {
     public let name = "send_message_via_whatsapp_or_imessage"
+    public let summary = "Send WhatsApp or iMessages securely."
     public let description = """
     Send messages via WhatsApp or iMessage.
     For WhatsApp: recipient MUST be a phone number with country code (e.g. +905551234567).
@@ -13,6 +14,7 @@ public struct MessengerTool: AgentTool {
     CRITICAL: The 'message' parameter is ONLY for the raw content to be sent to the recipient. 
     Do NOT include task status, system reports, or your own results (e.g., 'İşlem tamamlandı') here.
     """
+    public let ubid = 37 // Token 'F' in Qwen 2.5
     
     public init() {}
     

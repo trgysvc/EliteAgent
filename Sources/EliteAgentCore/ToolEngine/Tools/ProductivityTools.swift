@@ -2,7 +2,9 @@ import Foundation
 
 public struct ContactsTool: AgentTool {
     public let name = "contacts_find"
+    public let summary = "Search and retrieve Apple Contacts."
     public let description = "Find contact information from Apple Contacts. Parametre: query (name)."
+    public let ubid = 38 // Token 'G' in Qwen 2.5
     
     public init() {}
     
@@ -29,7 +31,9 @@ public struct ContactsTool: AgentTool {
 
 public struct FileManagerTool: AgentTool {
     public let name = "file_manager_action"
+    public let summary = "Legacy file management (create/delete)."
     public let description = "Perform file operations. Parametreler: action (create/delete/move), path, content (for create)."
+    public let ubid = 39 // Token 'H' in Qwen 2.5
     
     public init() {}
     

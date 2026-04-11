@@ -71,11 +71,25 @@ final class UNOXPCService: NSObject, NSXPCListenerDelegate, UNORemoteProxy, @unc
     func performRemoteAction(data: Data, reply: @escaping @Sendable (Data?, Data?) -> Void) {
         Task {
             do {
-                let action = try JSONDecoder().decode(UNOActionWrapper.self, from: data)
+                // v13.8: Swift Native Binary Decoding (PLST)
+                let action = try PropertyListDecoder().decode(UNOActionWrapper.self, from: data)
+                
+                // v13.8: Schema Version Validation
+                let currentVersion = 1
+                if action.version > currentVersion {
+                    AgentLogger.logAudit(level: .warn, agent: "UNO-XPC", message: "Incoming action has higher version (V\(action.version)) than service (V\(currentVersion)). Processing with caution.")
+                }
+                
                 let response = try await executor.execute(action: action)
-                let responseData = try JSONEncoder().encode(response)
+                
+                // v13.8: Binary Encoding of result
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .binary
+                let responseData = try encoder.encode(response)
+                
                 reply(responseData, nil)
             } catch {
+                AgentLogger.logAudit(level: .error, agent: "UNO-XPC", message: "Binary decoding/execution failed: \(error.localizedDescription)")
                 reply(nil, error.localizedDescription.data(using: .utf8))
             }
         }

@@ -2,7 +2,9 @@ import Foundation
 
 public struct PatchTool: AgentTool, Sendable {
     public let name = "patch_file"
+    public let summary = "Atomic hot-patch for code snippets."
     public let description = "Atomically patches an existing file by exactly matching 'old_content' and replacing it with 'new_content'. Do NOT use sed/awk."
+    public let ubid = 41 // Token 'J' in Qwen 2.5
     
     public init() {}
     

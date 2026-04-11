@@ -60,5 +60,22 @@ public actor HardwareMonitor {
         case .critical: return 85.0 // Acil durum ısı seviyesi
         @unknown default: return nil
         }
+    /// M-Serisi donanım durumuna göre yeni bir ağır (heavy) görevin başlatılıp başlatılamayacağını döner.
+    public func canAcceptHeavyTask() -> (canProceed: Bool, reason: String?) {
+        let stats = getMemoryStats()
+        let thermal = ProcessInfo.processInfo.thermalState
+        
+        // v11.5: Dynamic thresholds for M-series optimization
+        let ramUsageRatio = stats.used / stats.total
+        if ramUsageRatio > 0.90 {
+            return (false, "Eritilmiş RAM Sınırı: %\(Int(ramUsageRatio * 100)) - Sistem çok dolu.")
+        }
+        
+        switch thermal {
+        case .serious, .critical:
+            return (false, "Termal Sınırlama: Sistem aşırı ısındı. Soğuması bekleniyor.")
+        default:
+            return (true, nil)
+        }
     }
 }

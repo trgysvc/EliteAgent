@@ -2,7 +2,9 @@ import Foundation
 
 public struct GitTool: AgentTool, Sendable {
     public let name = "git_action"
+    public let summary = "Manage Git commits, reverts, and diffs."
     public let description = "Executes git operations (commit, revert, status, diff) via GitStateEngine. Provide 'path' to explicitly set the active Git repository directory."
+    public let ubid = 42 // Token 'K' in Qwen 2.5
     
     public init() {}
     

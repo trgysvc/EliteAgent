@@ -2,7 +2,9 @@ import Foundation
 
 public struct MediaControllerTool: AgentTool {
     public let name = "media_control"
+    public let summary = "Control Apple Music / System Audio."
     public let description = "Control Apple Music and system sound. CRITICAL: The toolID MUST be 'media_control'. Pass action via 'params'. Actions: 'play', 'pause', 'next', 'volume' (requires 'level' 0-100), 'play_content' (requires 'searchTerm' String, optional 'contentType' as 'track' or 'playlist'). Example: {\"toolID\": \"media_control\", \"params\": {\"action\": \"play_content\", \"searchTerm\": \"Coffee playlist\"}}"
+    public let ubid = 43 // Token 'L' in Qwen 2.5
     
     public init() {}
     

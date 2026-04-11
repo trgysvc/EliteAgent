@@ -2,7 +2,9 @@ import Foundation
 
 public struct MemoryTool: AgentTool, Sendable {
     public let name = "memory"
+    public let summary = "Search/Store long-term cognitive data."
     public let description = "Searches or saves persistent architectural memories using MemoryAgent. Actions: search (query), save (task, solution)."
+    public let ubid = 44 // Token 'M' in Qwen 2.5
     
     private let agent: MemoryAgent
     

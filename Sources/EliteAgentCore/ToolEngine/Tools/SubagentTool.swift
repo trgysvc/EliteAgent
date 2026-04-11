@@ -2,7 +2,9 @@ import Foundation
 
 public struct SubagentTool: AgentTool, Sendable {
     public let name = "subagent_spawn"
+    public let summary = "Recursive spawning for complex sub-tasks."
     public let description = "Spawn a sub-agent to handle a specific sub-task."
+    public let ubid = 19 // Token '4' in Qwen 2.5
     
     private let runtimeCreator: @Sendable (PlannerAgent, CloudProvider) -> OrchestratorRuntime
     private let planner: PlannerAgent

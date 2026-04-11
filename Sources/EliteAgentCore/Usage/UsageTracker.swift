@@ -23,15 +23,15 @@ public actor UsageTracker {
     
     private init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        let url = home.appendingPathComponent(".eliteagent/usage.json")
+        let url = home.appendingPathComponent(".eliteagent/usage.plist")
         self.fileURL = url
         
         // Ensure directory exists
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         
-        // Load initial data synchronously during init (actor safe as it's isolated)
+        // v13.8: Using PropertyListDecoder for UNO Pure (No JSON Artıkları)
         if let data = try? Data(contentsOf: url),
-           let decoded = try? JSONDecoder().decode(PersistentUsageData.self, from: data) {
+           let decoded = try? PropertyListDecoder().decode(PersistentUsageData.self, from: data) {
             self.dailyTokens = decoded.dailyTokens
             self.dailyCost = decoded.dailyCost
             self.lastResetDate = decoded.lastResetDate
@@ -49,7 +49,9 @@ public actor UsageTracker {
                 dailyCost: 0.0,
                 lastResetDate: now
             )
-            if let encoded = try? JSONEncoder().encode(data) {
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            if let encoded = try? encoder.encode(data) {
                 try? encoded.write(to: fileURL, options: .atomic)
             }
         }
@@ -108,7 +110,9 @@ public actor UsageTracker {
             lastResetDate: lastResetDate
         )
         
-        guard let encoded = try? JSONEncoder().encode(data) else { return }
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .binary
+        guard let encoded = try? encoder.encode(data) else { return }
         try? encoded.write(to: fileURL, options: .atomic)
     }
 }

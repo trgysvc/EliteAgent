@@ -101,14 +101,16 @@ public struct EliteAgentOutput: Codable, Sendable {
     public var thought: String?          // Akıl yürütme süreci (reasoning)
     public var content: String?          // type == .response ise
     public var action: String?           // type == .tool_call ise
+    public var ubid: Int?                // v13.8: Direct Binary ID trigger (UNO Pure)
     public var params: [String: AnyCodable]? // type == .tool_call ise
     public var steps: [ToolCall]?        // v10.5.6: Çok adımlı plan desteği
     
-    public init(type: EliteOutputType?, thought: String? = nil, content: String? = nil, action: String? = nil, params: [String: AnyCodable]? = nil, steps: [ToolCall]? = nil) {
+    public init(type: EliteOutputType?, thought: String? = nil, content: String? = nil, action: String? = nil, ubid: Int? = nil, params: [String: AnyCodable]? = nil, steps: [ToolCall]? = nil) {
         self.type = type
         self.thought = thought
         self.content = content
         self.action = action
+        self.ubid = ubid
         self.params = params
         self.steps = steps
     }
@@ -167,10 +169,12 @@ public struct EliteAgentOutput: Codable, Sendable {
 
 public struct ToolCall: Codable, Sendable {
     public var tool: String
+    public var ubid: Int?               // v13.8: Binary Identifier (UNO Pure)
     public var params: [String: AnyCodable]
     
-    public init(tool: String, params: [String: AnyCodable]) {
+    public init(tool: String, ubid: Int? = nil, params: [String: AnyCodable]) {
         self.tool = tool
+        self.ubid = ubid
         self.params = params
     }
     
@@ -217,10 +221,12 @@ public struct ThinkBlock: Sendable {
 public struct UNOResponse: Codable, Sendable {
     public let result: String
     public let error: String?
+    public let version: Int
     
-    public init(result: String, error: String? = nil) {
+    public init(result: String, error: String? = nil, version: Int = 1) {
         self.result = result
         self.error = error
+        self.version = version
     }
 }
 
@@ -232,10 +238,12 @@ public protocol UNOToolExecutor {
 public struct UNOActionWrapper: Codable, Sendable {
     public let toolID: String
     public let params: [String: AnyCodable]
+    public let version: Int
     
-    public init(toolID: String, params: [String: AnyCodable]) {
+    public init(toolID: String, params: [String: AnyCodable], version: Int = 1) {
         self.toolID = toolID
         self.params = params
+        self.version = version
     }
 }
 

@@ -6,11 +6,13 @@ import AppKit
 /// UI ağacını tarayarak "öğrenmesini" sağlar.
 public struct AppDiscoveryTool: AgentTool {
     public let name = "learn_application_ui"
+    public let summary = "Learn/Map UI tree of unknown Mac apps."
     public let description = """
     Bilinmeyen veya güncellenmiş bir uygulamanın kullanıcı arayüzünü (UI) tarar.
     Arama çubuğu, butonlar ve giriş alanlarını hafızaya kaydeder.
     Parametreler: application_name (Uygulamanın tam adı)
     """
+    public let ubid = 35 // Token 'D' in Qwen 2.5
     
     public init() {}
     

@@ -7,7 +7,9 @@ import OSLog
 /// Uses VNRecognizeTextRequest to find and label UI elements.
 public actor ChicagoVisionTool: AgentTool {
     public let name = "chicago_vision"
+    public let summary = "Legacy Screen OCR/Vision system."
     public let description = "Analyzes the screen using OCR and Computer Vision to identify UI elements."
+    public let ubid = 23 // Token '8' in Qwen 2.5
     
     private let logger = Logger(subsystem: "com.elite.agent", category: "Vision")
     

@@ -20,20 +20,22 @@ public actor MetricsStore {
     
     private init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        fileURL = home.appendingPathComponent(".eliteagent/metrics.json")
+        fileURL = home.appendingPathComponent(".eliteagent/metrics.plist")
         
         // Ensure directory exists
         try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         
-        // Load initial data
+        // v13.8: Using PropertyListDecoder for UNO Pure (No JSON Artıkları)
         if let data = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder().decode([String: ModelMetrics].self, from: data) {
+           let decoded = try? PropertyListDecoder().decode([String: ModelMetrics].self, from: data) {
             self.metrics = decoded
         }
     }
     
     private func save() {
-        guard let data = try? JSONEncoder().encode(metrics) else { return }
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .binary
+        guard let data = try? encoder.encode(metrics) else { return }
         try? data.write(to: fileURL)
     }
     

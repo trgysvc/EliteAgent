@@ -2,7 +2,9 @@ import Foundation
 
 public struct WriteFileTool: AgentTool, Sendable {
     public let name = "write_file"
-    public let description = "Write or overwrite a file in the workspace."
+    public let summary = "Create or overwrite worker files using Native swift APIs."
+    public let description = "Write or overwrite a file in the workspace or allowed home directories. MANDATORY: Use this instead of 'echo >' or shell redirection for all file writing tasks."
+    public let ubid = 34 // Token 'C' in Qwen 2.5
     
     public init() {}
     

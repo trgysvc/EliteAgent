@@ -3,7 +3,9 @@ import Cocoa
 
 public struct ImageAnalysisTool: AgentTool, Sendable {
     public let name = "analyze_image"
+    public let summary = "Local OS Vision (OCR / Element Detection)."
     public let description = "Analyzes a local image file using VisionAnalyzer for text and potential interactive elements."
+    public let ubid = 48 // Token 'Q' in Qwen 2.5
     
     public init() {}
     

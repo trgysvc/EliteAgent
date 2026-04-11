@@ -22,6 +22,7 @@ private final class ProgressState: @unchecked Sendable {
 
 public struct MusicDNATool: AgentTool {
     public let name = "music_dna"
+    public let summary = "Professional MIR spectral audio analysis."
     public let description = """
     CRITICAL: ALWAYS use this tool for music analysis (BPM, Key, Spectral DNA). 
     DO NOT use shell commands (afinfo, mdls) as they lack spectral/MIR capabilities.
@@ -29,6 +30,7 @@ public struct MusicDNATool: AgentTool {
     Sonuçlar otomatik olarak '~/Documents/AI Works' klasörüne kaydedilir.
     Parametre: path (string) — Ses dosyasının tam yolu.
     """
+    public let ubid = 18 // Token '3' in Qwen 2.5
 
     public init() {}
 

@@ -4,11 +4,13 @@ import Foundation
 /// Hafif ve hızlıdır, LLM'in hangi otomasyonların mevcut olduğunu anlamasını sağlar.
 public struct ShortcutDiscoveryTool: AgentTool {
     public let name = "discover_shortcuts"
+    public let summary = "List all available macOS Shortcuts."
     public let description = """
     Sistemdeki macOS Kısayollarını (Shortcuts) listeler. 
     SADECE kullanıcı doğrudan bir kısayol aranması talep ettiğinde KULLANILMALIDIR. Aksi halde başka işlemler için ASLA KULLANMA.
     Parametre: force_refresh (bool)
     """
+    public let ubid = 50 // Token 'S' in Qwen 2.5
     
     public init() {}
     

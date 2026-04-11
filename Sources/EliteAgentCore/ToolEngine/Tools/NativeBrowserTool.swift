@@ -3,7 +3,9 @@ import Cocoa
 
 public struct NativeBrowserTool: AgentTool {
     public let name: String = "browser_native"
+    public let summary: String = "Interactive high-fidelity native browser."
     public let description: String = "A high-fidelity native browser for navigating and interacting with web pages. Supports 'navigate', 'read', 'screenshot', and 'click'."
+    public let ubid: Int = 47 // Token 'P' in Qwen 2.5
     
     public init() {}
     

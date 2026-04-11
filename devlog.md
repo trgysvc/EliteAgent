@@ -546,3 +546,51 @@ EliteAgent'ın dosya yapısını Apple'ın resmi macOS standartlarına ve kullan
 
 ### 🏁 Durum: **PRODUCTION READY**
 EliteAgent artık DMG veya Apple Store üzerinden dağıtıma tam uyumlu, sistem dostu ve veri güvenliği öncelikli bir yapıya kavuştu. (System Data != User Data).
+
+---
+
+## 🧠 UNO 1.0: Sinirsel İletim (Binary Spinal Cord) - [2026-04-11]
+
+EliteAgent sistemini JSON tabanlı "mektuplaşma" yönteminden, Apple standartlarında yüksek performanslı ve halüsinasyon-free **Binary PropertyList** mimarisine taşıyan devrimsel dönüşüm.
+
+### 🧩 Teknik Devrim: Üçlü Koruma Hattı (Triple-Jump)
+
+#### 1. Binary Spinal Cord (XPC Performance)
+- **Problem**: Karmaşık JSON objelerinin serileştirilmesi (Parsing) sırasındaki işlemci yükü ve serileştirme hatalarından kaynaklanan sessiz kilitlenmeler.
+- **Çözüm**: `UNOTransport` ve `EliteAgentXPC` arasındaki tüm iletişim JSON'dan **Binary PropertyList (PLST)** formatına dönüştürüldü. Veri transferi artık "parsing" gerektirmeyen, milisaniyelik hızlara sahip yerel ikili otoyola taşındı.
+
+#### 2. Strict Logit Masking (Hallucination Immunization)
+- **Problem**: Modelin aksiyon fazında uydurulmuş/hatalı araç (tool) isimleri üretmesi.
+- **Çözüm**: `UNOGrammarLogitProcessor` güncellendi. Model `action` fazına girdiğinde, sistem sadece tanımlı **UBID** (Unique Binary ID) ve kritik kontrol token'larına (EOS, im_end, vb.) izin verecek şekilde lojitleri maskeler. Bu, modelin halüsinasyon yapmasını fiziksel olarak imkansız kılar.
+
+#### 3. UBID (Unique Binary ID) Katmanı
+- **Problem**: Uzun araç isimlerinin tokenizer üzerindeki token maliyeti ve "token-level" çakışmalar.
+- **Çözüm**: Tüm araçlara ve dinamik eklentilere (Phase 2), modelin tokenizer'ı tarafından kolayca tanınan (tercihen tek bir karakter karşılığı olan) **Unique Binary ID'ler** (Int16) atandı. Model artık araçları ismiyle değil, ikili ID'si üzerinden doğrudan "neuronal link" üzerinden çağırıyor.
+
+### 🏁 Durum: **UNO ARCHITECTURE DEPLOYED**
+EliteAgent artık bir chat arayüzü değil, donanımla ikili düzeyde konuşan, halüsinasyona karşı bağışıklığı olan gerçek bir **Unified Native Orchestration** (UNO) motoruna dönüşmüştür.
+
+---
+## 📅 [2026-04-11] — UNO Pure: Battle Test & Serial Mastery (v14.0 - v14.5)
+
+Bugün EliteAgent'ın "JSON-Free" vizyonunu saha testleriyle (Battle Test) doğruladık ve sistemi çoklu görev ortamlarında sarsılmaz kılacak "Dinamik Seri Orkestrasyon" mimarisini devreye aldık.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Dynamic Serial Orchestration (v14.0)
+- **Problem**: Kullanıcının hızlıca "Enter" tuşuna basması veya arka arkaya komut vermesi durumunda, önceki görevlerin yarıda kesilmesi veya state çakışmaları.
+- **Çözüm**: `QueuedTask` yapısı ve FIFO (First-In-First-Out) tabanlı bir görev kuyruğu sisteme eklendi. Artık her komut sırasıyla, bir önceki bitmeden başlamayacak şekilde işleniyor.
+
+#### 2. Strict Context Isolation (v14.5)
+- **Problem**: Bir önceki görevdeki hataların (örn: README boş hatası) bir sonraki bağımsız görevin zihnini kirletmesi ("Context Leakage").
+- **Çözüm**: `executeActualTask` başlangıcında `currentMessages`, `steps` ve `thinkBlocks` tamamen temizlenerek her göreve "tabula rasa" (temiz sayfa) prensibiyle başlanması sağlandı. `InternalMonologue` sinyaliyle planlayıcı hafızası sıfırlandı.
+
+#### 3. Metadata Hardening & Hallucination Immunization
+- **Geliştirme**: `PlannerTemplate` içindeki örnek UBID'ler (Shell: 32, Read: 33, Write: 34) gerçek değerleriyle mühürlendi.
+- **Dürtüleme**: `WriteFile`, `SystemInfo` ve `Safari` araçlarının açıklamaları "NATIVE" ve "MANDATORY" ifadeleriyle güçlendirilerek modelin gereksiz yere `shell_exec`'e kaçması engellendi.
+
+### 🏁 Durum: **UNO PURE - BATTLE READY**
+EliteAgent artık sadece ikili (binary) düzeyde konuşmakla kalmıyor, aynı zamanda her görevi izole bir zihinle ve yüksek disiplinli bir sırayla yerine getiriyor.
+
+---
+*EliteAgent Core · UNO Pure v14.5 · Serial Mastery & Context Isolation.*

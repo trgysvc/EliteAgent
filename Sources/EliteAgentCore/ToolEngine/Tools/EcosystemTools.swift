@@ -2,7 +2,9 @@ import Foundation
 
 public struct CalendarTool: AgentTool {
     public let name = "apple_calendar"
+    public let summary = "Manage native Apple Calendar events."
     public let description = "Schedule and manage events in the native Apple Calendar app using direct system protocols."
+    public let ubid = 54 // Token 'W' in Qwen 2.5
     
     public init() {}
     
@@ -62,7 +64,9 @@ public struct CalendarTool: AgentTool {
 
 public struct MailTool: AgentTool {
     public let name = "apple_mail"
+    public let summary = "Send/Draft native Apple Mail emails."
     public let description = "Directly manage Apple Mail drafts and sending."
+    public let ubid = 55 // Token 'X' in Qwen 2.5
     
     public init() {}
     
@@ -139,7 +143,9 @@ public struct MailTool: AgentTool {
 
 public struct SystemVolumeTool: AgentTool {
     public let name = "set_volume"
-    public let description = "Set the system output volume level (0-100). Parametre: level (int)."
+    public let summary = "Adjust macOS system speaker volume."
+    public let description = "Set the system output volume level (0-100) using native Core Audio protocols. Use this for all volume adjustments. Parametre: level (int)."
+    public let ubid = 56 // Token 'Y' in Qwen 2.5
     
     public init() {}
     
@@ -156,7 +162,9 @@ public struct SystemVolumeTool: AgentTool {
 
 public struct BrightnessControlTool: AgentTool {
     public let name = "set_brightness"
+    public let summary = "Adjust macOS screen brightness level."
     public let description = "Set the screen brightness level (0.0 - 1.0). Parametre: level (float)."
+    public let ubid = 57 // Token 'Z' in Qwen 2.5
     
     public init() {}
     
@@ -174,7 +182,9 @@ public struct BrightnessControlTool: AgentTool {
 
 public struct SleepControlTool: AgentTool {
     public let name = "system_sleep"
-    public let description = "Put the system to sleep immediately."
+    public let summary = "Force macOS system to sleep mode."
+    public let description = "Put the system to sleep immediately using native AppleScript protocols. Preferred over shell commands."
+    public let ubid = 15 // Token '0' in Qwen 2.5
     
     public init() {}
     
@@ -187,7 +197,9 @@ public struct SleepControlTool: AgentTool {
 
 public struct SystemInfoTool: AgentTool {
     public let name = "get_system_info"
-    public let description = "Get basic system information (OS version, Hostname, etc.)"
+    public let summary = "Get detailed OS version and hardware info via Native APIs."
+    public let description = "Get basic system information (OS version, Device Name, M-Series Model) using Swift's ProcessInfo. MANDATORY: Use this instead of sw_vers or shell commands for system info."
+    public let ubid = 16 // Token '1' in Qwen 2.5
     
     public init() {}
     

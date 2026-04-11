@@ -12,12 +12,12 @@ public struct PlannerTemplate: Sendable {
         } else {
             // Default to Master Toolset if no subset provided (Full Escalation Mode)
             toolsToDisplay = [
-                "- [11] `shell_exec`: Terminal komutu çalıştırır.",
-                "- [31] `read_file`: Dosya içeriğini okur.",
-                "- [32] `write_file`: Dosya yazar.",
-                "- [37] `messenger`: iMessage/WhatsApp mesajı gönderir.",
-                "- [40] `safari_control`: Safari otomasyonu.",
-                "- [45] `web_search`: Google araması yapar."
+                "- [32] `shell_exec`: Terminal komutu çalıştırır (zsh/osascript).",
+                "- [33] `read_file`: Dosya içeriğini yerel Swift API'leri ile okur.",
+                "- [34] `write_file`: Dosya içeriğini yerel Swift API'leri ile yazar (MANDATORY).",
+                "- [37] `messenger`: iMessage/WhatsApp mesajı gönderir (Native).",
+                "- [40] `safari_automation`: Safari otomasyonu ve Google arama (NATIVE).",
+                "- [45] `web_search`: Google araması yapar (WebFetch)."
             ]
         }
         

@@ -23,7 +23,8 @@ public actor AuditLoggerActor {
         ]
         
         do {
-            let data = try JSONSerialization.data(withJSONObject: entry)
+            // v13.8: UNO Pure - Binary PropertyList Serialization (No JSON Artıkları)
+            let data = try PropertyListSerialization.data(fromPropertyList: entry, format: .binary, options: 0)
             
             // Check if encryption is enabled in settings
             let shouldEncrypt = UserDefaults.standard.bool(forKey: "Settings_encryptAuditLogs")
@@ -77,8 +78,8 @@ public actor AuditLoggerActor {
     }
     
     private func save(data: Data, isEncrypted: Bool) throws {
-        let logFileName = isEncrypted ? "audit_log.enc" : "audit_log.json"
-        guard let logURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent(logFileName) else { return }
+        let logFileName = isEncrypted ? "audit_log.enc" : "audit_log.plist"
+        let logURL = PathConfiguration.shared.applicationSupportURL.appendingPathComponent(logFileName)
         
         if !FileManager.default.fileExists(atPath: logURL.path) {
             FileManager.default.createFile(atPath: logURL.path, contents: nil)
@@ -87,7 +88,7 @@ public actor AuditLoggerActor {
         let fileHandle = try FileHandle(forWritingTo: logURL)
         fileHandle.seekToEndOfFile()
         fileHandle.write(data)
-        fileHandle.write("\n".data(using: .utf8)!)
+        // Note: For binary streams, separators like \n are omitted to maintain Plist integrity
         fileHandle.closeFile()
     }
 }

@@ -5,7 +5,9 @@ import AppKit
 /// Bu araç sayesinde ajan, Apple Silicon mimarisinin o anki durumuna göre strateji belirleyebilir.
 public struct SystemTelemetryTool: AgentTool {
     public let name = "get_system_telemetry"
+    public let summary = "Monitor M-series thermal/RAM pressure."
     public let description = "Retrieve real-time hardware status including thermal state, memory pressure, and performance metrics."
+    public let ubid = 36 // Token 'E' in Qwen 2.5
     
     public init() {}
     

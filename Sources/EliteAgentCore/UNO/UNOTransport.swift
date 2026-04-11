@@ -15,7 +15,16 @@ public final class UNOTransport: @unchecked Sendable {
     
     public func executeRemote(action: UNOActionWrapper) async throws -> UNOResponse {
         let conn = try getOrCreateConnection()
-        let data = try JSONEncoder().encode(action)
+        
+        // v13.8: Unified Native Binary Serialization (No JSON "Letters")
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .binary
+        let data = try encoder.encode(action)
+        
+        // v13.8: Debug Inspect Mode (Meta + Hex summary)
+        #if DEBUG
+        AgentLogger.logInfo("[UNO-Trans] Binary Payload size: \(data.count) bytes | Target: \(action.toolID)")
+        #endif
         
         return try await withCheckedThrowingContinuation { continuation in
             let proxy = conn.remoteObjectProxyWithErrorHandler { error in
@@ -40,7 +49,14 @@ public final class UNOTransport: @unchecked Sendable {
                 }
                 
                 do {
-                    let response = try JSONDecoder().decode(UNOResponse.self, from: data)
+                    // v13.8: Binary Decoding
+                    let response = try PropertyListDecoder().decode(UNOResponse.self, from: data)
+                    
+                    // Schema Version Validation (User Requirement 1.1)
+                    if response.version != action.version {
+                        AgentLogger.logAudit(level: .error, agent: "UNO", message: "Schema Mismatch: Sent V\(action.version), Recv V\(response.version)")
+                    }
+                    
                     continuation.resume(returning: response)
                 } catch {
                     continuation.resume(throwing: error)

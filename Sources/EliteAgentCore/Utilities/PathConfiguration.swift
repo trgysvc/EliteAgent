@@ -57,7 +57,7 @@ public struct PathConfiguration: Sendable {
     }
     
     public var historyURL: URL {
-        return applicationSupportURL.appendingPathComponent("history.json")
+        return applicationSupportURL.appendingPathComponent("history.plist")
     }
     
     public var memoryDBURL: URL {

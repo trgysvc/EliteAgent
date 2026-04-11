@@ -66,14 +66,16 @@ public actor HistoryManager {
     }
     
     public func save(_ sessions: [ChatSession]) async throws {
-        let data = try JSONEncoder().encode(sessions)
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .binary
+        let data = try encoder.encode(sessions)
         try data.write(to: fileURL, options: .atomic)
     }
     
     public func load() async throws -> [ChatSession] {
         guard FileManager.default.fileExists(atPath: fileURL.path) else { return [] }
         let data = try Data(contentsOf: fileURL)
-        return try JSONDecoder().decode([ChatSession].self, from: data)
+        return try PropertyListDecoder().decode([ChatSession].self, from: data)
     }
     
     public func clear() async throws {

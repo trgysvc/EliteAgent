@@ -3,7 +3,9 @@ import PDFKit
 
 public struct ReadFileTool: AgentTool, Sendable {
     public let name = "read_file"
+    public let summary = "Read content from .txt, .pdf, .docx files."
     public let description = "Read content from a file (.txt, .pdf, .docx)."
+    public let ubid = 33 // Token 'B' in Qwen 2.5
     
     public init() {}
     

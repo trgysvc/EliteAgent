@@ -2,7 +2,9 @@ import Foundation
 
 public struct ResearchReportTool: AgentTool {
     public let name = "research_report"
+    public let summary = "Finalize strategic JSON research reports."
     public let description = "MANDATORY: Use this tool to finalize a strategic research task. It formats findings into a premium UI-compatible JSON report. Parametre: report_json (string)."
+    public let ubid = 20 // Token '5' in Qwen 2.5
     
     public init() {}
     

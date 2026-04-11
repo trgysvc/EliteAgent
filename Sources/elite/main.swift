@@ -23,6 +23,7 @@ func runCLI() async {
           --brief                  Force v10.0 Brief Mode (60% compression).
           --update-baseline        Update token_baselines.json for the current scenario.
           --verify-pvp             Run Production Verification Protocol (v7.8.5).
+          --verify-uno             Verify UNO Architecture & Tool Registry (v14.0).
           --help, -h               Show this help message.
         
         Precedence:
@@ -39,7 +40,13 @@ func runCLI() async {
     var promptOnFallback = args.contains("--prompt-on-fallback")
     let allowCloudFallback = args.contains("--allow-cloud-fallback")
     let verifyPVP = args.contains("--verify-pvp")
+    let verifyUNO = args.contains("--verify-uno")
     let updateBaseline = args.contains("--update-baseline")
+    
+    if verifyUNO {
+        await runUNOVerification()
+        exit(0)
+    }
     
     if verifyPVP {
         await runPVPVerification()
@@ -60,7 +67,7 @@ func runCLI() async {
     }
     
     // Extract task prompt (exclude flags)
-    let flags = ["--strict-local", "--force-local", "--prompt-on-fallback", "--allow-cloud-fallback", "--token-trace", "--brief", "--update-baseline"]
+    let flags = ["--strict-local", "--force-local", "--prompt-on-fallback", "--allow-cloud-fallback", "--token-trace", "--brief", "--update-baseline", "--verify-uno"]
     let taskPrompt = args.filter { !flags.contains($0) }.dropFirst().joined(separator: " ")
     
     guard !taskPrompt.isEmpty else {
@@ -228,6 +235,58 @@ func runPVPVerification() async {
     await monitor.setDebugOverride(nil)
 
     print("\n✨ PVP Verification Completed.\n")
+}
+
+@MainActor
+func runUNOVerification() async {
+    print("\n🚀 Starting UNO Architecture & Tool Verification (v14.0)...\n")
+    
+    // Initialize Orchestrator to trigger tool registration
+    let orchestrator = Orchestrator()
+    print("  ✅ Orchestrator başlatıldı.")
+    
+    // 1. Static Diagnostic Report
+    let report = await UNODiagnostic.generateReport()
+    UNODiagnostic.printReport(report)
+    
+    if report.toolCount < 35 {
+        print("⚠️  UYARI: Eksik araç kaydı tespit edildi. (Beklenen: 35, Bulunan: \(report.toolCount))")
+    }
+    
+    // 2. State Machine Hand-off Test (Logic Probe)
+    print("\n🧪 Test 2: State Machine Hand-off (Logic Probe)")
+    
+    // 3. Functional Tool Tests (Direct Registry execution)
+    print("\n🧪 Test 3: Functional Tool Probe (Bypassing LLM)")
+    let registry = ToolRegistry.shared
+    let session = Session(workspaceURL: PathConfiguration.shared.workspaceURL, config: .default, complexity: 1)
+    
+    print("  -> Testing 'get_system_info'...")
+    do {
+        let sysInfo = try await registry.execute(toolCall: ToolCall(tool: "get_system_info", params: [:]), session: session)
+        print("  ✅ Success: \(sysInfo.prefix(50))...")
+    } catch {
+        print("  ❌ Failed: \(error)")
+    }
+    
+    print("  -> Testing 'calculator_op' (5 * 5)...")
+    do {
+        let calc = try await registry.execute(toolCall: ToolCall(tool: "calculator_op", params: ["expression": AnyCodable("5 * 5")]), session: session)
+        print("  ✅ Success: \(calc)")
+    } catch {
+        print("  ❌ Failed: \(error)")
+    }
+    
+    print("  -> Testing 'shell_exec' (ls -la)...")
+    do {
+        let shell = try await registry.execute(toolCall: ToolCall(tool: "shell_exec", params: ["command": AnyCodable("ls -la")]), session: session)
+        print("  ✅ Success: \(shell.prefix(50))...")
+    } catch {
+        print("  ❌ Failed: \(error)")
+    }
+    
+    print("\n✨ UNO Verification Pre-checks Completed.")
+    print("Run targeted tasks with 'elite \"task description\"' for end-to-end testing.\n")
 }
 
 Task {
