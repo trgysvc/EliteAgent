@@ -291,9 +291,9 @@ public struct MenuBarView: View {
         
         switch selected {
         case .localMLX: return "Local - Titan Engine"
-        case .bridge: return "Local - Ollama"
         case .openRouter: return "Cloud - OpenRouter"
         case .custom(_, let name, _, _, _): return name
+        default: return "Unknown Provider"
         }
     }
     

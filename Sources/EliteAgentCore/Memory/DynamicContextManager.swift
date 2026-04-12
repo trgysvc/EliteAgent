@@ -12,7 +12,7 @@ public actor DynamicContextManager {
     /// The index after which messages are considered 'recent' and protected from summarization.
     private var compactBoundary: Int = 10
     
-    public init(maxTokens: Int, provider: CloudProvider) {
+    public init(maxTokens: Int, provider: CloudProvider?) {
         self.maxTokens = maxTokens
         self.provider = provider
     }

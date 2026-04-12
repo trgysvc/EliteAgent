@@ -4,7 +4,6 @@ import Foundation
 public enum ModelProvider: Codable, Sendable, Equatable {
     case none
     case localTitanEngine(modelID: String)  // Native MLX
-    case localOllama(modelName: String)     // Ollama Bridge
     case cloudOpenRouter(modelID: String)   // Gemini, Claude, etc.
 }
 

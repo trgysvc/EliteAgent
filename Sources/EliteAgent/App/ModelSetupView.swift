@@ -36,9 +36,6 @@ public struct ModelSetupView: View {
                         // Section 2: CLOUD MODELS
                         modelSection(title: "CLOUD PROVIDERS", icon: "cloud.fill", filter: .cloud)
                         
-                        // Section 3: OLLAMA BRIDGE
-                        modelSection(title: "OLLAMA BRIDGE", icon: "point.3.connected.trianglepath.dotted", filter: .ollama)
-                        
                         diskUsageFooter
                     }
                     .padding(20)
@@ -169,13 +166,12 @@ public struct ModelSetupView: View {
     
     // MARK: - Helper Methods
     
-    private enum ProviderCategory { case local, cloud, ollama }
+    private enum ProviderCategory { case local, cloud }
     
     private func match(_ provider: ModelProvider, category: ProviderCategory) -> Bool {
         switch (provider, category) {
         case (.localTitanEngine, .local): return true
         case (.cloudOpenRouter, .cloud): return true
-        case (.localOllama, .ollama): return true
         default: return false
         }
     }

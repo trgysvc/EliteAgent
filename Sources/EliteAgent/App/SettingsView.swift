@@ -158,7 +158,6 @@ struct AISettingsView: View {
                 let providerStr: String = {
                     switch sessionState.activeProvider {
                     case "local": return "Yerel - Titan Engine"
-                    case "ollama": return "Yerel - Ollama"
                     case "cloud": return "Bulut - OpenRouter"
                     default: return "Kurulu Değil"
                     }

@@ -32,6 +32,16 @@ public struct Message: Codable, Sendable {
     }
 }
 
+public struct UntrustedData: Codable, Sendable {
+    public let source: String
+    public let content: String
+    
+    public init(source: String, content: String) {
+        self.source = source
+        self.content = content
+    }
+}
+
 public struct CompletionRequest: Codable, Sendable {
     public let taskID: String
     public let systemPrompt: String
@@ -42,8 +52,20 @@ public struct CompletionRequest: Codable, Sendable {
     public var maxLatencyMs: Int?
     public var sensitivityLevel: SensitivityLevel
     public var complexity: Int
+    public var untrustedContext: [UntrustedData]? // v13.9: Structural Isolation
     
-    public init(taskID: String, systemPrompt: String, messages: [Message], maxTokens: Int, temperature: Double? = 0.2, requiredCapabilities: [Capability]? = nil, maxLatencyMs: Int? = 30_000, sensitivityLevel: SensitivityLevel, complexity: Int) {
+    public init(
+        taskID: String, 
+        systemPrompt: String, 
+        messages: [Message], 
+        maxTokens: Int, 
+        temperature: Double? = 0.2, 
+        requiredCapabilities: [Capability]? = nil, 
+        maxLatencyMs: Int? = 30_000, 
+        sensitivityLevel: SensitivityLevel, 
+        complexity: Int,
+        untrustedContext: [UntrustedData]? = nil
+    ) {
         self.taskID = taskID
         self.systemPrompt = systemPrompt
         self.messages = messages
@@ -53,6 +75,7 @@ public struct CompletionRequest: Codable, Sendable {
         self.maxLatencyMs = maxLatencyMs
         self.sensitivityLevel = sensitivityLevel
         self.complexity = complexity
+        self.untrustedContext = untrustedContext
     }
 }
 

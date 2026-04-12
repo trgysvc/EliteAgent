@@ -63,7 +63,6 @@ public enum RoutingStrategy: String, Codable, Sendable {
     case localFirst = "local_first"
     case cloudOnly = "cloud_only"
     case hybrid = "hybrid"
-    case bridgeFirst = "bridge_first"
 }
 
 public enum VaultError: Error, CustomStringConvertible, Sendable {
@@ -106,10 +105,9 @@ public actor VaultManager {
             let defaultConfig = VaultConfig(
                 providers: [
                     ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-                    ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
                     ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
                 ],
-                routingStrategy: .bridgeFirst,
+                routingStrategy: .localFirst,
                 inference: VaultInferenceConfig(pauseOnUserInteraction: true),
                 browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
             )
@@ -147,12 +145,11 @@ public actor VaultManager {
         return config.providers.contains { $0.type == .local }
     }
     
-    /// Ensures that 'mlx', 'bridge', and 'openrouter' are present. Restores defaults if missing.
+        // Ensures that 'mlx' and 'openrouter' are present. Restores defaults if missing.
     private static func syncRequiredProviders(config: inout VaultConfig, configURL: URL) throws -> Bool {
-        let requiredIds = ["mlx", "bridge", "openrouter"]
+        let requiredIds = ["mlx", "openrouter"]
         let defaults: [String: ProviderConfig] = [
             "mlx": ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
-            "bridge": ProviderConfig(id: "bridge", type: .bridge, endpoint: "http://localhost:11434/v1", keychainKey: nil, modelName: "", capabilities: ["general", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
             "openrouter": ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
         ]
         

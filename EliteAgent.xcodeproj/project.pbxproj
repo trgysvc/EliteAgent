@@ -88,64 +88,9 @@
 		AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = EliteAgentXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		AE61DCD22F8A98A000F04518 /* Exceptions for "Sources/EliteAgent" folder in "EliteAgent" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				App/Agents/AgentProtocol.swift,
-				App/Agents/CriticAgent.swift,
-				App/Agents/CriticTemplate.swift,
-				App/Agents/EliteCoordinator.swift,
-				App/Agents/ExecutorAgent.swift,
-				App/Agents/GuardAgent.swift,
-				App/Agents/InternalMonologueActor.swift,
-				App/Agents/MemoryAgent.swift,
-				App/Agents/Orchestrator.swift,
-				App/Agents/OrchestratorRuntime.swift,
-				App/Agents/PlannerAgent.swift,
-				App/Agents/PlannerTemplate.swift,
-				App/Agents/ProjectObserver.swift,
-				App/Agents/SelfHealingEngine.swift,
-				App/Agents/Session.swift,
-				App/Agents/TaskClassifier.swift,
-				App/Agents/ToolPrivacyGate.swift,
-				App/Agents/TulparActor.swift,
-			);
-			target = AE747A172F70602B004732A5 /* EliteAgent */;
-		};
-		AE61DCD32F8A98A000F04518 /* Exceptions for "Sources/EliteAgent" folder in "EliteAgentCore" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				App/Agents/AgentProtocol.swift,
-				App/Agents/CriticAgent.swift,
-				App/Agents/CriticTemplate.swift,
-				App/Agents/EliteCoordinator.swift,
-				App/Agents/ExecutorAgent.swift,
-				App/Agents/GuardAgent.swift,
-				App/Agents/InternalMonologueActor.swift,
-				App/Agents/MemoryAgent.swift,
-				App/Agents/Orchestrator.swift,
-				App/Agents/OrchestratorRuntime.swift,
-				App/Agents/PlannerAgent.swift,
-				App/Agents/PlannerTemplate.swift,
-				App/Agents/ProjectObserver.swift,
-				App/Agents/SelfHealingEngine.swift,
-				App/Agents/Session.swift,
-				App/Agents/TaskClassifier.swift,
-				App/Agents/ToolPrivacyGate.swift,
-				App/Agents/TulparActor.swift,
-			);
-			target = AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AE747A1A2F70602B004732A5 /* Sources/EliteAgent */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				AE61DCD22F8A98A000F04518 /* Exceptions for "Sources/EliteAgent" folder in "EliteAgent" target */,
-				AE61DCD32F8A98A000F04518 /* Exceptions for "Sources/EliteAgent" folder in "EliteAgentCore" target */,
-			);
 			path = Sources/EliteAgent;
 			sourceTree = "<group>";
 		};

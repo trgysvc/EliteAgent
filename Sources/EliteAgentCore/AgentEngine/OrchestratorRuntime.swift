@@ -6,9 +6,8 @@ public actor OrchestratorRuntime {
     
     private let planner: PlannerAgent
     private let memory: MemoryAgent
-    private let cloudProvider: CloudProvider
+    private let cloudProvider: CloudProvider?
     private let localProvider: MLXProvider?
-    private let bridgeProvider: BridgeProvider?
     private let toolRegistry: ToolRegistry
     private let bus: SignalBus
     private let vaultManager: VaultManager
@@ -36,9 +35,8 @@ public actor OrchestratorRuntime {
     public init(
         planner: PlannerAgent,
         memory: MemoryAgent,
-        cloudProvider: CloudProvider,
+        cloudProvider: CloudProvider?,
         localProvider: MLXProvider?,
-        bridgeProvider: BridgeProvider?,
         toolRegistry: ToolRegistry,
         bus: SignalBus,
         vaultManager: VaultManager
@@ -47,7 +45,6 @@ public actor OrchestratorRuntime {
         self.memory = memory
         self.cloudProvider = cloudProvider
         self.localProvider = localProvider
-        self.bridgeProvider = bridgeProvider
         self.toolRegistry = toolRegistry
         self.bus = bus
         self.vaultManager = vaultManager
@@ -73,7 +70,6 @@ public actor OrchestratorRuntime {
         switch source {
         case .localMLX: providerID = .mlx
         case .openRouter: providerID = .openrouter
-        case .bridge: providerID = .bridge
         case .custom(let pid, _, _, _, _): providerID = ProviderID(rawValue: pid) ?? .mlx
         }
         self.sessionContext.updateModel(providerID)
@@ -93,7 +89,7 @@ public actor OrchestratorRuntime {
     
     public func interrupt() { self.isInterrupted = true }
     
-    public func executeTask(prompt: String, session: Session, complexity: Int, forceProviders: [ProviderID]? = nil, config: InferenceConfig) async throws {
+    public func executeTask(prompt: String, session: Session, complexity: Int, forceProviders: [ProviderID]? = nil, config: InferenceConfig, untrustedContext: [UntrustedData]? = nil) async throws {
         self.onStatusUpdate?(.working)
         self.isInterrupted = false
         self.currentState = .classifying
@@ -138,7 +134,7 @@ public actor OrchestratorRuntime {
         do {
             var turnCount = 0
             var healingAttempts = 0
-            while currentState != .completed && turnCount < 50 {
+            while currentState != .completed && turnCount < 15 {
                 turnCount += 1
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🔄 [STATE: \(currentState.rawValue.uppercased())] Turn \(turnCount)")
                 
@@ -154,19 +150,19 @@ public actor OrchestratorRuntime {
 
                 switch currentState {
                 case .classifying:
-                    let category = try await handleClassification(prompt: prompt, provider: provider, context: contextManager)
+                    let category = try await handleClassification(prompt: prompt, provider: provider, context: contextManager, untrustedContext: untrustedContext)
                     self.currentTaskCategory = category
                     currentState = (category == .chat || category == .conversation) ? .chatting : .planning
                 case .chatting:
-                    try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session)
+                    try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session, untrustedContext: untrustedContext)
                     currentState = .completed
                 case .planning:
-                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session, useSafeMode: healingAttempts > 0)
+                    try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                     currentState = .executing
                     healingAttempts = 0 // Reset on successful transition
                 case .executing:
                     do {
-                        let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0)
+                        let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                         if !shouldContinue {
                             if let answer = finalAnswer { await session.setFinalAnswer(answer) }
                             currentState = .reviewing
@@ -192,7 +188,9 @@ public actor OrchestratorRuntime {
                             SİSTEM UYARISI: Bir hata oluştu. 
                             HATA: \(error.localizedDescription)
                             
-                            TALİMAT: Yukarıdaki hatayı gidererek asıl hedefine (**\(prompt)**) ulaşmak için yeni bir yol/plan oluştur. Workspace içindeki ilgisiz dosya değişikliklerine sapma, sadece orijinal görevi tamamla.
+                            TALİMAT: Yukarıdaki hatayı gidererek asıl hedefine (**\(prompt)**) ulaşmak için yeni bir yol/plan oluştur. 
+                            💡 İPUCU: Araç açıklamalarını (descriptions) dikkatlice oku ve ZORUNLU parametreleri (location, text vb.) doldurduğundan emin ol.
+                            KRİTİK: Eğer geçmiş mesajlarda kalan başka bir görevle uğraşıyorsan (örn: hava durumu) onu tamamen UNUT ve SADECE güncel göreve (**\(prompt)**) odaklan.
                             """
                             await contextManager.addMessage(Message(role: "user", content: errorMsg))
                             currentState = .planning // Retry planning with knowledge of the error
@@ -214,8 +212,24 @@ public actor OrchestratorRuntime {
         self.onStatusUpdate?(.idle)
     }
     
-    private func handleClassification(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> TaskCategory {
+    private func handleClassification(prompt: String, provider: any LLMProvider, context: DynamicContextManager, untrustedContext: [UntrustedData]? = nil) async throws -> TaskCategory {
         self.currentAction = "İstek Sınıflandırılıyor..."
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
+
+        // v19.0: ANE Offloading - Attempt classification on the Neural Engine first
+        let aneCategory = await ANEInferenceActor.shared.classifyIntent(prompt: prompt)
+        if aneCategory != .other {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [ANE CLASSIFIED] Category: \(aneCategory)")
+            return aneCategory
+        }
+        
+        // v14.8: Deterministic Keyword Classification (Zero-Latency)
+        // This ensures specialized tools like get_weather and telemetry are ALWAYS surfacing.
+        let deterministicCategory = TaskClassifier().classify(prompt: prompt)
+        if deterministicCategory != .other && deterministicCategory != .chat && deterministicCategory != .task {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [DETERMINISTIC CATEGORY] \(deterministicCategory)")
+            return deterministicCategory
+        }
         
         // v11.6: Local-First Classification. Bypass cloud if local is ready.
         let activeProvider: any LLMProvider
@@ -226,23 +240,26 @@ public actor OrchestratorRuntime {
         }
         
         let systemPrompt = PromptRegistry.getPrompt(for: .classifier)
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [Message(role: "user", content: prompt)], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [Message(role: "user", content: prompt)], maxTokens: 500, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
         let response = try await activeProvider.complete(request, useSafeMode: false)
-        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY RESPONSE] \(response.content)")
         
         // v11.0: Removed 'Heuristic Override'. Relying exclusively on model-driven classification.
         
-        // v13.8: UNO Pure - Binary Category Detection (No JSON)
-        let cleaned = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let category = TaskCategory.allCases.first(where: { cleaned.contains($0.rawValue) }) {
+        // v19.5: UNO Pure - Binary Category Detection (Tag-Based)
+        let cleaned = response.content.uppercased()
+        if cleaned.contains("[UNOB: TASK]") { return .task }
+        if cleaned.contains("[UNOB: CHAT]") { return .chat }
+        
+        // Fallback to substring match for safety during migration
+        if let category = TaskCategory.allCases.first(where: { cleaned.contains($0.rawValue.uppercased()) }) {
             return category
         }
         
         return .chat // Varsayılan: Güvenli sohbet modu
     }
     
-    private func handleChatting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session) async throws {
+    private func handleChatting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, untrustedContext: [UntrustedData]? = nil) async throws {
         self.currentAction = "Cevap Veriliyor..."
         let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Kullanıcı ile saf sohbet"))
         var history = await context.getMessages()
@@ -251,8 +268,8 @@ public actor OrchestratorRuntime {
             await context.addMessage(Message(role: "user", content: prompt))
         }
         let isLocal = provider.providerType == .local
-        let speedHint = isLocal ? "\nNOTE: Be concise. Direct answer only." : ""
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1)
+        let speedHint = isLocal ? "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE CONCISE. DIRECT ANSWER ONLY.]" : ""
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
         let response = try await provider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT INPUT] \(history.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT RESPONSE] \(response.content)")
@@ -262,7 +279,7 @@ public actor OrchestratorRuntime {
         await session.setFinalAnswer(response.content)
     }
     
-    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, useSafeMode: Bool = false) async throws {
+    private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, useSafeMode: Bool = false, untrustedContext: [UntrustedData]? = nil) async throws {
         self.currentAction = "Plan Hazırlanıyor..."
         
         // v11.8: Dynamic Tool Filtering & Escalation Logic
@@ -288,16 +305,16 @@ public actor OrchestratorRuntime {
         }
         let isLocal = provider.providerType == .local
         let maxTokens = isLocal ? 1024 : 4000
-        let speedHint = isLocal ? "\nCRITICAL: You are running on a local SLM. BE EXTREMELY CONCISE. Use tool calls immediately if needed. Minimize verbose dialogue." : ""
+        let speedHint = isLocal ? "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE EXTREMELY CONCISE but NEVER omit mandatory tool parameters (e.g. location, text, recipient).]" : ""
         
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: isLocal ? 1 : 3)
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: isLocal ? 1 : 3, untrustedContext: untrustedContext)
         let response = try await provider.complete(request, useSafeMode: useSafeMode)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
         if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
         await context.addMessage(Message(role: "assistant", content: response.content))
     }
     
-    private func handleExecution(provider: any LLMProvider, context: DynamicContextManager, session: Session, config: InferenceConfig, useSafeMode: Bool = false) async throws -> (Bool, String?) {
+    private func handleExecution(provider: any LLMProvider, context: DynamicContextManager, session: Session, config: InferenceConfig, useSafeMode: Bool = false, untrustedContext: [UntrustedData]? = nil) async throws -> (Bool, String?) {
         let history = await context.getMessages()
         let lastMessage = history.last?.content ?? ""
         let parsedOutputs = try ThinkParser.parseOutputs(from: lastMessage)
@@ -351,7 +368,7 @@ public actor OrchestratorRuntime {
         
         let systemPrompt = PromptRegistry.getPrompt(for: .executor(plan: "In Progress", forbiddenPatterns: []))
         let newHistory = await context.getMessages()
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: newHistory, maxTokens: 4000, sensitivityLevel: .public, complexity: 2)
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: newHistory, maxTokens: 4000, sensitivityLevel: .public, complexity: 2, untrustedContext: untrustedContext)
         let response = try await provider.complete(request, useSafeMode: useSafeMode)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC INPUT] \(newHistory.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC RESPONSE] \(response.content)")
@@ -377,25 +394,35 @@ public actor OrchestratorRuntime {
         let lastHistory = await context.getMessages()
         let lastResponse = lastHistory.last?.content ?? ""
         let systemPrompt = PromptRegistry.getPrompt(for: .critic(task: prompt, output: lastResponse, criteria: "Accuracy"))
+        
+        // v19.5: Binary Review (No JSON)
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
         let response = try await provider.complete(request, useSafeMode: false)
+        let resultString = response.content.uppercased()
+        
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚖️ [REVIEW] \(response.content)")
-        return response.content.contains("\"passed\": true") || response.content.contains("passed: true")
+        
+        // v19.5: UNOB Tag Detection
+        if resultString.contains("UNOB:PASS") { return true }
+        if resultString.contains("UNOB:FAIL") { return false }
+        
+        // Soft Recovery: If model fails to emit tag but has high score, or loops twice, default to PASS.
+        if resultString.contains("SCORE: 10") || resultString.contains("SCORE: 9") { return true }
+        
+        return false
     }
     
     private func resolveProvider(force: [ProviderID]?, config: InferenceConfig) throws -> any LLMProvider {
         let preferredModel = sessionContext.selectedModel
         if let force = force?.first {
             if force == .mlx, let p = localProvider { return p }
-            if force == .openrouter { return cloudProvider }
-            if force == .bridge, let p = bridgeProvider { return p }
+            if force == .openrouter, let p = cloudProvider { return p }
         }
         if preferredModel == .mlx, let p = localProvider { return p }
-        if preferredModel == .openrouter { return cloudProvider }
+        if preferredModel == .openrouter, let p = cloudProvider { return p }
         for pid in config.providerPriority {
             if pid == .mlx, let p = localProvider { return p }
-            if pid == .openrouter { return cloudProvider }
-            if pid == .bridge, let p = bridgeProvider { return p }
+            if pid == .openrouter, let p = cloudProvider { return p }
         }
         if config.strictLocal { throw InferenceError.localProviderUnavailable("Titan hazır değil.") }
         throw InferenceError.localProviderUnavailable("No provider.")

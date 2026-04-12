@@ -169,14 +169,32 @@ public struct ChatWindowView: View {
             .sheet(isPresented: $showingTitanAssistant) {
                 ModelSetupView()
             }
+            .onAppear {
+                processVM.onCompletion = { url in
+                    Task {
+                        try? await orchestrator.submitTask(prompt: "Aşağıdaki dosyayı analiz et: \(url.lastPathComponent)\nDosya Yolu: \(url.path)")
+                    }
+                }
+            }
             .fileImporter(
                 isPresented: $showingFileImporter,
-                allowedContentTypes: [.pdf, .plainText, .swiftSource, .json],
+                allowedContentTypes: [.item, .data, .content, .pdf, .plainText, .swiftSource, .json, .text],
                 allowsMultipleSelection: false
             ) { result in
                 if case .success(let urls) = result, let url = urls.first {
                     processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
                 }
+            }
+            .onDrop(of: [.fileURL], isTargeted: $isDraggingOver) { providers in
+                guard let provider = providers.first else { return false }
+                _ = provider.loadObject(ofClass: URL.self) { url, error in
+                    if let url = url {
+                        Task { @MainActor in
+                            processVM.startUpload(fileURL: url, actor: InferenceActor.shared)
+                        }
+                    }
+                }
+                return true
             }
         }
     }
@@ -309,16 +327,6 @@ struct ModelPickerMenu: View {
                 }
             }
             
-            if modelPickerVM.hasOllama {
-                Section("LOCAL - OLLAMA") {
-                    ForEach(modelPickerVM.filteredOllamaModels) { model in
-                        Button { modelPickerVM.selectModel(model) } label: {
-                            Label(model.name, systemImage: model.icon)
-                        }
-                    }
-                }
-            }
-            
             Section(modelPickerVM.hasOpenRouter ? "CLOUD - OPENROUTER" : "CLOUD") {
                 ForEach(modelPickerVM.filteredCloudModels) { model in
                     Button { modelPickerVM.selectModel(model) } label: {
@@ -341,38 +349,6 @@ struct ModelPickerMenu: View {
     }
 }
 
-struct ChatBubble: View {
-    let message: ChatMessage
-    @State private var parseError: Bool = false
-    
-    var body: some View {
-        HStack {
-            if message.role == .user { Spacer() }
-            
-            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 8) {
-                if let report = tryParseReport(message.content) {
-                    ResearchReportView(report: report).frame(maxWidth: 600)
-                } else {
-                    Text(message.content)
-                        .font(.subheadline)
-                        .padding(12)
-                        .background(message.role == .user ? Color.accentColor : Color.secondary.opacity(0.1))
-                        .foregroundStyle(message.role == .user ? .white : .primary)
-                        .cornerRadius(14)
-                }
-            }
-            
-            if message.role == .assistant { Spacer() }
-        }
-    }
-    
-    private func tryParseReport(_ content: String) -> ResearchReport? {
-        guard UserDefaults.standard.bool(forKey: "enableResearchMode") else { return nil }
-        let jsonStr = ThinkParser.extractJSONRobustly(content)
-        guard jsonStr.contains("\"report\""), let data = jsonStr.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(ResearchReport.self, from: data)
-    }
-}
 
 
 

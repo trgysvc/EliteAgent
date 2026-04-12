@@ -73,7 +73,8 @@ public actor MLXProvider: LocalLLMProvider {
             messages: messages, 
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens,
-            useSafeMode: useSafeMode
+            useSafeMode: useSafeMode,
+            untrustedContext: request.untrustedContext
         )
         
         var fullContent = ""

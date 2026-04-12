@@ -209,11 +209,11 @@ public struct SystemInfoTool: AgentTool {
         let model = "Apple Silicon (M-Series)"
         
         return """
-        [System Info]
-        - Device Name: \(name)
-        - OS: \(os)
-        - Architecture: \(model)
-        - EliteAgent Core: v9.5
+        [Sistem Bilgisi]
+        - Cihaz Adı: \(name)
+        - İşletim Sistemi: \(os)
+        - Mimari: \(model)
+        - EliteAgent Çekirdek: v14.9 (Pure)
         """
     }
 }

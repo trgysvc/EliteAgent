@@ -24,12 +24,15 @@ public final class ToolRegistry {
     
     public init() {}
     
-    public func register(_ tool: any AgentTool) {
+    public func register(_ tool: any AgentTool, isPlugin: Bool = false) {
         queue.async(flags: .barrier) {
             self.tools[tool.name] = tool
             self.ubidMap[tool.ubid] = tool
             if self.statusMap[tool.name] == nil {
                 self.statusMap[tool.name] = ToolStatus()
+            }
+            if isPlugin {
+                AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🧬 Dynamic Plugin Registered: \(tool.name) (UBID: \(tool.ubid))")
             }
         }
     }

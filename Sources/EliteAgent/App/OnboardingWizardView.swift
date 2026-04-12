@@ -38,7 +38,7 @@ struct OnboardingWizardView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             
-            HStack(spacing: 16) {
+            HStack(spacing: 24) {
                 providerCard(
                     id: "local",
                     title: "🏠 YEREL",
@@ -54,16 +54,8 @@ struct OnboardingWizardView: View {
                     color: .orange,
                     action: { errorMessage = nil; selectedProvider = "cloud"; currentPage = 2 }
                 )
-                
-                providerCard(
-                    id: "ollama",
-                    title: "🔗 OLLAMA",
-                    features: ["Kendi Ollama'nız için", "Modeller otomatik keşfedilir", "Ekstra kurulum yoktur"],
-                    color: .green,
-                    action: { errorMessage = nil; selectedProvider = "ollama"; currentPage = 2; startOllamaCheck() }
-                )
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 40)
             
             Button("⚙️ Sonra Ayarla") {
                 UserDefaults.standard.set(true, forKey: "hasSkippedOnboarding")
@@ -80,8 +72,7 @@ struct OnboardingWizardView: View {
     // MARK: - Page 2: Dynamic Setup
     private var page2Setup: some View {
         VStack(spacing: 20) {
-            Text(selectedProvider == "local" ? "Model Hazırlanıyor..." : 
-                 selectedProvider == "cloud" ? "OpenRouter Kurulumu" : "Ollama Kontrol Ediliyor...")
+            Text(selectedProvider == "local" ? "Model Hazırlanıyor..." : "OpenRouter Kurulumu")
                 .font(.title2.bold())
                 .padding(.top, 32)
             
@@ -144,19 +135,6 @@ struct OnboardingWizardView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
-                }
-                .padding(40)
-            } else if selectedProvider == "ollama" {
-                VStack(spacing: 16) {
-                    Text(ollamaStatus)
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                    
-                    Button("🔄 Yeniden Denetle") { startOllamaCheck() }
-                        .buttonStyle(.bordered)
-                    
-                    Button("Sohbet Et") { currentPage = 3 }
-                        .buttonStyle(.borderedProminent)
                 }
                 .padding(40)
             }
@@ -225,14 +203,6 @@ struct OnboardingWizardView: View {
             } catch {
                 errorMessage = "İndirme başlatılamadı veya donanım uyumsuz. Lütfen bağlantınızı kontrol edin."
             }
-        }
-    }
-    
-    private func startOllamaCheck() {
-        Task {
-            ollamaStatus = "Denetleniyor..."
-            let running = await OllamaProvider.shared.isOllamaRunning()
-            ollamaStatus = running ? "✅ Ollama Kurulu ve Çalışıyor" : "❌ Ollama Bulunamadı (Kurun: ollama.ai)"
         }
     }
 }

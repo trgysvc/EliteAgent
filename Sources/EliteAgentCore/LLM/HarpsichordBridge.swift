@@ -109,23 +109,18 @@ public actor HarpsichordBridge {
             Task {
                 let start = Date()
                 let effectiveConfig = config ?? InferenceConfig.default
-                
-                // 1. Diagnostics & Selection
                 let localReady = (await LocalModelHealthMonitor.shared.runDiagnostics(modelID: AISessionState.shared.selectedModel)) == .healthy
                 
                 var pID = preferredProvider ?? effectiveConfig.providerPriority.first ?? .mlx
                 var isFallback = false
                 
-                // If local requested but not ready, and not in strict mode, fallback to cloud
                 if pID == .mlx && !localReady && effectiveConfig.fallbackPolicy != .strictLocal {
                     pID = .openrouter
                     isFallback = true
                 }
                 
-                // 2. Emit Metadata FIRST
                 continuation.yield(.metadata(providerID: pID, isFallback: isFallback, latency: Date().timeIntervalSince(start)))
                 
-                // 3. Execution (Bridging to providers)
                 guard let provider = providers[pID] else {
                     continuation.yield(.error("Provider \(pID) not found"))
                     continuation.finish()
@@ -133,17 +128,12 @@ public actor HarpsichordBridge {
                 }
                 
                 do {
-                    // For now, most providers use routeAndComplete bridge.
-                    // In v7.9, we will implement native AsyncStream for each provider.
                     let result = try await provider.complete(request, useSafeMode: false)
-                    
-                    // Simulate stream for immediate UI feedback
                     let words = result.content.split(separator: " ", omittingEmptySubsequences: false)
                     for word in words {
-                        try? await Task.sleep(for: .milliseconds(10)) // Smooth streaming feel
+                        try? await Task.sleep(for: .milliseconds(10))
                         continuation.yield(.text(String(word) + " "))
                     }
-                    
                     continuation.finish()
                 } catch {
                     continuation.yield(.error(error.localizedDescription))
@@ -152,35 +142,15 @@ public actor HarpsichordBridge {
             }
         }
     }
+}
 
 public enum StreamChunk: Sendable {
     case metadata(providerID: ProviderID, isFallback: Bool, latency: Double)
     case text(String)
     case error(String)
 }
-    
-    // v7.9.1: Silent Fail for Ollama
-    private func checkOllamaAvailability() async -> Bool {
-        #if DEBUG
-        print("[TRACE] HarpsichordBridge: Checking Ollama at localhost:11434")
-        #endif
-        
-        guard let url = URL(string: "http://localhost:11434/api/tags") else { return false }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 1.0
-        
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            return (response as? HTTPURLResponse)?.statusCode == 200
-        } catch {
-            #if DEBUG
-            print("[TRACE] HarpsichordBridge: Ollama not available: \(error.localizedDescription)")
-            #endif
-            return false
-        }
-    }
-    
-    // v7.1 Additions for Config-Driven logic
+
+extension HarpsichordBridge {
     public func getAvailableProviderCount() async -> Int {
         var count = 0
         for p in self.providers.values {

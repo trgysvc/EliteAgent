@@ -13,7 +13,8 @@ public actor DreamActor {
     private init() {}
     
     /// Triggers a consolidation session if conditions (Token, Energy, Content) are met.
-    public func consolidateIfNeeded(memoryAgent: MemoryAgent, cloudProvider: CloudProvider) async {
+    public func consolidateIfNeeded(memoryAgent: MemoryAgent, cloudProvider: CloudProvider?) async {
+        guard let cloudProvider = cloudProvider else { return }
         // 1. Check Energy & Thermal State
         let thermalState = ProcessInfo.processInfo.thermalState
         if thermalState == .serious || thermalState == .critical {

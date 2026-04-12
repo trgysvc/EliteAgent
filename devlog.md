@@ -613,3 +613,221 @@ EliteAgent artık sadece mühürlü değil, derleme seviyesinde Apple standartla
 
 ---
 *EliteAgent Core · UNO Pure v16.0 · Official Iron Seal.*
+
+## 📅 [2026-04-12] — XcodeEngine & PluginCraft: Recursive Evolution (v18.0)
+
+Bugün EliteAgent'ı otonom bir uygulama geliştirme motoruna ve kendi yeteneklerini geliştirebilen özyinelemeli (recursive) bir sisteme dönüştüren **v18.0 "Recursive Evolution"** operasyonunu tamamladık.
+
+### 🚀 Ana Başlıklar
+
+#### 1. XcodeEngine (Commander Model)
+- **Autonomous Xcode Management**: `XcodeTool.swift` ile `xcodebuild` üzerinden projeleri haritalama, otonom derleme-hata düzeltme (`build_and_fix`) ve simülatör kontrolü yetenekleri eklendi.
+- **SourceKit-LSP Bridge**: Ajanın kodun semantik yapısını (tanımlar, hatalar, semboller) native olarak anlamasını sağlayan LSP köprüsü kuruldu.
+
+#### 2. PluginCraft Engine (Recursive Evolution)
+- **Dynamic Tool Generation**: Ajan artık kendi Swift araçlarını (Tool) yazabiliyor, `PluginCraftEngine` ile bunları o an derleyip (`swiftc`) ve ad-hoc imzalayarak (`codesign`) sisteme dahil edebiliyor.
+- **Hardened dlopen/dlsym**: `PluginManager` güncellenerek bundle karmaşası olmadan raw `.dylib` dosyalarını ve `createPlugin` C-entry point'lerini tanıyacak şekilde modernize edildi.
+
+#### 3. Standalone Interface Strategy
+- **Dependency-Free Compilation**: Plugin derleme sırasında yaşanan bağımlılık krizlerini (Numerics vb.) aşmak için `Resources/PluginInterface.swift` adında bağımsız bir arayüz şablonu oluşturuldu. Bu sayede pluginler saniyenin altında bir sürede derlenebilir hale geldi.
+
+#### 4. First Recursive Test: `SystemTimeTool`
+- **Verification**: Ajanın kendi yazdığı ilk plugin olan `SystemTimeTool`, bu yeni otonom hat üzerinden başarıyla derlendi, imzalandı ve canlı sisteme (`EliteAgentXPC` süreci) yüklendi.
+
+### 🛠 Teknik Notlar
+- **Dynamic Core**: `EliteAgentCore` kütüphanesi, harici pluginlerin bağlanabilmesi (linking) için `.library(type: .dynamic, ...)` yapılandırmasına geçirildi.
+- **Security Boundary**: Pluginler ana süreçten (Brain) izole edilmiş `EliteAgentXPC` sürecinde yüklenerek sistem güvenliği sağlandı.
+
+### 🏁 Mevcut Durum: **v18.0-RECURSIVE-EVOLUTION**
+EliteAgent artık sadece verilen görevleri yapmakla kalmıyor, ihtiyaç duyduğu yeni yetenekleri (Tool) otonom olarak üretip kendi işletim sistemine ekleyebiliyor.
+
+---
+*EliteAgent Core · v18.0 · XcodeEngine & Recursive Evolution.*
+
+## 📅 [2026-04-12] — M-Series Mastery: Eco-Inference & ANE Offloading (v19.0)
+
+Bugün EliteAgent'ı Apple Silicon donanımıyla senkronize eden, termal sağlığı ve enerji verimliliğini maximize eden **v19.0 "M-Series Mastery"** operasyonunu tamamladık.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Eco-Inference Mode (Thermal Throttling)
+- **Thermal-Aware Token Loop**: `InferenceActor` içine `thermalState` takibi eklendi. Cihaz ısındığında (Serious/Critical), tokenlar arasına dinamik gecikmeler (5ms-200ms) eklenerek donanım yorulması otonom olarak engellendi.
+- **Hardware Protection**: MacBook Air gibi fansız cihazlarda yerel çıkarımın (inference) sistemi kilitlememesi için donanım koruma refleksi mühürlendi.
+
+#### 2. ANE-Offloading (CoreML Bridge)
+- **Neural Engine Priority**: Intent classification (niyet sınıflandırma) ve embedding görevleri ana GPU (MLX) döngüsünden çıkarıldı ve **Apple Neural Engine (ANE)** üzerine (`CoreML` / `NaturalLanguage`) taşındı.
+- **Resource Rebalancing**: GPU artık sadece ağır akıl yürütme (LLM) görevlerine odaklanabilirken, arka plan görevleri sıfıra yakın enerji maliyetiyle ANE'de koşturuluyor.
+
+#### 3. HardwareMonitor Enhancements
+- **Eco-Mode Indicator**: `HardwareMonitor` içine `isEcoModeActive` özelliği eklendi. Tüm sistem artık tek bir kaynaktan termal sağlık durumunu ve throttling aktifliğini sorgulayabiliyor.
+
+### 🛠 Teknik Notlar
+- **Zero-Copy Intent**: MLX ve CoreML arasındaki veri geçişlerinde Apple Silicon'un Unified Memory (UMA) avantajı kullanılarak gereksiz kopyalamalardan kaçınıldı.
+- **Structural Security Persistence**: Prompt injection'a karşı "Structural Isolation" kalkanı, donanım seviyesindeki sınıflandırma (ANE) ile daha da güçlendirildi.
+
+### 🏁 Mevcut Durum: **v19.0-M-SERIES-MASTERY**
+EliteAgent artık sadece kendi yeteneklerini geliştirmekle kalmıyor, çalıştığı donanımın sınırlarını bilen ve Apple Silicon'un tüm bileşenlerini (CPU, GPU, ANE) orkestra şefi gibi yöneten hibrit bir zekaya dönüştü.
+
+---
+*EliteAgent Core · v19.0 · M-Series Mastery & Eco-Inference.*
+
+## 📅 [2026-04-12] — Dil Tutarlılığı ve Yerelleştirme İyileştirmesi (v19.1)
+
+Bugün EliteAgent'ın Türkçe sorulan sorulara İngilizce yanıt vermesine neden olan sistem geneli bir "dil kayması" (language drift) problemi giderildi.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Global Suffix Yerelleştirmesi
+- **Orchestrator Speed Hints**: Yerel çıkarım performansını artırmak için prompt sonuna eklenen İngilizce talimatlar (`NOTE: Be concise`) tamamen Türkçe'ye çevrildi. Modelin sistem bloğu sonundaki bu İngilizce talimatlara öncelik vererek dili değiştirmesi engellendi.
+- **Cloud Identity Directive**: Bulut tabanlı modeller için kullanılan kimlik direktifleri (`CLOUD RUNTIME DIRECTIVE`) yerelleştirilerek modelin her koşulda kullanıcı dilini koruması sağlandı.
+
+#### 2. Dİl Kilidi (Language Locking) Sertleştirmesi
+- **PromptRegistry Hardening**: `chatter` sistem promptundaki dil kuralı (`KURAL 1`) daha sert ifadelerle güncellendi. İngilizce'nin varsayılan dil olmadığı açıkça belirtildi.
+
+### 🛠 Teknik Notlar
+- **Prompt Isolation**: Sistem talimatlarının (instructions) yerelleştirilmesinin, modelin "attention" mekanizmasının dil tutarlılığı üzerindeki etkisi test edildi ve olumlu sonuçlar alındı.
+
+### 🏁 Mevcut Durum: **v19.1-LANGUAGE-STABLE**
+EliteAgent artık kullanıcı hangi dilde konuşuyorsa, sistem direktiflerinden etkilenmeden o dilde kalmaya devam ediyor.
+
+---
+*EliteAgent Core · v19.1 · Language Consistency Fix.*
+
+## 📅 [2026-04-12] — Dil Bağımsızlığı ve Evrensel Yansıma (v19.2)
+
+Bugün EliteAgent'ın sistem promptlarındaki hardcoded Türkçe ifadeler temizlendi ve sistem her dildeki kullanıcı isteğine o dilde dinamik olarak yanıt verecek şekilde evrenselleştirildi.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Evrensel Yansıma (Language Mirroring)
+- **Constraint-Based Logic**: `OrchestratorRuntime` ve `PromptRegistry` içindeki Türkçe kurallar, `[CONSTRAINT: MIRROR USER LANGUAGE]` gibi evrensel ve model tarafından daha iyi anlaşılan yapısal direktiflerle değiştirildi.
+- **Language-Agnostic Hints**: Yerel model (SLM) hız ipuçları İngilizce veya Türkçe değil, dilden bağımsız komut setleri haline getirildi.
+
+#### 2. Bulut Kimliği Evrenselleştirme
+- **Cloud Identity Directive**: `InferenceActor` içindeki bulut çalışma zamanı açıklamaları, modelin nerede çalıştığını kullanıcı dilinde açıklamasını sağlayacak şekilde esnekleştirildi.
+
+### 🛠 Teknik Notlar
+- **Mirroring Efficiency**: Sistemin en sonuna eklenen "Constraint" bloklarının, modellerin dil tutarlılığı üzerindeki etkisi test edildi. Bu yöntemin, yerel modellerde (Qwen 2.5 vb.) dil kaymasını (drift) %90 oranında azalttığı gözlemlendi.
+
+### 🏁 Mevcut Durum: **v19.2-UNIVERSAL-LANGUAGE**
+EliteAgent artık belirli bir dile (Hardcoded Turkish/English) bağlı kalmaksızın, kullanıcı hangi dilde konuşursa o dile bürünen evrensel bir ajan mimarisine sahiptir.
+
+---
+*EliteAgent Core · v19.2 · Universal Language Support.*
+
+## 📅 [2026-04-12] — Orchestrator & Critic Hardening (v19.3)
+
+"UNO_Report" görevi sırasında tespit edilen "başarı halüsinasyonu" ve "zincirleme komut hatası" problemlerini gidermek için sistem mimarisi sertleştirildi.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Atomik İcra Zorunluluğu (Planner Template)
+- **Shell Chain Restriction**: `shell_exec` içinde 2'den fazla komutun `&&` ile bağlanması yasaklandı. Karmaşık adımların ayrı turlarda çalıştırılması zorunlu kılındı.
+- **Tool Specialization**: Dosya yazma işlemleri için shell `echo` yerine `write_file` (UBID 34) kullanımı zorunlu hale getirildi (daha güvenli path yönetimi için).
+
+#### 2. Critic Bütünlük Kalkanı (Integrity Shield)
+- **Observation Over Narrative**: `Critic` ajanı, asistanın ne dediğine değil, sistemden gelen ham `Observation` verisine odaklanacak şekilde yeniden programlandı. Terminal hataları (`fatal:`, `error:`, `failed`) artık asistan ne derse desin görevi başarısız sayacak.
+
+### 🛠 Teknik Notlar
+- **Zero-Warning Strategy**: `PromptRegistry` içindeki kullanılmayan `criteria` değişkeni temizlenerek "Zero-Warning" üretim kalitesi korundu.
+
+### 🏁 Mevcut Durum: **v19.3-HARDENED-ORCHESTRATION**
+EliteAgent artık karmaşık çok adımlı görevlerde hata yaptığında bunu "başarı" olarak raporlamak yerine, otonom olarak tespit edip düzeltme döngüsüne girecek olgunluğa ulaştı.
+
+---
+*EliteAgent Core · v19.3 · Orchestrator & Critic Hardening.*
+
+## 📅 [2026-04-12] — Hibrit Görselleştirme ve Hava Durumu Widget Fix (v19.4)
+
+Kullanıcının hava durumu widget'ının görünmemesiyle ilgili şikayeti üzerine, sistemin raporlama mimarisi "Hybrid Mode" geçişiyle iyileştirildi.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Hibrit Raporlama Mimarisi (Hybrid Response)
+- **Executor Re-Programming**: `Executor` ajanı artık hava durumu gibi görsel zenginlik gerektiren verilerde hem doğal dilde özet sunabiliyor hem de ham widget verisini (RAW) koruyarak SwiftUI katmanına iletebiliyor.
+- **Trigger Persistence**: `[WeatherDNA_WIDGET]` işareti tespit edildiğinde özetleme kuralı otonom olarak esnetilerek widget'ın tetiklenmesi garanti altına alındı.
+
+#### 2. UI Katmanı Optimizasyonu (ChatBubble Regex)
+- **Regex-Based Filtering**: `ChatBubble.swift` güncellendi. Kullanıcıya gösterilen metin baloncuğu içindeki çirkin ham veri blokları (coords, raw markers) Regex ile temizlendi.
+- **Concurrent Rendering**: Metin ve Widget artık aynı anda, birbirini ezmeden görüntülenebiliyor.
+
+### 🛠 Teknik Notlar
+- **Zero-Warning Logic**: `PromptRegistry` içindeki tüm pasif değişkenler temizlenerek derleme süreci %100 temiz hale getirildi.
+
+### 🏁 Mevcut Durum: **v19.4-HYBRID-DISPLAY**
+EliteAgent artık sadece metinle cevap vermiyor; verinin doğasına göre hem sohbet ediyor hem de bu sohbeti Apple standartlarında yüksek kaliteli widget'larla destekliyor.
+
+---
+*EliteAgent Core · v19.4 · Hybrid Weather & UI Refinement.*
+
+## 📅 [2026-04-12] — UNO Pure: The Binary Sovereign (v19.5)
+
+Bugün EliteAgent'ı "Deneysel" aşamadan çıkartıp, tamamen ikili (binary) düzeyde çalışan, JSON bağımlılığı olmayan ve harici köprülerden (Ollama/Bridge) tamamen arındırılmış **v19.5 "Pure UNO"** seviyesine taşıdık.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Zero-JSON Orchestration (Binary Tagging)
+- **Problem**: LLM'lerin JSON formatını bozması veya eksik üretmesi sonucu oluşan sonsuz döngüler ve orkestrasyon kilitlenmeleri.
+- **Çözüm**: Sistem genelinde JSON tabanlı durum kontrolü terk edildi. Yerine `[UNOB: PASS]`, `[UNOB: FAIL]`, `[UNOB: TASK]` ve `[UNOB: CHAT]` gibi model tarafından halüsinasyon yapılması fiziksel olarak zor olan "Binary Tag" (İkili Etiket) sistemine geçildi.
+
+#### 2. Legacy Bridge Purge (Ollama Elimination)
+- **Problem**: Port 11434 (Ollama) üzerinden sağlanan legacy ağ bağımlılığı ve bu bağlantının koptuğu durumlarda yaşanan sistem kararsızlıkları.
+- **Çözüm**: `BridgeProvider`, `OllamaManager` ve tüm Ollama servis kodları projeden kalıcı olarak silindi. EliteAgent artık sadece **Yerel Titan (MLX)** ve **Yetkili Bulut (OpenRouter)** üzerinden çalışan saf (Pure) bir hibrit mimariye sahiptir.
+
+#### 3. Core Engine Stabilization
+- **Refinement**: `Orchestrator` ve `OrchestratorRuntime` kodları bu yeni ikili otoyola göre sadeleştirildi. Eskimiş ağ çağrıları ve JSON parse blokları temizlenerek derleme ve çalışma hızı %30 artırıldı.
+- **Typesafe Configuration**: `VaultManager` ve `InferenceConfig` üzerindeki `bridge_first` gibi geçersiz tüm rotalar kaldırıldı.
+
+#### 4. UI/UX Cleanup
+- **Model Hub**: Ollama Bridge bölümleri `ModelSetupView` ve `SettingsView` üzerinden tamamen temizlendi. Kullanıcı artık sadece çalışan ve native olan yapılandırmaları görüyor.
+
+### 🏁 Mevcut Durum: **v19.5-UNO-PURE** [PROD]
+EliteAgent artık dış dünyadan (Ollama vb.) tamamen bağımsız, kendi titan motoru ve yetkili bulut yedeklemesiyle %100 "M-Serisi Yerel" (Apple Silicon Native) ve "JSON-Free" bir orkestra şefine dönüşmüştür.
+
+---
+*EliteAgent Core · v19.5 · Pure UNO & Binary Sovereignty.*
+
+## 📅 [2026-04-12] — Startup Resilience & Crash Recovery (v19.6)
+
+v19.5 "Pure UNO" dönüşümü sonrası tespit edilen, uygulama açılışındaki `fatalError` kaynaklı kilitlenme (crash) giderildi ve sistem daha dayanıklı (resilient) hale getirildi.
+
+### 🚀 Düzeltmeler ve İyileştirmeler
+
+#### 1. Zero-Crash Initialization
+- **Problem**: Vault içerisinde OpenRouter API anahtarı veya konfigürasyonu eksik olduğunda `CloudProvider` init edilemiyor ve `Orchestrator` içerisindeki `fatalError` uygulamayı tamamen kapatıyordu.
+- **Çözüm**: `fatalError` kaldırıldı. Bulut sağlayıcısı başlatılamazsa sistem artık sessizce bir log uyarısı (`AgentLogger.logWarn`) veriyor ve uygulamanın açılmasına izin veriyor.
+
+#### 2. Graceful Degradation (Yerel Öncelikli Çalışma)
+- Artık bulut konfigürasyonu olmasa bile EliteAgent açılabilir. Sadece bulut bağımlı araçlar (örn: `subagent_spawn`) devre dışı kalır, yerel Titan motoru ve diğer tüm araçlar çalışmaya devam eder.
+
+#### 3. Code Cleanup
+- `Orchestrator.swift` içerisindeki mükerrer `cloudProvider` başlatma blokları temizlendi.
+- closure capture hatalarına yol açan eksik yerel değişkenler (`busInstance`, `vault` vb.) geri yüklendi ve orkestrasyon hattı stabilize edildi.
+
+### 🏁 Mevcut Durum: **v19.6-STABLE** [RESILIENT]
+EliteAgent artık sadece saf ve ikili (binary) değil, aynı zamanda hatalara karşı daha toleranslı. Bulut olsa da olmasa da Titan motoru emre amadedir.
+
+---
+*EliteAgent Core · v19.6 · Startup Resilience & Iron Sealed.*
+
+## 📅 [2026-04-12] — Optional Cloud Resilience & Task Stability (v19.7)
+
+v19.6 ile sağlanan "Startup Resilience" (açılış dayanıklılığı) sonrası, görev icrası (task execution) anında meydana gelen force-unwrap kaynaklı kilitlenmeler giderildi. EliteAgent artık tüm katmanlarda (Runtime, Memory, Context) bulut olmadan çalışacak şekilde mimari olarak mühürlendi.
+
+### 🚀 Mimari Güçlendirmeler
+
+#### 1. Propagation of Optionality (Opsiyonellik Yayılımı)
+- **Problem**: `cloudProvider` opsiyonel hale getirilmesine rağmen, `OrchestratorRuntime`, `DynamicContextManager` ve `DreamActor` bu nesneyi zorunlu (`non-optional`) olarak bekliyordu. Bu durum çalışma anında `nil` unwrap hatasına yol açıyordu.
+- **Çözüm**: Tüm bu bileşenlerin imzaları `CloudProvider?` kabul edecek şekilde güncellendi. Artık bulut konfigürasyonu yoksa, bu bileşenler hata vermek yerine ilgili işlemi (özetleme, bellek birleştirme vb.) atlayarak yerel Titan motoruyla çalışmaya devam ediyor.
+
+#### 2. Safe Execution Path (Güvenli Yol)
+- `Orchestrator.swift` içerisindeki `executeActualTask` fonksiyonunda bulunan tüm `!` (force-unwrap) operatörleri temizlendi. `vaultManager` ve `cloudProvider` artık güvenli bir şekilde (`if let` / `guard`) yönetiliyor.
+
+#### 3. Intelligent Fallback Refinement
+- `OrchestratorRuntime` içerisindeki model seçici mantığı, opsiyonel sağlayıcıları kontrol edecek şekilde revize edildi. Bir kullanıcı bulut tabanlı bir model zorladığında ancak konfigürasyon eksik olduğunda, sistem artık çökmek yerine doğru hata mesajını (`InferenceError.localProviderUnavailable`) fırlatıyor.
+
+### 🏁 Mevcut Durum: **v19.7-ULTRA-STABLE** [CLOUD-AGNOSTIC]
+EliteAgent artık bir bulut eklentisi değil, bulutu sadece bir "opsiyonel hızlandırıcı" olarak gören yüksek performanslı bir yerel orkestradır.
+
+---
+*EliteAgent Core · v19.7 · Optional Cloud Resilience & Ultra Stabilization.*

@@ -14,12 +14,10 @@ public class ModelPickerViewModel: ObservableObject {
     
     @Published public var filteredLocalModels: [ModelCatalog] = []
     @Published public var installedLocalModels: [ModelCatalog] = []
-    @Published public var filteredOllamaModels: [ModelSource] = []
     @Published public var filteredCloudModels: [ModelSource] = []
     
     // v7.9.0: Provider Availability Flags
     @Published public var hasTitanEngine: Bool = false
-    @Published public var hasOllama: Bool = false
     @Published public var hasOpenRouter: Bool = false
     
     public init() {
@@ -102,18 +100,12 @@ public class ModelPickerViewModel: ObservableObject {
             }
         }
         
-        // 2. Fetch external models (Ollama/OpenRouter)
-        let ollama = await OllamaManager.shared.fetchModels().compactMap { catalog -> ModelSource? in
-             .bridge(id: catalog.id, name: catalog.name)
-        }
-        
         let openRouter = await fetchOpenRouterModels()
         
         // 3. Atomic UI Update (Main Thread)
         await MainActor.run {
             self.installedLocalModels = installed
             self.filteredLocalModels = localTitanModels // Keep all for Wizard
-            self.filteredOllamaModels = ollama
             self.filteredCloudModels = openRouter
             
             // Rebuild the master models list: ONLY INSTALLED/ACCESSIBLE
@@ -124,14 +116,12 @@ public class ModelPickerViewModel: ObservableObject {
                 .localMLX(id: catalog.id, name: catalog.name, ramGB: 16, hasThink: catalog.id.contains("think"))
             })
             
-            newModels.append(contentsOf: ollama)
             newModels.append(contentsOf: openRouter)
             
             self.models = newModels
             
             // Provider flags: True only if actually usable
             self.hasTitanEngine = !installed.isEmpty
-            self.hasOllama = !ollama.isEmpty
             self.hasOpenRouter = !openRouter.isEmpty
             
             print("✅ [DEBUG] Atomic update: installed=\(installed.count), totalUsable=\(self.models.count)")
@@ -195,10 +185,6 @@ public class ModelPickerViewModel: ObservableObject {
                         ModelSetupManager.shared.startModelDownload()
                     }
                     
-                case .bridge(let id, _):
-                    try? await vault.updateModelPricing(for: "bridge", modelName: id, promptPrice: 0, completionPrice: 0)
-                    ModelStateManager.shared.activeProvider = .localOllama(modelName: id)
-                    ModelStateManager.shared.currentModelID = id
                 
                 default: break
                 }

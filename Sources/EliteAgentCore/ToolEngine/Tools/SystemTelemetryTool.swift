@@ -6,7 +6,7 @@ import AppKit
 public struct SystemTelemetryTool: AgentTool {
     public let name = "get_system_telemetry"
     public let summary = "Monitor M-series thermal/RAM pressure."
-    public let description = "Retrieve real-time hardware status including thermal state, memory pressure, and performance metrics."
+    public let description = "Retrieve real-time hardware status including thermal state, free memory, active cores, and performance metrics. Use this for ALL CPU, RAM, memory, and hardware queries."
     public let ubid = 36 // Token 'E' in Qwen 2.5
     
     public init() {}
@@ -14,34 +14,46 @@ public struct SystemTelemetryTool: AgentTool {
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         let processInfo = ProcessInfo.processInfo
         
-        // 1. Thermal State & Temperature
+        // 1. Thermal State
         let thermalState = processInfo.thermalState
-        let currentTemp = await HardwareMonitor.shared.getCPUTemperature()
         let thermalDescription: String
         switch thermalState {
-        case .nominal: thermalDescription = "Nominal (Cool) \(currentTemp != nil ? "- \(Int(currentTemp!))°C" : "")"
-        case .fair: thermalDescription = "Fair (Normal) \(currentTemp != nil ? "- \(Int(currentTemp!))°C" : "")"
-        case .serious: thermalDescription = "Serious (Throttling) \(currentTemp != nil ? "- \(Int(currentTemp!))°C" : "")"
-        case .critical: thermalDescription = "Critical (Emergency) \(currentTemp != nil ? "- \(Int(currentTemp!))°C" : "")"
-        @unknown default: thermalDescription = "Unknown"
+        case .nominal:  thermalDescription = "✅ Soğuk (Nominal)"
+        case .fair:     thermalDescription = "🟡 Normal (Fair)"
+        case .serious:  thermalDescription = "🟠 Throttling (Serious)"
+        case .critical: thermalDescription = "🔴 Kritik (Critical)"
+        @unknown default: thermalDescription = "Bilinmiyor"
         }
         
-        // 2. Real Memory Usage (Mach Host API)
-        let memoryStats = await HardwareMonitor.shared.getMemoryStats()
+        // 2. Real Memory Usage via Mach Host API (no shell required)
+        let memStats = await HardwareMonitor.shared.getMemoryStats()
+        let totalGB  = memStats.total
+        let usedGB   = memStats.used
+        let freeGB   = max(0, totalGB - usedGB)
+        let usagePct = totalGB > 0 ? Int((usedGB / totalGB) * 100) : 0
+
+        // 3. CPU Core Info
+        let activeCores = processInfo.activeProcessorCount
+        let totalCores  = processInfo.processorCount
         
-        // 3. System Load (Basic)
-        let processorCount = processInfo.processorCount
-        let activeProcessorCount = processInfo.activeProcessorCount
-        let upTime = processInfo.systemUptime
+        // 4. Uptime
+        let uptimeHours = Int(processInfo.systemUptime / 3600)
+        let uptimeMins  = Int((processInfo.systemUptime.truncatingRemainder(dividingBy: 3600)) / 60)
         
-        let report = "[TELEMETRY] Thermal:\(thermalDescription), Cores:\(activeProcessorCount)/\(processorCount), RAM:\(String(format: "%.1f", memoryStats.used))/\(String(format: "%.1f", memoryStats.total))GB, Uptime:\(Int(upTime / 3600))h, M-Series:\(isAppleSilicon())"
+        let report = """
+        [🖥 Sistem Telemetri Raporu]
+        ─────────────────────────────
+        • Termal Durum   : \(thermalDescription)
+        • CPU Çekirdek   : \(activeCores) aktif / \(totalCores) toplam
+        • Toplam RAM     : \(String(format: "%.1f", totalGB)) GB
+        • Kullanılan RAM : \(String(format: "%.1f", usedGB)) GB (%\(usagePct))
+        • Boş RAM        : \(String(format: "%.1f", freeGB)) GB
+        • Sistem Süresi  : \(uptimeHours) saat \(uptimeMins) dakika
+        • Mimari         : Apple Silicon (M-Serisi, arm64)
+        ─────────────────────────────
+        """
         
         return report
-    }
-    
-    private func getSystemMemoryUsage() -> (used: Double, swap: Double) {
-        // v9.0: Replaced by HardwareMonitor.shared.getMemoryStats()
-        return (0.0, 0.0)
     }
     
     private func isAppleSilicon() -> Bool {
@@ -50,18 +62,5 @@ public struct SystemTelemetryTool: AgentTool {
         #else
         return false
         #endif
-    }
-    
-    private func getRecommendations(thermalState: ProcessInfo.ThermalState) -> String {
-        switch thermalState {
-        case .nominal, .fair:
-            return "Stable. You can utilize high-performance Metal and ANE pipelines."
-        case .serious:
-            return "Warning: High heat. Switch heavy tasks to Efficiency (E) cores or reduce Metal complexity."
-        case .critical:
-            return "Emergency: Immediate throttling. Halt non-essential processing, reduce display/GPU load."
-        @unknown default:
-            return "Monitor system integrity."
-        }
     }
 }

@@ -7,6 +7,7 @@ public struct PendingTask: Sendable {
     public let forceProviders: [ProviderID]?
     public let promptWithContext: String
     public let complexity: Int
+    public let untrustedContext: [UntrustedData]? // v13.9
 }
 
 public struct QueuedTask: Sendable {
@@ -15,6 +16,7 @@ public struct QueuedTask: Sendable {
     public let forceProviders: [ProviderID]?
     public let strictLocal: Bool?
     public let promptOnFallback: Bool?
+    public let untrustedContext: [UntrustedData]? // v13.9
 }
 
 @MainActor
@@ -47,7 +49,6 @@ public class Orchestrator: ObservableObject {
     private let bus: SignalBus
     private var cloudProvider: CloudProvider?
     private var localProvider: MLXProvider?
-    private var bridgeProvider: BridgeProvider?
     private let toolRegistry: ToolRegistry
     private var vaultManager: VaultManager?
     private var observer: ProjectObserver?
@@ -88,12 +89,6 @@ public class Orchestrator: ObservableObject {
                 print("Failed to init cloud provider: \(error)")
             }
             
-            do {
-                self.bridgeProvider = try BridgeProvider(providerID: .bridge, vaultManager: vault)
-            } catch {
-                print("Failed to init bridge provider: \(error)")
-            }
-            
             let local = MLXProvider(providerID: .mlx)
             self.localProvider = local
             
@@ -129,8 +124,6 @@ public class Orchestrator: ObservableObject {
                             Task { try? await localProv.loadModel(id) }
                         }
                     case .openRouter(_, let name, _, _, _, _):
-                        self.providerUsed = name
-                    case .bridge(_, let name):
                         self.providerUsed = name
                     default:
                         break
@@ -208,6 +201,7 @@ public class Orchestrator: ObservableObject {
         // v10.0: Architecture Evolution Tools
         group.register(ChicagoVisionTool())
         group.register(AccessibilityTool())
+        group.register(XcodeTool()) // v16.0: Autonomous App Builder Engine
         
         let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
             Task { @MainActor [weak self] in
@@ -215,31 +209,27 @@ public class Orchestrator: ObservableObject {
             }
         }
         
-        guard let safeProvider = self.cloudProvider else {
-            // v11.0: Realized self.cloudProvider should always be active if the app reached this state.
-            // If it's nil, the init flow has a critical failure that should be bubbled up, not masked.
-            fatalError("CloudProvider not initialized in vault-ready environment.")
-        }
-        
         let local = self.localProvider
-        let bridge = self.bridgeProvider
         let memory = self.memory
         let busInstance = self.bus
         let vault = self.vaultManager
         
-        let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
-            return OrchestratorRuntime(
-                planner: planner, 
-                memory: memory, 
-                cloudProvider: provider, 
-                localProvider: local, 
-                bridgeProvider: bridge, 
-                toolRegistry: ToolRegistry.shared, 
-                bus: busInstance, 
-                vaultManager: vault!
-            )
+        if let safeProvider = self.cloudProvider {
+            let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
+                return OrchestratorRuntime(
+                    planner: planner, 
+                    memory: memory, 
+                    cloudProvider: safeProvider, 
+                    localProvider: local, 
+                    toolRegistry: ToolRegistry.shared, 
+                    bus: busInstance, 
+                    vaultManager: vault!
+                )
+            }
+            self.toolRegistry.register(subagentTool)
+        } else {
+            AgentLogger.logWarn("[ORCHESTRATOR] CloudProvider not available. Sub-processes disabled.")
         }
-        self.toolRegistry.register(subagentTool)
         
         Task { await loadHistory() }
     }
@@ -299,8 +289,6 @@ public class Orchestrator: ObservableObject {
             switch decision {
             case .useCloud:
                 try? await submitTask(prompt: prompt, forceProviders: [.openrouter], promptOnFallback: false)
-            case .useOllama:
-                try? await submitTask(prompt: prompt, forceProviders: [.bridge], promptOnFallback: false)
             case .cancel:
                 self.status = .idle
                 self.steps.append(TaskStep(name: "Görev İptal Edildi", status: "failed", latency: "ANE", thought: "Kullanıcı bulut model geçişini reddetti."))
@@ -313,12 +301,12 @@ public class Orchestrator: ObservableObject {
         self.pendingTask = nil
     }
 
-    public func submitTask(prompt: String, forceProviders: [ProviderID]? = nil, strictLocal: Bool? = nil, promptOnFallback: Bool? = nil) async throws {
+    public func submitTask(prompt: String, forceProviders: [ProviderID]? = nil, strictLocal: Bool? = nil, promptOnFallback: Bool? = nil, untrustedContext: [UntrustedData]? = nil) async throws {
         // v14.7: Immediate Feedback - Add user prompt to history before queuing
         let userMsg = ChatMessage(role: .user, content: prompt)
         self.currentMessages.append(userMsg)
         
-        let newTask = QueuedTask(prompt: prompt, forceProviders: forceProviders, strictLocal: strictLocal, promptOnFallback: promptOnFallback)
+        let newTask = QueuedTask(prompt: prompt, forceProviders: forceProviders, strictLocal: strictLocal, promptOnFallback: promptOnFallback, untrustedContext: untrustedContext)
         self.taskQueue.append(newTask)
         self.queuedTasksCount = self.taskQueue.count
         
@@ -405,8 +393,6 @@ public class Orchestrator: ObservableObject {
             if current.contains("/") || current.contains(":") { // Likely OpenRouter or Ollama ID
                 if current.contains("/") {
                     finalForceProviders = [.openrouter]
-                } else if current.contains(":") {
-                    finalForceProviders = [.bridge]
                 }
             }
         }
@@ -423,7 +409,8 @@ public class Orchestrator: ObservableObject {
         
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "Starting task: \(prompt)")
         
-        var promptWithContext = prompt
+        var finalUntrustedContext = task.untrustedContext ?? []
+        
         if let filePath = Orchestrator.extractFilePath(from: prompt) {
             do {
                 let reader = ReadFileTool()
@@ -434,17 +421,26 @@ public class Orchestrator: ObservableObject {
                 )
                 let content = try await reader.execute(params: ["path": AnyCodable(filePath)], session: tempSession)
                 let fileName = URL(fileURLWithPath: filePath).lastPathComponent
-                promptWithContext = "### DOCUMENT CONTEXT (File: \(fileName))\n\(content)\n------------------------------------------\nUSER TASK: \(prompt)"
-                self.steps.append(TaskStep(name: "DocEye", status: "done", latency: "ANE", thought: "Injected context from \(fileName)"))
                 
-                // v10.1: Log full initial prompt with context for Elite Auditing
-                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [FULL PROMPT WITH CONTEXT]\n\(promptWithContext)")
+                // v13.9: Structural Isolation
+                let docData = UntrustedData(source: "File: \(fileName)", content: content)
+                finalUntrustedContext.append(docData)
+                
+                self.steps.append(TaskStep(name: "DocEye", status: "done", latency: "ANE", thought: "Injected context from \(fileName) via Structural Isolation"))
+                
+                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [STRUCTURAL CONTEXT ADDED] Source: \(fileName)")
             } catch {
                 print("[ORCHESTRATOR] DocEye failed: \(error)")
             }
         } else {
             // v10.1: Elite Auditing - Log initial raw prompt if no DocEye context added
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [USER PROMPT] \(prompt)")
+        }
+        
+        guard let vault = vaultManager else {
+            AgentLogger.logError("[ORCHESTRATOR] VaultManager not initialized. Cannot execute task.")
+            self.status = .error
+            return
         }
         
         do {
@@ -454,12 +450,11 @@ public class Orchestrator: ObservableObject {
             let runtime = OrchestratorRuntime(
                 planner: planner, 
                 memory: memory,
-                cloudProvider: self.cloudProvider!, 
+                cloudProvider: self.cloudProvider, 
                 localProvider: self.localProvider,
-                bridgeProvider: bridgeProvider,
                 toolRegistry: toolRegistry,
                 bus: bus,
-                vaultManager: vaultManager!
+                vaultManager: vault
             )
             
             self.observer?.stop()
@@ -478,7 +473,7 @@ public class Orchestrator: ObservableObject {
                 Task { @MainActor in self?.overlayMessage = message }
             }
             
-            await runtime.setChatMessageUpdateHandler { [weak self] msg in
+            await runtime.setChatMessageUpdateHandler { [weak self] (msg: ChatMessage) in
                 Task { @MainActor in
                     if msg.isStatus {
                         // v13.4: Reroute status to overlay exclusively
@@ -491,7 +486,7 @@ public class Orchestrator: ObservableObject {
                 }
             }
             
-            await runtime.setTokenUpdateHandler { [weak self] count, cost in
+            await runtime.setTokenUpdateHandler { [weak self] (count: TokenCount, cost: Decimal) in
                 Task { @MainActor in
                     self?.promptTokens += count.prompt
                     self?.completionTokens += count.completion
@@ -514,11 +509,12 @@ public class Orchestrator: ObservableObject {
             )
             
             try await runtime.executeTask(
-                prompt: promptWithContext, 
+                prompt: prompt, // v13.9: Original trusted prompt
                 session: session, 
                 complexity: complexity, 
                 forceProviders: finalForceProviders,
-                config: effectiveConfig
+                config: effectiveConfig,
+                untrustedContext: finalUntrustedContext // v13.9: Structured untrusted data
             )
             
             let finalAnswer = await session.finalAnswer ?? "Task completed."
@@ -566,7 +562,7 @@ public class Orchestrator: ObservableObject {
                 if effectiveConfig.fallbackPolicy == .promptBeforeSwitch && (promptOnFallback ?? true) {
                     sessionState.requiresUserAcknowledgement = true
                     sessionState.isInputLocked = true
-                    self.pendingTask = PendingTask(prompt: prompt, forceProviders: forceProviders, promptWithContext: promptWithContext, complexity: 3)
+                    self.pendingTask = PendingTask(prompt: prompt, forceProviders: forceProviders, promptWithContext: prompt, complexity: 3, untrustedContext: finalUntrustedContext)
                     self.status = .awaitingFallbackApproval(taskID: UUID().uuidString, error: reason)
                     self.steps.append(TaskStep(name: "Titan Hazır Değil", status: "warning", latency: "ANE", thought: reason))
                 } else if effectiveConfig.fallbackPolicy == .strictLocal {

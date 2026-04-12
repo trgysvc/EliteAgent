@@ -27,7 +27,6 @@ public final class AISessionState {
         switch ModelStateManager.shared.activeProvider {
         case .none: return "none"
         case .localTitanEngine: return "local"
-        case .localOllama: return "ollama"
         case .cloudOpenRouter: return "cloud"
         }
     }

@@ -12,29 +12,23 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v15.0 UNO Pure]**: Official Iron Seal, Swift 6 Concurrency Compliance, and MLX Unified Memory Optimization.
+> **[v19.5 UNO Pure]**: Zero-JSON Binary-Native Architecture, Official Iron Seal, and Complete Legacy Bridge (Ollama) Purge.
 
 ## 🔥 Key Features
 
 ### 1. Self-Healing & Architecture Hardening [v15.0 OFFICIAL SEAL]
+- **Eco-Inference Mode [v19.0]:** Thermal-aware dynamic throttling that injects nanosecond delays (5ms-200ms) in the token loop based on `thermalState` to prevent hardware degradation.
+- **Structural Isolation (Structural Security):** Separates system instructions from untrusted external data (Files, Web) to prevent prompt injection.
 - **Official Iron Seal Build:** 100% compliant with Apple Distributed Actor standards and Swift 6 ownership transfer (SE-0430).
-- **Xcode Type-Solver Optimization:** Resolved diagnostic timeouts by using named, struct-based generation contexts.
-- **Silent Background Research:** Elimination of Safari tab spam with headless `WKWebView` scraping—70% less resource usage.
-- **Atomic State Management:** Centralized `ModelStateManager` for zero-latency Provider (Local/Cloud) synchronization.
-- **Health Dashboard (Swift Charts):** Real-time monitoring of VRAM, TPS, and Thermal state with persistent history.
-- **Stress Simulator:** Manual stress trigger to verify Auto-Recovery and Cloud Fallback mechanisms.
-- **MLX Engine Guardian:** 180-second adaptive timeout and proactive VRAM sanitization.
-- **Deep Recovery (Hard Reset):** Fast engine restart (2-3s) with session and memory preservation.
-- **TTFT Optimization [v9.9.15]:** Context Pruning (Sliding Window) drops prefill latency from 146s to <5s for local models.
-- **Swift 6 Actor Isolation (v10.0):** 100% thread-safe background processing for Dreams, Budgets, and Privacy Guards.
 - **YOLO Guard v2 & Encrypted Audits:** Dynamic risk assessment with Keychain-backed AES.GCM forensic logging.
 - **XPC Architecture Hardening [v13.7]:** Deterministic C-module resolution (`yyjson`, `Cmlx`, `_NumericsShims`) with absolute path enforcement.
 
-### 2. UNO Pure (Unified Native Orchestration) [v14.5 - CORE]
-- **JSON-Free Binary Logic:** Full migration from unstable JSON strings to native Binary PropertyLists for internal orchestration.
+### 2. Autonomous Recursive Evolution [v18.0 RECURSIVE]
+- **PluginCraft Engine:** The system can now generate, compile (`swiftc`), ad-hoc sign (`codesign`), and dynamically load (`dlopen`) its own tools at runtime.
+- **Zero-Dependency Plugin Build:** Standalone `PluginInterface` allows instant tool compilation without linking complex external dependencies.
 - **Dynamic Serial Queue:** FIFO task management prevents state contamination and ensures sequential integrity.
-- **Strict Logit Masking [v14.8]:** Hardware-level enforcement of tool-calling integrity via MLX `logitsProcessor`. Hallucinations and single-quote (`'`) JSON errors are now physically impossible.
-- **UBID Ecosystem v2:** Corrected Binary ID mapping (Shell=32, Read=33, Write=34) with native-first priority.
+- **Pure UNO Architecture [v19.5]:** Zero-JSON binary-native orchestration. All structural control is handled via `[UNOB: ...]` binary tags, eliminating parsing hallucinations and infinite loops.
+- **Legacy Bridge Purge:** Complete removal of Ollama (Port 11434) and third-party bridge dependencies. 100% self-contained local inference.
 - **Biometric Guard:** Secured WhatsApp/iMessage communication with mandatory TouchID/Apple ID verification.
 
 ### 3. Purpose Lock & Context Isolation [v14.5 - CORE]
@@ -53,10 +47,12 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **GGUF Integrity Shield:** Mandatory verification (Magic bytes, Version v3+, and Tensors) to prevent memory corruption.
 - **Unified Memory Diagnostics:** Fully Sandbox-compliant memory management using heuristics and `ProcessInfo`.
 
-### 3. Meteorological & Communication Intelligence [v13.9 NEW]
-- **Weather Intelligence (WeatherKit):** Native integration with Apple's `WeatherKit` and `CoreLocation` for precise meteorology with `wttr.in` fallback.
-- **Biometric Communication Guard:** Secura Mode implementation for WhatsApp/iMessage, requiring TouchID/Password confirmation for all transmissions.
-- **Multi-Step Tool Sync:** Advanced intent-mapping allowing seamless weather-to-messaging data flow without planning latency.
+### 3. M-Series Mastery & ANE Offloading [v19.0 NEW]
+- **ANE-Offloading (CoreML Bridge):** Routine tasks (intent classification, embeddings) are offloaded to the **Apple Neural Engine (ANE)**, freeing the GPU for primary LLM inference.
+- **Eco-Inference Throttling:** Real-time monitoring of `ProcessInfo.thermalState` to intelligently manage duty cycles on fanless models like MacBook Air.
+- **Zero-Copy Architecture:** Unified memory optimization ensuring no data duplication between MLX (GPU) and CoreML (ANE) buffers.
+- **XcodeEngine:** Direct management of Swift/Xcode projects including mapping, building, and self-healing build errors.
+- **SourceKit-LSP Native Bridge:** Deep semantic code understanding, navigation, and diagnostics for accurate codebase modification.
 
 ### 4. Audio Intelligence & Music DNA (Librosa Killer) - [v7.1]
 - **Chroma CENS (Energy Normalized Statistics):** Native implementation of the Librosa `chroma_cens` algorithm for superior cover-song and harmonic fingerprinting.
@@ -135,16 +131,18 @@ EliteAgent/
 ├── Sources/
 │   ├── elite/                 # PVP CLI Tool & Verification Suite
 │   └── EliteAgentCore/        # The Core Brain
+│       ├── Plugins/           # PluginCraft & Dynamic Registries
+│       ├── XcodeEngine/       # XcodeTool & SourceKit-LSP Bridge
 │       ├── Agents/            # Orchestrator, Planner, Critic
 │       ├── ToolEngine/        # Messenger, Patch, Shell, Fetch
 │       ├── UI/                # MTKView, NeuralSight.metal
 │       ├── LLM/               # InferenceActor, HealthMonitor, Bridge
-│       └── Security/          # VaultManager, PromptSanitizer
-├── devlog.md                  # Comprehensive architectural history
+│       └── Security/          # VaultManager, Structural Isolation
+├── Resources/                 # PluginInterface & App Assets
 └── Package.swift              # SPM Modulations (MLX, Sparkle, etc.)
 ```
 
 ---
 
-> *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice."*  
-> **[EliteAgent Core - v15.0 UNO Pure - OFFICIAL IRON SEALED]**
+> *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice. Evolution by Recursive Logic. Hardware by Mastery. Pure by Architecture."*  
+> **[EliteAgent Core - v19.5 UNO Pure - OFFICIAL IRON SEALED]**

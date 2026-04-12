@@ -18,7 +18,6 @@ public enum AgentID: String, Codable, Sendable {
 
 public enum FallbackDecision: String, Codable, Sendable {
     case useCloud
-    case useOllama
     case cancel
 }
 
@@ -249,7 +248,6 @@ public struct UNOActionWrapper: Codable, Sendable {
 
 public enum ProviderID: String, Codable, CaseIterable, Sendable {
     case mlx
-    case bridge
     case openrouter
     case none
 }
@@ -257,7 +255,6 @@ public enum ProviderID: String, Codable, CaseIterable, Sendable {
 public enum ProviderType: String, Codable, Sendable {
     case local
     case cloud
-    case bridge
 }
 
 public enum FallbackPolicy: String, Codable, Sendable {
@@ -283,7 +280,7 @@ public struct InferenceConfig: Codable, Sendable {
     public var systemPrompt: String? = nil
     
     public init(
-        providerPriority: [ProviderID] = [.mlx, .openrouter, .bridge],
+        providerPriority: [ProviderID] = [.mlx, .openrouter],
         strictLocal: Bool = false,
         requireFallbackApproval: Bool = true,
         fallbackPolicy: FallbackPolicy = .promptBeforeSwitch,
@@ -311,7 +308,7 @@ public struct InferenceConfig: Codable, Sendable {
     }
     
     public static let `default` = InferenceConfig(
-        providerPriority: [.mlx, .openrouter, .bridge],
+        providerPriority: [.mlx, .openrouter],
         strictLocal: false,
         requireFallbackApproval: true,
         fallbackPolicy: .promptBeforeSwitch,

@@ -12,8 +12,8 @@ public struct CategoryMapper {
         .systemManagement: ["get_system_telemetry", "app_discovery", "process_manager", "system_status", "discover_shortcuts", "run_shortcut"],
         .fileProcessing: ["read_file", "write_file", "path_tool", "file_manager", "patch_tool"],
         .codeGeneration: ["read_file", "write_file", "shell_exec", "git_action", "patch_tool"],
-        .hardware: ["get_system_telemetry", "system_status"],
-        .weather: ["get_weather", "send_message_via_whatsapp_or_imessage"],
+        .hardware: ["get_system_telemetry", "get_system_info", "system_status"],
+        .weather: ["get_weather", "google_search", "send_message_via_whatsapp_or_imessage"],
         .conversation: ["memory", "send_message_via_whatsapp_or_imessage", "email"],
         .chat: ["memory"]
     ]

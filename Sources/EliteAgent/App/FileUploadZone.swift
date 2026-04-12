@@ -67,11 +67,11 @@ public struct FileUploadZone: View {
         }
         .fileImporter(
             isPresented: $showingFileImporter,
-            allowedContentTypes: [.pdf, .plainText, .swiftSource, .json, .text],
+            allowedContentTypes: [.item, .data, .content, .pdf, .plainText, .swiftSource, .json, .text],
             allowsMultipleSelection: false
         ) { result in
-            if case .success(let urls) = result, let url = urls.first {
-                onFileAccepted(url)
+            if case .success(let urls) = result, !urls.isEmpty {
+                onFileAccepted(urls.first!)
             }
         }
     }

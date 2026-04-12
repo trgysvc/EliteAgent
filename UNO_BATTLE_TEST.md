@@ -1,4 +1,4 @@
-# UNO Pure: Battle Test Protocol (Draft v1)
+# UNO Pure: Battle Test Protocol (Draft v3)
 
 Bu dosya, EliteAgent'ın **UNO Pure (Binary Native Orchestration)** mimarisini gerçek sistem üzerinde doğrulamak için tasarlanmış kapsamlı test istemlerini (prompts) içerir. 
 
@@ -39,6 +39,12 @@ Bu fazda her aracın UBID tabanlı yeni protokolle (JSON olmadan) tetiklendiğin
 - **Get Weather**: `İstanbul için bugünkü hava durumunu getir.`
 - **Learn App UI**: `Hesap Makinesi (Calculator) uygulamasının UI yapısını analiz et.`
 
+### 🧬 5. Recursive Evolution & Hardware Mastery (v18.0/v19.0) [NEW]
+- **Plugin Generation**: `Sistemdeki pil sağlığını (Battery Health) raporlayan yeni bir araç (tool) yaz, derle ve sisteme yükle.`
+- **Xcode Commander**: `Masaüstünde 'EliteDemo' adında bir iOS projesi oluştur, içine bir 'Hello Elite' SwiftUI view'ı ekle ve simülatörde derle.`
+- **ANE Offloading**: `Şu cümleyi sınıflandır (Intent Classification): 'Yarın saat 5'te annemi ara'. Ama bu işlemi mutlaka Neural Engine üzerinden yap.`
+- **Eco-Inference Throttling**: `Sistemi termal olarak zorla ve Eco-Inference modunun (yavaşlatılmış token üretimi) devreye girdiğini doğrula.`
+
 ---
 
 ## 🟡 FAZ 2: AJANİK ORKESTRASYON (Koordinasyon Testi)
@@ -52,6 +58,20 @@ Bu fazda birden fazla aracın ardışık olarak kullanıldığı ve ikili (binar
 
 3. **Sistem ve Medya**:
    > "Sistem sesini %10 yap, ekran parlaklığını en sona getir ve bana şu anki CPU sıcaklığını söyle."
+
+---
+
+## 🟣 FAZ 3: RECURSIVE & NATIVE WORKFLOWS (M-Series Mastery)
+Bu fazda ajanın kendi sınırlarını aşma ve Apple Silicon donanımını sonuna kadar kullanma yeteneğini test edeceğiz.
+
+1.  **Otonom Geliştirici Döngüsü**:
+    > "Masaüstünde yeni bir macOS uygulama projesi başlat. Adı 'TitanDashboard' olsun. Apple Neural Engine (ANE) kullanımını izleyen basit bir UI ekle. Hata alırsan otonom olarak düzelt ve projeyi çalıştır."
+
+2.  **Özyinelemeli Yetenek Artırımı**:
+    > "İnternetteki son GitHub trendlerini (Swift) analiz eden bir plugin yaz. Bu plugin'i ad-hoc imzala, yükle ve bana bugünün en popüler 3 reposunu söyle."
+
+3.  **Termal ve Güç Verimliliği**:
+    > "Batarya modundayken ağır bir kod analizi başlat. Ajanın 'Eco-Inference' moduna geçtiğini (daha yavaş ama verimli token üretimi) ve arka plan görevlerini ANE'ye attığını doğrula."
 
 ---
 

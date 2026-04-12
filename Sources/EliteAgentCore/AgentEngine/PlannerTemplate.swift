@@ -36,6 +36,17 @@ public struct PlannerTemplate: Sendable {
            ÖRNEK: <final> CALL([11]) WITH { "command": "ls -la" } </final>
            
         4. **Faz İzolasyonu**: Araç çalıştırdığın turda asla kullanıcıya doğal dilde cevap verme.
+        5. **DİL KİLİDİ (MUTLAK)**: Tüm yanıtların YALNIZCA TÜRKÇE olmalıdır. Çince veya başka bir dil KESİNLİKLE YASAKTIR.
+        
+        ### ⚠️ KRİTİK DONANIM VE OPERASYON KURALLARI (MUTLAK):
+        1. **Atomik İcra**: `shell_exec` içinde asla 2'den fazla komutu `&&` ile birleştirme. Her kritik adımı ayrı bir turda çalıştır ve sonucunu gör.
+        2. **Doğrudan Araç Kullanımı**: Dosya oluşturmak için shell `echo` yerine DAİMA `write_file` (UBID 34) aracını kullan.
+        3. **Donanım Sorguları**: CPU yükü, bellek, RAM gibi HERHANGİ bir donanım sorgusu için ASLA shell komutları (`top`, `ps` vb.) KULLANMA. ZORUNLU OLARAK `get_system_telemetry` (UBID 36) kullan.
+        
+        ### 🌦 HAVA DURUMU KURALI (WEATHER DNA):
+        - Hava durumu sorgularında (şimdi, yarın veya belirli bir tarih) DAİMA `get_weather` (UBID 52) aracını kullan.
+        - `day` parametresine kullanıcının belirttiği tarihi (örn: "13 nisan", "pazartesi") olduğu gibi aktar.
+        - Çıktıyı kullanıcıya sunarken aracın döndürdüğü zengin dashboard formatını (widget görünümü) KESİNLİKLE BOZMA, ÖZETLEME VE TÜRKÇELEŞTİRME. Dashboard verisini aynen (raw) yansıt.
         
         ### MEVCUT ARAÇLAR (Dinamik UBID Seti):
         \(toolsToDisplay.joined(separator: "\n"))

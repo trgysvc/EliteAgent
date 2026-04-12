@@ -40,6 +40,7 @@ public struct ProcessStep: Identifiable, Codable, Sendable, Equatable {
 @MainActor
 public final class ChatProcessViewModel: ObservableObject {
     @Published public var currentState: AgentProcessState = .idle
+    public var onCompletion: ((URL) -> Void)? = nil
     private var processTask: Task<Void, Error>?
     
     public init() {}
@@ -68,31 +69,12 @@ public final class ChatProcessViewModel: ObservableObject {
                     withAnimation { currentState = .uploading(progress: Double(i) / 10.0) }
                 }
                 
-                // 2. Integration with Actor Stream
-                let streamTask = Task {
-                    for await step in await actor.processStream {
-                        if Task.isCancelled { break }
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            currentState = .processing(step: step)
-                        }
-                    }
-                }
-                
-                // 3. Execution (v9.2: Pass messages array for context consistency)
-                var result = ""
-                let prompt = "Analiz et: \(fileURL.lastPathComponent)"
-                let messages = [Message(role: "user", content: prompt)]
-                
-                for await chunk in await actor.generate(messages: messages) {
-                    if Task.isCancelled { break }
-                    result += chunk
-                }
-                
-                streamTask.cancel()
-                
                 withAnimation {
-                    currentState = .success(result: result)
+                    currentState = .success(result: "Yüklendi")
                 }
+                
+                // Signal completion to the UI to trigger main orchestrator task
+                onCompletion?(fileURL)
             } catch {
                 withAnimation {
                     currentState = .failed(error: error.localizedDescription)

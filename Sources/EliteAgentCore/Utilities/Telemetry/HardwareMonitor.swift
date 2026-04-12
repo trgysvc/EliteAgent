@@ -80,4 +80,11 @@ public actor HardwareMonitor {
             return (true, nil)
         }
     }
+
+    /// v19.0: Returns true if the system is under serious thermal pressure 
+    /// and Eco-Inference mode should be engaged.
+    public var isEcoModeActive: Bool {
+        let state = ProcessInfo.processInfo.thermalState
+        return state == .serious || state == .critical
+    }
 }
