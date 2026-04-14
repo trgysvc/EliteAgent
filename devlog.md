@@ -852,3 +852,22 @@ EliteAgent mimarisi artık hem kod hem de derleme düzeyinde temiz ve mühürlü
 
 ---
 *EliteAgent Core · v19.7.1 · Final Build Polish & Stabilization.*
+
+## 📅 [2026-04-14] — Systematic Legacy Purge & Vault Self-Healing (v19.7.2)
+
+Uygulamanın mesajlara cevap vermesini engelleyen "hayalet" konfigürasyon (legacy artifacts) sorunu giderildi. `VaultManager` artık mimari değişimlere karşı kendi kendini onarabilen bir yapıya kavuşturuldu.
+
+### 🚀 Giderilen Kritik Sorunlar
+
+#### 1. Vault Schema Mismatch (Şema Uyuşmazlığı)
+- **Problem**: v19.5 "Pure UNO" geçişi öncesinden kalan `bridge_first` ve `bridge` gibi eski değerler, `vault.plist` okunurken sessizce hataya yol açıyor ve `VaultManager`'ın başlatılmasını engelliyordu. `VaultManager` olmayınca orkestratör görev icra edemiyordu.
+- **Çözüm**: `VaultManager.init` bloğuna **Self-Healing (Kendi Kendini Onarma)** mantığı eklendi. Decode hatası alındığında sistem artık çökmüyor; hatayı logluyor ve konfigürasyonu otomatik olarak v19.7.2 standartlarına (Saf Yerel/Bulut hibrit) sıfırlayarak iyileştiriyor.
+
+#### 2. Enhanced Startup Diagnostics (Başlangıç Tanılama)
+- **Orchestrator.swift**: Kasa başlatma hataları artık sessizce yutulmuyor. Ciddi bir hata durumunda hatanın teknik detayı `audit.log`'a "CRITICAL FAILURE" etiketiyle yazılıyor.
+
+### 🏁 Mevcut Durum: **v19.7.2-AUTO-HEALED** [PURE UNO]
+EliteAgent artık sadece kod olarak değil, disk üzerindeki verileriyle de tamamen mühürlü ve temizdir. "Bridge" ve "Ollama" döneminden kalan tüm artıklar sistemden programatik olarak temizlendi.
+
+---
+*EliteAgent Core · v19.7.2 · Systematic Legacy Purge & Configuration Healing.*

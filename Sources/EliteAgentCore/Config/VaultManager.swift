@@ -120,7 +120,23 @@ public actor VaultManager {
         do {
             let data = try Data(contentsOf: configURL)
             let decoder = PropertyListDecoder()
-            var decodedConfig = try decoder.decode(VaultConfig.self, from: data)
+            var decodedConfig: VaultConfig
+            
+            do {
+                decodedConfig = try decoder.decode(VaultConfig.self, from: data)
+            } catch {
+                print("[VaultManager] ⚠️ SCHEMA MISMATCH DETECTED: \(error.localizedDescription)")
+                print("[VaultManager] Attempting to heal/recover config...")
+                
+                // Fallback: Create fresh default if recovery fails
+                decodedConfig = VaultManager.createDefaultConfig()
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .xml
+                let healedData = try encoder.encode(decodedConfig)
+                try healedData.write(to: configURL)
+                
+                print("[VaultManager] ✅ CONFIG HEALED: Legacy artifacts purged.")
+            }
             
             // Sync required providers to ensure migration completeness
             let wasRestored = try VaultManager.syncRequiredProviders(config: &decodedConfig, configURL: configURL)
@@ -130,8 +146,21 @@ public actor VaultManager {
                 print("[VaultManager] Successfully restored missing required providers.")
             }
         } catch {
+            // Last resort: If healing itself fails, we throw to alert Orchestrator
             throw VaultError.invalidFormat(error)
         }
+    }
+    
+    private static func createDefaultConfig() -> VaultConfig {
+        return VaultConfig(
+            providers: [
+                ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
+            ],
+            routingStrategy: .localFirst,
+            inference: VaultInferenceConfig(pauseOnUserInteraction: true),
+            browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
+        )
     }
     
     /// Returns true if at least one cloud provider is properly configured with an API key identifier.

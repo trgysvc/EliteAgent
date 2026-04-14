@@ -146,6 +146,7 @@ public class Orchestrator: ObservableObject {
             }
             
         } catch {
+            AgentLogger.logError("[ORCHESTRATOR] VaultManager initialization CRITICAL FAILURE: \(error.localizedDescription)")
             self.status = .error
         }
         
