@@ -12,7 +12,7 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v19.5 UNO Pure]**: Zero-JSON Binary-Native Architecture, Official Iron Seal, and Complete Legacy Bridge (Ollama) Purge.
+> **[v19.7.1 UNO Pure]**: Zero-JSON Binary-Native Architecture, Resilient Optional-Cloud, and Hardened Core Orchestration.
 
 ## 🔥 Key Features
 
@@ -145,4 +145,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice. Evolution by Recursive Logic. Hardware by Mastery. Pure by Architecture."*  
-> **[EliteAgent Core - v19.5 UNO Pure - OFFICIAL IRON SEALED]**
+> **[EliteAgent Core - v19.7.1 UNO Pure - OFFICIAL IRON SEALED]**

@@ -214,7 +214,7 @@ public class Orchestrator: ObservableObject {
         let busInstance = self.bus
         let vault = self.vaultManager
         
-        if let safeProvider = self.cloudProvider {
+        if let safeProvider = self.cloudProvider, let vault = self.vaultManager {
             let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
                 return OrchestratorRuntime(
                     planner: planner, 
@@ -223,12 +223,12 @@ public class Orchestrator: ObservableObject {
                     localProvider: local, 
                     toolRegistry: ToolRegistry.shared, 
                     bus: busInstance, 
-                    vaultManager: vault!
+                    vaultManager: vault
                 )
             }
             self.toolRegistry.register(subagentTool)
         } else {
-            AgentLogger.logWarn("[ORCHESTRATOR] CloudProvider not available. Sub-processes disabled.")
+            AgentLogger.logWarn("[ORCHESTRATOR] CloudProvider or Vault not available. Sub-processes disabled.")
         }
         
         Task { await loadHistory() }

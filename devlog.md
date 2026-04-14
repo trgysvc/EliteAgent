@@ -831,3 +831,24 @@ EliteAgent artık bir bulut eklentisi değil, bulutu sadece bir "opsiyonel hızl
 
 ---
 *EliteAgent Core · v19.7 · Optional Cloud Resilience & Ultra Stabilization.*
+
+## 📅 [2026-04-14] — Build Polish & Initialization Hardening (v19.7.1)
+
+v19.7 "Ultra-Stable" sürümü sonrası tespit edilen derleyici uyarıları giderildi ve başlangıç sekansı (startup) daha güvenli hale getirildi.
+
+### 🚀 Düzeltmeler ve İyileştirmeler
+
+#### 1. Compiler Warning Cleanup (Swift 6)
+- **MenuBarView**: `ModelSource` enum hiyerarşisindeki sadeleşme sonrası boşa çıkan `default` case'i temizlendi. "Default will never be executed" uyarısı giderildi.
+
+#### 2. Startup Hardening
+- **Orchestrator.swift**: `vaultManager` nesnesinin force-unwrap (`!`) yapıldığı son nokta olan `SubagentTool` kaydı güvenli (`if let`) hale getirildi. Kasa hazır değilse uygulama artık çökmek yerine uyarı vererek açılmaya devam eder.
+
+#### 3. Build Transparency
+- **Dependency Warnings**: `mlx-swift` üzerinden gelen `Numerics` kütüphanesindeki "no symbols" uyarıları incelendi. Bu uyarıların üçüncü taraf kütüphanelerin mimari geçişleri (shims) sırasında oluşan zararsız yan etkiler olduğu ve uygulamanın çalışmasını etkilemediği teyit edildi.
+
+### 🏁 Mevcut Durum: **v19.7.1-FINALISED** [STABLE]
+EliteAgent mimarisi artık hem kod hem de derleme düzeyinde temiz ve mühürlüdür. İkili-yerel (Binary-Native) yapıda tam performans için optimize edilmiştir.
+
+---
+*EliteAgent Core · v19.7.1 · Final Build Polish & Stabilization.*

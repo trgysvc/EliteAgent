@@ -293,7 +293,6 @@ public struct MenuBarView: View {
         case .localMLX: return "Local - Titan Engine"
         case .openRouter: return "Cloud - OpenRouter"
         case .custom(_, let name, _, _, _): return name
-        default: return "Unknown Provider"
         }
     }
     
