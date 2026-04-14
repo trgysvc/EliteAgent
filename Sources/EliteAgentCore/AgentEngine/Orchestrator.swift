@@ -95,8 +95,8 @@ public class Orchestrator: ObservableObject {
             if ModelSetupManager.shared.isModelReady {
                 Task {
                     do {
-                        let mlxConfig = vault.config.providers.first(where: { $0.id == "mlx" })
-                        if let modelID = mlxConfig?.modelName, !modelID.isEmpty {
+                        // v19.7.5: Single Source of Truth. The UI explicitly records the selected model here, removing the dependency on vault.plist which may be empty after cleanups.
+                        if let modelID = AISessionState.shared.selectedModel, !modelID.isEmpty {
                             try await local.loadModel(modelID)
                         } else {
                             AgentLogger.logInfo("[ORCHESTRATOR] Local model not configured. Skipping initialization.")

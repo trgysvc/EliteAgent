@@ -345,6 +345,7 @@ public actor OrchestratorRuntime {
             throw ParserError.emptyJSON("Model geçerli bir plan veya yanıt üretmedi.")
         }
         
+        var latestObservation: String? = nil
         for toolCall in toolBlocks {
             // v11.6: Placeholder Guard. Detect and block 'taslak veri' usage.
             let paramString = "\(toolCall.params)".lowercased()
@@ -361,6 +362,7 @@ public actor OrchestratorRuntime {
             self.onStepUpdate?(TaskStep(name: actionName, status: "Executing", latency: "0ms", thought: "UBID: \(toolCall.ubid ?? 0) | Params: \(toolCall.params)"))
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [ACTION] \(toolCall.tool)")
             let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
+            latestObservation = result
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
             await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
             if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) { self.sourcesAnalyzed += 1 }
@@ -375,14 +377,26 @@ public actor OrchestratorRuntime {
         self.onTokenUpdate?(response.tokensUsed, response.costUSD)
         await TokenBudgetActor.shared.recordUsage(tokens: response.tokensUsed.total, cost: response.costUSD)
         
-        let cleanedResponse = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        var finalContent = response.content
+        
+        // v19.7.6: Programmatic Widget Data Bonding
+        // LLMs often fail to perfectly echo the observation data required for rich widgets.
+        // We override this by programmatically injecting the raw observation if a widget tag is present.
+        if let observation = latestObservation, observation.contains("[WeatherDNA_WIDGET]"), finalContent.contains("[WeatherDNA_WIDGET]") {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧬 [WIDGET BONDING] Injecting raw observation into response content.")
+            let footer = "*(WeatherDNA Engine v14.10)*"
+            let intro = finalContent.components(separatedBy: "[WeatherDNA_WIDGET]").first ?? ""
+            finalContent = "\(intro)\n\n\(observation)\n\(footer)"
+        }
+        
+        let cleanedResponse = finalContent.trimmingCharacters(in: .whitespacesAndNewlines)
         let isNaturalLanguage = !cleanedResponse.hasPrefix("{") && !cleanedResponse.hasPrefix("```json")
         
         if isNaturalLanguage {
-            self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
+            self.onChatMessage?(ChatMessage(role: .assistant, content: finalContent))
         }
         
-        await context.addMessage(Message(role: "assistant", content: response.content))
+        await context.addMessage(Message(role: "assistant", content: finalContent))
         
         // v10.5.9: If we provided a natural language response, we assume the immediate execution sequence is done.
         // Returning (false, content) signals to transition to reviewing/completed.

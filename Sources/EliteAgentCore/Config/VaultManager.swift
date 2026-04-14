@@ -126,24 +126,37 @@ public actor VaultManager {
                 decodedConfig = try decoder.decode(VaultConfig.self, from: data)
             } catch {
                 print("[VaultManager] ⚠️ SCHEMA MISMATCH DETECTED: \(error.localizedDescription)")
-                print("[VaultManager] Attempting to heal/recover config...")
+                print("[VaultManager] Attempting surgical healing (preserving model selection)...")
                 
-                // Fallback: Create fresh default if recovery fails
-                decodedConfig = VaultManager.createDefaultConfig()
+                // v19.7.3: Surgical Extraction
+                var preservedModelName = ""
+                if let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                   let providers = dict["providers"] as? [[String: Any]] {
+                    if let mlx = providers.first(where: { ($0["id"] as? String) == "mlx" }) {
+                        preservedModelName = mlx["modelName"] as? String ?? ""
+                    }
+                }
+                
+                decodedConfig = VaultManager.createDefaultConfig(initialModelName: preservedModelName)
                 let encoder = PropertyListEncoder()
                 encoder.outputFormat = .xml
                 let healedData = try encoder.encode(decodedConfig)
                 try healedData.write(to: configURL)
                 
-                print("[VaultManager] ✅ CONFIG HEALED: Legacy artifacts purged.")
+                print("[VaultManager] ✅ SURGICAL HEALING COMPLETE: Legacy artifacts purged, model selection '\(preservedModelName)' preserved.")
             }
             
             // Sync required providers to ensure migration completeness
-            let wasRestored = try VaultManager.syncRequiredProviders(config: &decodedConfig, configURL: configURL)
+            var wasRestored = try VaultManager.syncRequiredProviders(config: &decodedConfig, configURL: configURL)
+            
+            // v19.7.4 Auto-Priming: If local model is empty, try to discover one on disk
+            let autoPrimed = try VaultManager.autoPrimeModelIfEmpty(config: &decodedConfig, configURL: configURL)
+            wasRestored = wasRestored || autoPrimed
+            
             self.config = decodedConfig
             
             if wasRestored {
-                print("[VaultManager] Successfully restored missing required providers.")
+                print("[VaultManager] Successfully restored missing required providers or auto-primed models.")
             }
         } catch {
             // Last resort: If healing itself fails, we throw to alert Orchestrator
@@ -151,10 +164,10 @@ public actor VaultManager {
         }
     }
     
-    private static func createDefaultConfig() -> VaultConfig {
+    private static func createDefaultConfig(initialModelName: String = "") -> VaultConfig {
         return VaultConfig(
             providers: [
-                ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
+                ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: initialModelName, capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
                 ProviderConfig(id: "openrouter", type: .cloud, endpoint: "https://openrouter.ai/api/v1", keychainKey: "OPENROUTER_API_KEY", modelName: "", capabilities: ["vision", "tools"], costPer1KTokens: nil, promptPrice: nil, completionPrice: nil, maxContextTokens: 200000, temperature: 0.7, topP: 1.0, maxTokens: 4096)
             ],
             routingStrategy: .localFirst,
@@ -238,6 +251,42 @@ public actor VaultManager {
             let data = try encoder.encode(config)
             try data.write(to: configURL)
             return true
+        }
+        
+        return false
+    }
+    
+    private static func autoPrimeModelIfEmpty(config: inout VaultConfig, configURL: URL) throws -> Bool {
+        var updatedProviders = config.providers
+        guard let mlxIndex = updatedProviders.firstIndex(where: { $0.id == "mlx" }) else { return false }
+        
+        let currentModel = updatedProviders[mlxIndex].modelName ?? ""
+        if !currentModel.isEmpty { return false } // Already primed
+        
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let modelsDir = appSupport.appendingPathComponent("EliteAgent/Models")
+        
+        guard let contents = try? FileManager.default.contentsOfDirectory(at: modelsDir, includingPropertiesForKeys: nil) else { return false }
+        
+        for url in contents where url.hasDirectoryPath {
+            let modelID = url.lastPathComponent
+            
+            // Check if model is complete enough to bind
+            let safetensorsPath = url.appendingPathComponent("model.safetensors").path
+            if FileManager.default.fileExists(atPath: safetensorsPath) || FileManager.default.fileExists(atPath: url.appendingPathComponent("weights.npz").path) {
+                print("[VaultManager] 🤖 AUTO-PRIMING: Discovered local model '\(modelID)'. Binding to config...")
+                
+                var p = updatedProviders[mlxIndex]
+                updatedProviders[mlxIndex] = ProviderConfig(id: p.id, type: p.type, endpoint: p.endpoint, keychainKey: p.keychainKey, modelName: modelID, capabilities: p.capabilities, costPer1KTokens: p.costPer1KTokens, promptPrice: p.promptPrice, completionPrice: p.completionPrice, maxContextTokens: p.maxContextTokens, temperature: p.temperature, topP: p.topP, maxTokens: p.maxTokens)
+                
+                config = VaultConfig(providers: updatedProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser)
+                
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .xml
+                let data = try encoder.encode(config)
+                try data.write(to: configURL)
+                return true
+            }
         }
         
         return false
