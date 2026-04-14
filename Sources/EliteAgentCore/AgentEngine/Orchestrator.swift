@@ -213,7 +213,6 @@ public class Orchestrator: ObservableObject {
         let local = self.localProvider
         let memory = self.memory
         let busInstance = self.bus
-        let vault = self.vaultManager
         
         if let safeProvider = self.cloudProvider, let vault = self.vaultManager {
             let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in

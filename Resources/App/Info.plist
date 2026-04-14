@@ -24,5 +24,9 @@
     <string>dummy_eddsa_public_key_for_silencing_warnings_v13</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>EliteAgent needs to control other apps to provide autonomous automation and workflow management.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
 </dict>
 </plist>

@@ -242,7 +242,7 @@ func runUNOVerification() async {
     print("\n🚀 Starting UNO Architecture & Tool Verification (v14.0)...\n")
     
     // Initialize Orchestrator to trigger tool registration
-    let orchestrator = Orchestrator()
+    _ = Orchestrator()
     print("  ✅ Orchestrator başlatıldı.")
     
     // 1. Static Diagnostic Report

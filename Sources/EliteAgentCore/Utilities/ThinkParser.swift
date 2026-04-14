@@ -146,7 +146,18 @@ public final class ThinkParser {
         if !results.isEmpty {
             AgentLogger.logInfo("[UNO-Pure] Binary Action Found: \(results.count) steps")
         }
-        return results
+        if !results.isEmpty {
+            AgentLogger.logInfo("[UNO-Pure] Binary Action Found: \(results.count) steps")
+            return results
+        }
+        
+        // v19.7.11: DONE Signal Detection
+        if text.contains("<final>DONE</final>") {
+            AgentLogger.logInfo("[UNO-Pure] DONE signal detected.")
+            return [EliteAgentOutput(type: .response, content: "TASK_DONE")]
+        }
+        
+        return []
     }
 }
 

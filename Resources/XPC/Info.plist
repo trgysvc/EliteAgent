@@ -21,5 +21,9 @@
 		<key>JoinExistingSession</key>
 		<true/>
 	</dict>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
 </dict>
 </plist>

@@ -276,7 +276,7 @@ public actor VaultManager {
             if FileManager.default.fileExists(atPath: safetensorsPath) || FileManager.default.fileExists(atPath: url.appendingPathComponent("weights.npz").path) {
                 print("[VaultManager] 🤖 AUTO-PRIMING: Discovered local model '\(modelID)'. Binding to config...")
                 
-                var p = updatedProviders[mlxIndex]
+                let p = updatedProviders[mlxIndex]
                 updatedProviders[mlxIndex] = ProviderConfig(id: p.id, type: p.type, endpoint: p.endpoint, keychainKey: p.keychainKey, modelName: modelID, capabilities: p.capabilities, costPer1KTokens: p.costPer1KTokens, promptPrice: p.promptPrice, completionPrice: p.completionPrice, maxContextTokens: p.maxContextTokens, temperature: p.temperature, topP: p.topP, maxTokens: p.maxTokens)
                 
                 config = VaultConfig(providers: updatedProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser)

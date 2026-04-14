@@ -28,7 +28,8 @@ public struct PromptRegistry {
             KURAL 2: Yeni bir araç çağırmaya VEYA "steps" oluşturmaya ÇALIŞMA.
             KURAL 3: SADECE Bilgi ver, ne olduğunu kısaca söyle.
             KURAL 4 (HAVA DURUMU - ÖZEL): Eğer araç çıktısında (Observation) `[WeatherDNA_WIDGET]` ifadesi varsa; önce kısa bir doğal dil yorumu yap, ardından ham çıktının (Observation) TAMAMINI hiçbir değişiklik yapmadan altına ekle. Bu, widget'ın tetiklenmesi için kritiktir.
-            KURAL 5 (DİL KİLİDİ - MUTLAK): Yanıtın YALNIZCA TÜRKÇE olmalıdır. Çince (中文), İngilizce veya başka bir dil KESİNLİKLE YASAKTIR. Araç çıktısı hangi dilde olursa olsun, sen her zaman Türkçe yanıt ver.
+            KURAL 5 (ARAÇ SEÇİMİ - KRİTİK): İnternette arama yapmak veya bir sayfa okumak için KESİNLİKLE `shell_exec` veya `osascript` kullanma. Bu tür görevler için YALNIZCA `web_search` ve `web_fetch` araçlarını kullanmalısın.
+            KURAL 6 (DİL KİLİDİ - MUTLAK): Yanıtın YALNIZCA TÜRKÇE olmalıdır. Çince (中文), İngilizce veya başka bir dil KESİNLİKLE YASAKTIR. Araç çıktısı hangi dilde olursa olsun, sen her zaman Türkçe yanıt ver.
             """
             
         case .critic(let task, _, _):

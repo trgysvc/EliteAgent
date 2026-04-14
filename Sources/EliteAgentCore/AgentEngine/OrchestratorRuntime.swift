@@ -345,7 +345,14 @@ public actor OrchestratorRuntime {
             throw ParserError.emptyJSON("Model geçerli bir plan veya yanıt üretmedi.")
         }
         
-        var latestObservation: String? = nil
+        // v19.7.10: Atomicity Guard - Force sequential execution for integrity
+        if toolBlocks.count > 1 {
+            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [ATOMICITY GUARD] Blocked multi-call response (\(toolBlocks.count) steps).")
+            let warning = "Observation: SİSTEM UYARISI: HATA! Aynı anda birden fazla CALL bloğu kullandın (Sıralı İcra Kuralı İhlali). Özellikle bağımlı görevlerde (arama yapıp dosyaya yazmak gibi) ÖNCE veriyi çeken aracı çalıştır, sonucunu (Observation) gör ve gerçek veriyi aldıktan sonra bir sonraki adımı planla. Şimdi sadece İLK öncelikli adımı icra et."
+            await context.addMessage(Message(role: "user", content: warning))
+            return (true, nil) // Force rethink
+        }
+        
         for toolCall in toolBlocks {
             // v11.6: Placeholder Guard. Detect and block 'taslak veri' usage.
             let paramString = "\(toolCall.params)".lowercased()
@@ -362,45 +369,18 @@ public actor OrchestratorRuntime {
             self.onStepUpdate?(TaskStep(name: actionName, status: "Executing", latency: "0ms", thought: "UBID: \(toolCall.ubid ?? 0) | Params: \(toolCall.params)"))
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [ACTION] \(toolCall.tool)")
             let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
-            latestObservation = result
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
             await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
             if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) { self.sourcesAnalyzed += 1 }
         }
         
-        let systemPrompt = PromptRegistry.getPrompt(for: .executor(plan: "In Progress", forbiddenPatterns: []))
-        let newHistory = await context.getMessages()
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: newHistory, maxTokens: 4000, sensitivityLevel: .public, complexity: 2, untrustedContext: untrustedContext)
-        let response = try await provider.complete(request, useSafeMode: useSafeMode)
-        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC INPUT] \(newHistory.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
-        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [EXEC RESPONSE] \(response.content)")
-        self.onTokenUpdate?(response.tokensUsed, response.costUSD)
-        await TokenBudgetActor.shared.recordUsage(tokens: response.tokensUsed.total, cost: response.costUSD)
-        
-        var finalContent = response.content
-        
-        // v19.7.6: Programmatic Widget Data Bonding
-        // LLMs often fail to perfectly echo the observation data required for rich widgets.
-        // We override this by programmatically injecting the raw observation if a widget tag is present.
-        if let observation = latestObservation, observation.contains("[WeatherDNA_WIDGET]"), finalContent.contains("[WeatherDNA_WIDGET]") {
-            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧬 [WIDGET BONDING] Injecting raw observation into response content.")
-            let footer = "*(WeatherDNA Engine v14.10)*"
-            let intro = finalContent.components(separatedBy: "[WeatherDNA_WIDGET]").first ?? ""
-            finalContent = "\(intro)\n\n\(observation)\n\(footer)"
-        }
-        
-        let cleanedResponse = finalContent.trimmingCharacters(in: .whitespacesAndNewlines)
-        let isNaturalLanguage = !cleanedResponse.hasPrefix("{") && !cleanedResponse.hasPrefix("```json")
-        
-        if isNaturalLanguage {
-            self.onChatMessage?(ChatMessage(role: .assistant, content: finalContent))
-        }
-        
-        await context.addMessage(Message(role: "assistant", content: finalContent))
-        
-        // v10.5.9: If we provided a natural language response, we assume the immediate execution sequence is done.
-        // Returning (false, content) signals to transition to reviewing/completed.
-        return (!isNaturalLanguage, isNaturalLanguage ? response.content : nil)
+        // v19.7.12: Minimalist ReAct Loop
+        // After any tool execution, we immediately return to Planning (true).
+        // This leverages the Orchestrator's main loop (max 15 turns) as the safety net.
+        // If the model produces natural language instead of tools, this method is never reached 
+        // with tools, and the fallback logic handles completion.
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🔄 [CYCLIC] Tool(s) executed. Returning to PLANNING for next turn.")
+        return (true, nil)
     }
     
     private func handleReview(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> Bool {

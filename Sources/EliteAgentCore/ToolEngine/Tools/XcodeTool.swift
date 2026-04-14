@@ -14,7 +14,7 @@ public struct XcodeTool: AgentTool, Sendable {
     - simulator_control: Simülatörü başlatır/durdurur veya uygulama yükler.
     Parametreler: action (String), path (String), target (String?), destination (String?)
     """
-    public let ubid = 45 // New Unique Binary ID for Xcode Engine
+    public let ubid = 47 // v19.7.8: Resolved collision with WebSearch (45)
     
     public init() {}
     
