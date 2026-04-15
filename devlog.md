@@ -1179,3 +1179,9 @@ EliteAgent artık sadece akıllı değil, aynı zamanda loglarıyla dürüstçe 
 - Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift
 **Decision made:** Transitioned from strict context isolation to 'Smart Compaction' (OpenClaw-inspired) to restore short-term memory without UI clutter.
 **Next:** Monitor the quality of automated 'Observation Proxies' in high-token sessions.
+
+### [2026-04-15] — v29.1: Engine Room Stabilization
+**What changed:** Resolved build failures in the Application/UI layer by explicitly linking the 'AudioIntelligence' package to the EliteAgent target. Addressed 'ghost framework' orphans in Xcode.
+**Files modified:** `Package.swift`.
+**Decision made:** Enforced multi-target dependency mapping to ensure consistent MIR module visibility across Core, UI, and XPC layers.
+**Next:** User-side Xcode cache reset and final live test.

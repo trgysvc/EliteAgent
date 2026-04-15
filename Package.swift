@@ -24,7 +24,8 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "Sparkle", package: "Sparkle")
+                .product(name: "Sparkle", package: "Sparkle"),
+                .product(name: "AudioIntelligence", package: "audiointelligence")
             ],
             path: "Sources/EliteAgent"
         ),
