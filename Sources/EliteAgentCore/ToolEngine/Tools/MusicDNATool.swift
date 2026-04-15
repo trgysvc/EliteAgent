@@ -87,8 +87,7 @@ public struct MusicDNATool: AgentTool {
 
         return """
         ✅ Analiz tamamlandı!
-        📄 Markdown: \(result.mdPath)
-        📊 JSON: \(result.jsonPath)
+        📄 Rapor: \(result.mdPath)
         
         \(result.reportText)
         """

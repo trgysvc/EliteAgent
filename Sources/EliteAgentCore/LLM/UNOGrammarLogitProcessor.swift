@@ -24,7 +24,7 @@ public final class UNOGrammarLogitProcessor: LogitProcessor, @unchecked Sendable
         self.tokenizer = tokenizer
         self.allowedTokenIDs = Set(allowedTokenIDs)
         // Default control tokens for Qwen 2.5: EOS (151643), im_end (151645), \n (10), \r (13)
-        // Plus vital JSON/Grammar tokens: { } [ ] " : , (ASCII)
+        // Plus vital Grammar tokens: { } [ ] " : , (ASCII)
         let vitalTokens = Set(controlTokenIDs)
         
         // We need to fetch ID for these characters dynamically or use common ones

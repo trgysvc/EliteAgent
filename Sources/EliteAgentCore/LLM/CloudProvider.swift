@@ -40,11 +40,8 @@ public actor CloudProvider: LLMProvider {
     public func complete(_ request: CompletionRequest, useSafeMode: Bool) async throws -> CompletionResponse {
         let apiKey: String
         do {
-            print("[TRACE] CloudProvider: Retrieving API Key...")
             apiKey = try await vaultManager.getAPIKey(for: providerConf)
-            print("[TRACE] CloudProvider: API Key retrieved (length: \(apiKey.count)).")
         } catch {
-            print("[TRACE] CloudProvider: API Key retrieval FAILED: \(error)")
             throw ProviderError.networkError("API Key retrieval failed: \(error)")
         }
         
@@ -57,7 +54,6 @@ public actor CloudProvider: LLMProvider {
         
         var finalSystemPrompt = request.systemPrompt
         
-        // v13.9: Structural Isolation Flattening for Cloud Providers
         if let contexts = request.untrustedContext, !contexts.isEmpty {
             var contextString = "\n\n[CONTEXT START – UNTRUSTED EXTERNAL DATA]\n"
             for context in contexts {
@@ -82,31 +78,23 @@ public actor CloudProvider: LLMProvider {
             "temperature": useSafeMode ? 0.0 : (request.temperature ?? 0.2)
         ]
         
-        urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
-        urlRequest.timeoutInterval = 60.0 // Strict 60s Timeout for Stability
-        
-        // v10.5.5: Full Transparency - Log Request Body (Sanitized)
-        if let bodyData = urlRequest.httpBody, let bodyStr = String(data: bodyData, encoding: .utf8) {
-            AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ Request Body: \(bodyStr)")
-        }
+        // v13.8: UNO Pure - Delegate serialization to External Bridge
+        urlRequest.httpBody = try UNOExternalBridge.encodeExternalPayload(body)
+        urlRequest.timeoutInterval = 60.0
         
         let startTime = Date()
-        print("[TRACE] CloudProvider: Starting URLSession data task to \(endpointURL)...")
-        
         let data: Data
         let response: URLResponse
         
         do {
             (data, response) = try await URLSession.shared.data(for: urlRequest)
         } catch let error as URLError where error.code == .timedOut {
-            print("[TRACE] CloudProvider: URLSession TIMED OUT after 60s.")
             throw ProviderError.networkError("Network Timeout (60s limit reached)")
         } catch {
             throw error
         }
         
         let latency = Int(Date().timeIntervalSince(startTime) * 1000)
-        print("[TRACE] CloudProvider: URLSession data task COMPLETED. Latency: \(latency)ms")
         
         guard let httpRes = response as? HTTPURLResponse else {
             throw ProviderError.networkError("Invalid HTTP response")
@@ -114,8 +102,6 @@ public actor CloudProvider: LLMProvider {
         
         guard httpRes.statusCode == 200 else {
             let errStr = String(data: data, encoding: .utf8) ?? "Unknown HTTP Error"
-            print("[CLOUD_PROVIDER ERROR] HTTP \(httpRes.statusCode): \(errStr)")
-            
             switch httpRes.statusCode {
             case 401: throw ProviderError.authenticationError
             case 429: throw ProviderError.rateLimitExceeded
@@ -123,89 +109,14 @@ public actor CloudProvider: LLMProvider {
             }
         }
         
-        // v10.5.5: Full Transparency - Log Raw Response Data
-        if let rawRes = String(data: data, encoding: .utf8) {
-            AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ Raw Response: \(rawRes)")
-        }
-        
-        print("[DEBUG_TRACE] CloudProvider: Data size received: \(data.count) bytes")
-        
-        struct OpenAIResponse: Codable {
-            struct Choice: Codable {
-                struct ChatMessage: Codable {
-                    let role: String
-                    let content: String?
-                    let reasoning: String?
-                    let tool_calls: [ToolCallDetail]?
-                    
-                    struct ToolCallDetail: Codable {
-                        let id: String
-                        let type: String
-                        struct FunctionDetail: Codable {
-                            let name: String
-                            let arguments: String
-                        }
-                        let function: FunctionDetail
-                    }
-                    
-                    enum CodingKeys: String, CodingKey {
-                        case role, content, reasoning
-                        case tool_calls
-                    }
-                    
-                    var bestContent: String {
-                        content ?? ""
-                    }
-                    
-                    var bestReasoning: String? {
-                        reasoning
-                    }
-                }
-                let message: ChatMessage
-            }
-            struct Usage: Codable {
-                let prompt_tokens: Int?
-                let completion_tokens: Int?
-                let total_tokens: Int?
-            }
-            let choices: [Choice]
-            let usage: Usage?
-        }
-        
-        let decoded: OpenAIResponse
-        do {
-            decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-        } catch {
-            print("[CLOUD_PROVIDER ERROR] Failed to decode JSON. Error: \(error)")
-            throw ProviderError.networkError("JSON parsing failed: \(error.localizedDescription)")
-        }
-        
-        guard let choice = decoded.choices.first else {
-            throw ProviderError.emptyResponse
-        }
-        
-        let message = choice.message
-        let text = message.bestContent
-        let toolCalls: [ToolCall]? = message.tool_calls?.compactMap { detail in
-            guard let jsonData = detail.function.arguments.data(using: .utf8),
-                  let params = try? JSONDecoder().decode([String: AnyCodable].self, from: jsonData) else {
-                return nil
-            }
-            return ToolCall(tool: detail.function.name, params: params)
-        }
-        
-        print("[DEBUG_TRACE] CloudProvider: Parsed text segment: \(String(text.prefix(50))) | ToolCalls: \(toolCalls?.count ?? 0)")
-        
-        // v8.5.5 Resilience: If content is null but we have tool calls or reasoning, it's NOT a terminal error
-        if text.isEmpty && (toolCalls == nil || toolCalls?.isEmpty == true) && message.bestReasoning == nil {
-            print("[CLOUD_PROVIDER EMPTY TEXT] No content, tools, or reasoning found.")
-            throw ProviderError.emptyResponse
-        }
+        // v13.8: UNO Pure - Delegate response parsing to External Bridge
+        let result = try UNOExternalBridge.parseCloudResponse(data: data)
+        let text = result.text
         
         let count = TokenCount(
-            prompt: decoded.usage?.prompt_tokens ?? 0,
-            completion: decoded.usage?.completion_tokens ?? 0,
-            total: decoded.usage?.total_tokens ?? 0
+            prompt: result.tokens.prompt,
+            completion: result.tokens.completion,
+            total: result.tokens.total
         )
         
         // Dynamic Cost Calculation
@@ -215,16 +126,16 @@ public actor CloudProvider: LLMProvider {
 
         // Extract think block natively if model returned it inside <think> tags
         let parsed = LLMModel.parseThinkBlock(from: text)
-        let finalThink = (parsed.think ?? "") + (message.bestReasoning ?? "")
+        let finalThink = (parsed.think ?? "") + (result.think ?? "")
         
-        AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ LLM Call completed | Model: \(modelName) | Latency: \(latency)ms | Tokens: \(count.total) (\(count.prompt)p/\(count.completion)c) | Cost: $\(cost)")
+        AgentLogger.logAudit(level: .info, agent: "CloudProvider", message: "☁️ LLM Call completed | Model: \(modelName) | Latency: \(latency)ms | Tokens: \(count.total) | Cost: $\(cost)")
         
         return CompletionResponse(
             taskID: request.taskID,
             providerUsed: providerID,
             content: parsed.content,
             thinkBlock: finalThink.isEmpty ? nil : finalThink,
-            toolCalls: toolCalls,
+            toolCalls: nil, // Cloud calls are routed back through Orchestrator ReAct loops if needed
             tokensUsed: count,
             latencyMs: latency,
             costUSD: cost

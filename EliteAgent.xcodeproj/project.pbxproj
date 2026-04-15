@@ -7,29 +7,32 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AE69BFC42F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFC52F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFC62F8FD1520080DB7D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
+		AE69BFC72F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFC82F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFC92F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFCA2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFCB2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFCC2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFCD2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFCE2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFCF2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFD02F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFD12F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE69BFD22F8FD1520080DB7D /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
+		AE69BFD32F8FD1520080DB7D /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
+		AE69BFD42F8FD1520080DB7D /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
+		AE69BFD52F8FD1520080DB7D /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
+		AE69BFD62F8FD1520080DB7D /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
+		AE69BFD72F8FD1520080DB7D /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
+		AE69BFD82F8FD1520080DB7D /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
+		AE69BFD92F8FD1520080DB7D /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
+		AE69BFDA2F8FD1520080DB7D /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
+		AE69BFDB2F8FD1520080DB7D /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
+		AE69BFDC2F8FD1520080DB7D /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
 		AE7BBEDA2F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
-		AE7BD8C72F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8C82F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8C92F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8CA2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8CB2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8CC2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8CD2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8CE2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8CF2F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8D02F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8D12F895B6D00FDE202 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE7BD8D22F895B6D00FDE202 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
-		AE7BD8D32F895B6D00FDE202 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
-		AE7BD8D42F895B6D00FDE202 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
-		AE7BD8D52F895B6D00FDE202 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
-		AE7BD8D62F895B6D00FDE202 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
-		AE7BD8D72F895B6D00FDE202 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
-		AE7BD8D82F895B6D00FDE202 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
-		AE7BD8D92F895B6D00FDE202 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
-		AE7BD8DA2F895B6D00FDE202 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
-		AE7BD8DB2F895B6D00FDE202 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
-		AE7BD8DC2F895B6D00FDE202 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
 		AE7BD8DD2F895B6D00FDE202 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
 		AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
 		AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
@@ -45,7 +48,6 @@
 		AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
 		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AEEB40622F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
-		AEEB4F672F7930700082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,7 +113,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AEEB40622F785F210082B0CE /* Sparkle in Frameworks */,
+				AE69BFC62F8FD1520080DB7D /* Sparkle in Frameworks */,
+				AE69BFC42F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFC52F8FD1520080DB7D /* (null) in Frameworks */,
 				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -128,7 +132,7 @@
 				AEB132E92F79F6D900626F70 /* MLXEmbedders in Frameworks */,
 				AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */,
 				AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */,
-				AEEB4F672F7930700082B0CE /* Sparkle in Frameworks */,
+				AEEB40622F785F210082B0CE /* Sparkle in Frameworks */,
 				AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */,
 				AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */,
 				AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */,
@@ -139,30 +143,30 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE69BFD72F8FD1520080DB7D /* MLXOptimizers in Frameworks */,
 				AE7BD8DD2F895B6D00FDE202 /* Numerics in Frameworks */,
-				AE7BD8DA2F895B6D00FDE202 /* MLXLLM in Frameworks */,
+				AE69BFC72F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFD82F8FD1520080DB7D /* MLXRandom in Frameworks */,
 				AE7BBEDA2F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */,
-				AE7BD8D52F895B6D00FDE202 /* MLXLinalg in Frameworks */,
-				AE7BD8C72F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8C82F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8D92F895B6D00FDE202 /* MLXEmbedders in Frameworks */,
-				AE7BD8D42F895B6D00FDE202 /* MLXFast in Frameworks */,
-				AE7BD8C92F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8D72F895B6D00FDE202 /* MLXOptimizers in Frameworks */,
-				AE7BD8CA2F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8CB2F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8D82F895B6D00FDE202 /* MLXRandom in Frameworks */,
-				AE7BD8D62F895B6D00FDE202 /* MLXNN in Frameworks */,
-				AE7BD8CC2F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8DB2F895B6D00FDE202 /* MLXLMCommon in Frameworks */,
-				AE7BD8CD2F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8CE2F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8CF2F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8D22F895B6D00FDE202 /* MLX in Frameworks */,
-				AE7BD8D32F895B6D00FDE202 /* MLXFFT in Frameworks */,
-				AE7BD8DC2F895B6D00FDE202 /* MLXVLM in Frameworks */,
-				AE7BD8D02F895B6D00FDE202 /* (null) in Frameworks */,
-				AE7BD8D12F895B6D00FDE202 /* (null) in Frameworks */,
+				AE69BFC82F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFC92F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFD32F8FD1520080DB7D /* MLXFFT in Frameworks */,
+				AE69BFD42F8FD1520080DB7D /* MLXFast in Frameworks */,
+				AE69BFCA2F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFD52F8FD1520080DB7D /* MLXLinalg in Frameworks */,
+				AE69BFD22F8FD1520080DB7D /* MLX in Frameworks */,
+				AE69BFCB2F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFDB2F8FD1520080DB7D /* MLXLMCommon in Frameworks */,
+				AE69BFDC2F8FD1520080DB7D /* MLXVLM in Frameworks */,
+				AE69BFCC2F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFD62F8FD1520080DB7D /* MLXNN in Frameworks */,
+				AE69BFCD2F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFCE2F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFD92F8FD1520080DB7D /* MLXEmbedders in Frameworks */,
+				AE69BFCF2F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFD02F8FD1520080DB7D /* (null) in Frameworks */,
+				AE69BFDA2F8FD1520080DB7D /* MLXLLM in Frameworks */,
+				AE69BFD12F8FD1520080DB7D /* (null) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -175,6 +179,7 @@
 				AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
 				AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */,
 				AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */,
+				AE747A1B2F70602B004732A5 /* Frameworks */,
 				AE747A192F70602B004732A5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -187,6 +192,13 @@
 				AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AE747A1B2F70602B004732A5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -512,7 +524,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -551,7 +563,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -586,7 +598,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -616,7 +628,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -645,7 +657,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -676,7 +688,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = RDCY864LPJ;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Resources/XPC/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -19,23 +19,10 @@ public final class BPETokenizer: Sendable {
         let vocabURL = directory.appendingPathComponent("tokenizer.json")
         let data = try Data(contentsOf: vocabURL)
         
-        struct TokenizerFile: Codable {
-            struct Model: Codable {
-                let vocab: [String: Int]
-                let merges: [String]?
-            }
-            let model: Model
-        }
+        // v13.8: UNO Pure - Delegate resource decoding to External Bridge
+        let manifest = UNOExternalBridge.loadTokenizerManifest(data: data)
         
-        let decoded = try JSONDecoder().decode(TokenizerFile.self, from: data)
-        var mergeMap = [String: Int]()
-        if let merges = decoded.model.merges {
-            for (index, merge) in merges.enumerated() {
-                mergeMap[merge] = index
-            }
-        }
-        
-        return BPETokenizer(vocab: decoded.model.vocab, merges: mergeMap)
+        return BPETokenizer(vocab: manifest.vocab, merges: manifest.merges)
     }
     
     public func encode(text: String) -> [Int] {

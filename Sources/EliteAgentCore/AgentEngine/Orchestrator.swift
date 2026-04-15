@@ -165,7 +165,7 @@ public class Orchestrator: ObservableObject {
         group.register(WebSearchToolWrapper())
         group.register(WebFetchToolWrapper())
         group.register(SafariAutomationTool())
-        group.register(ResearchReportTool())
+        group.register(MarkdownReportTool())
         // NativeBrowserTool is for internal scraping
         group.register(NativeBrowserTool())
         
@@ -517,12 +517,14 @@ public class Orchestrator: ObservableObject {
                 untrustedContext: finalUntrustedContext // v13.9: Structured untrusted data
             )
             
-            let finalAnswer = await session.finalAnswer ?? "Task completed."
+            let widgetShown = await session.wasWidgetRendered
+            let finalAnswer = await session.finalAnswer ?? (widgetShown ? "" : "Task completed.")
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
             
-            // Clean any trailing status messages
-
-            
+            // v19.9: UI Integrity Check - Ensure the final result is in chat history
+            if !self.currentMessages.contains(where: { $0.role == .assistant && $0.content == finalAnswer }) {
+                self.currentMessages.append(ChatMessage(role: .assistant, content: finalAnswer))
+            }
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle
             

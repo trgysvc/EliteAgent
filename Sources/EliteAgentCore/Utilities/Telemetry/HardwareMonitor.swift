@@ -8,39 +8,32 @@ public actor HardwareMonitor {
     
     private init() {}
     
-    /// Gerçek RAM kullanım verilerini Mach Host API üzerinden çeker.
+    /// Gerçek RAM kullanım verilerini sysctl bazlı güvenli yöntemle çeker.
+    /// Mach Host API (host_statistics64) yerine sysctl kullanmak, 0x5 yetki hatalarını bitirir.
     public func getMemoryStats() -> (used: Double, total: Double) {
-        var stats = vm_statistics64()
-        var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64_t>.size / MemoryLayout<integer_t>.size)
-        let hostPort = mach_host_self()
+        let totalRAMBytes = ProcessInfo.processInfo.physicalMemory
         
-        let result = withUnsafeMutablePointer(to: &stats) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                host_statistics64(hostPort, HOST_VM_INFO64, $0, &count)
-            }
-        }
+        // v20.5: Global safe memory retrieval via sysctl
+        // hw.memsize (Total) ve vm.page_free_count (Free) kullanarak hesaplama yapacağız.
+        var pagesize: Int32 = 0
+        var size = MemoryLayout<Int32>.size
+        sysctlbyname("hw.pagesize", &pagesize, &size, nil, 0)
         
-        // v11.1: Concurrency-safe page size retrieval
-        let pageSize = UInt64(getpagesize())
-        let totalRAM = ProcessInfo.processInfo.physicalMemory
+        var freeCount: Int32 = 0
+        var freeSize = MemoryLayout<Int32>.size
+        sysctlbyname("vm.page_page_dict.free_count", &freeCount, &freeSize, nil, 0)
         
-        if result == KERN_SUCCESS && stats.active_count > 0 {
-            // Active + Wired + Compressed memory provides a realistic 'used' metric on macOS
-            let usedPages = UInt64(stats.active_count + stats.wire_count + stats.compressor_page_count)
-            let usedBytes = usedPages * pageSize
-            return (Double(usedBytes) / (1024 * 1024 * 1024), Double(totalRAM) / (1024 * 1024 * 1024))
-        }
+        // vm_statistics64 kullanımı genellikle TaskPort gerektirir, 
+        // bu yüzden sysctl hw.usermem (kullanılabilir bellek) üzerinden gitmek daha güvenlidir.
+        var userMem: UInt64 = 0
+        var userMemSize = MemoryLayout<UInt64>.size
+        sysctlbyname("hw.usermem", &userMem, &userMemSize, nil, 0)
         
-        // v11.3: Sysctl Fallback for restricted environments
-        if totalRAM == 0 {
-            var size: UInt64 = 0
-            var len = MemoryLayout<UInt64>.size
-            if sysctlbyname("hw.memsize", &size, &len, nil, 0) == 0 {
-                return (0.0, Double(size) / (1024 * 1024 * 1024))
-            }
-        }
+        let totalGB = Double(totalRAMBytes) / (1024 * 1024 * 1024)
+        let availableGB = Double(userMem) / (1024 * 1024 * 1024)
+        let usedGB = max(0, totalGB - availableGB)
         
-        return (0.0, Double(totalRAM) / (1024 * 1024 * 1024))
+        return (usedGB, totalGB)
     }
     
     /// IOHIDEventSystem üzerinden tüm termal sensörlerin ortalamasını okur (M-Serisi uyumlu).

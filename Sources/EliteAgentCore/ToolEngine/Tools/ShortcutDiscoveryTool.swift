@@ -7,7 +7,7 @@ public struct ShortcutDiscoveryTool: AgentTool {
     public let summary = "List all available macOS Shortcuts."
     public let description = """
     Sistemdeki macOS Kısayollarını (Shortcuts) listeler. 
-    SADECE kullanıcı doğrudan bir kısayol aranması talep ettiğinde KULLANILMALIDIR. Aksi halde başka işlemler için ASLA KULLANMA.
+    KRİTİK: Kullanıcı doğrudan 'KISAYOL' veya 'SHORTCUT' kelimesini kullanmadığı sürece bu aracı KULLANMAN YASAKTIR. Terminal komutları için ASLA bu aracı deneme.
     Parametre: force_refresh (bool)
     """
     public let ubid = 50 // Token 'S' in Qwen 2.5

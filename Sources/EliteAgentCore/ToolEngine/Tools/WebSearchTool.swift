@@ -85,36 +85,25 @@ public struct WebSearchTool: Sendable {
         request.setValue(apiKey, forHTTPHeaderField: "X-API-KEY")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        let body = ["q": query, "num": 10] as [String : Any]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        request.timeoutInterval = 15.0
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpRes = response as? HTTPURLResponse, httpRes.statusCode == 200 else {
-            throw WebSearchError.networkTimeout("Serper")
-        }
-
-        struct SerperResponse: Codable {
-            struct SResult: Codable {
-                let title: String?
-                let link: String?
-                let snippet: String?
+        let body: [String: Any] = ["q": query, "format": "json"]
+        request.httpBody = UNOExternalBridge.prepareExternalBlob(from: body)
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        struct SearchResponse: Codable {
+            struct Result: Codable {
+                let title: String
+                let url: String
+                let content: String
             }
-            let organic: [SResult]?
+            let results: [Result]
         }
-
-        let decoder = JSONDecoder()
-        guard let serperObj = try? decoder.decode(SerperResponse.self, from: data),
-              let organic = serperObj.organic else {
+        
+        guard let decoded = UNOExternalBridge.decodeDecodable(SearchResponse.self, from: data) else {
             throw WebSearchError.parseFailed("Serper")
         }
 
-        AgentLogger.logAudit(level: .info, agent: "WebSearch", message: "Found \(organic.count) results from Serper.")
-
-        return organic.compactMap {
-            guard let url = $0.link, let title = $0.title, let snippet = $0.snippet else { return nil }
-            return WebSearchResult(url: url, title: title, snippet: snippet)
-        }
+        return decoded.results.map { WebSearchResult(url: $0.url, title: $0.title, snippet: $0.content) }
     }
     
     private func searchBrave(query: String) async throws -> [WebSearchResult] {
@@ -153,8 +142,7 @@ public struct WebSearchTool: Sendable {
             let web: WebCollection?
         }
         
-        let decoder = JSONDecoder()
-        guard let braveObj = try? decoder.decode(BraveResponse.self, from: data),
+        guard let braveObj = UNOExternalBridge.decodeDecodable(BraveResponse.self, from: data),
               let results = braveObj.web?.results else {
             throw WebSearchError.parseFailed("Brave")
         }

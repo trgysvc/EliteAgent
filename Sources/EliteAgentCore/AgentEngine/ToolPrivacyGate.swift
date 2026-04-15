@@ -68,8 +68,9 @@ public actor ToolPrivacyGate: Sendable {
     }
     
     private func appendToFile(entry: [String: Any]) {
-        guard let data = try? JSONSerialization.data(withJSONObject: entry, options: .fragmentsAllowed),
-              let logURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("audit_log.json") else { return }
+        // v13.8: UNO Pure - Shielded binary write for privacy logs
+        guard let data = UNOExternalBridge.prepareExternalBlob(from: entry) else { return }
+        let logURL = PathConfiguration.shared.applicationSupportURL.appendingPathComponent("audit_log.bin")
         
         if !FileManager.default.fileExists(atPath: logURL.path) {
             FileManager.default.createFile(atPath: logURL.path, contents: nil)

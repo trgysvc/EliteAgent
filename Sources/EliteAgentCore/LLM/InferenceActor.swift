@@ -316,7 +316,7 @@ public actor InferenceActor {
         // v13.7: Initialize Grammar Processor with Tool Discovery
         let toolUBIDs = ToolRegistry.shared.listTools().map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
         
-        // v14.1: Retrieve Structural JSON Tokens & Alphanumeric for Qwen 2.5
+        // v14.1: Retrieve Structural Binary Signature Tokens & Alphanumeric for Qwen 2.5
         let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\"
         var allowedTokens: [Int] = []
         for char in allowedChars {

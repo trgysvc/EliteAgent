@@ -150,12 +150,13 @@ public final class LocalModelWatchdog: ObservableObject {
     }
     
     public func exportMetrics() -> URL? {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
+        // v13.8: Unified Native Binary Serialization (No JSON Artıkları)
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .binary
         
         guard let data = try? encoder.encode(history) else { return nil }
         let tempDir = FileManager.default.temporaryDirectory
-        let fileURL = tempDir.appendingPathComponent("EliteAgent_Health_Metrics.json")
+        let fileURL = tempDir.appendingPathComponent("EliteAgent_Health_Metrics.plist")
         
         try? data.write(to: fileURL)
         return fileURL

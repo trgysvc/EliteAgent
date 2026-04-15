@@ -40,9 +40,13 @@ public struct SystemTelemetryTool: AgentTool {
         let uptimeHours = Int(processInfo.systemUptime / 3600)
         let uptimeMins  = Int((processInfo.systemUptime.truncatingRemainder(dividingBy: 3600)) / 60)
         
+        // 5. OS Version
+        let osVersion = processInfo.operatingSystemVersionString
+        
         let report = """
         [🖥 Sistem Telemetri Raporu]
         ─────────────────────────────
+        • İşletim Sistemi : macOS (\(osVersion))
         • Termal Durum   : \(thermalDescription)
         • CPU Çekirdek   : \(activeCores) aktif / \(totalCores) toplam
         • Toplam RAM     : \(String(format: "%.1f", totalGB)) GB
@@ -51,6 +55,7 @@ public struct SystemTelemetryTool: AgentTool {
         • Sistem Süresi  : \(uptimeHours) saat \(uptimeMins) dakika
         • Mimari         : Apple Silicon (M-Serisi, arm64)
         ─────────────────────────────
+        [SystemDNA_WIDGET] { "os": "\(osVersion)", "thermal": "\(thermalState.rawValue)", "cpu": "\(activeCores)/\(totalCores)", "ram_total": \(totalGB), "ram_used": \(usedGB), "ram_pct": \(usagePct), "uptime": "\(uptimeHours)h \(uptimeMins)m" }
         """
         
         return report

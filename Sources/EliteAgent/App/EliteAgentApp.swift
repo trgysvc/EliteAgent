@@ -91,7 +91,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menuBarView = MenuBarView(orchestrator: orchestrator, modelPickerVM: modelPickerVM!)
             .background(Color.clear)
         
+        // v20.5: Definitively kill layout recursion by disabling ALL sizingOptions.
+        // This stops the hosting controller from trying to reach back into SwiftUI 
+        // for sizing during a layout pass, which was causing the 0x5/recursion hang.
         let hostingController = NSHostingController(rootView: menuBarView)
+        hostingController.sizingOptions = [] // No auto-sizing
+        hostingController.view.frame.size = NSSize(width: 320, height: 520)
         popover?.contentViewController = hostingController
         popover?.behavior = .transient
     }

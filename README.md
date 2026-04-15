@@ -45,7 +45,7 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **Qwen 3.5 9B Specialization (4-bit):** Native **4-bit Quantized** Qwen 3.5 9B via `InferenceActor`, providing high-speed local reasoning.
 - **Hallucination Protection Shield:** Integrated **1.4x Repetition Penalty** and token-loop detection for s-tier stability.
 - **GGUF Integrity Shield:** Mandatory verification (Magic bytes, Version v3+, and Tensors) to prevent memory corruption.
-- **Unified Memory Diagnostics:** Fully Sandbox-compliant memory management using heuristics and `ProcessInfo`.
+- **Unified Memory Diagnostics:** Unrestricted memory management using heuristics and `ProcessInfo`, optimized for non-sandboxed performance.
 
 ### 3. M-Series Mastery & ANE Offloading [v19.0 NEW]
 - **ANE-Offloading (CoreML Bridge):** Routine tasks (intent classification, embeddings) are offloaded to the **Apple Neural Engine (ANE)**, freeing the GPU for primary LLM inference.

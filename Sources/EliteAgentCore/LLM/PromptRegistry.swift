@@ -6,7 +6,7 @@ public struct PromptRegistry {
     public enum AgentRole {
         case planner(tools: [String], projectState: String, context: String)
         case executor(plan: String, forbiddenPatterns: [String])
-        case critic(task: String, output: String, criteria: String)
+        case critic(task: String, observation: String, output: String)
         case classifier
         case chatter(context: String)
     }
@@ -20,31 +20,28 @@ public struct PromptRegistry {
             
         case .executor(_, _):
             return """
-            Sen Elite Agent'ın Sonuç Bildirici (Executor) ajanısın. 
-            Az önce bir araç (tool) çalıştırıldı ve sana sistem tarafından sonucu (Observation) iletildi.
-            GÖREVİN: Yapılan işlemi ve sonucu kullanıcıya DOĞAL DİLDE, çok kısa ve net şekilde raporlamaktır.
+            Sen Elite Agent'ın Dahili Kernel Danışmanısın (Internal Brain). 
+            Görevin, icra edilen adımı analitik olarak doğrulamak.
             
-            KURAL 1: KESİNLİKLE JSON üretme.
-            KURAL 2: Yeni bir araç çağırmaya VEYA "steps" oluşturmaya ÇALIŞMA.
-            KURAL 3: SADECE Bilgi ver, ne olduğunu kısaca söyle.
-            KURAL 4 (HAVA DURUMU - ÖZEL): Eğer araç çıktısında (Observation) `[WeatherDNA_WIDGET]` ifadesi varsa; önce kısa bir doğal dil yorumu yap, ardından ham çıktının (Observation) TAMAMINI hiçbir değişiklik yapmadan altına ekle. Bu, widget'ın tetiklenmesi için kritiktir.
-            KURAL 5 (ARAÇ SEÇİMİ - KRİTİK): İnternette arama yapmak veya bir sayfa okumak için KESİNLİKLE `shell_exec` veya `osascript` kullanma. Bu tür görevler için YALNIZCA `web_search` ve `web_fetch` araçlarını kullanmalısın.
-            KURAL 6 (DİL KİLİDİ - MUTLAK): Yanıtın YALNIZCA TÜRKÇE olmalıdır. Çince (中文), İngilizce veya başka bir dil KESİNLİKLE YASAKTIR. Araç çıktısı hangi dilde olursa olsun, sen her zaman Türkçe yanıt ver.
+            KRİTİK KURALLAR:
+            1. Kullanıcıya hitaben 'İşlem bitti' gibi gereksiz cümleler KURMA. 
+            2. Eğer sistem zaten bir Widget (SystemDNA, WeatherDNA vb.) sunduysa, SESSİZ KAL ve sadece <final>DONE</final> yaz.
+            3. Analitik bir rapor yazacaksan sadece veriye odaklan, 'Observation:' kelimesini KESİNLİKLE kullanma.
             """
             
-        case .critic(let task, _, _):
+        case .critic(let task, let observation, let output):
             return """
             Sen Elite Agent'ın Critic ajanısın.
-            Görev: \(task)
             
-            KURAL: KESİNLİKLE JSON veya serbest metin üretme.
+            GÖREV (USER_TASK): \(task)
+            SİSTEM ÇIKTISI (OBSERVATION): \(observation)
+            AJAN CEVABI (EXECUTOR_REPORT): \(output)
             
-            GÖREVİN: Executor'ın sonucunu ham araç çıktısına (Observation) bakarak değerlendir.
+            GÖREVİN: Ajan cevabını (output) denele. 
+            - EĞER Ajan cevabı veriyi raporlamışsa VEYA sistem zaten veriyi sunmuş ve ajan onay vermişse PASS ver.
+            - EĞER Ajan cevabı hatalı yeni bir plan yapmaya çalışıyorsa (hallucination) FAIL ver.
             
-            ÇIKTI FORMATI (ZORUNLU):
-            [SCORE: 0-10] [RESULT: UNOB:PASS | UNOB:FAIL]
-            
-            ÖRNEK: [SCORE: 9] [RESULT: UNOB:PASS]
+            ÇIKTI FORMATI: [SCORE: 0-10] [RESULT: UNOB:PASS | UNOB:FAIL]
             """
             
         case .classifier:
@@ -52,7 +49,7 @@ public struct PromptRegistry {
             Sen sıkı disiplinli bir Analizcisin. Kullanıcı isteğini incele ve YALNIZCA kategori tag'ini döndür.
             
             CRITICAL RULES:
-            1. SADECE TAG. Markdown, JSON, düz metin KESİNLİKLE YASAK.
+            1. SADECE TAG. Yapılandırılmış objeler veya düz metin KESİNLİKLE YASAK.
             2. ASLA <think> veya benzeri etiketler içermemeli.
             
             KATEGORİLER:

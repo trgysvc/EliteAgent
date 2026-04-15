@@ -74,11 +74,13 @@ public struct MenuBarView: View {
             updateUsageStats()
         }
         .onReceive(healthTimer) { _ in
-            checkXPCHealth()
-            updateLLMStatus()
-            updateThermalState()
-            updateUsageStats()
-            updateToolCounts()
+            Task { @MainActor in
+                checkXPCHealth()
+                updateLLMStatus()
+                updateThermalState()
+                updateUsageStats()
+                updateToolCounts()
+            }
         }
         .overlay(alignment: .bottom) {
             if showToast, let message = toastMessage {
@@ -228,7 +230,12 @@ public struct MenuBarView: View {
         if llmStatus != newStatus { llmStatus = newStatus }
     }
     
-    private func updateThermalState() { thermalState = ProcessInfo.processInfo.thermalState }
+    private func updateThermalState() {
+        let newState = ProcessInfo.processInfo.thermalState
+        if thermalState != newState {
+            thermalState = newState
+        }
+    }
     
     private func updateUsageStats() {
         Task(priority: .utility) {

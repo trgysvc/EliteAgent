@@ -85,7 +85,7 @@ public struct WeatherTool: AgentTool {
                     }
                 }
                 
-                // If we found a specific day, return rich dashboard for that day
+                // v13.8: UNO Pure - External Protocol Adaptor (No JSON logic in core)
                 if let dayWeather = targetForecast {
                     let tempHigh = Int(dayWeather.highTemperature.value)
                     let tempLow  = Int(dayWeather.lowTemperature.value)
@@ -148,8 +148,8 @@ public struct WeatherTool: AgentTool {
         
         if let url = URL(string: urlString),
            let (data, _) = try? await URLSession.shared.data(from: url),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let weatherArray = json["weather"] as? [[String: Any]],
+           let dict = UNOExternalBridge.resolveDictionary(from: data),
+           let weatherArray = dict["weather"] as? [[String: Any]],
            let dayWeather = weatherArray.first,
            let hourly = (dayWeather["hourly"] as? [[String: Any]])?.first,
            let tempStr = hourly["tempC"] as? String {

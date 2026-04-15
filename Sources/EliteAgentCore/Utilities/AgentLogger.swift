@@ -66,6 +66,7 @@ public struct AgentLogger: Sendable {
         // Push to background worker
         Task {
             await LogWorker.shared.write(fileName: "audit.log", content: line)
+            await LogWorker.shared.write(fileName: "debug.log", content: line)
         }
     }
     
@@ -88,6 +89,7 @@ public struct AgentLogger: Sendable {
         
         Task {
             await LogWorker.shared.write(fileName: "security.log", content: line)
+            await LogWorker.shared.write(fileName: "debug.log", content: line)
         }
     }
 }

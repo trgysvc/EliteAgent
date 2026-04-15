@@ -9,7 +9,7 @@ public struct UNOToolSignature: Codable, Sendable {
     public let summary: String         // One-liner for fast discovery
     public let description: String     // Detailed instructions for LLM
     public let ubid: Int               // Unique Binary ID for logic-level tokenization
-    public let parameterSchema: [String: AnyCodable] // MCP/JSON-Schema fragment
+    public let parameterSchema: [String: AnyCodable] // MCP/Binary-Schema fragment
     public let requiredParameters: [String]
     
     public init(id: String, name: String, summary: String, description: String, ubid: Int, parameterSchema: [String: AnyCodable] = [:], requiredParameters: [String] = []) {

@@ -1,0 +1,69 @@
+		AE7BBEDE2F885C0100FDE204 /* Numerics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = Numerics;
+		};
+		AEB132D92F79F4FC00626F70 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		AEB132DB2F79F4FC00626F70 /* MLXFFT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFFT;
+		};
+		AEB132DD2F79F4FC00626F70 /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		AEB132DF2F79F4FC00626F70 /* MLXLinalg */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXLinalg;
+		};
+		AEB132E12F79F4FC00626F70 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		AEB132E32F79F4FC00626F70 /* MLXOptimizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXOptimizers;
+		};
+		AEB132E52F79F4FC00626F70 /* MLXRandom */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXRandom;
+		};
+		AEB132E82F79F6D900626F70 /* MLXEmbedders */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXEmbedders;
+		};
+		AEB132EA2F79F6D900626F70 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
+		AEB132EC2F79F6D900626F70 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+		AEB132EE2F79F6D900626F70 /* MLXVLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXVLM;
+		};
+		AEEB40612F785F210082B0CE /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AE747A102F70602B004732A5 /* Project object */;
+}

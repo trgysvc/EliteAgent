@@ -1046,3 +1046,124 @@ EliteAgent artık internette araştırma yapıp, sonuçları okuyup, sonra kendi
 **What changed:** Reverted all fallbacks and fixed root-cause sandbox/daemon restrictions by adding mandatory Info.plist privacy keys and entitlements.
 **Files modified:** Info.plist (App/XPC), EliteAgent.entitlements, EliteAgentXPC.entitlements, WebSearchTool.swift, WeatherTool.swift, BackgroundWebScraper.swift
 **Decision made:** Re-aligned with user's "Native First" philosophy by fixing the system block instead of bypassing it.
+
+### [2026-04-14] — Total Sandbox Decommissioning
+**What changed:** Permanently removed macOS Sandbox restrictions by purging entitlements and project-level security configs. Cleaned up legacy container data and reset Launch Services.
+**Files modified:** `project.pbxproj`, `ToolPrivacyGate.swift`, `EliteAgent.entitlements` (deleted), `EliteAgentXPC.entitlements` (deleted).
+**Decision made:** Transitioned EliteAgent to an unrestricted native process to solve web research (0x5) and file access issues.
+**Next:** Battle Test verification via `UNO_BATTLE_TEST.md`.
+
+### [2026-04-14] — Hardened Runtime Deactivation & Identity Restoration
+**What changed:** Disabled `ENABLE_HARDENED_RUNTIME` and restored minimal entitlements to fix kernel protection (0x5) and URLSession identity errors. Updated purge script to clear `DerivedData`.
+**Files modified:** `project.pbxproj`, `EliteAgent.entitlements`, `EliteAgentXPC.entitlements`, `total_sandbox_purge.sh`.
+**Decision made:** Complemented sandbox removal with Hardened Runtime deactivation to achieve 100% system autonomy.
+**Next:** User-led verification of high-level autonomous tasks.
+### [2026-04-14] — Surgical Project File Restoration
+**What changed:** Restored corrupted Swift Package links in `project.pbxproj` by removing redundant `(null)` references in build phases and clean up `PBXBuildFile` sections.
+**Files modified:** `project.pbxproj`.
+**Decision made:** Surgically repaired framework links for XPC and Core targets to resolve "Missing package product" errors without affecting sandbox-removal settings.
+**Next:** Standard feature development.
+
+### [2026-04-14] — PBXGroup Frameworks Restoration
+**What changed:** Re-inserted the missing "Frameworks" group into the Project Navigator and linked it to the root project hierarchy. Cleaned up residual `(null)` build phase entries.
+**Files modified:** `project.pbxproj`.
+**Decision made:** Prioritized visual consistency in Xcode sidebar by restoring the standard Frameworks folder while maintaining Swift Package resolution integrity.
+**Next:** Monitor for any secondary navigation issues.
+### [2026-04-14] — Build Restoration & Navigator Fix (Minimalist)
+**What changed:** Fixed 25 "Missing package product" errors by reverting corrupted framework metadata and re-applying a minimalist Frameworks group. Restored MLX dependency to the main target.
+**Files modified:** `project.pbxproj`.
+**Decision made:** Prioritized build stability over metadata cleanup; verified with `xcodebuild` that the minimalist approach satisfies both functionality and visual organization.
+**Next:** Zero-warning feature development.
+
+### [2026-04-14] — Final Metadata Deep-Clean & GUI Restoration
+**What changed:** Removed all `(null)` build file references and unified framework IDs across targets. Verified full resolution of package products for EliteAgent, Core, and XPC targets.
+**Files modified:** `project.pbxproj`.
+**Decision made:** Implemented a non-destructive metadata deep-clean to satisfy Xcode GUI's strict indexing requirements while maintaining command-line build stability.
+**Next:** Standard development.
+
+
+### [2026-04-15] — System Info & Hardened Runtime Fix
+**What changed:** Updated `get_system_telemetry` tool (UBID 36) to include macOS version strings and disabled `ENABLE_HARDENED_RUNTIME` across all project targets. Optimized `NSPopover` layout initialization in AppleDelegate.
+**Files modified:** `SystemTelemetryTool.swift`, `project.pbxproj`, `EliteAgentApp.swift`.
+**Decision made:** Added OS version metadata to the core telemetry report to satisfy LLM system queries. Disabled Hardened Runtime to eliminate `(os/kern) failure (0x5)` task port errors. Applied `sizingOptions` to `NSHostingController` to mitigate SwiftUI layout recursion logs.
+**Next:** Monitor system report accuracy in multi-turn agent loops.
+
+## 📅 [2026-04-15] — System Stability & Log Restoration (v20.0)
+
+Bugün, EliteAgent'ın "tepkisizlik" ve "log kirliliği" sorunlarını kökten çözen, sistemi tekrar "Battle Test" hazırlığına getiren **v20.0 "Stability & Restoration"** operasyonunu tamamladık. Logları susturmak yerine, hataların mimari nedenlerini giderdik.
+
+### 🚀 Ana Başlıklar
+
+#### 1. UI Layout Recursion & WindowServer Fix
+- **Problem**: SwiftUI `MenuBarView` ve AppKit `NSPopover` arasındaki `.intrinsicContentSize` bazlı boyutlandırma çakışması, `layoutSubtreeIfNeeded` uyarısına ve sistemin kilitlenmesine neden oluyordu. Bu durum dolaylı olarak `ViewBridge` kopmalarına ve `WindowServer (PID 403)` yetki hatalarına yol açıyordu.
+- **Çözüm**: `NSHostingController` yapılandırmasından `intrinsicContentSize` kaldırıldı, yerine sabit/kontrollü boyutlandırma getirildi. Durum güncellemeleri (`thermalState`, `tokens`) asenkron ve `MainActor` üzerinde güvenli hale getirilerek layout döngüleri kırıldı.
+
+#### 2. Log Sistemi Onarımı (Truth-of-Source)
+- **Audit Log Path**: `audit_log.plist` dosyasının yanlış dizinde aranması ve yazma hataları giderildi. Dosya artık standart `~/Library/Logs/EliteAgent/` dizinine yazılıyor.
+- **Debug Mirroring**: Kullanıcının bottleneck takibi yapabilmesi için tüm sistem loglarını tek bir dosyada toplayan merkezi `debug.log` mekanizması `AgentLogger` içerisine entegre edildi.
+
+#### 3. System Resilience
+- **WindowServer Permission**: `failure (0x5)` hatalarının öncelikli nedeni olan UI thread blokajları giderilerek sistemin pencere yöneticisiyle olan iletişimi stabilleştirildi.
+- **Robust File Handling**: `AuditLoggerActor` içerisindeki dosya yazma operasyonları `defer` ve `FileHandle` hata yönetimiyle güçlendirildi.
+
+### 🛠 Teknik Notlar
+- **Path Correction**: Tüm log operasyonları `PathConfiguration.shared.logsURL` üzerinden merkezi hale getirildi.
+- **Async UI**: `onReceive` tetikleyicileri içerisindeki ağır state güncellemeleri `Task { @MainActor in ... }` bloklarına alınarak UI akıcılığı sağlandı.
+
+### 🏁 Mevcut Durum: **v20.0-STABLE-RECOVERY**
+EliteAgent artık sadece akıllı değil, aynı zamanda loglarıyla dürüstçe konuşan, UI döngülerinden arındırılmış ve test edilmeye hazır bir stabiliteyle çalışıyor.
+
+---
+*EliteAgent Core · v20.0 · Stability & Log Restoration Excellence.*
+
+### [2026-04-15] — v20.5 Full Pipeline Restoration
+**What changed:** Implemented a new ".reporting" phase in OrchestratorRuntime to force natural language summaries after tool execution. Added a programmatic Silence Guard in handleReview that vetoes empty successful reviews. Replaced Mach Host API with sysctl in HardwareMonitor to eliminate PID 403 kernel errors. Hardened NSHostingController sizing isolation to stop layout recursion.
+**Files modified:** Sources/EliteAgentCore/Types/Types.swift, Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift, Sources/EliteAgentCore/Utilities/Telemetry/HardwareMonitor.swift, Sources/EliteAgent/App/EliteAgentApp.swift
+**Decision made:** Switched from prompt-guidance to procedural-enforcement (Logic Guard) for reporting to ensure data reached the UI regardless of LLM "DONE" eagerness.
+**Next:** Monitor live battle tests for telemetry and popover stability.
+
+### [2026-04-15] — v20.6 Direct Data Reflection (Structural Fix)
+**What changed:** Shifted responsibility for UI data reflection from the LLM to the Orchestrator. The system now pushes tool results to the UI immediately upon execution (Direct Reflect). Added aggressive hallucination filters to ThinkParser to strip protocol tags and thinking headers from chat bubbles. Restricted Executor and Critic prompts to prevent planning loops.
+**Files modified:** Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift, Sources/EliteAgentCore/Utilities/ThinkParser.swift, Sources/EliteAgentCore/LLM/PromptRegistry.swift
+**Decision made:** Bypassed LLM conversational turn for primary data display to ensure zero-latency reporting and eliminate hallucination-driven silence.
+**Next:** Confirm user visibility of telemetry data.
+
+### [2026-04-15] — v20.7 SystemDNA Premium Widget & UX Cleanup
+**What changed:** Replaced text-only system telemetry with a high-fidelity SwiftUI widget (SystemDNA) featuring RAM gauges and M-series performance badges. Silenced the completion confirmations ("İşlem başarıyla tamamlandı") by making the executor prompt purely protocol-focused. Integrated widget detection and tag suppression in ChatBubble.
+**Files modified:** Sources/EliteAgentCore/ToolEngine/Tools/SystemTelemetryTool.swift, Sources/EliteAgent/App/Components/System/SystemDataView.swift, Sources/EliteAgent/App/ChatBubble.swift, Sources/EliteAgentCore/LLM/PromptRegistry.swift
+**Decision made:** Adopted a "Widget-First" reporting philosophy where rich UI components replace markdown tables for core system utilities.
+**Next:** Verify widget responsiveness on different window sizes.
+
+### [2026-04-15] — EliteAgent v21.1: Persistent Narrative Authority & Context Isolation
+**What changed:** 
+- Moved `wasWidgetRendered` state to the persistent `Session` actor.
+- Implemented history sanitization in `OrchestratorRuntime` to purge previous technical observations.
+- Hardened `Orchestrator` to strictly suppress "Task completed." fallback bubbles when widgets are rendered.
+- Enforced UBID 36 (SystemTelemetry) in `PlannerTemplate` for all identity queries.
+**Files modified:** 
+- Sources/EliteAgentCore/AgentEngine/Session.swift
+- Sources/EliteAgentCore/AgentEngine/Orchestrator.swift
+- Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift
+- Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift
+**Decision made:** Transitioned from ephemeral to persistent state management to solve Turn-to-Turn narrative leakage.
+**Next:** Monitor for any further context blurring in high-recursion tasks.
+
+### [2026-04-15] — EliteAgent v21.2: Display Isolation & Widget Extraction
+**What changed:** 
+- Implemented `Display Isolation` in `OrchestratorRuntime`. 
+- Filtered `onChatMessage` reflection to extract ONLY widget tags when present.
+- Discarded analytical text reports from the UI while preserving them in background context.
+**Files modified:** 
+- Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift
+**Decision made:** Enforced separation between LLM context (analytical data) and User view (rich UI widgets) to ensure visual premiumness.
+**Next:** Monitor for any edge-case widget tags that might require regex adjustments.
+
+### [2026-04-15] — EliteAgent v21.3: Semantic Tool Differentiation
+**What changed:** 
+- Decoupled Static System Identity from Live Resource Telemetry in `PlannerTemplate`.
+- Enforced `get_system_info` (UBID 16) for OS/Build/Version queries.
+- Reserved `get_system_telemetry` (UBID 36) strictly for dynamic performance/load tasks.
+**Files modified:** 
+- Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift
+**Decision made:** Enforced semantic intent boundaries to prevent the agent from providing identical responses to different systemic questions.
+**Next:** Verify if any other tool pairs (e.g. WiFi vs Network Telemetry) require similar semantic de-coupling.

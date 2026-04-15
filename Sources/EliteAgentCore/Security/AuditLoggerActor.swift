@@ -79,16 +79,15 @@ public actor AuditLoggerActor {
     
     private func save(data: Data, isEncrypted: Bool) throws {
         let logFileName = isEncrypted ? "audit_log.enc" : "audit_log.plist"
-        let logURL = PathConfiguration.shared.applicationSupportURL.appendingPathComponent(logFileName)
+        let logURL = PathConfiguration.shared.logsURL.appendingPathComponent(logFileName)
         
         if !FileManager.default.fileExists(atPath: logURL.path) {
-            FileManager.default.createFile(atPath: logURL.path, contents: nil)
+            FileManager.default.createFile(atPath: logURL.path, contents: nil, attributes: nil)
         }
         
         let fileHandle = try FileHandle(forWritingTo: logURL)
-        fileHandle.seekToEndOfFile()
-        fileHandle.write(data)
-        // Note: For binary streams, separators like \n are omitted to maintain Plist integrity
-        fileHandle.closeFile()
+        defer { try? fileHandle.close() }
+        try fileHandle.seekToEnd()
+        try fileHandle.write(contentsOf: data)
     }
 }

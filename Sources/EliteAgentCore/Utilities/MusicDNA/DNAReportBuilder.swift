@@ -1,6 +1,5 @@
-// DNAReportBuilder.swift
 // Elite Music DNA Engine — Phase 3
-// Markdown + JSON çift format rapor üreticisi
+// Pure Markdown Report Engine
 
 import Foundation
 
@@ -13,7 +12,7 @@ public final class DNAReportBuilder: @unchecked Sendable {
     public static func analyze(
         url: URL,
         progress: @Sendable @escaping (Double, String, String?) -> Void
-    ) async throws -> (analysis: MusicDNAAnalysis, reportText: String, mdPath: String, jsonPath: String) {
+    ) async throws -> (analysis: MusicDNAAnalysis, reportText: String, mdPath: String) {
 
         let filename = url.lastPathComponent
 
@@ -90,10 +89,9 @@ public final class DNAReportBuilder: @unchecked Sendable {
             try? FileManager.default.createDirectory(at: aiWorksDir, withIntermediateDirectories: true, attributes: nil)
         }
 
-        // Output paths
+        // Output path
         let baseName = url.deletingPathExtension().lastPathComponent
         let mdPath = aiWorksDir.appendingPathComponent("\(baseName).dna.md").path
-        let jsonPath = aiWorksDir.appendingPathComponent("\(baseName).dna.json").path
 
         // Build Markdown
         let markdown = buildMarkdown(
@@ -103,15 +101,6 @@ public final class DNAReportBuilder: @unchecked Sendable {
             forensic: forensicResult
         )
         try markdown.write(toFile: mdPath, atomically: true, encoding: String.Encoding.utf8)
-
-        // Build JSON
-        let json = buildJSON(
-            url: url, buffer: buffer, rhythm: rhythm,
-            chroma: chromaResult, spectral: spectral, mfcc: mfccResult,
-            hpss: hpss, structure: structure,
-            forensic: forensicResult
-        )
-        try json.write(toFile: jsonPath, atomically: true, encoding: String.Encoding.utf8)
 
         progress(100, "Analiz tamamlandı!", nil)
 
@@ -177,14 +166,13 @@ public final class DNAReportBuilder: @unchecked Sendable {
             chroma: chromaResult.meanChroma,
             mfcc: mfccResult.mfcc,
             structure: structure.segments.map { ($0.id, $0.startSec, $0.endSec, $0.label) },
-            outputMd: mdPath,
-            outputJson: jsonPath
+            outputMd: mdPath
         )
 
         var finalAnalysis = analysis
         finalAnalysis.reportPath = mdPath
 
-        return (finalAnalysis, reportText, mdPath, jsonPath)
+        return (finalAnalysis, reportText, mdPath)
     }
 
     // MARK: Markdown Builder
@@ -288,102 +276,9 @@ public final class DNAReportBuilder: @unchecked Sendable {
         | WhereFroms | \(forensic.whereFroms.joined(separator: ", ")) |
 
         ---
-        *EliteAgent Music DNA Engine — Powered by Apple Accelerate (vDSP)*
+        *EliteAgent Music DNA Engine v14.10*
         """
-
         return md
-    }
-
-    // MARK: JSON Builder
-
-    private static func buildJSON(
-        url: URL, buffer: AudioBuffer, rhythm: RhythmResult,
-        chroma: ChromaResult, spectral: SpectralResult, mfcc: MFCCResult,
-        hpss: HPSSResult, structure: StructureResult,
-        forensic: ForensicDNA
-    ) -> String {
-        let noteNames = ChromaResult.noteNames
-        let now = ISO8601DateFormatter().string(from: Date())
-
-        let chromaDict = zip(noteNames, chroma.meanChroma)
-            .map { "      \"\($0.0)\": \(String(format: "%.4f", $0.1))" }
-            .joined(separator: ",\n")
-
-        let beatTimesStr = rhythm.beatTimes.prefix(20).map { String(format: "%.3f", $0) }.joined(separator: ", ")
-
-        let segmentsStr = structure.segments.map { seg -> String in
-            """
-                  {
-                    "id": \(seg.id),
-                    "start_sec": \(String(format: "%.2f", seg.startSec)),
-                    "end_sec": \(String(format: "%.2f", seg.endSec)),
-                    "duration_sec": \(String(format: "%.2f", seg.durationSec)),
-                    "label": "\(seg.label)"
-                  }
-            """
-        }.joined(separator: ",\n")
-
-        let mfccStr = mfcc.mfcc.map { String(format: "%.4f", $0) }.joined(separator: ", ")
-        let filename = url.lastPathComponent
-
-        return """
-        {
-          "metadata": {
-            "filename": "\(filename)",
-            "duration_sec": \(String(format: "%.2f", buffer.duration)),
-            "sample_rate": \(Int(buffer.sampleRate)),
-            "analyzed_at": "\(now)",
-            "engine": "EliteAgent Music DNA Engine v1.0"
-          },
-          "rhythm": {
-            "bpm": \(String(format: "%.4f", rhythm.bpm)),
-            "beat_count": \(rhythm.beatFrames.count),
-            "beat_grid_std_sec": \(String(format: "%.4f", rhythm.gridStdSec)),
-            "onset_strength_mean": \(String(format: "%.4f", rhythm.onsetMean)),
-            "onset_strength_peak": \(String(format: "%.4f", rhythm.onsetPeak)),
-            "beat_times_sec_first20": [\(beatTimesStr)]
-          },
-          "tonality": {
-            "key": "\(chroma.key)",
-            "key_strength": \(String(format: "%.4f", chroma.keyStrength)),
-            "is_minor": \(chroma.isMinor),
-            "chroma": {
-        \(chromaDict)
-            }
-          },
-          "spectral": {
-            "centroid_hz": \(String(format: "%.2f", spectral.centroidHz)),
-            "rolloff_hz": \(String(format: "%.2f", spectral.rolloffHz)),
-            "bandwidth_hz": \(String(format: "%.2f", spectral.bandwidthHz)),
-            "flatness": \(String(format: "%.6f", spectral.flatness)),
-            "zcr": \(String(format: "%.6f", spectral.zcr))
-          },
-          "dynamics": {
-            "rms_mean": \(String(format: "%.6f", spectral.rmsMean)),
-            "rms_max": \(String(format: "%.6f", spectral.rmsMax)),
-            "dynamic_range_db": \(String(format: "%.4f", spectral.dynamicRangeDb))
-          },
-          "mfcc": [\(mfccStr)],
-          "hpss": {
-            "harmonic_energy_ratio": \(String(format: "%.4f", hpss.harmonicEnergyRatio)),
-            "percussive_energy_ratio": \(String(format: "%.4f", hpss.percussiveEnergyRatio)),
-            "characterization": "\(hpss.characterization)"
-          },
-          "structure": {
-            "segment_count": \(structure.segmentCount),
-            "segments": [
-        \(segmentsStr)
-            ]
-          },
-          "forensic": {
-            "format": "\(forensic.format)",
-            "bitrate": "\(forensic.bitRate)",
-            "encoder": "\(forensic.encoder)",
-            "signature_found": \(forensic.signatureFound),
-            "where_froms": [\(forensic.whereFroms.map { "\"\($0)\"" }.joined(separator: ", "))]
-          }
-        }
-        """
     }
 
     // MARK: Helpers

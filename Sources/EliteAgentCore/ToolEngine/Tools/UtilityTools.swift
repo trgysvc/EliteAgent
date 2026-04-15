@@ -3,8 +3,10 @@ import Foundation
 public struct UtilityTools: Sendable {
     public init() {}
     
-    public func jsonParse(data: Data, keyPath: String? = nil) throws -> String {
-        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+    /// UNO Pure: Bridges a text-based structured payload into an internal dictionary or key-path result.
+    public func structureParse(data: Data, keyPath: String? = nil) throws -> String {
+        // v13.8: UNO Pure - Delegate parsing to shielded bridge
+        guard let dict = UNOExternalBridge.resolveDictionary(from: data) else {
             return String(data: data, encoding: .utf8) ?? ""
         }
         
@@ -20,11 +22,17 @@ public struct UtilityTools: Sendable {
                 }
             }
             
-            let resultData = try JSONSerialization.data(withJSONObject: current, options: .prettyPrinted)
+            // v13.8: UNO Pure - Delegate re-encoding to shielded bridge
+            guard let resultData = UNOExternalBridge.prepareExternalBlob(from: ["result": current]) else {
+                return "Protocol mapping failed."
+            }
             return String(data: resultData, encoding: .utf8) ?? ""
         }
         
-        let resultData = try JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted)
+        // v13.8: UNO Pure - Delegate re-encoding to shielded bridge
+        guard let resultData = UNOExternalBridge.prepareExternalBlob(from: dict) else {
+            return "Protocol mapping failed."
+        }
         return String(data: resultData, encoding: .utf8) ?? ""
     }
     

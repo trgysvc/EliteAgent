@@ -226,7 +226,7 @@ public class ModelPickerViewModel: ObservableObject {
             let data: [ORModel]
         }
         
-        guard let decoded = try? JSONDecoder().decode(ORResponse.self, from: data) else { return [] }
+        guard let decoded = UNOExternalBridge.decodeDecodable(ORResponse.self, from: data) else { return [] }
         
         return decoded.data
             .sorted { $0.name.lowercased() < $1.name.lowercased() }

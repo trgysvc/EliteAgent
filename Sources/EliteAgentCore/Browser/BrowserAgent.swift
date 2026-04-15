@@ -60,17 +60,15 @@ public actor BrowserAgent: AgentProtocol {
         if signal.name == "BROWSER_ACTION" {
             self.status = .working
             
-            guard let payloadStr = String(data: signal.payload, encoding: .utf8),
-                  let data = payloadStr.data(using: .utf8),
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let type = json["type"] as? String else {
+            guard let dict = UNOExternalBridge.resolveDictionary(from: signal.payload),
+                  let type = dict["type"] as? String else {
                 self.status = .idle
                 return
             }
             
             do {
                 var currentURLStr = ""
-                if type == "navigate", let targetUrl = json["url"] as? String {
+                if type == "navigate", let targetUrl = dict["url"] as? String {
                     currentURLStr = targetUrl
                 } else {
                     currentURLStr = try SafariJSBridge.getCurrentURL()
@@ -98,7 +96,7 @@ public actor BrowserAgent: AgentProtocol {
                 
                 switch type {
                 case "navigate":
-                    guard let urlStr = json["url"] as? String, let url = URL(string: urlStr) else { break }
+                    guard let urlStr = dict["url"] as? String, let url = URL(string: urlStr) else { break }
                     let success = navigateAXUIElement(url: url)
                     resultText = success ? "Navigated to \(urlStr) via AXUIElement" : "AXUIElement navigation failed"
                     
@@ -106,14 +104,14 @@ public actor BrowserAgent: AgentProtocol {
                     resultText = try SafariJSBridge.evaluate("document.body.innerText")
                     
                 case "query":
-                    guard let selector = json["selector"] as? String else { break }
+                    guard let selector = dict["selector"] as? String else { break }
                     // REQUIRES APPROVAL
                     AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "action=browser_js requirement=approval_granted")
                     let escaped = selector.replacingOccurrences(of: "'", with: "\\'")
                     resultText = try SafariJSBridge.evaluate("var el = document.querySelector('\(escaped)'); el ? el.outerHTML : ''")
                     
                 case "fill":
-                    guard let fields = json["fields"] as? [String: String] else { break }
+                    guard let fields = dict["fields"] as? [String: String] else { break }
                     // REQUIRES APPROVAL
                     AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "action=browser_fill requirement=approval_granted")
                     

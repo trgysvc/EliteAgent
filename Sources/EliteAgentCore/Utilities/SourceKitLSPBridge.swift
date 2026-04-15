@@ -34,9 +34,9 @@ public actor SourceKitLSPBridge {
         AgentLogger.logAudit(level: .info, agent: "SourceKitLSP", message: "🚀 SourceKit-LSP started for workspace: \(workspaceURL.path)")
         
         // v15.0: İlk ilkleme (initialize) mesajı gönderilmeli.
-        // JSON-RPC protokolü gereği bu adım zorunludur.
-        // EliteAgent kuralları gereği içeride PList/Binary sistemleri tercih edilse de,
-        // dış araçlarla iletişimde (LSP) standart protokol uygulanır.
+        // v13.8: Harici LSP protokolü gereği bu adım zorunludur.
+        // EliteAgent kuralları gereği içeride PList/Binary sistemleri tercih edilir.
+        // Dış araçlarla iletişimde (LSP) Bridge üzerinden protokol izolasyonu uygulanır.
     }
     
     /// Belirli bir dosyadaki semantik hataları ve uyarıları döndürür.

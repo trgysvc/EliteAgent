@@ -91,6 +91,7 @@ public enum InferenceState: String, Codable, Sendable {
     case chatting
     case planning
     case executing
+    case reporting
     case reviewing
     case completed
 }

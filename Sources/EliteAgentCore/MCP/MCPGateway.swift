@@ -5,27 +5,6 @@ public enum MCPTransport: Sendable {
     case sse(url: URL, apiKey: String?)
 }
 
-// JSON-RPC 2.0 Structure bounds
-public struct JSONRPCRequest: Codable, Sendable {
-    public var jsonrpc = "2.0"
-    public let id: String
-    public let method: String
-    public let params: [String: String]?
-    
-    public init(id: String, method: String, params: [String: String]? = nil) {
-        self.id = id
-        self.method = method
-        self.params = params
-    }
-}
-
-public struct JSONRPCResponse: Codable, Sendable {
-    public let jsonrpc: String
-    public let id: String
-    public let result: [String: String]?
-    public let error: [String: String]?
-}
-
 public actor MCPGateway: AgentProtocol {
     public let agentID: AgentID = .mcpGateway
     public private(set) var status: AgentStatus = .idle
@@ -48,7 +27,7 @@ public actor MCPGateway: AgentProtocol {
         self.bus = bus
     }
     
-    // Establishing JSON-RPC 2.0 natively across Foundation
+    /// UNO Pure: Connects to an external MCP server via shielded protocol.
     public func connect(transport: MCPTransport) async throws {
         switch transport {
         case .stdio(let cmd, let args):
@@ -81,9 +60,9 @@ public actor MCPGateway: AgentProtocol {
                     let (bytes, _) = try await URLSession.shared.bytes(for: request)
                     for try await line in bytes.lines {
                         if line.hasPrefix("data: ") {
-                            let jsonString = String(line.dropFirst(6))
-                            if let data = jsonString.data(using: .utf8),
-                               let response = try? JSONDecoder().decode(JSONRPCResponse.self, from: data) {
+                            let payload = String(line.dropFirst(6))
+                            if let data = payload.data(using: .utf8),
+                               let response = UNOExternalBridge.decodeJSONRPCResponse(data: data) {
                                 self.manifest = response.result
                             }
                         }
@@ -96,16 +75,16 @@ public actor MCPGateway: AgentProtocol {
     }
     
     private func requestToolsList() async throws {
-        let req = JSONRPCRequest(id: UUID().uuidString, method: "tools/list")
-        guard let data = try? JSONEncoder().encode(req) else { return }
+        // v13.8: UNO Pure - Use Bridge for JSON-RPC encoding
+        guard let data = UNOExternalBridge.encodeJSONRPCRequest(id: UUID().uuidString, method: "tools/list") else { return }
         var msg = data
         msg.append(contentsOf: "\n".utf8)
         
         stdInPipe?.fileHandleForWriting.write(msg)
         
-        // Polling raw struct boundaries (Basic extraction)
+        // Polling raw protocol boundaries
         if let outData = stdOutPipe?.fileHandleForReading.availableData, !outData.isEmpty {
-            if let response = try? JSONDecoder().decode(JSONRPCResponse.self, from: outData) {
+            if let response = UNOExternalBridge.decodeJSONRPCResponse(data: outData) {
                 self.manifest = response.result
                 self.timeoutCount = 0
             } else {
@@ -134,17 +113,16 @@ public actor MCPGateway: AgentProtocol {
                 return
             }
             
-            // v11.0: Real connectivity check for MCP Gateway
+            // v13.8: Unified Native Status Payload (Shielded via Bridge)
             let isConnected = process?.isRunning ?? false || ssePostURL != nil
             let activeTools = manifest?.count ?? 0
             
-            responsePayload = """
-            {
-                "status": "\(isConnected ? "CONNECTED" : "DISCONNECTED")",
-                "active_tools": \(activeTools),
+            let statusDict: [String: Any] = [
+                "status": isConnected ? "CONNECTED" : "DISCONNECTED",
+                "active_tools": activeTools,
                 "gateway": "MCP-1.0-Native"
-            }
-            """.data(using: .utf8) ?? Data()
+            ]
+            responsePayload = (try? UNOExternalBridge.encodeExternalPayload(statusDict)) ?? Data()
             
             let resSignal = Signal(
                 source: .mcpGateway,
@@ -158,13 +136,10 @@ public actor MCPGateway: AgentProtocol {
         }
     }
     
-    // Establish targeted Xcode MCP Protocol bindings
     public func connectXcodeMCP() async throws {
-        // Mapped exclusively limiting stdio binaries executing swift/npx paths natively
         try await connect(transport: .stdio(command: "/usr/bin/npx", args: ["-y", "@smithery/xcode-mcp"]))
     }
     
-    // Establish targeted Figma MCP bindings natively
     public func connectFigmaMCP() async throws {
         guard let tokenData = try? KeychainHelper().read(key: "com.eliteagent.api.figma"),
               let tokenString = String(data: tokenData, encoding: .utf8) else {
@@ -174,8 +149,10 @@ public actor MCPGateway: AgentProtocol {
     }
     
     public func executeTool(name: String, args: [String: String]?) async throws -> String {
-        let req = JSONRPCRequest(id: UUID().uuidString, method: "tools/call", params: ["name": name])
-        guard let data = try? JSONEncoder().encode(req) else { return "Encoding error" }
+        // v13.8: UNO Pure - Use Bridge for JSON-RPC encoding
+        guard let data = UNOExternalBridge.encodeJSONRPCRequest(id: UUID().uuidString, method: "tools/call", params: ["name": name]) else {
+            return "Protocol encoding error"
+        }
         
         if let sseURL = ssePostURL {
             var request = URLRequest(url: sseURL)
@@ -187,7 +164,7 @@ public actor MCPGateway: AgentProtocol {
             request.httpBody = data
             
             let (resData, _) = try await URLSession.shared.data(for: request)
-            if let response = try? JSONDecoder().decode(JSONRPCResponse.self, from: resData) {
+            if let response = UNOExternalBridge.decodeJSONRPCResponse(data: resData) {
                 return response.result?.description ?? "SSE Tool executed successfully: \(name)"
             }
             return "SSE Tool processed \(name) natively."
@@ -200,7 +177,7 @@ public actor MCPGateway: AgentProtocol {
         
         // Wait roughly bounding stdio sync loops
         if let outData = stdOutPipe?.fileHandleForReading.availableData, !outData.isEmpty {
-            if let response = try? JSONDecoder().decode(JSONRPCResponse.self, from: outData) {
+            if let response = UNOExternalBridge.decodeJSONRPCResponse(data: outData) {
                 return response.result?.description ?? "MCP Tool executed successfully."
             }
         }

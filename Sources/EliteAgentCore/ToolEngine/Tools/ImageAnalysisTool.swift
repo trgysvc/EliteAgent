@@ -30,14 +30,18 @@ public struct ImageAnalysisTool: AgentTool, Sendable {
         
         let elements = try await VisionAnalyzer.shared.analyze(image: image)
         
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
-        let data = try encoder.encode(elements)
+        // v13.8: UNO Pure - Pure Markdown Vision Report (No JSON)
+        var report = "ANALİZ TAMAMLANDI: \(elements.count) görsel öğe bulundu.\n\n"
+        report += "| Tip | İçerik / Etiket | Koordinatlar (x,y,w,h) |\n"
+        report += "| :--- | :--- | :--- |\n"
         
-        guard let jsonString = String(data: data, encoding: .utf8) else {
-            throw ToolError.executionError("Failed to encode visual elements to JSON.")
+        for element in elements {
+            let rect = element.rect
+            let coords = String(format: "(%.1f, %.1f, %.1f, %.1f)", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+            let label = element.label
+            report += "| \(element.type) | \(label) | \(coords) |\n"
         }
         
-        return "SUCCESS: Analyzed \(elements.count) visual elements.\n\(jsonString)"
+        return report
     }
 }

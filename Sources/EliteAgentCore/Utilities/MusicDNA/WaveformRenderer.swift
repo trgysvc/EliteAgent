@@ -89,8 +89,7 @@ public enum WaveformRenderer {
         chroma: [Float],
         mfcc: [Float],
         structure: [(id: Int, start: Double, end: Double, label: String)],
-        outputMd: String?,
-        outputJson: String?
+        outputMd: String?
     ) -> String {
 
         let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -145,9 +144,6 @@ public enum WaveformRenderer {
 
         if let md = outputMd {
             lines.append("│  📄 \(md.prefix(63).padding(toLength: 63, withPad: " ", startingAt: 0))│")
-        }
-        if let json = outputJson {
-            lines.append("│  📊 \(json.prefix(63).padding(toLength: 63, withPad: " ", startingAt: 0))│")
         }
 
         lines.append("└──────────────────────────────────────────────────────────────────┘")

@@ -190,11 +190,11 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     private func validateModelArchitecture(at url: URL) -> Bool {
         let configURL = url.appendingPathComponent("config.json")
         guard FileManager.default.fileExists(atPath: configURL.path),
-              let data = try? Data(contentsOf: configURL),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let architectures = json["architectures"] as? [String] else {
+              let data = try? Data(contentsOf: configURL) else {
             return false
         }
+        
+        let architectures = UNOExternalBridge.resolveArchitectures(from: data)
         
         // Qwen 3.5 might use Qwen2ForCausalLM as its base architecture or its own.
         let supported = ["Qwen2ForCausalLM", "MistralForCausalLM", "Qwen2MoEForCausalLM"]

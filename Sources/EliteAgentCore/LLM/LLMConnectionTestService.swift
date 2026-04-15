@@ -26,8 +26,13 @@ public actor LLMConnectionTestService {
             "max_tokens": 1
         ]
         
+        // v13.8: UNO Pure - Shielded Protocol Adaptor (No JSON in internal logic)
+        guard let httpBody = UNOExternalBridge.prepareExternalBlob(from: body) else {
+            return .failure(error: "Protocol encoding failure")
+        }
+        
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            request.httpBody = httpBody
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
@@ -36,9 +41,9 @@ public actor LLMConnectionTestService {
             }
             
             if httpResponse.statusCode == 200 {
-                // Try to parse the model name from the response if possible
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let model = json["model"] as? String {
+                // v13.8: UNO Pure - Delegate parsing to bridge
+                if let dict = UNOExternalBridge.resolveDictionary(from: data),
+                   let model = dict["model"] as? String {
                     return .success(modelName: model)
                 }
                 return .success(modelName: modelID)

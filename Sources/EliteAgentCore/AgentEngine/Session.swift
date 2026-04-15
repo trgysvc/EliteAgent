@@ -24,6 +24,7 @@ public actor Session: Identifiable {
     public private(set) var completionTokens: Int = 0
     public private(set) var healingAttempts: Int = 0
     public private(set) var finalAnswer: String?
+    public private(set) var wasWidgetRendered: Bool = false // v21.1: Persistent Narrative authority
     
     // Music DNA Analysis (Titan Integration)
     public var audioAnalysis: MusicDNAAnalysis?
@@ -64,6 +65,10 @@ public actor Session: Identifiable {
     
     public func setFinalAnswer(_ content: String) {
         self.updateStatus(.finished, finalAnswer: content)
+    }
+    
+    public func markWidgetAsRendered() {
+        self.wasWidgetRendered = true
     }
     
     public func setAudioAnalysis(_ analysis: MusicDNAAnalysis) {

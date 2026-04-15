@@ -4,7 +4,7 @@ import Cocoa
 public struct NativeBrowserTool: AgentTool {
     public let name: String = "browser_native"
     public let summary: String = "Interactive high-fidelity native browser."
-    public let description: String = "A high-fidelity native browser for navigating and interacting with web pages. Supports 'navigate', 'read', 'screenshot', and 'click'."
+    public let description = "A high-fidelity native browser for navigating and interacting with web pages. Supports 'navigate', 'read', 'screenshot', and 'click'."
     public let ubid: Int = 47 // Token 'P' in Qwen 2.5
     
     public init() {}
@@ -43,8 +43,12 @@ public struct NativeBrowserTool: AgentTool {
         case "visual_analyze":
             let image = try await BrowserEngine.shared.takeSnapshot()
             let elements = try await VisionAnalyzer.shared.analyze(image: image)
-            let result = try JSONEncoder().encode(elements)
-            return String(data: result, encoding: .utf8) ?? "[]"
+            
+            // v13.8: UNO Pure - Shielded encoding for external UI browser data
+            guard let payload = UNOExternalBridge.prepareExternalBlob(from: ["elements": elements]) else {
+                return "Browser data encoding failed."
+            }
+            return String(data: payload, encoding: .utf8) ?? "[]"
             
         case "click_at":
             guard let x = params["x"]?.value as? Double, let y = params["y"]?.value as? Double else {

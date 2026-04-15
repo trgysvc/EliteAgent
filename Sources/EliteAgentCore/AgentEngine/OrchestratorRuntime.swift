@@ -31,6 +31,7 @@ public actor OrchestratorRuntime {
     private var currentState: InferenceState = .idle
     private var currentTaskCategory: TaskCategory = .other
     private var isEscalatedToFullTools = false
+    private var currentTurnObservations: [String] = [] // v21.0: Isolate current Turn data
     
     public init(
         planner: PlannerAgent,
@@ -77,7 +78,7 @@ public actor OrchestratorRuntime {
     
     private func handleRetryParse() async {
         AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "User requested a re-parse.")
-        let retryMsg = "Observation: JSON parse failed. Please provide output again in valid JSON format."
+        let retryMsg = "Observation: UNO Protokol İmzası okunamadı. Lütfen çıktıyı geçerli CALL([UBID]) formatında tekrarla."
         await activeContextManager?.addMessage(Message(role: "user", content: retryMsg))
     }
     
@@ -157,6 +158,7 @@ public actor OrchestratorRuntime {
                     try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session, untrustedContext: untrustedContext)
                     currentState = .completed
                 case .planning:
+                    self.currentTurnObservations.removeAll() // v21.0: Start fresh on new task
                     try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                     currentState = .executing
                     healingAttempts = 0 // Reset on successful transition
@@ -164,10 +166,17 @@ public actor OrchestratorRuntime {
                     do {
                         let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                         if !shouldContinue {
-                            if let answer = finalAnswer { await session.setFinalAnswer(answer) }
+                            if let answer = finalAnswer {
+                                let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmed != "TASK_DONE" && !trimmed.isEmpty {
+                                    await session.setFinalAnswer(answer) 
+                                    self.onChatMessage?(ChatMessage(role: .assistant, content: answer))
+                                }
+                            }
                             currentState = .reviewing
                         } else {
-                            currentState = .planning
+                            // v20.5: Force transition to reporting if tool(s) were executed
+                            currentState = .reporting
                         }
                     } catch {
                         healingAttempts += 1
@@ -189,6 +198,7 @@ public actor OrchestratorRuntime {
                             HATA: \(error.localizedDescription)
                             
                             TALİMAT: Yukarıdaki hatayı gidererek asıl hedefine (**\(prompt)**) ulaşmak için yeni bir yol/plan oluştur. 
+                            KURAL: YALNIZCA <think> bloğu ve ardından gelen <final> içindeki CALL([UBID]) bloğunu kullan. Harici yapılandırılmış tablolar KESİNLİKLE YASAK.
                             💡 İPUCU: Araç açıklamalarını (descriptions) dikkatlice oku ve ZORUNLU parametreleri (location, text vb.) doldurduğundan emin ol.
                             KRİTİK: Eğer geçmiş mesajlarda kalan başka bir görevle uğraşıyorsan (örn: hava durumu) onu tamamen UNUT ve SADECE güncel göreve (**\(prompt)**) odaklan.
                             """
@@ -196,6 +206,9 @@ public actor OrchestratorRuntime {
                             currentState = .planning // Retry planning with knowledge of the error
                         }
                     }
+                case .reporting:
+                    try await handleReporting(prompt: prompt, provider: provider, context: contextManager, session: session, untrustedContext: untrustedContext)
+                    currentState = .reviewing
                 case .reviewing:
                     let passed = try await handleReview(prompt: prompt, provider: provider, context: contextManager)
                     currentState = passed ? .completed : .planning
@@ -279,6 +292,66 @@ public actor OrchestratorRuntime {
         await session.setFinalAnswer(response.content)
     }
     
+    private func handleReporting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, untrustedContext: [UntrustedData]? = nil) async throws {
+        self.currentAction = "Bulgular Raporlanıyor..."
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [STATE: REPORTING]")
+        
+        let history = await context.getMessages()
+        let lastObservation = history.last(where: { $0.role == "user" && $0.content.hasPrefix("Observation:") })?.content ?? ""
+        
+        // Use the dedicated executor prompt for narrative reporting
+        let systemPrompt = PromptRegistry.getPrompt(for: .executor(plan: prompt, forbiddenPatterns: []))
+        
+        // v21.1: Context Purge - Filter out previous observation blocks from planning
+        var sanitizedHistory = await context.getMessages()
+        if sanitizedHistory.count > 1 {
+            // Keep system prompt (0) and only current Turn messages. 
+            // For older turns, we strip the raw technical observations (Observation:) to prevent leakage.
+            sanitizedHistory = sanitizedHistory.map { msg in
+                if msg.role == "user" && msg.content.hasPrefix("Observation:") {
+                    return Message(role: "user", content: "Observation: [Previous technical data summarized or truncated]")
+                }
+                return msg
+            }
+        }
+        
+        let isLocal = provider.providerType == .local
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: sanitizedHistory, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
+        
+        let response = try await provider.complete(request, useSafeMode: false)
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [REPORT RESPONSE] \(response.content)")
+        
+        // v20.6: Hallucination Suppression
+        // We filter out any protocol junk (THINK, CALL, DONE) from appearing in the ChatView.
+        let rawReport = response.content
+        let cleanedReport = ThinkParser.cleanForUI(text: rawReport)
+        
+        // v20.9: Agent-First Silence Policy
+        // If a widget was already rendered by the system, we DON'T show the model's summary turn
+        // unless it's a critical error or a very complex multi-turn answer.
+        let widgetShown = await session.wasWidgetRendered
+        if widgetShown && cleanedReport.count < 150 {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v21.1 SILENCE GUARD] Widget already rendered. Suppressing redundant summary.")
+            await context.addMessage(Message(role: "assistant", content: response.content))
+            return
+        }
+
+        // Strictly block any 'thinking' or 'planning' hallucinations from the UI bubble
+        if !cleanedReport.isEmpty && 
+           !cleanedReport.uppercased().contains("CALL[") && 
+           !cleanedReport.contains("THINK>") && 
+           cleanedReport.uppercased() != "DONE" &&
+           cleanedReport.uppercased() != "TASK_DONE" {
+            await session.setFinalAnswer(cleanedReport)
+            self.onChatMessage?(ChatMessage(role: .assistant, content: cleanedReport))
+        } else if !lastObservation.isEmpty && (cleanedReport.uppercased() == "DONE" || cleanedReport.isEmpty) {
+            // If model is just saying 'DONE', the direct reflection from handleExecution was already enough.
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [REPORT MUTE] Model emitted protocol-only response. Relying on Direct Reflection.")
+        }
+        
+        await context.addMessage(Message(role: "assistant", content: response.content))
+    }
+    
     private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, useSafeMode: Bool = false, untrustedContext: [UntrustedData]? = nil) async throws {
         self.currentAction = "Plan Hazırlanıyor..."
         
@@ -342,7 +415,7 @@ public actor OrchestratorRuntime {
             // If no tools but we have a final answer, return it.
             if let answer = finalAnswer { return (false, answer) }
             // If no tools and no answer, the model might have failed to plan.
-            throw ParserError.emptyJSON("Model geçerli bir plan veya yanıt üretmedi.")
+            throw ParserError.protocolMismatch("Model geçerli bir UNO planı veya yanıt üretmedi.")
         }
         
         // v19.7.10: Atomicity Guard - Force sequential execution for integrity
@@ -367,9 +440,46 @@ public actor OrchestratorRuntime {
             let actionName = self.getFriendlyActionName(for: toolCall.ubid != nil ? "ubid_\(toolCall.ubid!)" : toolCall.tool)
             self.currentAction = actionName
             self.onStepUpdate?(TaskStep(name: actionName, status: "Executing", latency: "0ms", thought: "UBID: \(toolCall.ubid ?? 0) | Params: \(toolCall.params)"))
-            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛠 [ACTION] \(toolCall.tool)")
+            // v21.0: Mission Guard - Veto unrequested structural modifications
+            if ["shell_exec", "write_file"].contains(toolCall.tool) {
+                let lowerParams = "\(toolCall.params)".lowercased()
+                let remedialPatterns = ["purge", "free -m", "killall", "rm -rf", "sudo bash"]
+                if remedialPatterns.contains(where: { lowerParams.contains($0) }) {
+                    AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [MISSION GUARD] Blocked unrequested remedial action: \(toolCall.tool)")
+                    let warning = "Observation: SİSTEM UYARISI: Bu eylem (sistem müdahalesi) mevcut görevin kapsamı dışındadır. Lütfen sadece kullanıcı tarafından talep edilen işlemi yap. Eğer bellek doluysa kullanıcıyı uyar ama müdahale etme."
+                    await context.addMessage(Message(role: "user", content: warning))
+                    return (true, nil)
+                }
+            }
+
             let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
+            self.currentTurnObservations.append(result)
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
+            
+            // v21.1: Automatic Narrative Authority Trigger
+            if result.contains("_WIDGET]") {
+                await session.markWidgetAsRendered()
+            }
+            
+            // v20.6: Direct Reflection - The System reflects data immediately to UI
+            // v21.2: Display Isolation - Only show the Widget if present, hide analytical text.
+            if !result.isEmpty {
+                var displayContent = result.replacingOccurrences(of: "Observation:", with: "", options: .caseInsensitive)
+                
+                // If the result contains a widget tag, extract it and discard the 'Brain-only' text report for the UI
+                if displayContent.contains("_WIDGET]") {
+                    let patterns = ["\\[SystemDNA_WIDGET\\].*", "\\[WeatherDNA_WIDGET\\].*", "\\[MusicDNA_WIDGET\\].*"]
+                    for pattern in patterns {
+                        if let range = displayContent.range(of: pattern, options: .regularExpression) {
+                            displayContent = String(displayContent[range])
+                            break
+                        }
+                    }
+                }
+                
+                self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent.trimmingCharacters(in: .whitespacesAndNewlines)))
+            }
+            
             await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
             if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) { self.sourcesAnalyzed += 1 }
         }
@@ -387,23 +497,31 @@ public actor OrchestratorRuntime {
         self.currentAction = "Sonuç Denetleniyor..."
         let lastHistory = await context.getMessages()
         let lastResponse = lastHistory.last?.content ?? ""
-        let systemPrompt = PromptRegistry.getPrompt(for: .critic(task: prompt, output: lastResponse, criteria: "Accuracy"))
+        
+        // v19.8: Contextual Review - Extract the last observation for the Critic
+        let lastObservation = lastHistory.last(where: { $0.content.hasPrefix("Observation:") })?.content ?? "No observation found."
+        
+        let systemPrompt = PromptRegistry.getPrompt(for: .critic(task: prompt, observation: lastObservation, output: lastResponse))
         
         // v19.5: Binary Review (No JSON)
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
         let response = try await provider.complete(request, useSafeMode: false)
         let resultString = response.content.uppercased()
+        let passed = resultString.contains("UNOB:PASS") || resultString.contains("SCORE: 10") || resultString.contains("SCORE: 9")
+        
+        // v20.5: Programmatic Fidelity Guard (Veto Power)
+        // If the pass is hallucinated (i.e. report is empty/DONE only but observation has data), we VETO.
+        let reportText = lastResponse.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if passed && (reportText == "DONE" || reportText == "<FINAL>DONE</FINAL>" || reportText.isEmpty) {
+            if lastObservation != "No observation found." && lastObservation.count > 50 {
+                AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [v20.5 VETO] Critic passed a silent report. Forcing failure.")
+                return false // Vetoed! Force back to planning/reporting.
+            }
+        }
         
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚖️ [REVIEW] \(response.content)")
         
-        // v19.5: UNOB Tag Detection
-        if resultString.contains("UNOB:PASS") { return true }
-        if resultString.contains("UNOB:FAIL") { return false }
-        
-        // Soft Recovery: If model fails to emit tag but has high score, or loops twice, default to PASS.
-        if resultString.contains("SCORE: 10") || resultString.contains("SCORE: 9") { return true }
-        
-        return false
+        return passed
     }
     
     private func resolveProvider(force: [ProviderID]?, config: InferenceConfig) throws -> any LLMProvider {
