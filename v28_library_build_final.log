@@ -1,0 +1,77 @@
+Building for debugging...
+[0/5] Write sources
+[1/5] Write swift-version--58304C5D6DBC2206.txt
+error: emit-module command failed with exit code 1 (use -v to see invocation)
+[3/10] Compiling AudioIntelligenceCore StereoEngine.swift
+[4/10] Compiling AudioIntelligenceCore LoudnessEngine.swift
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/LoudnessEngine.swift:38:21: warning: initialization of immutable value 'end' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+36 |                 var chunkMS: Float = 0
+37 |                 let start = i
+38 |                 let end = i + momWindow
+   |                     `- warning: initialization of immutable value 'end' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+39 |                 weightedSamples.withUnsafeBufferPointer { ptr in
+40 |                     if let base = ptr.baseAddress {
+
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/LoudnessEngine.swift:56:21: warning: initialization of immutable value 'end' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+54 |                 var chunkMS: Float = 0
+55 |                 let start = i
+56 |                 let end = i + stWindow
+   |                     `- warning: initialization of immutable value 'end' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+57 |                 weightedSamples.withUnsafeBufferPointer { ptr in
+58 |                     if let base = ptr.baseAddress {
+[5/10] Emitting module AudioIntelligenceCore
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/SpectralEngine.swift:34:31: error: cannot find type 'STFTResult' in scope
+ 32 |     }
+ 33 |     
+ 34 |     public func analyze(stft: STFTResult, samples: [Float]) -> SpectralResult {
+    |                               `- error: cannot find type 'STFTResult' in scope
+ 35 |         let nFrames = stft.nFrames
+ 36 |         let nBins = nFFT / 2 + 1
+[6/10] Compiling AudioIntelligenceCore DNAReportBuilder.swift
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/SpectralEngine.swift:34:31: error: cannot find type 'STFTResult' in scope
+ 32 |     }
+ 33 |     
+ 34 |     public func analyze(stft: STFTResult, samples: [Float]) -> SpectralResult {
+    |                               `- error: cannot find type 'STFTResult' in scope
+ 35 |         let nFrames = stft.nFrames
+ 36 |         let nBins = nFFT / 2 + 1
+
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/DNAReportBuilder.swift:116:47: error: value of tuple type '(isLikelyUpsampled: Bool, effectiveBits: Int)' has no member 'bits'
+114 |                 encoder: forensicResult.encoder,
+115 |                 isVerified: forensicResult.signatureFound,
+116 |                 effectiveBits: bitDepthResult.bits,
+    |                                               `- error: value of tuple type '(isLikelyUpsampled: Bool, effectiveBits: Int)' has no member 'bits'
+117 |                 isUpsampled: bitDepthResult.isUpsampled,
+118 |                 techSpecs: ["Format": forensicResult.format, "Bitrate": forensicResult.bitRate]
+
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/DNAReportBuilder.swift:117:45: error: value of tuple type '(isLikelyUpsampled: Bool, effectiveBits: Int)' has no member 'isUpsampled'
+115 |                 isVerified: forensicResult.signatureFound,
+116 |                 effectiveBits: bitDepthResult.bits,
+117 |                 isUpsampled: bitDepthResult.isUpsampled,
+    |                                             `- error: value of tuple type '(isLikelyUpsampled: Bool, effectiveBits: Int)' has no member 'isUpsampled'
+118 |                 techSpecs: ["Format": forensicResult.format, "Bitrate": forensicResult.bitRate]
+119 |             ),
+
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/DNAReportBuilder.swift:132:75: error: cannot infer contextual base in reference to member 'utf8'
+130 | 
+131 |         let reportText = MusicDNAReporter.generateReport(analysis: analysis)
+132 |         try reportText.write(toFile: mdPath, atomically: true, encoding: .utf8)
+    |                                                                           `- error: cannot infer contextual base in reference to member 'utf8'
+133 | 
+134 |         progress(100, "Analiz tamamlandı!", nil)
+[7/10] Compiling AudioIntelligenceCore SpectralEngine.swift
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/SpectralEngine.swift:34:31: error: cannot find type 'STFTResult' in scope
+ 32 |     }
+ 33 |     
+ 34 |     public func analyze(stft: STFTResult, samples: [Float]) -> SpectralResult {
+    |                               `- error: cannot find type 'STFTResult' in scope
+ 35 |         let nFrames = stft.nFrames
+ 36 |         let nBins = nFFT / 2 + 1
+
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/SpectralEngine.swift:47:32: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+ 45 |                 var frameDiff: Float = 0
+ 46 |                 for f in 0..<nBins {
+ 47 |                     let diff = mag[f * nFrames + t] - mag[f * nFrames + t - 1]
+    |                                `- error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+ 48 |                     frameDiff += max(0, diff) 
+ 49 |                 }

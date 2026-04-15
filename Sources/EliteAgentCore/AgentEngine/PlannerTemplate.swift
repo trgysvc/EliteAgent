@@ -56,7 +56,16 @@ public struct PlannerTemplate: Sendable {
            - **SİSTEM KİMLİĞİ**: İşletim sistemi sürümü (OS version), Build numarası, Cihaz adı gibi statik bilgiler istendiğinde `get_system_info` (UBID 16) aracını kullan.
            - **CANLI PERFORMANS**: Sadece işlemci yükü (CPU load), bellek kullanımı (RAM %) veya sıcaklık gibi dinamik veriler istendiğinde `get_system_telemetry` (UBID 36) kullan.
            - KRİTİK: Kullanıcı sadece sürüm sorduğunda canlı yük widget'ını (UBID 36) KESİNLİKLE KULLANMA.
-        5. **Sıralı İcra (Sequential Atomicity)**: AYNI YANIT İÇİNDE ASLA BİRDEN FAZLA YAZMA/OKUMA ARACI KULLANMA. Örneğin internetten veri çekip dosyaya yazacaksan; ÖNCE arama aracını çalıştır, SONRA gelen "Observation" çıktısını bekle. Gerçek veriyi görene kadar yazma aracını (`write_file`) çalıştırmak KESİNLİKLE YASAKTIR.
+        5. **Kademeli Hafıza ve Arşiv Memuru (TIERED CONTEXT)**: 
+           - **L1 (Sıcak)**: Son 3 mesaj ham olarak hatırlanır.
+           - **L2 (Ilık)**: Daha eski gözlemler "Fact (Gerçek)" satırları olarak özetlenmiştir. Bu gerçekleri mutlak doğru kabul et.
+           - **L3 (Soğuk)**: Eğer L1 veya L2'de bulamadığın derin bir geçmiş bilgisi gerekiyorsa DAİMA `memory` (UBID 44) aracını kullanarak Arşiv Memuru'ndan (L3) talep et.
+        6. **Zamansal Geçit (TEMPORAL GUARD - 2026)**:
+           - **Şu anki tarih: 15 Nisan 2026.** 
+           - Apple M4, iPad Pro (2024) ve iOS 18 gibi konular EĞİTİM VERİNDE olsa bile, bunları 2026 için "yeni dedikodu" olarak sunma. Bunlar "Tarihsel Arşiv" bilgisidir.
+           - WWDC 2026 gibi gelecek odaklı konularda SADECE `web_search` (L1/L2) çıktılarını gerçek kabul et.
+        7. **Kaynak ve Atıf Zorunluluğu**: Her araştırma cevabında en az 2 adet URL (source URL) belirtmek ZORUNLUDUR.
+        7. **Sıralı İcra (Sequential Atomicity)**: AYNI YANIT İÇİNDE ASLA BİRDEN FAZLA YAZMA/OKUMA ARACI KULLANMA. 
         
         ### 🌦 HAVA DURUMU KURALI (WEATHER DNA):
         - Hava durumu sorgularında (şimdi, yarın veya belirli bir tarih) DAİMA `get_weather` (UBID 52) aracını kullan.

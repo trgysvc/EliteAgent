@@ -1,0 +1,79 @@
+warning: 'audiointelligence': Source files for target AudioIntelligenceTests should be located under 'Tests/AudioIntelligenceTests', 'Tests', or a custom sources path can be set with the 'path' property in Package.swift
+[0/1] Planning build
+Building for debugging...
+[0/6] Write sources
+[2/6] Write swift-version--58304C5D6DBC2206.txt
+[4/29] Compiling AudioIntelligenceCore OnsetEngine.swift
+[5/29] Compiling AudioIntelligenceCore RhythmEngine.swift
+[6/31] Compiling AudioIntelligenceCore StructureEngine.swift
+[7/31] Compiling AudioIntelligenceCore UtilityEngine.swift
+[8/31] Compiling AudioIntelligenceCore MelFilterBank.swift
+[9/31] Compiling AudioIntelligenceCore MelSpectrogramEngine.swift
+[10/31] Compiling AudioIntelligenceCore MusicDNAReporter.swift
+[11/31] Compiling AudioIntelligenceCore HPSSEngine.swift
+[12/31] Compiling AudioIntelligenceCore LoudnessEngine.swift
+[13/31] Compiling AudioIntelligenceCore MFCCEngine.swift
+[14/31] Compiling AudioIntelligenceCore STFTEngine.swift
+[15/31] Compiling AudioIntelligenceCore SpectralEngine.swift
+[16/31] Compiling AudioIntelligenceCore WaveformRenderer.swift
+[17/31] Compiling AudioIntelligenceCore YINEngine.swift
+[18/31] Compiling AudioIntelligenceCore SpectralFeatureEngine.swift
+[19/31] Compiling AudioIntelligenceCore StereoEngine.swift
+[20/31] Compiling AudioIntelligenceCore ForensicDNAEngine.swift
+[21/31] Compiling AudioIntelligenceCore MusicDNAModels.swift
+[22/31] Compiling AudioIntelligenceCore ChromaEngine.swift
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/DNAReportBuilder.swift:81:13: warning: initialization of immutable value 'bitDepthResult' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 79 |         let forensicEngine = ForensicDNAEngine()
+ 80 |         let forensicResult = await forensicEngine.scan(at: url, samples: buffer.samples)
+ 81 |         let bitDepthResult = forensicEngine.analyzeBitDepthIntegrity(samples: buffer.samples)
+    |             `- warning: initialization of immutable value 'bitDepthResult' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 82 | 
+ 83 |         // Step 12: Professional Mastering Metrics (v25.0)
+[23/31] Compiling AudioIntelligenceCore DNAReportBuilder.swift
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/DNAReportBuilder.swift:81:13: warning: initialization of immutable value 'bitDepthResult' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 79 |         let forensicEngine = ForensicDNAEngine()
+ 80 |         let forensicResult = await forensicEngine.scan(at: url, samples: buffer.samples)
+ 81 |         let bitDepthResult = forensicEngine.analyzeBitDepthIntegrity(samples: buffer.samples)
+    |             `- warning: initialization of immutable value 'bitDepthResult' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 82 | 
+ 83 |         // Step 12: Professional Mastering Metrics (v25.0)
+[24/31] Compiling AudioIntelligenceCore FilterbankEngine.swift
+/Users/trgysvc/Developer/audiointelligence/Sources/AudioIntelligenceCore/Engines/DNAReportBuilder.swift:81:13: warning: initialization of immutable value 'bitDepthResult' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 79 |         let forensicEngine = ForensicDNAEngine()
+ 80 |         let forensicResult = await forensicEngine.scan(at: url, samples: buffer.samples)
+ 81 |         let bitDepthResult = forensicEngine.analyzeBitDepthIntegrity(samples: buffer.samples)
+    |             `- warning: initialization of immutable value 'bitDepthResult' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 82 | 
+ 83 |         // Step 12: Professional Mastering Metrics (v25.0)
+[25/31] Compiling AudioIntelligenceCore DSPHelpers.swift
+[26/31] Compiling AudioIntelligenceCore AudioLoader.swift
+[27/31] Compiling AudioIntelligenceCore CQTEngine.swift
+[28/31] Emitting module AudioIntelligenceCore
+[29/34] Emitting module AudioIntelligence
+[30/34] Compiling AudioIntelligence AudioIntelligence.swift
+[31/34] Compiling AudioIntelligence AudioReport.swift
+[32/36] Emitting module CLIExample
+[33/36] Compiling CLIExample main.swift
+/Users/trgysvc/Developer/audiointelligence/Examples/CLIExample/main.swift:17:27: error: extra argument 'features' in call
+15 |             let report = try await intelligence.analyze(
+16 |                 url: mockURL,
+17 |                 features: [.rhythm, .forensic]
+   |                           `- error: extra argument 'features' in call
+18 |             )
+19 |             
+
+/Users/trgysvc/Developer/audiointelligence/Examples/CLIExample/main.swift:17:29: error: reference to member 'rhythm' cannot be resolved without a contextual type
+15 |             let report = try await intelligence.analyze(
+16 |                 url: mockURL,
+17 |                 features: [.rhythm, .forensic]
+   |                             `- error: reference to member 'rhythm' cannot be resolved without a contextual type
+18 |             )
+19 |             
+
+/Users/trgysvc/Developer/audiointelligence/Examples/CLIExample/main.swift:17:38: error: reference to member 'forensic' cannot be resolved without a contextual type
+15 |             let report = try await intelligence.analyze(
+16 |                 url: mockURL,
+17 |                 features: [.rhythm, .forensic]
+   |                                      `- error: reference to member 'forensic' cannot be resolved without a contextual type
+18 |             )
+19 |             

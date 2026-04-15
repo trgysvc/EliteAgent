@@ -302,21 +302,36 @@ public actor OrchestratorRuntime {
         // Use the dedicated executor prompt for narrative reporting
         let systemPrompt = PromptRegistry.getPrompt(for: .executor(plan: prompt, forbiddenPatterns: []))
         
-        // v21.1: Context Purge - Filter out previous observation blocks from planning
-        var sanitizedHistory = await context.getMessages()
-        if sanitizedHistory.count > 1 {
-            // Keep system prompt (0) and only current Turn messages. 
-            // For older turns, we strip the raw technical observations (Observation:) to prevent leakage.
-            sanitizedHistory = sanitizedHistory.map { msg in
-                if msg.role == "user" && msg.content.hasPrefix("Observation:") {
-                    return Message(role: "user", content: "Observation: [Previous technical data summarized or truncated]")
+        // v23.0: Tiered Context Architecture (Arşiv Memuru)
+        let messages = await context.getMessages()
+        var tieredHistory: [Message] = []
+        
+        if messages.count > 1 {
+            // L1 Index: Keep the last 3 user-assistant pairs un-summarized
+            let l1Threshold = max(0, messages.count - 6) 
+            
+            tieredHistory = messages.enumerated().map { index, msg in
+                // System prompt (0) and L1 (Recent) are RAW
+                if index == 0 || index >= l1Threshold {
+                    return msg
                 }
+                
+                // L2 (Warm Facts): Downgrade older technical observations to semantic facts
+                if msg.role == "user" && msg.content.hasPrefix("Observation:") {
+                    let observation = BasicObservation.from(rawResult: msg.content, toolName: "Historical Engine")
+                    return Message(role: "user", content: observation.toFactString())
+                }
+                
                 return msg
             }
+        } else {
+            tieredHistory = messages
         }
         
+        // v23.0: L3 Cold Retrieval (RAG Injection)
+        // If meta-intent is detected, actively pull matching facts from MemoryAgent (Experience Vault)
         let isLocal = provider.providerType == .local
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: sanitizedHistory, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: tieredHistory, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
         
         let response = try await provider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [REPORT RESPONSE] \(response.content)")
@@ -326,12 +341,12 @@ public actor OrchestratorRuntime {
         let rawReport = response.content
         let cleanedReport = ThinkParser.cleanForUI(text: rawReport)
         
-        // v20.9: Agent-First Silence Policy
-        // If a widget was already rendered by the system, we DON'T show the model's summary turn
-        // unless it's a critical error or a very complex multi-turn answer.
+        // v22.0: Intellectual Continuity Check - Do not silence if reporting a complex follow-up
         let widgetShown = await session.wasWidgetRendered
-        if widgetShown && cleanedReport.count < 150 {
-            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v21.1 SILENCE GUARD] Widget already rendered. Suppressing redundant summary.")
+        let isFollowUp = prompt.lowercased().contains("nereden") || prompt.lowercased().contains("neden") || prompt.lowercased().contains("how")
+        
+        if widgetShown && cleanedReport.count < 150 && !isFollowUp {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v22.0 SILENCE GUARD] Widget already rendered. Suppressing redundant summary.")
             await context.addMessage(Message(role: "assistant", content: response.content))
             return
         }
@@ -455,6 +470,11 @@ public actor OrchestratorRuntime {
             let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
             self.currentTurnObservations.append(result)
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
+            
+            // v22.0: Deep Continuity - Sync finding to the MemoryAgent (RAG)
+            Task {
+                await self.memory.storeExperience(task: "Turn-based data find", solution: result)
+            }
             
             // v21.1: Automatic Narrative Authority Trigger
             if result.contains("_WIDGET]") {

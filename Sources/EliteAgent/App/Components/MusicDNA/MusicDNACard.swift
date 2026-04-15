@@ -4,6 +4,7 @@
 // The premium "Röntgen" analysis card for the chat interface.
 
 import SwiftUI
+import AudioIntelligence
 import EliteAgentCore
 
 public struct MusicDNACard: View {

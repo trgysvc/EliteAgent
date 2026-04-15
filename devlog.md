@@ -1167,3 +1167,15 @@ EliteAgent artık sadece akıllı değil, aynı zamanda loglarıyla dürüstçe 
 - Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift
 **Decision made:** Enforced semantic intent boundaries to prevent the agent from providing identical responses to different systemic questions.
 **Next:** Verify if any other tool pairs (e.g. WiFi vs Network Telemetry) require similar semantic de-coupling.
+
+### [2026-04-15] — EliteAgent v22.0: Intellectual Continuity & Grounding Shield
+**What changed:** 
+- Implemented 'Smart History Compression' in `OrchestratorRuntime`. Summarizes instead of deleting observations.
+- Synchronized tool execution results with `MemoryAgent` for persistent RAG recall.
+- Injected 'Current Date Awareness' (2026) and 'Citation Mandate' into `PlannerTemplate`.
+- Added bypass to 'Silence Guard' for meta-questions (Why/How/Where).
+**Files modified:** 
+- Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift
+- Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift
+**Decision made:** Transitioned from strict context isolation to 'Smart Compaction' (OpenClaw-inspired) to restore short-term memory without UI clutter.
+**Next:** Monitor the quality of automated 'Observation Proxies' in high-token sessions.

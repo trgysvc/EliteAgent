@@ -1,0 +1,26 @@
+Building for debugging...
+[0/5] Write sources
+[1/5] Write swift-version--58304C5D6DBC2206.txt
+[3/8] Compiling AudioIntelligenceCore SpectralEngine.swift
+[4/8] Compiling AudioIntelligenceCore DNAReportBuilder.swift
+[5/8] Emitting module AudioIntelligenceCore
+[6/11] Emitting module AudioIntelligence
+[7/11] Compiling AudioIntelligence AudioReport.swift
+[8/11] Compiling AudioIntelligence AudioIntelligence.swift
+[9/13] Emitting module CLIExample
+[10/13] Compiling CLIExample main.swift
+/Users/trgysvc/Developer/audiointelligence/Examples/CLIExample/main.swift:24:33: error: value of type 'AudioReport' has no member 'rhythm'
+22 |             print("Summary: \(report.summary)")
+23 |             
+24 |             if let bpm = report.rhythm?.bpm {
+   |                                 `- error: value of type 'AudioReport' has no member 'rhythm'
+25 |                 print("BPM: \(bpm)")
+26 |             }
+
+/Users/trgysvc/Developer/audiointelligence/Examples/CLIExample/main.swift:28:38: error: value of type 'AudioReport' has no member 'forensic'
+26 |             }
+27 |             
+28 |             if let forensic = report.forensic {
+   |                                      `- error: value of type 'AudioReport' has no member 'forensic'
+29 |                 print("Encoder: \(forensic.encoderName)")
+30 |             }

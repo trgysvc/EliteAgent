@@ -1,4 +1,5 @@
 import Foundation
+import AudioIntelligence
 
 public enum SessionStatus: String, Codable, Sendable {
     case idle

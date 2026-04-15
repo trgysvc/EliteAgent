@@ -1,4 +1,5 @@
 import Foundation
+import AudioIntelligence
 
 public enum ChatRole: String, Codable, Sendable {
     case user
