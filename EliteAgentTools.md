@@ -1,49 +1,56 @@
-EliteAgent Exhaustive Tool Census (v10.1)
+EliteAgent Exhaustive Tool Census (v20.0 SEALED)
 
+This is the definitive list of all 35+ tools registered and active in the EliteAgent core. Each tool is mapped to a Unique Binary ID (UBID) for UNO-native orchestration.
 
-This is the definitive list of all 35 tools currently registered and active in the EliteAgent core. Each tool has been cross-referenced with its implementation file and its registration in Orchestrator.swift.
 🎼 Specialized Media Instruments
-* MusicDNATool (music_dna): Deep analysis of track metadata and session context. (File: MusicDNATool.swift)
-* MediaControllerTool (media_control): System-wide play/pause/skip for Music & Spotify. (File: MediaControllerTool.swift)
-* SystemVolumeTool (set_volume): Native volume management. (File: EcosystemTools.swift)
+* MusicDNATool (music_dna) | UBID: 18 (MusicDNATool.swift)
+* MediaControllerTool (media_control) | UBID: 43 (MediaControllerTool.swift)
+* SystemVolumeTool (set_volume) | UBID: 56 (EcosystemTools.swift)
+* BrightnessControlTool (set_brightness) | UBID: 57 (EcosystemTools.swift)
+* SleepControlTool (system_sleep) | UBID: 15 (EcosystemTools.swift)
+
 🌐 Web & Research Suite
-* WebSearchToolWrapper (web_search): Multi-provider search (Serper/Brave/Headless). (File: WebTools.swift)
-* WebFetchToolWrapper (web_fetch): Content extraction. (File: WebTools.swift)
-* SafariAutomationTool (safari_automation): Direct tab/window control. (File: SafariAutomationTool.swift)
-* NativeBrowserTool (native_browser): Internal scraping engine. (File: NativeBrowserTool.swift)
-* ResearchReportTool (research_report): Professional research synthesis. (File: ResearchReportTool.swift)
+* WebSearchToolWrapper (web_search) | UBID: 45 (WebTools.swift)
+* WebFetchToolWrapper (web_fetch) | UBID: 46 (WebTools.swift)
+* SafariAutomationTool (safari_automation) | UBID: 40 (SafariAutomationTool.swift)
+* NativeBrowserTool (native_browser) | UBID: 170 (NativeBrowserTool.swift)
+* MarkdownReportTool (markdown_report) | UBID: 20 (MarkdownReportTool.swift)
+
 📱 Communication & Social
-* WhatsAppTool (whatsapp): Direct messaging via URL/Keystroke hybrid. (File: CommunicationTools.swift)
-* MessengerTool (messenger): iMessage/SMS delivery. (File: MessengerTool.swift)
-* EmailTool (email): Internal email protocol. (File: CommunicationTools.swift)
-* MailTool (apple_mail): Native Mail.app integration. (File: EcosystemTools.swift)
-* ContactsTool (contacts): Address book lookup. (File: ProductivityTools.swift)
-* CalendarTool (calendar): Native Calendar management. (File: EcosystemTools.swift)
+* WhatsAppTool (whatsapp) | UBID: 17 (CommunicationTools.swift)
+* MessengerTool (messenger) | UBID: 37 (MessengerTool.swift)
+* EmailTool (email) | UBID: 22 (CommunicationTools.swift)
+* MailTool (apple_mail) | UBID: 55 (EcosystemTools.swift)
+* ContactsTool (contacts) | UBID: 39 (ProductivityTools.swift)
+* CalendarTool (calendar) | UBID: 54 (EcosystemTools.swift)
+
 💻 System & Workflow
-* AppDiscoveryTool (app_discovery): Lst and find installed applications. (File: AppDiscoveryTool.swift)
-* ShortcutDiscoveryTool (shortcuts_list): List macOS Shortcuts. (File: ShortcutDiscoveryTool.swift)
-* ShortcutExecutionTool (shortcuts_run): Run macOS Shortcuts. (File: ShortcutExecutionTool.swift)
-* BrightnessControlTool (set_brightness): Screen brightness management. (File: EcosystemTools.swift)
-* SleepControlTool (system_sleep): Power management. (File: EcosystemTools.swift)
-* SystemInfoTool (get_system_info): OS/Hardware telemetry. (File: EcosystemTools.swift)
-* SystemTelemetryTool (system_telemetry): Real-time resource monitoring. (File: SystemTelemetryTool.swift)
+* AppDiscoveryTool (app_discovery) | UBID: 35 (AppDiscoveryTool.swift)
+* ShortcutDiscoveryTool (shortcuts_list) | UBID: 50 (ShortcutDiscoveryTool.swift)
+* ShortcutExecutionTool (shortcuts_run) | UBID: 49 (ShortcutExecutionTool.swift)
+* SystemTelemetryTool (system_telemetry) | UBID: 36 (SystemTelemetryTool.swift)
+
 📂 Files & Developer Ops
-* FileManagerTool (file_manager): Direct directory management. (File: ProductivityTools.swift)
-* ReadFileTool (read_file): File content extraction. (File: ReadFileTool.swift)
-* WriteFileTool (write_file): File creation/modification. (File: WriteFileTool.swift)
-* ShellTool (shell_exec): Shell command execution (zsh/bash). (File: ShellTool.swift)
-* PatchTool (patch_apply): Diff/Patch application logic. (File: PatchTool.swift)
-* GitTool (git_ops): Full Git workflow support. (File: GitTool.swift)
-🛠 Basic Utilities
-* CalculatorTool (calculator): Mathematical operations. (File: ExtraUtilityTools.swift)
-* WeatherTool (weather): Real-time weather data. (File: ExtraUtilityTools.swift)
-* TimerTool (timer): Reminder and timer management. (File: ExtraUtilityTools.swift)
-🧠 Advanced & AI Operations
-* MemoryTool (context_memory): Long-term context persistence. (File: MemoryTool.swift)
-* ImageAnalysisTool (image_analysis): General image processing. (File: ImageAnalysisTool.swift)
-* ChicagoVisionTool (chicago_vision): Apple Silicon optimized visual processing (M4). (File: Orchestrator.swift)
-* AccessibilityTool (accessibility_traversal): System-wide UI automation. (File: Orchestrator.swift)
-* SubagentTool (delegate_task): Recursive task delegation. (File: SubagentTool.swift)
+* FileManagerTool (file_manager) | UBID: 38 (ProductivityTools.swift)
+* ReadFileTool (read_file) | UBID: 33 (ReadFileTool.swift)
+* WriteFileTool (write_file) | UBID: 34 (WriteFileTool.swift)
+* ShellTool (shell_exec) | UBID: 32 (ShellTool.swift)
+* PatchTool (patch_apply) | UBID: 41 (PatchTool.swift)
+* GitTool (git_ops) | UBID: 42 (GitTool.swift)
+* XcodeTool (xcode_build) | UBID: 47 (XcodeTool.swift)
+
+🛠 Basic Utilities (Restored)
+* CalculatorTool (calculator_op) | UBID: 80 (ExtraUtilityTools.swift)
+* WeatherTool (get_weather) | UBID: 81 (ExtraUtilityTools.swift)
+* SystemDateTool (system_date) | UBID: 82 (ExtraUtilityTools.swift)
+* TimerTool (set_timer) | UBID: 83 (ExtraUtilityTools.swift)
+* SystemInfoTool (get_system_info) | UBID: 58 (ExtraUtilityTools.swift)
+
+🧠 Advanced AI & Memory
+* MemoryTool (context_memory) | UBID: 44 (MemoryTool.swift)
+* ImageAnalysisTool (image_analysis) | UBID: 48 (ImageAnalysisTool.swift)
+* SubagentTool (delegate_task) | UBID: 19 (SubagentTool.swift)
 
 🏁 Census Summary
-Total Tools Count: 35. All 35 tools are fully implemented and registered in the Orchestrator startup sequence. No stubs or placeholder tools are currently active in the core registry.
+Total Tools Count: 35. All tools are registered in ToolIDs.swift and Orchestrator.swift.
+This census is SEALED for v20.0.

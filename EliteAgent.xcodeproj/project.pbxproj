@@ -75,6 +75,7 @@
 
 /* Begin PBXFileReference section */
 		AE747A182F70602B004732A5 /* EliteAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EliteAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AEA840D52F9196AA00C93E24 /* La Napa (feat. Nidia Góngora).mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = "La Napa (feat. Nidia Góngora).mp3"; path = "../../Downloads/La Napa (feat. Nidia Góngora).mp3"; sourceTree = "<group>"; };
 		AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = archive.ar; path = libEliteAgentCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = EliteAgentXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -175,6 +176,7 @@
 		AE747A1B2F70602B004732A5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AEA840D52F9196AA00C93E24 /* La Napa (feat. Nidia Góngora).mp3 */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

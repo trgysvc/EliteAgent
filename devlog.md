@@ -1232,3 +1232,15 @@ EliteAgent artık ses dosyalarını sadece bir "dosya" olarak değil, derinlemes
 **Onarım Etkisi:**
 - `WeatherWidgetView`: `WeatherData` struct'ı eklendi. String parse işlemi `init` aşamasına çekilerek `body` (render) döngüsünden izole edildi.
 - **Sonuç:** Layout recursion hatası teorik olarak giderildi, XPC üzerindeki thread baskısı kaldırıldı.
+
+### [2026-04-17] — Swift Tools Version Stabilization (v19.7)
+**What changed:** Updated 'EliteAgent' and 'AudioIntelligence' packages to explicitly use Swift tools version 6.3.0. Identified and resolved a version mismatch caused by the 'swiftly' toolchain manager, which was pinning the shell to 6.0.3.
+**Files modified:** Package.swift, ../audiointelligence/Package.swift, .swift-version
+**Decision made:** Enforced Swift 6.3.0 synchronization across all workspace components and the local environment to support modern Swift 6 features and resolve parsing failures.
+**Next:** Ensure overall project compilation with the new toolchain.
+
+### [2026-04-17] — UNO Master Tool Census Sealed (v20.0)
+**What changed:** Restored 'ExtraUtilityTools.swift' (Calculator, Weather, Timer, Date, SystemInfo) to the modern AgentTool architecture. Created 'ToolIDs.swift' as a central, sealed UBID registry to enforce system-wide binary consistency. Verified total build stability with Swift 6.3.0.
+**Files modified:** Sources/EliteAgentCore/ToolEngine/Tools/ExtraUtilityTools.swift, Sources/EliteAgentCore/ToolEngine/ToolIDs.swift, EliteAgentTools.md
+**Decision made:** Transitioned utility tools from a legacy/corrupted distributed actor pattern back to a stable struct-based AgentTool model to match the confirmed project standard and resolve compilation scope errors.
+**Next:** Monitor runtime execution of restored tools in the new toolchain environment.

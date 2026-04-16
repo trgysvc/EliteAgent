@@ -1,209 +1,157 @@
 import SwiftUI
-import WeatherKit
+import Foundation
+import EliteAgentCore
+
+public struct WeatherData: Sendable {
+    public var condition: String = "Mostly Sunny"
+    public var high: String = "--"
+    public var low: String = "--"
+    public var hissedilen: String = "--"
+    public var nem: String = "--"
+    public var ruzgar: String = "--"
+    public var hamle: String = "--"
+    public var uvIndex: String = "--"
+    public var basinc: String = "--"
+    public var gorus: String = "--"
+    public var yagis: String = "--"
+    public var gunDogumu: String = "--"
+    public var gunBatimi: String = "--"
+    
+    public init() {}
+}
 
 public struct WeatherWidgetView: View {
-    private struct WeatherData {
-        let location: String
-        let status: String?
-        let temperature: String?
-        let feelsLike: String?
-        let highLow: String?
-        let humidity: String?
-        let wind: String?
-        let windGust: String?
-        let uvIndex: String?
-        let visibility: String?
-        let pressure: String?
-        let sunrise: String?
-        let sunset: String?
-        let dewPoint: String?
-        let precipitation: String?
-    }
-    
+    private let content: String
     private let data: WeatherData
     
     public init(content: String) {
-        self.data = WeatherWidgetView.parse(content)
+        self.content = content
+        self.data = WeatherWidgetView.parse(content: content)
     }
     
-    private static func parse(_ raw: String) -> WeatherData {
-        func extract(key: String) -> String? {
-            let lines = raw.components(separatedBy: .newlines)
-            for line in lines {
-                if line.contains(key) {
-                    if let range = line.range(of: key) {
-                        return String(line[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+    static func parse(content: String) -> WeatherData {
+        var data = WeatherData()
+        let scanner = Scanner(string: content)
+        scanner.charactersToBeSkipped = .whitespacesAndNewlines
+        
+        func extract(for key: String) -> String? {
+            let s = Scanner(string: content)
+            while !s.isAtEnd {
+                if s.scanString(key) != nil {
+                    if let val = s.scanUpToCharacters(from: .newlines) {
+                        return val.trimmingCharacters(in: .whitespaces)
+                            .replacingOccurrences(of: ":", with: "")
+                            .trimmingCharacters(in: .whitespaces)
                     }
                 }
+                // String olmayan karakterleri güvenli bir şekilde atla
+                if s.isAtEnd { break }
+                _ = s.scanCharacter()
             }
             return nil
         }
         
-        // Helper specifically for combined fields like "Sıcaklık: X | Hissedilen: Y"
-        func splitExtract(lineKey: String, partLabel: String) -> String? {
-            let lines = raw.components(separatedBy: .newlines)
-            guard let line = lines.first(where: { $0.contains(lineKey) }) else { return nil }
-            let parts = line.components(separatedBy: "|")
-            for part in parts {
-                if part.contains(partLabel) {
-                    if let range = part.range(of: partLabel) {
-                        return String(part[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-                    }
-                }
-            }
-            return nil
-        }
+        data.condition = extract(for: "[DURUM]") ?? "Mostly Sunny"
+        data.high = extract(for: "[YUKSEK]") ?? "--"
+        data.low = extract(for: "[DUSUK]") ?? "--"
+        data.hissedilen = extract(for: "[HIS]") ?? "--"
+        data.nem = extract(for: "[NEM]") ?? "--"
+        data.ruzgar = extract(for: "[RUZGAR]") ?? "--"
+        data.hamle = extract(for: "[HAMLE]") ?? "--"
+        data.uvIndex = extract(for: "[UV]") ?? "--"
+        data.basinc = extract(for: "[PRES]") ?? "--"
+        data.gorus = extract(for: "[GORUS]") ?? "--"
+        data.yagis = extract(for: "[YAGIS]") ?? "--"
+        data.gunDogumu = extract(for: "[DOGUM]") ?? "--"
+        data.gunBatimi = extract(for: "[BATIM]") ?? "--"
+        
+        return data
+    }
 
-        return WeatherData(
-            location: extract(key: "📍")?.components(separatedBy: " - ").first ?? "HAVA DURUMU",
-            status: extract(key: "🌤 Durum:"),
-            temperature: splitExtract(lineKey: "🌡 Sıcaklık:", partLabel: "🌡 Sıcaklık:"),
-            feelsLike: splitExtract(lineKey: "🌡 Sıcaklık:", partLabel: "Hissedilen:"),
-            highLow: extract(key: "📈 En Yüksek:"),
-            humidity: splitExtract(lineKey: "💧 Nem:", partLabel: "💧 Nem:"),
-            wind: splitExtract(lineKey: "💧 Nem:", partLabel: "🌬 Rüzgar:"),
-            windGust: splitExtract(lineKey: "🌪 Hamle:", partLabel: "🌪 Hamle:"),
-            uvIndex: extract(key: "☀️ UV İndeksi:"),
-            visibility: splitExtract(lineKey: "👁 Görüş:", partLabel: "👁 Görüş:"),
-            pressure: splitExtract(lineKey: "👁 Görüş:", partLabel: "⏲ Basınç:"),
-            sunrise: splitExtract(lineKey: "🌅 Gün Doğumu:", partLabel: "🌅 Gün Doğumu:"),
-            sunset: splitExtract(lineKey: "🌅 Gün Doğumu:", partLabel: "🌇 Gün Batımı:"),
-            dewPoint: splitExtract(lineKey: "📉 Çiy Noktası:", partLabel: "📉 Çiy Noktası:"),
-            precipitation: splitExtract(lineKey: "📉 Çiy Noktası:", partLabel: "🌧 Yağış:")
-        )
-    }
-    
     public var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            headerSection
-            Divider().background(Color.primary.opacity(0.1))
-            
-            mainMetricsSection
-            Divider().background(Color.primary.opacity(0.1))
-            
-            // Premium Grid Layout
-            VStack(spacing: 16) {
-                HStack(spacing: 12) {
-                    WeatherDetailTile(label: "HİSSEDİLEN", value: data.feelsLike ?? "--", icon: "thermometer.medium", color: .orange)
-                    WeatherDetailTile(label: "NEM", value: data.humidity ?? "--", icon: "humidity.fill", color: .blue)
-                }
-                HStack(spacing: 12) {
-                    WeatherDetailTile(label: "RÜZGAR", value: data.wind ?? "--", icon: "wind", color: .secondary)
-                    WeatherDetailTile(label: "HAMLE", value: data.windGust ?? "--", icon: "wind.snow", color: .teal)
-                }
-                HStack(spacing: 12) {
-                    WeatherDetailTile(label: "UV İNDEKSİ", value: data.uvIndex ?? "--", icon: "sun.max.fill", color: .yellow)
-                    WeatherDetailTile(label: "BASINÇ", value: data.pressure ?? "--", icon: "gauge.with.needle.fill", color: .purple)
-                }
-                HStack(spacing: 12) {
-                    WeatherDetailTile(label: "GÖRÜŞ", value: data.visibility ?? "--", icon: "eye.fill", color: .green)
-                    WeatherDetailTile(label: "YAĞIŞ", value: data.precipitation ?? "--", icon: "drop.fill", color: .blue)
-                }
-                HStack(spacing: 12) {
-                    WeatherDetailTile(label: "GÜN DOĞUMU", value: data.sunrise ?? "--", icon: "sunrise.fill", color: .orange)
-                    WeatherDetailTile(label: "GÜN BATIMI", value: data.sunset ?? "--", icon: "sunset.fill", color: .indigo)
-                }
-            }
-            
-            footerSection
-        }
-        .padding(20)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.2), radius: 30, y: 15)
-        .frame(maxWidth: 400)
-    }
-    
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(data.location)
-                    .font(.system(size: 14, weight: .black))
-                    .kerning(1.0)
-                    .foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("WEATHER")
+                    .font(.system(size: 20, weight: .black))
+                    .foregroundColor(.white)
+                    .tracking(1)
                 
-                if let status = data.status {
-                    Text(status)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
+                Spacer()
+                
+                Image(systemName: "cloud.sun.fill")
+                    .renderingMode(.original)
+                    .font(.system(size: 44))
+                    .shadow(color: .yellow.opacity(0.3), radius: 10)
             }
-            Spacer()
-            weatherIcon(for: data.status ?? "")
-                .font(.system(size: 38))
-                .symbolRenderingMode(.multicolor)
-                .symbolEffect(.pulse)
-        }
-    }
-    
-    private var mainMetricsSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                if let temp = data.temperature {
-                    Text(temp)
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
+            .padding(.top, 10)
+            
+            Divider()
+                .background(Color.white.opacity(0.1))
+            
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    InfoTile(label: "HISSEDILEN", value: data.hissedilen, icon: "thermometer.medium", iconColor: .orange)
+                    InfoTile(label: "NEM", value: data.nem, icon: "drop.fill", iconColor: .blue)
+                }
+                HStack(spacing: 12) {
+                    InfoTile(label: "RUZGAR", value: data.ruzgar, icon: "wind", iconColor: .gray)
+                    InfoTile(label: "HAMLE", value: data.hamle, icon: "wind", iconColor: .cyan)
+                }
+                HStack(spacing: 12) {
+                    InfoTile(label: "UV INDEKSI", value: data.uvIndex, icon: "sun.max.fill", iconColor: .yellow)
+                    InfoTile(label: "BASINC", value: data.basinc, icon: "circle.fill", iconColor: .purple)
+                }
+                HStack(spacing: 12) {
+                    InfoTile(label: "GORUS", value: data.gorus, icon: "eye.fill", iconColor: .green)
+                    InfoTile(label: "YAGIS", value: data.yagis, icon: "drop.fill", iconColor: .blue)
+                }
+                HStack(spacing: 12) {
+                    InfoTile(label: "GUN DOGUMU", value: data.gunDogumu, icon: "sunrise.fill", iconColor: .orange)
+                    InfoTile(label: "GUN BATIMI", value: data.gunBatimi, icon: "sunset.fill", iconColor: .purple)
                 }
             }
             
-            if let highLow = data.highLow {
-                Text(highLow)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
+            Text("WeatherDNA v14.15 Final Engine")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(.white.opacity(0.3))
+                .padding(.top, 10)
         }
-    }
-    
-    private var footerSection: some View {
-        HStack {
-            Text("WeatherDNA Engine")
-                .font(.system(size: 8, weight: .black))
-                .foregroundStyle(.tertiary)
-            Spacer()
-            if let dew = data.dewPoint {
-                Text("Çiy Noktası: \(dew)").font(.system(size: 8)).foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.top, 4)
-    }
-    
-    private func weatherIcon(for condition: String) -> some View {
-        let cond = condition.lowercased()
-        if cond.contains("bulut") { return Image(systemName: "cloud.fill") }
-        if cond.contains("güneş") || cond.contains("açık") { return Image(systemName: "sun.max.fill") }
-        if cond.contains("yağmur") { return Image(systemName: "cloud.rain.fill") }
-        if cond.contains("kar") { return Image(systemName: "cloud.snow.fill") }
-        return Image(systemName: "cloud.sun.fill")
+        .padding(25)
+        .background(
+            RoundedRectangle(cornerRadius: 32)
+                .fill(Color(red: 31/255, green: 33/255, blue: 46/255))
+                .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 15)
+        )
+        .padding(.horizontal)
     }
 }
 
-struct WeatherDetailTile: View {
+struct InfoTile: View {
     let label: String
     let value: String
     let icon: String
-    let color: Color
+    let iconColor: Color
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(color)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(iconColor)
+                
                 Text(label)
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(.white.opacity(0.6))
+                    .tracking(0.5)
             }
+            
             Text(value)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Color.primary.opacity(0.03))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(16)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(18)
     }
 }

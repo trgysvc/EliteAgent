@@ -291,8 +291,10 @@ public class Orchestrator: ObservableObject {
             case .useCloud:
                 try? await submitTask(prompt: prompt, forceProviders: [.openrouter], promptOnFallback: false)
             case .cancel:
-                self.status = .idle
-                self.steps.append(TaskStep(name: "Görev İptal Edildi", status: "failed", latency: "ANE", thought: "Kullanıcı bulut model geçişini reddetti."))
+                await MainActor.run {
+                    self.status = .idle
+                    self.steps.append(TaskStep(name: "Görev İptal Edildi", status: "failed", latency: "ANE", thought: "Kullanıcı bulut model geçişini reddetti."))
+                }
             }
         }
     }
