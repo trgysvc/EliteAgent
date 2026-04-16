@@ -11,7 +11,7 @@ public struct ImageAnalysisTool: AgentTool, Sendable {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let path = params["path"]?.value as? String else {
-            throw ToolError.missingParameter("path")
+            throw AgentToolError.missingParameter("path")
         }
         
         let fileURL: URL
@@ -25,7 +25,7 @@ public struct ImageAnalysisTool: AgentTool, Sendable {
         }
         
         guard let image = NSImage(contentsOf: fileURL) else {
-            throw ToolError.executionError("Failed to load image from path: \(path)")
+            throw AgentToolError.executionError("Failed to load image from path: \(path)")
         }
         
         let elements = try await VisionAnalyzer.shared.analyze(image: image)

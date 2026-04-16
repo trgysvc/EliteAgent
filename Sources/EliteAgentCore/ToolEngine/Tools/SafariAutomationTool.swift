@@ -13,7 +13,7 @@ public struct SafariAutomationTool: AgentTool {
 
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.invalidParameter("Missing 'action' parameter.")
+            throw AgentToolError.invalidParameter("Missing 'action' parameter.")
         }
         
         // Check for automation permissions before proceeding
@@ -22,25 +22,25 @@ public struct SafariAutomationTool: AgentTool {
         switch action {
         case "search":
             guard let query = params["query"]?.value as? String else {
-                throw ToolError.invalidParameter("Missing 'query' for search action.")
+                throw AgentToolError.invalidParameter("Missing 'query' for search action.")
             }
             return try await performSearch(query: query)
         case "scrape":
             return try await scrapeActiveTab()
         case "open":
             guard let urlString = params["url"]?.value as? String else {
-                throw ToolError.invalidParameter("Missing 'url' for open action.")
+                throw AgentToolError.invalidParameter("Missing 'url' for open action.")
             }
             return try await openURL(urlString)
         case "click":
             guard let selector = params["selector"]?.value as? String else {
-                throw ToolError.invalidParameter("Missing 'selector' for click action.")
+                throw AgentToolError.invalidParameter("Missing 'selector' for click action.")
             }
             return try await openURL(selector)
         case "close":
             return try await closeActiveTab()
         default:
-            throw ToolError.invalidParameter("Unknown action: \(action)")
+            throw AgentToolError.invalidParameter("Unknown action: \(action)")
         }
     }
 
@@ -121,7 +121,7 @@ public struct SafariAutomationTool: AgentTool {
             _ = try runAppleScript(checkScript)
         } catch {
             // If we can't even count documents, it's likely a permission issue
-            throw ToolError.executionError("Safari Otomasyon izni eksik. Lütfen Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon altından EliteAgent'a Safari için izin verin.")
+            throw AgentToolError.executionError("Safari Otomasyon izni eksik. Lütfen Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon altından EliteAgent'a Safari için izin verin.")
         }
     }
 
@@ -144,12 +144,12 @@ public struct SafariAutomationTool: AgentTool {
 
             if process.terminationStatus != 0 {
                 let errorMsg = String(data: errorData, encoding: .utf8) ?? "Unknown AppleScript error"
-                throw ToolError.executionError(errorMsg)
+                throw AgentToolError.executionError(errorMsg)
             }
 
             return String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         } catch {
-            throw ToolError.executionError(error.localizedDescription)
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
 }

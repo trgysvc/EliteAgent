@@ -11,13 +11,13 @@ public struct NativeBrowserTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.missingParameter("action")
+            throw AgentToolError.missingParameter("action")
         }
         
         switch action {
         case "navigate":
             guard let urlStr = params["url"]?.value as? String, let url = URL(string: urlStr) else {
-                throw ToolError.missingParameter("url")
+                throw AgentToolError.missingParameter("url")
             }
             try await BrowserEngine.shared.navigate(to: url)
             return "Successfully navigated to \(urlStr)"
@@ -37,7 +37,7 @@ public struct NativeBrowserTool: AgentTool {
                 try pngData.write(to: path)
                 return "Screenshot saved to \(filename). Analyzable by VisionAnalyzer."
             } else {
-                throw ToolError.executionError("Failed to encode screenshot to PNG")
+                throw AgentToolError.executionError("Failed to encode screenshot to PNG")
             }
             
         case "visual_analyze":
@@ -52,14 +52,14 @@ public struct NativeBrowserTool: AgentTool {
             
         case "click_at":
             guard let x = params["x"]?.value as? Double, let y = params["y"]?.value as? Double else {
-                throw ToolError.missingParameter("x, y")
+                throw AgentToolError.missingParameter("x, y")
             }
             let script = CoordinateBridge.shared.generateClickScript(x: x, y: y)
             let result = try await BrowserEngine.shared.evaluateJavaScript(script)
             return "\(result)"
             
         default:
-            throw ToolError.invalidParameter("Unknown action: \(action)")
+            throw AgentToolError.invalidParameter("Unknown action: \(action)")
         }
     }
 }

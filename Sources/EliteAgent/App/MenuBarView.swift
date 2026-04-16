@@ -214,8 +214,8 @@ public struct MenuBarView: View {
     private func updateToolCounts() {
         Task {
             let registry = ToolRegistry.shared
-            let healthy = registry.getHealthyTools().count
-            let total = registry.listTools().count
+            let healthy = await registry.getHealthyTools().count
+            let total = await registry.listTools().count
             await MainActor.run {
                 if self.activeToolsCount != healthy || self.totalToolsCount != total {
                     self.activeToolsCount = healthy

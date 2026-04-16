@@ -174,7 +174,7 @@ struct ToolsSettingsView: View {
             var newStatuses: [String: ToolStatus] = [:]
             
             for name in currentConfig.enabledTools.keys {
-                newStatuses[name] = registry.getToolStatus(named: name)
+                newStatuses[name] = await registry.getToolStatus(named: name)
             }
             
             await MainActor.run {

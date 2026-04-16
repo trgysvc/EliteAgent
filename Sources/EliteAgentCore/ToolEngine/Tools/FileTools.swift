@@ -1,6 +1,6 @@
 import Foundation
 
-public enum FileToolError: Error, Sendable, CustomStringConvertible {
+public enum FileAgentToolError: Error, Sendable, CustomStringConvertible {
     case permissionDenied(path: String)
     case notFound(path: String)
     case writeFailed(Error)
@@ -27,7 +27,7 @@ public struct FileTools: Sendable {
         
         let isAllowed = allowedPaths.contains { pathString.hasPrefix($0) }
         guard isAllowed else {
-            throw FileToolError.permissionDenied(path: pathString)
+            throw FileAgentToolError.permissionDenied(path: pathString)
         }
         return url
     }
@@ -35,7 +35,7 @@ public struct FileTools: Sendable {
     public func readFile(path: String) throws -> String {
         let url = try validateAndResolve(path: path)
         guard FileManager.default.fileExists(atPath: url.path) else {
-            throw FileToolError.notFound(path: url.path)
+            throw FileAgentToolError.notFound(path: url.path)
         }
         return try String(contentsOf: url, encoding: .utf8)
     }
@@ -59,7 +59,7 @@ public struct FileTools: Sendable {
                 try fileManager.moveItem(at: tempURL, to: url)
             }
         } catch {
-            throw FileToolError.writeFailed(error)
+            throw FileAgentToolError.writeFailed(error)
         }
     }
 }

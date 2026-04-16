@@ -10,7 +10,7 @@ public struct ShellTool: AgentTool, Sendable {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let command = params["command"]?.value as? String else {
-            throw ToolError.missingParameter("'command' parameter is required.")
+            throw AgentToolError.missingParameter("'command' parameter is required.")
         }
         
         // Safety Check via LogicGate (Phase 1 Hardening)
@@ -21,7 +21,7 @@ public struct ShellTool: AgentTool, Sendable {
             Reason: \(risk.reason ?? "Dangerous execution detected.")
             Suggestion: Use built-in Swift tools or standard whitelisted commands.
             """
-            throw ToolError.executionError(errorMsg)
+            throw AgentToolError.executionError(errorMsg)
         }
         
         print("[SHELL] Executing: \(command)")
@@ -40,7 +40,7 @@ public struct ShellTool: AgentTool, Sendable {
             do {
                 try process.run()
             } catch {
-                continuation.resume(throwing: ToolError.executionError("Failed to launch process: \(error.localizedDescription)"))
+                continuation.resume(throwing: AgentToolError.executionError("Failed to launch process: \(error.localizedDescription)"))
                 return
             }
             

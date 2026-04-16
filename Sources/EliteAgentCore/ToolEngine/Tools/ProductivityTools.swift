@@ -10,7 +10,7 @@ public struct ContactsTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let query = params["query"]?.value as? String else {
-            throw ToolError.missingParameter("query")
+            throw AgentToolError.missingParameter("query")
         }
         
         let script = """
@@ -40,7 +40,7 @@ public struct FileManagerTool: AgentTool {
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String,
               let path = params["path"]?.value as? String else {
-            throw ToolError.missingParameter("action and path are required")
+            throw AgentToolError.missingParameter("action and path are required")
         }
         
         let fileManager = FileManager.default
@@ -57,7 +57,7 @@ public struct FileManagerTool: AgentTool {
             try fileManager.removeItem(atPath: expandedPath)
             return "Dosya silindi: \(expandedPath)"
         default:
-            throw ToolError.invalidParameter("Unknown action")
+            throw AgentToolError.invalidParameter("Unknown action")
         }
     }
 }

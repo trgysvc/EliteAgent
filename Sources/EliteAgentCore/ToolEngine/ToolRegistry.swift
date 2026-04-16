@@ -73,7 +73,7 @@ public actor ToolRegistry {
         if let ubid = toolCall.ubid {
             guard let t = ubidMap[ubid] else {
                 AgentLogger.logError("[Registry] CRITICAL: Tool not found for UBID: \(ubid). This is a model hallucination.")
-                throw ToolError.executionError("Tool not found for UBID: \(ubid)")
+                throw AgentToolError.toolNotFound("UBID \(ubid)")
             }
             tool = t
         } else if let t = getTool(named: toolCall.tool) {
@@ -82,9 +82,9 @@ public actor ToolRegistry {
             // v11.9: Smart Feedback for miscalled sub-actions
             let miscalledActions = ["play_content", "volume", "pause", "play", "next", "stop"]
             if miscalledActions.contains(toolCall.tool) {
-                throw ToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' aracının bir aksiyonudur. Doğru kullanım: CALL([18]) WITH {\"action\": \"\(toolCall.tool)\", ...}")
+                throw AgentToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' aracının bir aksiyonudur. Doğru kullanım: CALL([18]) WITH {\"action\": \"\(toolCall.tool)\", ...}")
             }
-            throw ToolError.executionError("Tool not found: \(toolCall.tool) / UBID \(toolCall.ubid ?? 0)")
+            throw AgentToolError.executionError("Tool not found: \(toolCall.tool) / UBID \(toolCall.ubid ?? 0)")
         }
         
         updateStatus(named: tool.name) { $0.callCount += 1 }

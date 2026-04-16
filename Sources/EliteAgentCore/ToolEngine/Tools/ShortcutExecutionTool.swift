@@ -29,7 +29,7 @@ public struct ShortcutExecutionTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let name = params["name"]?.value as? String else {
-            throw ToolError.missingParameter("Kısayol adı (name) gereklidir.")
+            throw AgentToolError.missingParameter("Kısayol adı (name) gereklidir.")
         }
         
         let inputText = params["input_text"]?.value as? String ?? ""

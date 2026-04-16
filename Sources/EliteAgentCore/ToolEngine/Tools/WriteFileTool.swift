@@ -25,7 +25,7 @@ public struct WriteFileTool: AgentTool, Sendable {
         }
         
         guard !finalPath.isEmpty else {
-            throw ToolError.missingParameter("path (HATA: Dosya yolu belirtilmedi. Klasörün üzerine yazamazsınız.)")
+            throw AgentToolError.missingParameter("path (HATA: Dosya yolu belirtilmedi. Klasörün üzerine yazamazsınız.)")
         }
         
         let expandedPath = finalPath.hasPrefix("~") 
@@ -57,7 +57,7 @@ public struct WriteFileTool: AgentTool, Sendable {
         // Prevent folder overwrite (The 'EliteAgentWorkspace' bug fix)
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDir), isDir.boolValue {
-            throw ToolError.executionError("HATA: '\(finalPath)' bir klasördür, üzerine dosya gibi yazılamaz. Lütfen bir dosya adı belirtin (örn: WWDC.md).")
+            throw AgentToolError.executionError("HATA: '\(finalPath)' bir klasördür, üzerine dosya gibi yazılamaz. Lütfen bir dosya adı belirtin (örn: WWDC.md).")
         }
         
         try finalContent.write(to: fileURL, atomically: true, encoding: .utf8)

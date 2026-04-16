@@ -10,7 +10,7 @@ public struct MediaControllerTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.missingParameter("Action parameter is required (play, pause, next, volume, play_content).")
+            throw AgentToolError.missingParameter("Action parameter is required (play, pause, next, volume, play_content).")
         }
         
         switch action {
@@ -29,7 +29,7 @@ public struct MediaControllerTool: AgentTool {
             return try await AppleScriptRunner.shared.execute(source: "set volume output volume \(level)")
         case "play_content":
             guard var searchTerm = params["searchTerm"]?.value as? String else {
-                throw ToolError.missingParameter("SearchTerm is required for play_content action.")
+                throw AgentToolError.missingParameter("SearchTerm is required for play_content action.")
             }
             
             let requestedType = params["contentType"]?.value as? String
@@ -90,7 +90,7 @@ public struct MediaControllerTool: AgentTool {
             }
             return try await AppleScriptRunner.shared.execute(source: script)
         default:
-            throw ToolError.invalidParameter("Unknown action: \(action)")
+            throw AgentToolError.invalidParameter("Unknown action: \(action)")
         }
     }
 }

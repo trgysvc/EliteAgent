@@ -12,16 +12,19 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v19.7.1 UNO Pure]**: Zero-JSON Binary-Native Architecture, Resilient Optional-Cloud, and Hardened Core Orchestration.
+> **[v19.8.0 UNO Pure]**: Zero-JSON Binary-Native Architecture, 100% Stateless Inference Engine (Memory Leak Prevention), and Actor-Isolated ToolRegistry.
 
 ## 🔥 Key Features
 
-### 1. Self-Healing & Architecture Hardening [v15.0 OFFICIAL SEAL]
-- **Eco-Inference Mode [v19.0]:** Thermal-aware dynamic throttling that injects nanosecond delays (5ms-200ms) in the token loop based on `thermalState` to prevent hardware degradation.
+### 1. Self-Healing & Architecture Hardening [v19.8.0 OFFICIAL SEAL]
+- **Stateless Inference Engine:** Resolved 10GB+ memory leaks by centralizing conversation state in `OrchestratorRuntime`, making the core LLM driver stateless.
+- **Actor-Isolated ToolRegistry:** Refactored to a Swift 6 `actor` to prevent race conditions during concurrent tool access.
+- **Eco-Inference Mode:** Thermal-aware dynamic throttling that injects nanosecond delays (5ms-200ms) in the token loop based on `thermalState` to prevent hardware degradation.
 - **Structural Isolation (Structural Security):** Separates system instructions from untrusted external data (Files, Web) to prevent prompt injection.
 - **Official Iron Seal Build:** 100% compliant with Apple Distributed Actor standards and Swift 6 ownership transfer (SE-0430).
 - **YOLO Guard v2 & Encrypted Audits:** Dynamic risk assessment with Keychain-backed AES.GCM forensic logging.
-- **XPC Architecture Hardening [v13.7]:** Deterministic C-module resolution (`yyjson`, `Cmlx`, `_NumericsShims`) with absolute path enforcement.
+- **XPC Architecture Hardening:** Deterministic C-module resolution (`yyjson`, `Cmlx`, `_NumericsShims`) with absolute path enforcement.
+- **Orchestrator Sync Barrier:** Synchronized tool registration using `Task` barriers to eliminate "Tool not found" startup race conditions.
 
 ### 2. Autonomous Recursive Evolution [v18.0 RECURSIVE]
 - **PluginCraft Engine:** The system can now generate, compile (`swiftc`), ad-hoc sign (`codesign`), and dynamically load (`dlopen`) its own tools at runtime.
@@ -145,4 +148,4 @@ EliteAgent/
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice. Evolution by Recursive Logic. Hardware by Mastery. Pure by Architecture."*  
-> **[EliteAgent Core - v19.7.1 UNO Pure - OFFICIAL IRON SEALED]**
+> **[EliteAgent Core - v19.8.0 UNO Pure - OFFICIAL IRON SEALED - STATELESS & STABILIZED]**

@@ -23,7 +23,6 @@ public actor InferenceActor {
     private var currentGenerationTask: Task<Void, Never>?
     private var modelContainer: ModelContainer?
     private var maxContextTokens: Int = 16384
-    private var conversationHistory: [Message] = []
     
     // v9.6: Self-Healing Metrics
     private var lastTPS: Double = 0
@@ -71,11 +70,10 @@ public actor InferenceActor {
         let activeProvider = await ModelStateManager.shared.activeProvider
         AgentLogger.logAudit(level: .info, agent: "UniversalInference", message: "Inferring via \(activeProvider)")
         
-        // v10.5.6: Only update local history if NOT using a cloud provider 
-        // to avoid double-appending in cases where Orchestrator handles history.
-        // Actually, Orchestrator always passes the full [Message] array, 
-        // so we should treat our local 'conversationHistory' as the *current* state.
-        self.conversationHistory = messages
+        // v10.5.6: Local context is now strictly stateless. 
+        // We do NOT update any internal history here; the caller (Orchestrator) 
+        // is the single source of truth for the context window.
+        let messages = [Message(role: "user", content: prompt)]
         
         let vaultURL = PathConfiguration.shared.vaultURL
         
@@ -86,7 +84,7 @@ public actor InferenceActor {
                 AgentLogger.logAudit(level: .warn, agent: "UniversalInference", message: "Model \(modelID) not in VRAM. Auto-loading...")
                 try await ModelManager.shared.load(modelID)
             }
-            return self.generate(messages: self.conversationHistory, systemPrompt: config.systemPrompt, maxTokens: config.maxTokens)
+            return self.generate(messages: messages, systemPrompt: config.systemPrompt, maxTokens: config.maxTokens)
             
         case .cloudOpenRouter(let modelID):
             return AsyncStream { continuation in
@@ -110,14 +108,13 @@ public actor InferenceActor {
                         let request = CompletionRequest(
                             taskID: UUID().uuidString,
                             systemPrompt: finalSystemPrompt,
-                            messages: self.conversationHistory,
+                            messages: messages, // Use the stateless messages array
                             maxTokens: config.maxTokens,
                             sensitivityLevel: .public,
                             complexity: 3
                         )
                         let response = try await cloud.complete(request, useSafeMode: false)
                         continuation.yield(response.content)
-                        self.conversationHistory.append(Message(role: "assistant", content: response.content))
                         continuation.finish()
                     }
                 }
@@ -139,9 +136,8 @@ public actor InferenceActor {
     }
     
     public func clearContext() {
-        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Context invalidated & history cleared.")
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "Titan: Context invalidated.")
         cancelOngoingGenerations()
-        self.conversationHistory.removeAll()
     }
     
     public func restart() async {
@@ -152,7 +148,6 @@ public actor InferenceActor {
             ModelSetupManager.shared.isModelReady = false
         }
         
-        let previousHistory = self.conversationHistory
         self.modelContainer = nil
         self.clearCache()
         
@@ -161,9 +156,6 @@ public actor InferenceActor {
         
         // Reload current model
         await ModelSetupManager.shared.reloadCurrentModel()
-        
-        // Restore session
-        self.conversationHistory = previousHistory
         
         await MainActor.run {
             AISessionState.shared.isRestartingEngine = false
@@ -313,10 +305,6 @@ public actor InferenceActor {
                         continuation.yield(chunk)
                     }
                     
-                    // Update internal history for future consistency
-                    self.conversationHistory = messages
-                    self.conversationHistory.append(Message(role: "assistant", content: fullContent))
-                    
                     // v10.5.6: Aggressive Memory Recovery
                     self.clearCache()
                     
@@ -325,9 +313,6 @@ public actor InferenceActor {
         }
     }
     
-    private func appendAssistantMessage(_ content: String) async {
-        self.conversationHistory.append(Message(role: "assistant", content: content))
-    }
     
     private func internalGenerate(formattedPrompt: String, maxTokens: Int, continuation: AsyncStream<String>.Continuation, useSafeMode: Bool = false) async throws {
         guard let container = self.modelContainer else {

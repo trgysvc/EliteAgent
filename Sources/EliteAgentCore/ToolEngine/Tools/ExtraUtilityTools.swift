@@ -13,7 +13,7 @@ public struct CalculatorTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let expression = params["expression"]?.value as? String else {
-            throw ToolError.missingParameter("expression")
+            throw AgentToolError.missingParameter("expression")
         }
         
         let format = NSExpression(format: expression)
@@ -35,7 +35,7 @@ public struct WeatherTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let locationName = params["location"]?.value as? String else {
-            throw ToolError.missingParameter("location")
+            throw AgentToolError.missingParameter("location")
         }
         
         let geocoder = CLGeocoder()
@@ -98,7 +98,7 @@ public struct TimerTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let seconds = params["seconds"]?.value as? Int else {
-            throw ToolError.missingParameter("seconds")
+            throw AgentToolError.missingParameter("seconds")
         }
         
         let message = params["message"]?.value as? String ?? "Timer finished!"

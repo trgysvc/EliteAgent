@@ -508,7 +508,7 @@ public actor OrchestratorRuntime {
                 }
                 
                 await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
-            } catch let error as ToolError {
+            } catch let error as AgentToolError {
                 // v10.5.6: Specific diagnostic for missing tools (UBID hallucination)
                 if case .toolNotFound(let identifier) = error {
                     let diagnostic = "Observation: HATA! Araç bulunamadı (Identifier: \(identifier)). Lütfen UBID listesini tekrar kontrol et ve SADECE mevcut UBID'leri kullan. OS Version/Bilgi için UBID 58, Hava durumu için UBID 81 kullanmalısın."

@@ -36,7 +36,7 @@ public struct WebSearchTool: Sendable {
         
         guard let vault = vault else {
             AgentLogger.logAudit(level: .error, agent: "WebSearchTool", message: "VaultManager.shared is nil")
-            throw ToolError.executionError("VaultManager not initialized")
+            throw AgentToolError.executionError("VaultManager not initialized")
         }
         
         // Priority 1: Serper (Google)

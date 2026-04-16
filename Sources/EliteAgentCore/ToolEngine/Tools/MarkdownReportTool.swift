@@ -10,7 +10,7 @@ public struct MarkdownReportTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let markdownContent = params["report_markdown"]?.value as? String else {
-            throw ToolError.missingParameter("report_markdown")
+            throw AgentToolError.missingParameter("report_markdown")
         }
         
         // UNO Pure: Strictly Markdown-based reporting. No JSON wrappers.

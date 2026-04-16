@@ -10,7 +10,7 @@ public struct GitTool: AgentTool, Sendable {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.missingParameter("action")
+            throw AgentToolError.missingParameter("action")
         }
         
         if let path = params["path"]?.value as? String {
@@ -22,14 +22,14 @@ public struct GitTool: AgentTool, Sendable {
         switch action {
         case "commit":
             guard let message = params["message"]?.value as? String else {
-                throw ToolError.missingParameter("message")
+                throw AgentToolError.missingParameter("message")
             }
             try await engine.commit(message: message)
             return "SUCCESS: Changes committed with message: '\(message)'"
             
         case "revert":
             guard let hash = params["hash"]?.value as? String else {
-                throw ToolError.missingParameter("hash")
+                throw AgentToolError.missingParameter("hash")
             }
             try await engine.revert(to: hash)
             return "SUCCESS: Reverted working directory to hash \(hash)"
@@ -43,7 +43,7 @@ public struct GitTool: AgentTool, Sendable {
             return diff.isEmpty ? "No unstaged changes." : diff
             
         default:
-            throw ToolError.executionError("Unsupported git action: \(action)")
+            throw AgentToolError.executionError("Unsupported git action: \(action)")
         }
     }
 }

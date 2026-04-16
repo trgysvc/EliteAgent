@@ -20,7 +20,7 @@ public struct XcodeTool: AgentTool, Sendable {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.missingParameter("action")
+            throw AgentToolError.missingParameter("action")
         }
         
         switch action {
@@ -31,7 +31,7 @@ public struct XcodeTool: AgentTool, Sendable {
         case "simulator_control":
             return try await handleSimulatorControl(params: params)
         default:
-            throw ToolError.invalidParameter("Unknown action: \(action)")
+            throw AgentToolError.invalidParameter("Unknown action: \(action)")
         }
     }
     
@@ -111,7 +111,7 @@ public struct XcodeTool: AgentTool, Sendable {
             return try await runShell(command: "xcrun simctl list devices available", directory: URL(fileURLWithPath: "/tmp"))
         case "boot":
             guard let deviceID = params["device_id"]?.value as? String else {
-                throw ToolError.missingParameter("device_id")
+                throw AgentToolError.missingParameter("device_id")
             }
             return try await runShell(command: "xcrun simctl boot \(deviceID)", directory: URL(fileURLWithPath: "/tmp"))
         default:
@@ -138,7 +138,7 @@ public struct XcodeTool: AgentTool, Sendable {
                 let output = String(data: data, encoding: .utf8) ?? ""
                 continuation.resume(returning: output)
             } catch {
-                continuation.resume(throwing: ToolError.executionError(error.localizedDescription))
+                continuation.resume(throwing: AgentToolError.executionError(error.localizedDescription))
             }
         }
     }

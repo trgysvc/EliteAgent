@@ -57,6 +57,7 @@ public class Orchestrator: ObservableObject {
     // v14.0 Serial Queue State
     private var taskQueue: [QueuedTask] = []
     private var isProcessingTask = false
+    private var registrationTask: Task<Void, Never>?
     
     public init() {
         let busKey = SymmetricKey(data: SHA256.hash(data: "ELITE_BUS_SECRET".data(using: .utf8)!))
@@ -150,7 +151,10 @@ public class Orchestrator: ObservableObject {
             self.status = .error
         }
         
-        Task {
+        self.registrationTask = Task { [weak self] in
+            guard let self = self else { return }
+            let group = self.toolRegistry
+            
             // Communication Tools
             await group.register(WhatsAppTool())
             await group.register(MessengerTool())
@@ -203,6 +207,16 @@ public class Orchestrator: ObservableObject {
             await group.register(ChicagoVisionTool())
             await group.register(AccessibilityTool())
             await group.register(XcodeTool()) // v16.0: Autonomous App Builder Engine
+            
+            let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
+                Task { @MainActor [weak self] in
+                    self?.steps.append(step)
+                }
+            }
+            
+            let local = self.localProvider
+            let memory = self.memory
+            let busInstance = self.bus
             
             if let safeProvider = self.cloudProvider, let vault = self.vaultManager {
                 let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
@@ -346,6 +360,9 @@ public class Orchestrator: ObservableObject {
     }
 
     private func executeActualTask(task: QueuedTask) async throws {
+        // v11.8: Barrier - Wait for tool registration before any execution
+        _ = await registrationTask?.result
+        
         let prompt = task.prompt
         let forceProviders = task.forceProviders
         let strictLocal = task.strictLocal

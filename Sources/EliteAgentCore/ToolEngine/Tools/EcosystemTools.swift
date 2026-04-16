@@ -10,7 +10,7 @@ public struct CalendarTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.missingParameter("Action (list_events, add_event) is required.")
+            throw AgentToolError.missingParameter("Action (list_events, add_event) is required.")
         }
         
         switch action {
@@ -33,7 +33,7 @@ public struct CalendarTool: AgentTool {
         case "add_event":
             guard let summary = params["summary"]?.value as? String,
                   let startStr = params["start"]?.value as? String else {
-                throw ToolError.missingParameter("Summary and start date (e.g., 'tomorrow 10am') are required.")
+                throw AgentToolError.missingParameter("Summary and start date (e.g., 'tomorrow 10am') are required.")
             }
             let script = """
             try
@@ -52,12 +52,12 @@ public struct CalendarTool: AgentTool {
             """
             let result = try await AppleScriptRunner.shared.execute(source: script)
             if result.contains("FAIL") {
-                throw ToolError.executionError("Calendar Protocol Error: \(result)")
+                throw AgentToolError.executionError("Calendar Protocol Error: \(result)")
             }
             return result
             
         default:
-            throw ToolError.invalidParameter("Unknown action: \(action)")
+            throw AgentToolError.invalidParameter("Unknown action: \(action)")
         }
     }
 }
@@ -72,7 +72,7 @@ public struct MailTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let action = params["action"]?.value as? String else {
-            throw ToolError.missingParameter("Action (list_unread, create_draft, send_email) is required.")
+            throw AgentToolError.missingParameter("Action (list_unread, create_draft, send_email) is required.")
         }
         
         switch action {
@@ -93,7 +93,7 @@ public struct MailTool: AgentTool {
             guard let subject = params["subject"]?.value as? String,
                   let recipient = params["recipient"]?.value as? String,
                   let body = params["body"]?.value as? String else {
-                throw ToolError.missingParameter("Subject, recipient, and body are required.")
+                throw AgentToolError.missingParameter("Subject, recipient, and body are required.")
             }
             let script = """
             tell application "Mail"
@@ -111,7 +111,7 @@ public struct MailTool: AgentTool {
             guard let subject = params["subject"]?.value as? String,
                   let recipient = params["recipient"]?.value as? String,
                   let body = params["body"]?.value as? String else {
-                throw ToolError.missingParameter("Subject, recipient, and body are required.")
+                throw AgentToolError.missingParameter("Subject, recipient, and body are required.")
             }
             let script = """
             try
@@ -129,12 +129,12 @@ public struct MailTool: AgentTool {
             """
             let result = try await AppleScriptRunner.shared.execute(source: script)
             if result.contains("FAIL") {
-                throw ToolError.executionError("Mail Protocol Error: \(result)")
+                throw AgentToolError.executionError("Mail Protocol Error: \(result)")
             }
             return result
             
         default:
-            throw ToolError.invalidParameter("Unknown action: \(action)")
+            throw AgentToolError.invalidParameter("Unknown action: \(action)")
         }
     }
 }
@@ -151,7 +151,7 @@ public struct SystemVolumeTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let level = params["level"]?.value as? Int else {
-            throw ToolError.missingParameter("level")
+            throw AgentToolError.missingParameter("level")
         }
         
         let script = "set volume output volume \(level)"
@@ -170,7 +170,7 @@ public struct BrightnessControlTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let level = params["level"]?.value as? Double else {
-            throw ToolError.missingParameter("level")
+            throw AgentToolError.missingParameter("level")
         }
         
         let script = "do shell script \"/usr/bin/brightness \(level)\" "

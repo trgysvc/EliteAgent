@@ -22,7 +22,7 @@ public struct MessengerTool: AgentTool {
         guard let platform = params["platform"]?.value as? String,
               let recipient = params["recipient"]?.value as? String,
               let message = params["message"]?.value as? String else {
-            throw ToolError.missingParameter("platform, recipient, and message are all required.")
+            throw AgentToolError.missingParameter("platform, recipient, and message are all required.")
         }
         
         if await AppSettings.shared.isBiometricEnabledForActions {

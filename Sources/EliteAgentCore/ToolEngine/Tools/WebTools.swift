@@ -12,7 +12,7 @@ public struct WebSearchToolWrapper: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let query = params["query"]?.value as? String else {
-            throw ToolError.missingParameter("query")
+            throw AgentToolError.missingParameter("query")
         }
         
         let results = try await engine.search(query: query, session: session)
@@ -33,7 +33,7 @@ public struct WebFetchToolWrapper: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let url = params["url"]?.value as? String else {
-            throw ToolError.missingParameter("url")
+            throw AgentToolError.missingParameter("url")
         }
         
         return try await engine.fetch(url: url)

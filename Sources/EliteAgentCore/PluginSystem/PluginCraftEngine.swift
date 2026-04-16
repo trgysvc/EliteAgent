@@ -33,7 +33,7 @@ public actor PluginCraftEngine {
         let compileResult = try await runShell(command: compileCommand)
         
         if compileResult.contains("error:") {
-            throw ToolError.executionError("Compilation Failed: \(compileResult)")
+            throw AgentToolError.executionError("Compilation Failed: \(compileResult)")
         }
         
         // v14.4: Ad-hoc Code Signing (Hardening for Apple Silicon)

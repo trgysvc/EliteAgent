@@ -43,7 +43,7 @@ public struct MusicDNATool: AgentTool {
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
 
         guard let rawPath = params["path"]?.value as? String else {
-            throw ToolError.missingParameter("`path` parametresi gerekli.")
+            throw AgentToolError.missingParameter("`path` parametresi gerekli.")
         }
 
         let expandedPath = rawPath.hasPrefix("~")
@@ -53,7 +53,7 @@ public struct MusicDNATool: AgentTool {
         let url = URL(fileURLWithPath: expandedPath)
 
         guard FileManager.default.fileExists(atPath: url.path) else {
-            throw ToolError.executionError("Dosya bulunamadı: \(expandedPath)")
+            throw AgentToolError.executionError("Dosya bulunamadı: \(expandedPath)")
         }
 
         // Header Banner

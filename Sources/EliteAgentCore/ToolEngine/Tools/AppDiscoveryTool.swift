@@ -18,7 +18,7 @@ public struct AppDiscoveryTool: AgentTool {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let appName = params["application_name"]?.value as? String else {
-            throw ToolError.missingParameter("application_name parametresi gereklidir.")
+            throw AgentToolError.missingParameter("application_name parametresi gereklidir.")
         }
         
         // Gerçek implementasyonda NSWorkspace ile uygulama bulunur ve AXUIElement ile taranır.

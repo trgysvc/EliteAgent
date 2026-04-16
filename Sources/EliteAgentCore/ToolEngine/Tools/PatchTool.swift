@@ -10,13 +10,13 @@ public struct PatchTool: AgentTool, Sendable {
     
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let path = params["path"]?.value as? String else {
-            throw ToolError.missingParameter("path")
+            throw AgentToolError.missingParameter("path")
         }
         guard let oldContent = params["old_content"]?.value as? String else {
-            throw ToolError.missingParameter("old_content")
+            throw AgentToolError.missingParameter("old_content")
         }
         guard let newContent = params["new_content"]?.value as? String else {
-            throw ToolError.missingParameter("new_content")
+            throw AgentToolError.missingParameter("new_content")
         }
         
         let fileURL: URL
@@ -30,7 +30,7 @@ public struct PatchTool: AgentTool, Sendable {
         }
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            throw ToolError.executionError("File does not exist: \(fileURL.path)")
+            throw AgentToolError.executionError("File does not exist: \(fileURL.path)")
         }
         
         var originalText = try String(contentsOf: fileURL, encoding: .utf8)
@@ -50,10 +50,10 @@ public struct PatchTool: AgentTool, Sendable {
         let matchCount = countOccurrences(of: oldContent, in: originalText)
         
         if matchCount == 0 {
-            throw ToolError.executionError("Target snippet 'old_content' NOT FOUND in the file! (Please make sure whitespace matches perfectly).")
+            throw AgentToolError.executionError("Target snippet 'old_content' NOT FOUND in the file! (Please make sure whitespace matches perfectly).")
         }
         if matchCount > 1 {
-            throw ToolError.executionError("Target snippet 'old_content' matches MULTIPLE times (\(matchCount) matches). Context is ambiguous, please provide a larger unique block or use full write_file.")
+            throw AgentToolError.executionError("Target snippet 'old_content' matches MULTIPLE times (\(matchCount) matches). Context is ambiguous, please provide a larger unique block or use full write_file.")
         }
         
         originalText = originalText.replacingOccurrences(of: oldContent, with: newContent)

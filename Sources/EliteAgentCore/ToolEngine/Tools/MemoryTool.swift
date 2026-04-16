@@ -18,13 +18,13 @@ public struct MemoryTool: AgentTool, Sendable {
         let action = (params["action"]?.value as? String) ?? (params["param"]?.value as? String)
         
         guard let action = action else {
-            throw ToolError.missingParameter("action")
+            throw AgentToolError.missingParameter("action")
         }
         
         switch action {
         case "search":
             guard let query = params["query"]?.value as? String else {
-                throw ToolError.missingParameter("query")
+                throw AgentToolError.missingParameter("query")
             }
             let result = await agent.retrieveRelevantExperiences(query: query)
             return result.isEmpty ? "No internal experiences found." : result
@@ -35,14 +35,14 @@ public struct MemoryTool: AgentTool, Sendable {
             let solution = (params["solution"]?.value as? String) ?? (params["query"]?.value as? String) ?? ""
             
             if solution.isEmpty {
-                throw ToolError.missingParameter("task/solution or query (Required for save)")
+                throw AgentToolError.missingParameter("task/solution or query (Required for save)")
             }
             
             await agent.storeExperience(task: task, solution: solution)
             return "SUCCESS: Experience stored in long-term memory."
             
         default:
-            throw ToolError.executionError("Unsupported memory action: \(action)")
+            throw AgentToolError.executionError("Unsupported memory action: \(action)")
         }
     }
 }

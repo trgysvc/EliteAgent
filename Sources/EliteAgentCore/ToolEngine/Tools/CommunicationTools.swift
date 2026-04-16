@@ -11,7 +11,7 @@ public struct WhatsAppTool: AgentTool {
     public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
         guard let recipient = params["recipient"]?.value as? String,
               let message = params["message"]?.value as? String else {
-            throw ToolError.missingParameter("recipient and message are required")
+            throw AgentToolError.missingParameter("recipient and message are required")
         }
         
         let script = """
@@ -47,7 +47,7 @@ public struct WhatsAppTool: AgentTool {
         if result.contains("SUCCESS") {
             return "WhatsApp mesajı \(recipient) kişisine iletildi komutu gönderildi."
         } else {
-            throw ToolError.executionError("WhatsApp kontrolü başarısız: \(result)")
+            throw AgentToolError.executionError("WhatsApp kontrolü başarısız: \(result)")
         }
     }
 }
@@ -64,7 +64,7 @@ public struct EmailTool: AgentTool {
         guard let recipient = params["recipient"]?.value as? String,
               let subject = params["subject"]?.value as? String,
               let body = params["body"]?.value as? String else {
-            throw ToolError.missingParameter("recipient, subject, and body are required")
+            throw AgentToolError.missingParameter("recipient, subject, and body are required")
         }
         
         let script = """

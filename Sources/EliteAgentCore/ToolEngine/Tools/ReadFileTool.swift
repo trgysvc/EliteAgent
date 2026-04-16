@@ -37,7 +37,7 @@ public struct ReadFileTool: AgentTool, Sendable {
         }
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            throw ToolError.executionError("File not found: \(rawPath)")
+            throw AgentToolError.executionError("File not found: \(rawPath)")
         }
         
         let ext = fileURL.pathExtension.lowercased()
@@ -49,7 +49,7 @@ public struct ReadFileTool: AgentTool, Sendable {
         switch ext {
         case "pdf":
             guard let pdf = PDFDocument(url: fileURL) else {
-                throw ToolError.executionError("Failed to load PDF document at \(rawPath)")
+                throw AgentToolError.executionError("Failed to load PDF document at \(rawPath)")
             }
             return pdf.string ?? ""
             
