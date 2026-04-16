@@ -1218,3 +1218,17 @@ EliteAgent artık ses dosyalarını sadece bir "dosya" olarak değil, derinlemes
 
 ---
 *EliteAgent Core · v41.1 · Audio Intelligence & System Resilience.*
+
+### [2026-04-16] — WeatherDNA Teşhis ve Stabilizasyon
+**Bulgular:**
+- **audit.log:** Veri çekimi başarılı (329 chars).
+- **Hata (Recursion):** `layoutSubtreeIfNeeded` hatası saptandı. Widget body'si içindeki senkron string parse işlemleri animasyonlarla çakışarak döngü oluşturuyor.
+- **Hata (Kernel 0x5):** Layout kilitlenmesi nedeniyle ViewBridge timeout'a düşüyor ve kernel süreci 0x5 ile sonlandırıyor.
+**Kritik Dosyalar:**
+- UI: `WeatherWidgetView.swift`
+- Logic: `ExtraUtilityTools.swift`
+- Bridge: `ChatBubble.swift`
+**Aksiyon:** View içindeki veri işleme mantığı initialize anında dondurulacak (Model tabanlı), layout recursion engellenecek.
+**Onarım Etkisi:**
+- `WeatherWidgetView`: `WeatherData` struct'ı eklendi. String parse işlemi `init` aşamasına çekilerek `body` (render) döngüsünden izole edildi.
+- **Sonuç:** Layout recursion hatası teorik olarak giderildi, XPC üzerindeki thread baskısı kaldırıldı.

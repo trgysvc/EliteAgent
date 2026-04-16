@@ -190,6 +190,7 @@ public class Orchestrator: ObservableObject {
         // Utility Tools
         group.register(CalculatorTool())
         group.register(WeatherTool())
+        group.register(SystemDateTool())
         group.register(TimerTool())
         
         // Advanced Ops Tools
@@ -514,7 +515,7 @@ public class Orchestrator: ObservableObject {
                 complexity: complexity, 
                 forceProviders: finalForceProviders,
                 config: effectiveConfig,
-                untrustedContext: finalUntrustedContext // v13.9: Structured untrusted data
+                untrustedContext: finalUntrustedContext 
             )
             
             let widgetShown = await session.wasWidgetRendered
@@ -589,6 +590,10 @@ public class Orchestrator: ObservableObject {
     }
     
     private func classifyIntent(prompt: String) -> TaskCategory {
+        let lower = prompt.lowercased()
+        if lower.contains(".mp3") || lower.contains(".wav") || lower.contains(".m4a") || lower.contains("analiz") {
+            return .audioAnalysis
+        }
         return TaskClassifier().classify(prompt: prompt)
     }
     

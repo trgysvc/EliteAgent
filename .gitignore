@@ -11,3 +11,4 @@ EliteAgent.xcodeproj/xcuserdata
 Package.resolved
 *.bak
 eliteagent_conversations.md
+*.metallib

@@ -2,10 +2,50 @@ import SwiftUI
 import WeatherKit
 
 public struct WeatherWidgetView: View {
-    let rawContent: String
+    private struct WeatherData {
+        let location: String
+        let status: String?
+        let temperature: String?
+        let precipitation: String?
+        let uvIndex: String?
+        let sunrise: String?
+        let sunset: String?
+        let wind: String?
+        let moonPhase: String?
+    }
+    
+    private let data: WeatherData
     
     public init(content: String) {
-        self.rawContent = content
+        // Pre-parse data once at initialization to prevent layout recursion
+        self.data = WeatherWidgetView.parse(content)
+    }
+    
+    private static func parse(_ raw: String) -> WeatherData {
+        func extract(key: String) -> String? {
+            let lines = raw.components(separatedBy: .newlines)
+            for line in lines {
+                if line.contains(key) {
+                    return line.replacingOccurrences(of: key, with: "").trimmingCharacters(in: .whitespaces)
+                }
+                if key == "📍" && line.starts(with: "📍") {
+                    return line.replacingOccurrences(of: "📍", with: "").trimmingCharacters(in: .whitespaces)
+                }
+            }
+            return nil
+        }
+        
+        return WeatherData(
+            location: extract(key: "📍") ?? "HAVA DURUMU",
+            status: extract(key: "🌤 Durum:"),
+            temperature: extract(key: "🌡 Sıcaklık:"),
+            precipitation: extract(key: "🌧 Yağış İhtimali:"),
+            uvIndex: extract(key: "☀️ UV İndeksi:"),
+            sunrise: extract(key: "🌅 Gün Doğumu:"),
+            sunset: extract(key: "🌇 Gün Batımı:"),
+            wind: extract(key: "💨 Rüzgar:"),
+            moonPhase: extract(key: "🌙 Ay Safhası:")
+        )
     }
     
     public var body: some View {
@@ -37,11 +77,11 @@ public struct WeatherWidgetView: View {
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(extractValue(for: "📍") ?? "HAVA DURUMU")
+                Text(data.location)
                     .font(.headline)
                     .foregroundStyle(.primary)
                 
-                if let status = extractValue(for: "🌤 Durum:") {
+                if let status = data.status {
                     Text(status)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -49,7 +89,7 @@ public struct WeatherWidgetView: View {
             }
             Spacer()
             
-            weatherIcon(for: extractValue(for: "🌤 Durum:") ?? "")
+            weatherIcon(for: data.status ?? "")
                 .font(.system(size: 32))
                 .symbolRenderingMode(.multicolor)
                 .symbolEffect(.pulse, options: .repeating)
@@ -58,7 +98,7 @@ public struct WeatherWidgetView: View {
     
     private var mainMetricsSection: some View {
         HStack(alignment: .firstTextBaseline) {
-            if let temp = extractValue(for: "🌡 Sıcaklık:") {
+            if let temp = data.temperature {
                 Text(temp)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
@@ -66,7 +106,7 @@ public struct WeatherWidgetView: View {
             
             Spacer()
             
-            if let precip = extractValue(for: "🌧 Yağış İhtimali:") {
+            if let precip = data.precipitation {
                 Label(precip, systemImage: "drop.fill")
                     .font(.subheadline.bold())
                     .foregroundStyle(.blue)
@@ -77,22 +117,22 @@ public struct WeatherWidgetView: View {
     private var secondaryMetricsSection: some View {
         VStack(spacing: 12) {
             HStack {
-                WeatherMetricItem(label: "UV İndeksi", value: extractValue(for: "☀️ UV İndeksi:") ?? "--", icon: "sun.max.fill", color: .orange)
+                WeatherMetricItem(label: "UV İndeksi", value: data.uvIndex ?? "--", icon: "sun.max.fill", color: .orange)
                 Spacer()
-                WeatherMetricItem(label: "Gün Doğumu", value: extractValue(for: "🌅 Gün Doğumu:") ?? "--", icon: "sunrise.fill", color: .yellow)
+                WeatherMetricItem(label: "Gün Doğumu", value: data.sunrise ?? "--", icon: "sunrise.fill", color: .yellow)
             }
             
             HStack {
-                WeatherMetricItem(label: "Rüzgar", value: extractValue(for: "💨 Rüzgar:") ?? "--", icon: "wind", color: .secondary)
+                WeatherMetricItem(label: "Rüzgar", value: data.wind ?? "--", icon: "wind", color: .secondary)
                 Spacer()
-                WeatherMetricItem(label: "Gün Batımı", value: extractValue(for: "🌇 Gün Batımı:") ?? "--", icon: "sunset.fill", color: .orange)
+                WeatherMetricItem(label: "Gün Batımı", value: data.sunset ?? "--", icon: "sunset.fill", color: .orange)
             }
         }
     }
     
     private var footerSection: some View {
         HStack {
-            if let moon = extractValue(for: "🌙 Ay Safhası:") {
+            if let moon = data.moonPhase {
                 Label(moon, systemImage: "moon.fill")
                     .font(.caption2.bold())
                     .foregroundStyle(.secondary)
@@ -102,22 +142,6 @@ public struct WeatherWidgetView: View {
                 .font(.system(size: 8, weight: .black))
                 .foregroundStyle(.tertiary)
         }
-    }
-    
-    // MARK: - Helpers
-    
-    private func extractValue(for key: String) -> String? {
-        let lines = rawContent.components(separatedBy: .newlines)
-        for line in lines {
-            if line.contains(key) {
-                return line.replacingOccurrences(of: key, with: "").trimmingCharacters(in: .whitespaces)
-            }
-            // Handle specific header format 📍 ANKARA - ŞİMDİ
-            if key == "📍" && line.starts(with: "📍") {
-                return line.replacingOccurrences(of: "📍", with: "").trimmingCharacters(in: .whitespaces)
-            }
-        }
-        return nil
     }
     
     private func weatherIcon(for condition: String) -> some View {
