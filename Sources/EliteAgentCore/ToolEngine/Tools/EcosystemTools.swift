@@ -195,25 +195,4 @@ public struct SleepControlTool: AgentTool {
     }
 }
 
-public struct SystemInfoTool: AgentTool {
-    public let name = "get_system_info"
-    public let summary = "Get detailed OS version and hardware info via Native APIs."
-    public let description = "Get basic system information (OS version, Device Name, M-Series Model) using Swift's ProcessInfo. MANDATORY: Use this instead of sw_vers or shell commands for system info."
-    public let ubid = 16 // Token '1' in Qwen 2.5
-    
-    public init() {}
-    
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
-        let os = ProcessInfo.processInfo.operatingSystemVersionString
-        let name = Host.current().localizedName ?? "Mac"
-        let model = "Apple Silicon (M-Series)"
-        
-        return """
-        [Sistem Bilgisi]
-        - Cihaz Adı: \(name)
-        - İşletim Sistemi: \(os)
-        - Mimari: \(model)
-        - EliteAgent Çekirdek: v14.9 (Pure)
-        """
-    }
-}
+// SystemInfoTool removed - properly defined in ExtraUtilityTools.swift

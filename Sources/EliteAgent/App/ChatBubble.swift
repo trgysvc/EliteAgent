@@ -19,10 +19,10 @@ public struct ChatBubble: View {
                     // We remove the raw WeatherDNA block from the text view to keep it clean,
                     // as the widget will handle the rich data display.
                     let cleanText = message.content
-                        .replacingOccurrences(of: "\\[WeatherDNA_WIDGET\\].*?\\*(WeatherDNA Engine.*?\\*)", with: "", options: .regularExpression, range: nil)
-                        .replacingOccurrences(of: "\\[SystemDNA_WIDGET\\].*?\\}", with: "", options: .regularExpression, range: nil)
+                        .replacingOccurrences(of: "(?s)\\[WeatherDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
+                        .replacingOccurrences(of: "(?s)\\[SystemDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
                         .replacingOccurrences(of: "(?s)\\[MusicDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
-                        .replacingOccurrences(of: "(?s)\\[🖥 Sistem Telemetri Raporu\\].*?─────────────────────────────", with: "", options: .regularExpression, range: nil)
+                        .replacingOccurrences(of: "(?s)\\[🖥 Sistem Telemetri Raporu\\].*", with: "", options: .regularExpression, range: nil)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     
                     if !cleanText.isEmpty {

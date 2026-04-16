@@ -114,28 +114,32 @@ public struct WeatherTool: AgentTool {
                 }
                 
                 // Default: Current Weather Home View
-                let current = weather.currentWeather
-                let temp = Int(current.temperature.value)
-                let feels = Int(current.apparentTemperature.value)
-                let humidity = Int(current.humidity * 100)
-                let pressure = Int(current.pressure.value)
-                let visibility = Int(current.visibility.value / 1000)
-                let windSpeed = Int(current.wind.speed.value)
-                let windDir = current.wind.direction.description
-                
-                return """
-                📍 \(locationName.uppercased()) - ŞİMDİ 🌡
-                ───────────────────────────
-                🌤 Durum: \(current.condition.description)
-                🌡 Sıcaklık: \(temp)°C (Hissedilen: \(feels)°C)
-                ───────────────────────────
-                💧 Nem: %\(humidity)         💨 Rüzgar: \(windSpeed) km/s (\(windDir))
-                ☀️ UV İndeksi: \(current.uvIndex.value)  👁 Görüş: \(visibility) km
-                ⏲ Basınç: \(pressure) hPa
-                ───────────────────────────
-                [WeatherDNA_WIDGET]
-                *(WeatherDNA Engine v14.10)*
-                """
+            let current = weather.currentWeather
+            let daily = weather.dailyForecast.first
+            
+            var forecast = "📍 \(locationName.uppercased()) - BUGÜN 🌦\n"
+            forecast += "───────────────────────────\n"
+            forecast += "🌤 Durum: \(current.condition.description)\n"
+            forecast += "🌡 Sıcaklık: \(Int(current.temperature.value))°C | Hissedilen: \(Int(current.apparentTemperature.value))°C\n"
+            if let low = daily?.lowTemperature.value, let high = daily?.highTemperature.value {
+                forecast += "📈 En Yüksek: \(Int(high))°C | 📉 En Düşük: \(Int(low))°C\n"
+            }
+            forecast += "───────────────────────────\n"
+            forecast += "💧 Nem: %\(Int(current.humidity * 100)) | 🌬 Rüzgar: \(Int(current.wind.speed.value)) km/s\n"
+            forecast += "🌪 Hamle: \(Int(current.wind.gust?.value ?? 0)) km/s | 🧭 Yön: \(current.wind.compassDirection.description)\n"
+            forecast += "☀️ UV İndeksi: \(current.uvIndex.value) (\(current.uvIndex.category.description))\n"
+            forecast += "👁 Görüş: \(Int(current.visibility.value / 1000)) km | ⏲ Basınç: \(Int(current.pressure.value)) hPa\n"
+            if let rise = daily?.sun.sunrise, let set = daily?.sun.sunset {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "HH:mm"
+                forecast += "🌅 Gün Doğumu: \(formatter.string(from: rise)) | 🌇 Gün Batımı: \(formatter.string(from: set))\n"
+            }
+            forecast += "📉 Çiy Noktası: \(Int(current.dewPoint.value))°C | 🌧 Yağış: %\(Int((daily?.precipitationChance ?? 0) * 100))\n"
+            forecast += "───────────────────────────\n"
+            forecast += "[WeatherDNA_WIDGET]\n"
+            forecast += "*(WeatherDNA Engine v14.11 - Premium Data)*"
+            
+            return forecast
                 
             } catch {
                 AgentLogger.logAudit(level: .error, agent: "WeatherTool", message: "WeatherKit Failure: \(error.localizedDescription)")
@@ -200,5 +204,60 @@ public struct TimerTool: AgentTool {
         }
         
         return "\(seconds) saniyelik zamanlayıcı ayarlandı."
+    }
+}
+
+public struct SystemInfoTool: AgentTool {
+    public let name = "get_system_info"
+    public let summary = "Real-time macOS CPU/RAM telemetry."
+    public let description = "Retrieve current system resource usage (CPU Load, Application Memory, Active Threads). Parameters: none."
+    public let ubid = 54
+    
+    public init() {}
+    
+    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+        var stats = "💻 SİSTEM DURUMU\n───────────────────────────\n"
+        
+        // RAM Info
+        var hostSize = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride)
+        var vmStats = vm_statistics64()
+        let hostPort = mach_host_self()
+        let result = withUnsafeMutablePointer(to: &vmStats) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(hostSize)) {
+                host_statistics64(hostPort, HOST_VM_INFO64, $0, &hostSize)
+            }
+        }
+        
+        if result == KERN_SUCCESS {
+            let pageSize = UInt64(getpagesize())
+            let active = UInt64(vmStats.active_count) * pageSize / (1024 * 1024 * 1024)
+            let free = UInt64(vmStats.free_count) * pageSize / (1024 * 1024 * 1024)
+            stats += "🧠 RAM: \(active)GB Kullanımda | \(free)GB Boş\n"
+        }
+        
+        // Logical Cores
+        let cores = ProcessInfo.processInfo.activeProcessorCount
+        stats += "⚙️ İşlemci: \(cores) Aktif Çekirdek\n"
+        stats += "───────────────────────────\n[SystemDNA_WIDGET]\n"
+        
+        return stats
+    }
+}
+
+public struct SystemDateTool: AgentTool {
+    public let name = "get_system_date"
+    public let summary = "Precise system wall-clock time."
+    public let description = "Current date, time, and timezone. Parameters: none."
+    public let ubid = 55
+    
+    public init() {}
+    
+    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "tr_TR")
+        formatter.dateFormat = "EEEE, d MMMM yyyy HH:mm"
+        let dateString = formatter.string(from: Date())
+        
+        return "📅 Bugün: \(dateString)"
     }
 }
