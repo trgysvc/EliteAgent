@@ -14,80 +14,67 @@ public struct ToolStatus: Codable, Sendable {
     }
 }
 
-public final class ToolRegistry {
+public actor ToolRegistry {
     public static let shared = ToolRegistry()
     
-    private let queue = DispatchQueue(label: "com.eliteagent.toolregistry", attributes: .concurrent)
     private var tools: [String: any AgentTool] = [:]
     private var ubidMap: [Int: any AgentTool] = [:] // v13.8: Binary ID Map
     private var statusMap: [String: ToolStatus] = [:]
     
-    public init() {}
+    private init() {}
     
     public func register(_ tool: any AgentTool, isPlugin: Bool = false) {
-        queue.async(flags: .barrier) {
-            self.tools[tool.name] = tool
-            self.ubidMap[tool.ubid] = tool
-            if self.statusMap[tool.name] == nil {
-                self.statusMap[tool.name] = ToolStatus()
-            }
-            if isPlugin {
-                AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🧬 Dynamic Plugin Registered: \(tool.name) (UBID: \(tool.ubid))")
-            }
+        self.tools[tool.name] = tool
+        self.ubidMap[tool.ubid] = tool
+        if self.statusMap[tool.name] == nil {
+            self.statusMap[tool.name] = ToolStatus()
+        }
+        if isPlugin {
+            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🧬 Dynamic Plugin Registered: \(tool.name) (UBID: \(tool.ubid))")
         }
     }
     
     public func getToolStatus(named name: String) -> ToolStatus {
-        queue.sync {
-            return statusMap[name] ?? ToolStatus()
-        }
+        return statusMap[name] ?? ToolStatus()
     }
     
-    public func updateStatus(named name: String, block: @escaping @Sendable (inout ToolStatus) -> Void) {
-        queue.async(flags: .barrier) {
-            var status = self.statusMap[name] ?? ToolStatus()
-            block(&status)
-            self.statusMap[name] = status
-        }
+    public func updateStatus(named name: String, block: @Sendable (inout ToolStatus) -> Void) {
+        var status = self.statusMap[name] ?? ToolStatus()
+        block(&status)
+        self.statusMap[name] = status
     }
     
     public func getTool(named name: String) -> (any AgentTool)? {
-        queue.sync {
-            return tools[name]
-        }
+        return tools[name]
     }
     
     public func getTool(ubid: Int) -> (any AgentTool)? {
-        queue.sync {
-            return ubidMap[ubid]
-        }
+        return ubidMap[ubid]
     }
     
     public func getToolIndices() -> [Int] {
-        queue.sync {
-            return Array(ubidMap.keys)
-        }
+        return Array(ubidMap.keys)
     }
     
     public func listTools() -> [any AgentTool] {
-        queue.sync {
-            return Array(tools.values)
-        }
+        return Array(tools.values)
     }
     
     public func getHealthyTools() -> [any AgentTool] {
-        queue.sync {
-            return tools.values.filter { tool in
-                statusMap[tool.name]?.isAvailable ?? true
-            }
+        return tools.values.filter { tool in
+            statusMap[tool.name]?.isAvailable ?? true
         }
     }
     
     public func execute(toolCall: ToolCall, session: Session) async throws -> String {
         let tool: any AgentTool
         
-        // v13.8: Direct UBID Lookup (UNO Pure)
-        if let ubid = toolCall.ubid, let t = getTool(ubid: ubid) {
+        // v13.8: Binary Protocol Routing
+        if let ubid = toolCall.ubid {
+            guard let t = ubidMap[ubid] else {
+                AgentLogger.logError("[Registry] CRITICAL: Tool not found for UBID: \(ubid). This is a model hallucination.")
+                throw ToolError.executionError("Tool not found for UBID: \(ubid)")
+            }
             tool = t
         } else if let t = getTool(named: toolCall.tool) {
             tool = t
@@ -140,5 +127,3 @@ public final class ToolRegistry {
         }
     }
 }
-
-extension ToolRegistry: @unchecked Sendable {}

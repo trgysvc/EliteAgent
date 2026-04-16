@@ -374,7 +374,13 @@ public actor OrchestratorRuntime {
         var toolSubset: [any AgentTool]? = nil
         if !isEscalatedToFullTools {
             let toolNames = CategoryMapper.getTools(for: self.currentTaskCategory)
-            toolSubset = toolNames.compactMap { self.toolRegistry.getTool(named: $0) }
+            var subset: [any AgentTool] = []
+            for name in toolNames {
+                if let tool = await self.toolRegistry.getTool(named: name) {
+                    subset.append(tool)
+                }
+            }
+            toolSubset = subset
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🎯 [FILTERED MODE] Category: \(self.currentTaskCategory) | Tools: \(toolNames.joined(separator: ", "))")
         } else {
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [FULL TOOLS MODE] Escalated due to complexity or errors.")
@@ -467,40 +473,52 @@ public actor OrchestratorRuntime {
                 }
             }
 
-            let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
-            self.currentTurnObservations.append(result)
-            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
-            
-            // v22.0: Deep Continuity - Sync finding to the MemoryAgent (RAG)
-            Task {
-                await self.memory.storeExperience(task: "Turn-based data find", solution: result)
-            }
-            
-            // v21.1: Automatic Narrative Authority Trigger
-            if result.contains("_WIDGET]") {
-                await session.markWidgetAsRendered()
-            }
-            
-            // v20.6: Direct Reflection - The System reflects data immediately to UI
-            // v21.2: Display Isolation - Only show the Widget if present, hide analytical text.
-            if !result.isEmpty {
-                var displayContent = result.replacingOccurrences(of: "Observation:", with: "", options: .caseInsensitive)
+            do {
+                let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
+                self.currentTurnObservations.append(result)
+                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
                 
-                // If the result contains a widget tag, extract it and discard the 'Brain-only' text report for the UI
-                if displayContent.contains("_WIDGET]") {
-                    let patterns = ["\\[SystemDNA_WIDGET\\].*", "\\[WeatherDNA_WIDGET\\].*", "\\[MusicDNA_WIDGET\\].*"]
-                    for pattern in patterns {
-                        if let range = displayContent.range(of: pattern, options: .regularExpression) {
-                            displayContent = String(displayContent[range])
-                            break
-                        }
-                    }
+                // v22.0: Deep Continuity - Sync finding to the MemoryAgent (RAG)
+                Task {
+                    await self.memory.storeExperience(task: "Turn-based data find", solution: result)
                 }
                 
-                self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent.trimmingCharacters(in: .whitespacesAndNewlines)))
+                // v21.1: Automatic Narrative Authority Trigger
+                if result.contains("_WIDGET]") {
+                    await session.markWidgetAsRendered()
+                }
+                
+                // v20.6: Direct Reflection - The System reflects data immediately to UI
+                // v21.2: Display Isolation - Only show the Widget if present, hide analytical text.
+                if !result.isEmpty {
+                    var displayContent = result.replacingOccurrences(of: "Observation:", with: "", options: .caseInsensitive)
+                    
+                    // If the result contains a widget tag, extract it and discard the 'Brain-only' text report for the UI
+                    if displayContent.contains("_WIDGET]") {
+                        let patterns = ["\\[SystemDNA_WIDGET\\].*", "\\[WeatherDNA_WIDGET\\].*", "\\[MusicDNA_WIDGET\\].*"]
+                        for pattern in patterns {
+                            if let range = displayContent.range(of: pattern, options: .regularExpression) {
+                                displayContent = String(displayContent[range])
+                                break
+                            }
+                        }
+                    }
+                    
+                    self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent.trimmingCharacters(in: .whitespacesAndNewlines)))
+                }
+                
+                await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
+            } catch let error as ToolError {
+                // v10.5.6: Specific diagnostic for missing tools (UBID hallucination)
+                if case .toolNotFound(let identifier) = error {
+                    let diagnostic = "Observation: HATA! Araç bulunamadı (Identifier: \(identifier)). Lütfen UBID listesini tekrar kontrol et ve SADECE mevcut UBID'leri kullan. OS Version/Bilgi için UBID 58, Hava durumu için UBID 81 kullanmalısın."
+                    await context.addMessage(Message(role: "user", content: diagnostic))
+                    AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🛠 [UBID DIAGNOSTIC] Hallucination detected for \(identifier). Sent correction.")
+                } else {
+                    await context.addMessage(Message(role: "user", content: "Observation: HATA! \(error.localizedDescription)"))
+                }
+                return (true, nil)
             }
-            
-            await context.addMessage(Message(role: "user", content: "Observation: \(result)"))
             if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) { self.sourcesAnalyzed += 1 }
         }
         

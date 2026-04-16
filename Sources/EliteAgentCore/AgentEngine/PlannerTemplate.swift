@@ -41,7 +41,7 @@ public struct PlannerTemplate: Sendable {
         3. **İcra**: <final> bloğu içine SADECE aşağıdaki formatta komut koy:
            CALL([UBID]) WITH { "param": "değer" }
            
-           ÖRNEK: <final> CALL([11]) WITH { "command": "ls -la" } </final>
+           ÖRNEK: <final> CALL([32]) WITH { "command": "ls -la" } </final>
            
         4. **Faz İzolasyonu**: Araç çalıştırdığın turda asla kullanıcıya doğal dilde cevap verme.
         5. **DİL KİLİDİ (MUTLAK)**: Tüm yanıtların YALNIZCA TÜRKÇE olmalıdır. Çince veya başka bir dil KESİNLİKLE YASAKTIR.
@@ -53,7 +53,7 @@ public struct PlannerTemplate: Sendable {
         2. **Doğrudan Araç Kullanımı**: Dosya oluşturmak için shell `echo` yerine DAİMA `write_file` (UBID 34) aracını kullan.
         3. **Araç Seçimi (RESEARCH)**: İnternette araştırma yapmak veya bir sayfa içeriğini çekmek için KESİNLİKLE `shell_exec` veya `osascript` (AppleScript) kullanma. Bu BİR HATTIR. Daima `web_search` (UBID 45) veya `web_fetch` (UBID 46) kullan.
         4. **Donanım ve Sistem Bilgisi Sınıflandırması (SEMANTİK AYRIM)**: 
-           - **SİSTEM KİMLİĞİ**: İşletim sistemi sürümü (OS version), Build numarası, Cihaz adı gibi statik bilgiler istendiğinde `get_system_info` (UBID 16) aracını kullan.
+           - **SİSTEM KİMLİĞİ**: İşletim sistemi sürümü (OS version), Build numarası, Cihaz adı gibi statik bilgiler istendiğinde `get_system_info` (UBID 58) aracını kullan.
            - **CANLI PERFORMANS**: Sadece işlemci yükü (CPU load), bellek kullanımı (RAM %) veya sıcaklık gibi dinamik veriler istendiğinde `get_system_telemetry` (UBID 36) kullan.
            - KRİTİK: Kullanıcı sadece sürüm sorduğunda canlı yük widget'ını (UBID 36) KESİNLİKLE KULLANMA.
         5. **Kademeli Hafıza ve Arşiv Memuru (TIERED CONTEXT)**: 
@@ -68,7 +68,7 @@ public struct PlannerTemplate: Sendable {
         7. **Sıralı İcra (Sequential Atomicity)**: AYNI YANIT İÇİNDE ASLA BİRDEN FAZLA YAZMA/OKUMA ARACI KULLANMA. 
         
         ### 🌦 HAVA DURUMU KURALI (WEATHER DNA):
-        - Hava durumu sorgularında (şimdi, yarın veya belirli bir tarih) DAİMA `get_weather` (UBID 52) aracını kullan.
+        - Hava durumu sorgularında (şimdi, yarın veya belirli bir tarih) DAİMA `get_weather` (UBID 81) aracını kullan.
         - `day` parametresine kullanıcının belirttiği tarihi (örn: "13 nisan", "pazartesi") olduğu gibi aktar.
         - Çıktıyı kullanıcıya sunarken aracın döndürdüğü zengin dashboard formatını (widget görünümü) KESİNLİKLE BOZMA, ÖZETLEME VE TÜRKÇELEŞTİRME. Dashboard verisini aynen (raw) yansıt.
         

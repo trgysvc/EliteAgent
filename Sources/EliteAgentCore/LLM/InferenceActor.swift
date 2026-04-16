@@ -49,9 +49,9 @@ public actor InferenceActor {
         self.sharedBuffer = MetalBufferWrapper(buffer)
         
         // v13.9: Official MLX Unified Memory Optimization (PRD v17.4)
-        // Set GPU cache limit to 70% of physical memory for zero-copy inference
+        // Set GPU cache limit to 55% of physical memory for zero-copy inference
         let memoryInfo = ProcessInfo.processInfo.physicalMemory
-        let cacheLimit = Int(Double(memoryInfo) * 0.7)
+        let cacheLimit = Int(Double(memoryInfo) * 0.55)
         MLX.Memory.cacheLimit = cacheLimit
         
         AgentLogger.logInfo("[MLX-Opt] Unified Memory GPU Cache set to \(cacheLimit / 1024 / 1024) MB")
@@ -71,8 +71,11 @@ public actor InferenceActor {
         let activeProvider = await ModelStateManager.shared.activeProvider
         AgentLogger.logAudit(level: .info, agent: "UniversalInference", message: "Inferring via \(activeProvider)")
         
-        // Update history before inference
-        self.conversationHistory.append(Message(role: "user", content: prompt))
+        // v10.5.6: Only update local history if NOT using a cloud provider 
+        // to avoid double-appending in cases where Orchestrator handles history.
+        // Actually, Orchestrator always passes the full [Message] array, 
+        // so we should treat our local 'conversationHistory' as the *current* state.
+        self.conversationHistory = messages
         
         let vaultURL = PathConfiguration.shared.vaultURL
         
@@ -313,6 +316,10 @@ public actor InferenceActor {
                     // Update internal history for future consistency
                     self.conversationHistory = messages
                     self.conversationHistory.append(Message(role: "assistant", content: fullContent))
+                    
+                    // v10.5.6: Aggressive Memory Recovery
+                    self.clearCache()
+                    
                     continuation.finish()
             }
         }
@@ -330,8 +337,9 @@ public actor InferenceActor {
         }
         
         
-        // v13.7: Initialize Grammar Processor with Tool Discovery
-        let toolUBIDs = ToolRegistry.shared.listTools().map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
+        // v13.7: Initialize Grammar Processor with Tool Discovery (v16.2 Modernized)
+        let tools = await ToolRegistry.shared.listTools()
+        let toolUBIDs = tools.map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
         
         // v14.1: Retrieve Structural Binary Signature Tokens & Alphanumeric for Qwen 2.5
         let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\"

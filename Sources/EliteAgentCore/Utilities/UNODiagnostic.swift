@@ -13,7 +13,7 @@ public struct UNODiagnostic {
     }
     
     public static func generateReport() async -> Report {
-        let tools = ToolRegistry.shared.listTools()
+        let tools = await ToolRegistry.shared.listTools()
         let plugins = PluginManager.shared.loadedPlugins
         
         // v14.0: Check if model is actually ready in VRAM

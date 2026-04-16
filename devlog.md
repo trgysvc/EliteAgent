@@ -1244,3 +1244,25 @@ EliteAgent artık ses dosyalarını sadece bir "dosya" olarak değil, derinlemes
 **Files modified:** Sources/EliteAgentCore/ToolEngine/Tools/ExtraUtilityTools.swift, Sources/EliteAgentCore/ToolEngine/ToolIDs.swift, EliteAgentTools.md
 **Decision made:** Transitioned utility tools from a legacy/corrupted distributed actor pattern back to a stable struct-based AgentTool model to match the confirmed project standard and resolve compilation scope errors.
 **Next:** Monitor runtime execution of restored tools in the new toolchain environment.
+### [2026-04-17] — Repository Synchronization & Git LFS Integration
+**What changed:** Unified the local workspace with GitHub by installing and initializing Git LFS. Migrated the 105MB metallib file and large scratch kernels into LFS storage.
+**Files modified:** .gitattributes, (Rewritten History)
+**Decision made:** Enforced Git LFS to bypass GitHub's 100MB file limit while strictly following the user's "no file reduction" requirement.
+**Next:** Monitor LFS usage and confirm synchronization in future commits.
+
+### [2026-04-16] — EliteAgent Diagnostic & Memory Optimization
+**What changed:** 
+- Synchronized hardcoded UBIDs in `PlannerTemplate.swift` with the master registry (System Info: 58, Weather: 81).
+- Optimized MLX memory usage by reducing GPU cache limit to 55% and adding automatic cache clearing post-inference.
+- Fixed redundant context history accumulation in `InferenceActor` to prevent 10GB+ RAM spikes.
+- Modernized `ToolRegistry` into a Swift 6 Actor for thread-safe state management.
+- Added diagnostic guardrails in the Orchestrator to intercept and correct UBID hallucinations.
+**Files modified:** 
+- Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift
+- Sources/EliteAgentCore/LLM/InferenceActor.swift
+- Sources/EliteAgentCore/ToolEngine/ToolRegistry.swift
+- Sources/EliteAgentCore/AgentEngine/Orchestrator.swift
+- Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift
+- Sources/EliteAgentCore/Utilities/UNODiagnostic.swift
+**Decision made:** Converted ToolRegistry to an actor to eliminate legacy DispatchQueue barriers and ensure strict concurrency compliance.
+**Next:** Monitor for any leftover sandbox-related permission errors in shell-based tools.

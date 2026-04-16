@@ -150,86 +150,76 @@ public class Orchestrator: ObservableObject {
             self.status = .error
         }
         
-        let group = self.toolRegistry
-        
-        // Communication Tools
-        group.register(WhatsAppTool())
-        group.register(MessengerTool())
-        group.register(EmailTool())
-        
-        // Media Tools
-        group.register(MediaControllerTool())
-        group.register(MusicDNATool())
-        
-        // Research Tools
-        group.register(WebSearchToolWrapper())
-        group.register(WebFetchToolWrapper())
-        group.register(SafariAutomationTool())
-        group.register(MarkdownReportTool())
-        // NativeBrowserTool is for internal scraping
-        group.register(NativeBrowserTool())
-        
-        // System Tools (EcosystemTools Suite)
-        group.register(SystemVolumeTool())
-        group.register(BrightnessControlTool())
-        group.register(SleepControlTool())
-        group.register(SystemInfoTool())
-        group.register(SystemTelemetryTool())
-        group.register(AppDiscoveryTool())
-        group.register(ShortcutDiscoveryTool())
-        group.register(ShortcutExecutionTool())
-        
-        // Productivity Tools
-        group.register(ContactsTool())
-        group.register(CalendarTool())
-        group.register(MailTool()) // Existing Mail implementation
-        group.register(FileManagerTool())
-        group.register(ReadFileTool())
-        group.register(WriteFileTool())
-        
-        // Utility Tools
-        group.register(CalculatorTool())
-        group.register(WeatherTool())
-        group.register(SystemDateTool())
-        group.register(TimerTool())
-        
-        // Advanced Ops Tools
-        group.register(ShellTool())
-        group.register(PatchTool())
-        group.register(GitTool())
-        group.register(ImageAnalysisTool())
-        group.register(MemoryTool(agent: self.memory))
-        
-        // v10.0: Architecture Evolution Tools
-        group.register(ChicagoVisionTool())
-        group.register(AccessibilityTool())
-        group.register(XcodeTool()) // v16.0: Autonomous App Builder Engine
-        
-        let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
-            Task { @MainActor [weak self] in
-                self?.steps.append(step)
+        Task {
+            // Communication Tools
+            await group.register(WhatsAppTool())
+            await group.register(MessengerTool())
+            await group.register(EmailTool())
+            
+            // Media Tools
+            await group.register(MediaControllerTool())
+            await group.register(MusicDNATool())
+            
+            // Research Tools
+            await group.register(WebSearchToolWrapper())
+            await group.register(WebFetchToolWrapper())
+            await group.register(SafariAutomationTool())
+            await group.register(MarkdownReportTool())
+            // NativeBrowserTool is for internal scraping
+            await group.register(NativeBrowserTool())
+            
+            // System Tools (EcosystemTools Suite)
+            await group.register(SystemVolumeTool())
+            await group.register(BrightnessControlTool())
+            await group.register(SleepControlTool())
+            await group.register(SystemInfoTool())
+            await group.register(SystemTelemetryTool())
+            await group.register(AppDiscoveryTool())
+            await group.register(ShortcutDiscoveryTool())
+            await group.register(ShortcutExecutionTool())
+            
+            // Productivity Tools
+            await group.register(ContactsTool())
+            await group.register(CalendarTool())
+            await group.register(MailTool()) // Existing Mail implementation
+            await group.register(FileManagerTool())
+            await group.register(ReadFileTool())
+            await group.register(WriteFileTool())
+            
+            // Utility Tools
+            await group.register(CalculatorTool())
+            await group.register(WeatherTool())
+            await group.register(SystemDateTool())
+            await group.register(TimerTool())
+            
+            // Advanced Ops Tools
+            await group.register(ShellTool())
+            await group.register(PatchTool())
+            await group.register(GitTool())
+            await group.register(ImageAnalysisTool())
+            await group.register(MemoryTool(agent: self.memory))
+            
+            // v10.0: Architecture Evolution Tools
+            await group.register(ChicagoVisionTool())
+            await group.register(AccessibilityTool())
+            await group.register(XcodeTool()) // v16.0: Autonomous App Builder Engine
+            
+            if let safeProvider = self.cloudProvider, let vault = self.vaultManager {
+                let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
+                    return OrchestratorRuntime(
+                        planner: planner, 
+                        memory: memory, 
+                        cloudProvider: safeProvider, 
+                        localProvider: local, 
+                        toolRegistry: ToolRegistry.shared, 
+                        bus: busInstance, 
+                        vaultManager: vault
+                    )
+                }
+                await self.toolRegistry.register(subagentTool)
+            } else {
+                AgentLogger.logWarn("[ORCHESTRATOR] CloudProvider or Vault not available. Sub-processes disabled.")
             }
-        }
-        
-        let local = self.localProvider
-        let memory = self.memory
-        let busInstance = self.bus
-        
-        if let safeProvider = self.cloudProvider, let vault = self.vaultManager {
-            let subagentTool = SubagentTool(planner: self.planner, cloudProvider: safeProvider, onStepUpdate: handler) { planner, provider in
-                return OrchestratorRuntime(
-                    planner: planner, 
-                    memory: memory, 
-                    cloudProvider: safeProvider, 
-                    localProvider: local, 
-                    toolRegistry: ToolRegistry.shared, 
-                    bus: busInstance, 
-                    vaultManager: vault
-                )
-            }
-            self.toolRegistry.register(subagentTool)
-        } else {
-            AgentLogger.logWarn("[ORCHESTRATOR] CloudProvider or Vault not available. Sub-processes disabled.")
         }
         
         Task { await loadHistory() }
