@@ -4,6 +4,13 @@ import MLXLLM
 import MLXLMCommon
 import Tokenizers
 import Metal
+import os
+
+#if PROFILE
+// v40.0: Basso Continuo Hardware Profiling
+fileprivate let inferenceLog = OSLog(subsystem: "app.eliteagent.titan", category: "InferencePerformance")
+fileprivate let signposter = OSSignposter(logHandle: inferenceLog)
+#endif
 
 /// The Universal Brain of EliteAgent. 
 /// Orchestrates local, cloud, and bridge providers via a single entry point.
@@ -260,6 +267,12 @@ public actor InferenceActor {
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "🧠 Full Formatted Prompt: \nBEGIN PROMPT\n\(promptToCapture)\nEND PROMPT")
                 let maxTokensToCapture = maxTokens
                 
+                // v40.0: Basso Continuo - Begin Prefill Signpost
+                #if PROFILE
+                let signpostID = signposter.makeSignpostID()
+                let state = signposter.beginInterval("Prefill", id: signpostID)
+                #endif
+                
                     var fullContent = ""
                     let stream: AsyncStream<String> = AsyncStream(String.self) { innerContinuation in
                         Task {
@@ -272,6 +285,10 @@ public actor InferenceActor {
                                         continuation: innerContinuation,
                                         useSafeMode: useSafeMode
                                     )
+                                    // v40.0: End Prefill / Start Decode
+                                    #if PROFILE
+                                    signposter.endInterval("Prefill", state)
+                                    #endif
                                 }
                             } catch let error as EngineError {
                                 innerContinuation.yield("⚠️ Engine Error: \(error.localizedDescription)")

@@ -23,7 +23,8 @@ public final class LogicGate: Sendable {
         "thermalmonitord": "Use 'ProcessInfo.processInfo.thermalState' (Swift) instead of spying on PID 404.",
         "host_statistics64": "Use 'ProcessInfo.processInfo.physicalMemory' for memory stats.",
         "top": "Use 'ProcessInfo.processInfo.processorCount' for basic CPU info.",
-        "curl | sh": "Piping remote scripts directly is restricted. Review source first."
+        "curl | sh": "Piping remote scripts directly is restricted. Review source first.",
+        "afplay": "Audio playback/analysis via shell is restricted. Use the 'music_dna' tool for AI-powered audio intelligence."
     ]
     
     private let allowedResearchDomains = [

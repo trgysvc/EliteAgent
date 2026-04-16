@@ -11,12 +11,13 @@ let package = Package(
         .library(name: "EliteAgentCore", type: .dynamic, targets: ["EliteAgentCore"]),
         .executable(name: "EliteAgentXPC", targets: ["EliteAgentXPC"]),
         .executable(name: "elite", targets: ["elite"]),
+        .executable(name: "uma-bench", targets: ["uma-bench"]),
     ],
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.19.0"),
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.31.3")),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
-        .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main")
+        .package(path: "../audiointelligence")
     ],
     targets: [
         .executableTarget(
@@ -44,7 +45,8 @@ let package = Package(
             ],
             path: "Sources/EliteAgentCore",
             resources: [
-                .process("UI/NeuralSight.metal")
+                .process("UI/NeuralSight.metal"),
+                .process("Resources/default.metallib")
             ],
             linkerSettings: []
         ),
@@ -70,6 +72,14 @@ let package = Package(
             name: "EliteAgentTests",
             dependencies: ["EliteAgentCore"],
             path: "Tests/EliteAgentTests"
+        ),
+        .executableTarget(
+            name: "uma-bench",
+            dependencies: [
+                "EliteAgentCore",
+                .product(name: "MLX", package: "mlx-swift")
+            ],
+            path: "Sources/uma-bench"
         )
     ]
 )

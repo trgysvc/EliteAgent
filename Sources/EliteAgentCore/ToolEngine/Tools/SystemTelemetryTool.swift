@@ -26,7 +26,10 @@ public struct SystemTelemetryTool: AgentTool {
         }
         
         // 2. Real Memory Usage via Mach Host API (no shell required)
-        let memStats = await HardwareMonitor.shared.getMemoryStats()
+        // v41.0: Offload to (.background) to protect P-Core availability
+        let memStats = await Task(priority: .background) {
+            await HardwareMonitor.shared.getMemoryStats()
+        }.value
         let totalGB  = memStats.total
         let usedGB   = memStats.used
         let freeGB   = max(0, totalGB - usedGB)

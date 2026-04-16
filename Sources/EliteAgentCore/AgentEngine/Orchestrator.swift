@@ -500,7 +500,7 @@ public class Orchestrator: ObservableObject {
             }
             
             let intent = classifyIntent(prompt: prompt)
-            let complexity: Int = (intent == .codeGeneration || intent == .research) ? 4 : 3
+            let complexity: Int = (intent == .codeGeneration || intent == .research || intent == .audioAnalysis) ? 4 : 3
             
             let session = Session(
                 workspaceURL: workspaceURL,
@@ -664,7 +664,7 @@ public class Orchestrator: ObservableObject {
 
 extension Orchestrator: ProjectObserverDelegate {
     private static func extractFilePath(from prompt: String) -> String? {
-        let pattern = #"(/[\w\.\-/ ]+\.(pdf|txt|md|swift|docx|json))|("[^"]+\.(pdf|txt|md|swift|docx|json)")"#
+        let pattern = #"(/[\w\.\-/ ]+\.(pdf|txt|md|swift|docx|json|mp3|m4a|wav|flac|aac))|("[^"]+\.(pdf|txt|md|swift|docx|json|mp3|m4a|wav|flac|aac)")"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
         let nsPrompt = prompt as NSString
         let results = regex.matches(in: prompt, options: [], range: NSRange(location: 0, length: nsPrompt.length))

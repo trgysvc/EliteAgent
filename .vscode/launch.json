@@ -59,6 +59,26 @@
             "target": "elite",
             "configuration": "release",
             "preLaunchTask": "swift: Build Release elite"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Debug uma-bench",
+            "target": "uma-bench",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug uma-bench"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Release uma-bench",
+            "target": "uma-bench",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release uma-bench"
         }
     ]
 }

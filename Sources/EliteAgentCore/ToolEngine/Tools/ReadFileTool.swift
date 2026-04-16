@@ -36,10 +36,14 @@ public struct ReadFileTool: AgentTool, Sendable {
             throw NSError(domain: "ReadFileTool", code: 2, userInfo: [NSLocalizedDescriptionKey: "Path is outside allowed boundaries (Home or Workspace)"])
         }
         
-        let ext = fileURL.pathExtension.lowercased()
-        
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
             throw ToolError.executionError("File not found: \(rawPath)")
+        }
+        
+        let ext = fileURL.pathExtension.lowercased()
+        let audioExtensions = ["mp3", "m4a", "wav", "flac", "aac"]
+        if audioExtensions.contains(ext) {
+            return "AUDIO_FILE_DETECTED: This is a binary audio file. You CANNOT read its content as text. USE 'music_dna' tool with path: '\(fileURL.path)' for technical analysis."
         }
         
         switch ext {

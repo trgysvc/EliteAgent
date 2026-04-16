@@ -7,20 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AE69BFC42F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFC52F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFC62F8FD1520080DB7D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
-		AE69BFC72F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFC82F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFC92F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFCA2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFCB2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFCC2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFCD2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFCE2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFCF2F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFD02F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		AE69BFD12F8FD1520080DB7D /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		AE1DE7A32F902A9B005E6190 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
+		AE1DE7A42F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
+		AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
 		AE69BFD22F8FD1520080DB7D /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
 		AE69BFD32F8FD1520080DB7D /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
 		AE69BFD42F8FD1520080DB7D /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
@@ -113,9 +102,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AE69BFC62F8FD1520080DB7D /* Sparkle in Frameworks */,
-				AE69BFC42F8FD1520080DB7D /* (null) in Frameworks */,
-				AE69BFC52F8FD1520080DB7D /* (null) in Frameworks */,
+				AE1DE7A42F902A9B005E6190 /* AudioIntelligence in Frameworks */,
+				AE1DE7A32F902A9B005E6190 /* Sparkle in Frameworks */,
 				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -124,6 +112,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */,
 				AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */,
 				AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */,
 				AEB132EF2F79F6D900626F70 /* MLXVLM in Frameworks */,
@@ -145,28 +134,17 @@
 			files = (
 				AE69BFD72F8FD1520080DB7D /* MLXOptimizers in Frameworks */,
 				AE7BD8DD2F895B6D00FDE202 /* Numerics in Frameworks */,
-				AE69BFC72F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFD82F8FD1520080DB7D /* MLXRandom in Frameworks */,
 				AE7BBEDA2F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */,
-				AE69BFC82F8FD1520080DB7D /* (null) in Frameworks */,
-				AE69BFC92F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFD32F8FD1520080DB7D /* MLXFFT in Frameworks */,
 				AE69BFD42F8FD1520080DB7D /* MLXFast in Frameworks */,
-				AE69BFCA2F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFD52F8FD1520080DB7D /* MLXLinalg in Frameworks */,
 				AE69BFD22F8FD1520080DB7D /* MLX in Frameworks */,
-				AE69BFCB2F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFDB2F8FD1520080DB7D /* MLXLMCommon in Frameworks */,
 				AE69BFDC2F8FD1520080DB7D /* MLXVLM in Frameworks */,
-				AE69BFCC2F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFD62F8FD1520080DB7D /* MLXNN in Frameworks */,
-				AE69BFCD2F8FD1520080DB7D /* (null) in Frameworks */,
-				AE69BFCE2F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFD92F8FD1520080DB7D /* MLXEmbedders in Frameworks */,
-				AE69BFCF2F8FD1520080DB7D /* (null) in Frameworks */,
-				AE69BFD02F8FD1520080DB7D /* (null) in Frameworks */,
 				AE69BFDA2F8FD1520080DB7D /* MLXLLM in Frameworks */,
-				AE69BFD12F8FD1520080DB7D /* (null) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,6 +203,7 @@
 			name = EliteAgent;
 			packageProductDependencies = (
 				AEEB40612F785F210082B0CE /* Sparkle */,
+				AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
 			);
 			productName = EliteAgent;
 			productReference = AE747A182F70602B004732A5 /* EliteAgent.app */;
@@ -258,6 +237,7 @@
 				AEB132EA2F79F6D900626F70 /* MLXLLM */,
 				AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
 				AEB132EE2F79F6D900626F70 /* MLXVLM */,
+				AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
 			);
 			productName = EliteAgentCore;
 			productReference = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */;
@@ -332,6 +312,7 @@
 				AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */,
+				AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE747A192F70602B004732A5 /* Products */;
@@ -757,6 +738,14 @@
 				minimumVersion = 1.0.2;
 			};
 		};
+		AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/trgysvc/audiointelligence.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
@@ -788,6 +777,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
 			productName = Numerics;
+		};
+		AEAB00012F8FD1520080DB7D /* AudioIntelligence */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */;
+			productName = AudioIntelligence;
 		};
 		AEB132D92F79F4FC00626F70 /* MLX */ = {
 			isa = XCSwiftPackageProductDependency;

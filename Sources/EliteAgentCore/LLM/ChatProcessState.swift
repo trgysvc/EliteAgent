@@ -58,6 +58,16 @@ public final class ChatProcessViewModel: ObservableObject {
         }
         
         processTask = Task {
+            // 60s Safety Timeout for the entire upload/processing cycle
+            let timeoutTask = Task {
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
+                if !Task.isCancelled {
+                    self.cancel(reason: "İşlem zaman aşımına uğradı (60s). Lütfen tekrar deneyin.")
+                }
+            }
+            
+            defer { timeoutTask.cancel() }
+            
             do {
                 // 1. Safe File Reading (mmap)
                 let _ = try await readFileSafely(from: fileURL)
@@ -76,18 +86,24 @@ public final class ChatProcessViewModel: ObservableObject {
                 // Signal completion to the UI to trigger main orchestrator task
                 onCompletion?(fileURL)
             } catch {
-                withAnimation {
-                    currentState = .failed(error: error.localizedDescription)
+                if !Task.isCancelled {
+                    withAnimation {
+                        currentState = .failed(error: error.localizedDescription)
+                    }
                 }
             }
         }
     }
     
     /// Cancels any active process and resets to idle.
-    public func cancel() {
+    public func cancel(reason: String? = nil) {
         processTask?.cancel()
         withAnimation {
-            currentState = .idle
+            if let reason = reason {
+                currentState = .failed(error: reason)
+            } else {
+                currentState = .idle
+            }
         }
     }
     

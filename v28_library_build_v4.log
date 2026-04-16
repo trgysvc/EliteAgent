@@ -1,9 +1,0 @@
-Building for debugging...
-[0/5] Write sources
-[1/5] Write swift-version--58304C5D6DBC2206.txt
-[3/7] Compiling CLIExample main.swift
-[4/7] Emitting module CLIExample
-[4/7] Write Objects.LinkFileList
-[5/7] Linking CLIExample
-[6/7] Applying CLIExample
-Build complete! (1.00s)

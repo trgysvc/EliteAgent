@@ -21,6 +21,7 @@ public struct ChatBubble: View {
                     let cleanText = message.content
                         .replacingOccurrences(of: "\\[WeatherDNA_WIDGET\\].*?\\*(WeatherDNA Engine.*?\\*)", with: "", options: .regularExpression, range: nil)
                         .replacingOccurrences(of: "\\[SystemDNA_WIDGET\\].*?\\}", with: "", options: .regularExpression, range: nil)
+                        .replacingOccurrences(of: "(?s)\\[MusicDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
                         .replacingOccurrences(of: "(?s)\\[🖥 Sistem Telemetri Raporu\\].*?─────────────────────────────", with: "", options: .regularExpression, range: nil)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     
@@ -51,6 +52,12 @@ public struct ChatBubble: View {
                             .frame(maxWidth: 400)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
+                    
+                    if isMusicDNA(message.content) {
+                        MusicDNAWidgetView(content: message.content)
+                            .frame(maxWidth: 400)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
             
             if message.role == .assistant { Spacer() }
@@ -63,5 +70,9 @@ public struct ChatBubble: View {
     
     private func isSystemDNA(_ content: String) -> Bool {
         return content.contains("[SystemDNA_WIDGET]")
+    }
+    
+    private func isMusicDNA(_ content: String) -> Bool {
+        return content.contains("[MusicDNA_WIDGET]")
     }
 }

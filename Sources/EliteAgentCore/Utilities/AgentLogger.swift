@@ -63,8 +63,8 @@ public struct AgentLogger: Sendable {
         let timestamp = isoFormatter.string(from: Date())
         let line = "[\(timestamp)] [\(level.rawValue)] [\(agent)] \(message)"
         
-        // Push to background worker
-        Task {
+        // v41.0: Push to (.utility) background worker to protect P-Core bandwidth
+        Task(priority: .utility) {
             await LogWorker.shared.write(fileName: "audit.log", content: line)
             await LogWorker.shared.write(fileName: "debug.log", content: line)
         }
@@ -87,7 +87,8 @@ public struct AgentLogger: Sendable {
         let timestamp = isoFormatter.string(from: Date())
         let line = "[\(timestamp)] [\(level.rawValue)] [\(agent)] \(message)"
         
-        Task {
+        // v41.0: Push to (.utility) background worker
+        Task(priority: .utility) {
             await LogWorker.shared.write(fileName: "security.log", content: line)
             await LogWorker.shared.write(fileName: "debug.log", content: line)
         }

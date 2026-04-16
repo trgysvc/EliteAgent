@@ -23,6 +23,13 @@ public struct TaskClassifier: Sendable {
         }
         
         if p.contains("araştır") || p.contains("search") || p.contains("find") { return .research }
+        
+        // v14.9.1: Audio Intelligence Deep Integration
+        if p.contains("müzik") || p.contains("ses") || p.contains("audio") || p.contains("music")
+            || p.contains(".mp3") || p.contains(".wav") || p.contains(".m4a") || p.contains(".flac") {
+            return .audioAnalysis
+        }
+        
         if p.contains("dosya") || p.contains("file") { return .fileProcessing }
         if p.contains("kod") || p.contains("swift") || p.contains("build") { return .codeGeneration }
         if p.contains("system") || p.contains("terminal") || p.contains("shell") { return .systemManagement }

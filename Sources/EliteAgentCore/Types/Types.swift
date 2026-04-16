@@ -70,6 +70,7 @@ public enum EliteOutputType: String, Codable, Sendable {
 public enum TaskCategory: String, Codable, Sendable, CaseIterable {
     case research
     case fileProcessing
+    case audioAnalysis
     case systemManagement
     case codeGeneration
     case dataProcessing
@@ -317,7 +318,7 @@ public struct InferenceConfig: Codable, Sendable {
             "shell_exec": true, "read_file": true, "write_file": true,
             "app_discovery": true, "system_telemetry": true, "patch_tool": true,
             "git_tool": true, "messenger": true, "calendar": true, "mail": true,
-            "safari_automation": true
+            "safari_automation": true, "music_dna": true
         ],
         isSafariAutomationEnabled: true,
         isDeepResearchEnabled: false,

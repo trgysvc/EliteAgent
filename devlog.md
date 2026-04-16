@@ -1185,3 +1185,36 @@ EliteAgent artık sadece akıllı değil, aynı zamanda loglarıyla dürüstçe 
 **Files modified:** `Package.swift`.
 **Decision made:** Enforced multi-target dependency mapping to ensure consistent MIR module visibility across Core, UI, and XPC layers.
 **Next:** User-side Xcode cache reset and final live test.
+
+### [2026-04-16] — Orchestrated Resilience (v41.0)
+**What changed:** Implemented conditional telemetry, strict QoS core steering (P-core vs E-core), and a dedicated UMA benchmarking target.
+**Files modified:** Sources/EliteAgentCore/LLM/InferenceActor.swift, Sources/EliteAgentCore/Utilities/AgentLogger.swift, Sources/EliteAgentCore/ToolEngine/Tools/SystemTelemetryTool.swift, Package.swift, Sources/elite/main.swift, Sources/uma-bench/main.swift.
+**Decision made:** Migrated profiling to #if PROFILE conditional compilation to ensure zero-overhead production builds; enforced .background QoS for all non-critical telemetry to protect M4 performance core availability.
+**Next:** Thermal stress testing to identify sustainable TPS drop-off limits.
+
+## 📅 [2026-04-16] — MusicDNATool Integration & System Hardening (v41.1)
+
+Bu oturumda, `MusicDNATool`'un EliteAgent mimarisine derin entegrasyonu tamamlandı ve ses analizi iş akışları Apple Silicon standartlarında zırhlandı.
+
+### 🚀 Ana Başlıklar
+
+#### 1. Ses Analizi Orkestrasyonu (MusicDNATool)
+- **Tool Registration**: `MusicDNATool`, `Orchestrator.init()` içerisinde açıkça (explicitly) kaydedilerek tüm ajan oturumlarında %100 erişilebilir kılındı.
+- **Intent Discovery**: `TaskClassifier` motoruna `.audioAnalysis` yeteneği eklendi. Sistem artık "müzik", "ses", "tempo" gibi niyetleri ve `.mp3`, `.wav`, `.m4a` gibi uzantıları otonom olarak tanıyor.
+- **Dynamic Complexity**: Ses analizi görevleri için `Orchestrator` seviyesinde **4. Seviye (Complexity: 4)** akıl yürütme derinliği mühürlendi.
+
+#### 2. Akıllı Yönlendirme ve Casusluk Kalkanı
+- **Steering Logic**: `ReadFileTool` güncellenerek ses dosyaları tespit edildiğinde, modelin ham metin okumaya çalışması engellendi ve doğrudan `MusicDNATool` uzmanlığına yönlendirildi.
+- **LogicGate Blacklist**: `afplay` gibi yetersiz terminal komutları kara listeye alındı. Model bu komutu kullanmaya çalıştığında, `LogicGate` devreye girerek profesyonel analiz için `MusicDNATool`'u zorunlu kılar.
+- **Regex Extraction**: `Orchestrator` üzerindeki dosya yolu yakalama mantığı ses formatlarını (`flac`, `aac`, `m4a`) kapsayacak şekilde genişletildi.
+
+#### 3. Güvenlik ve Performans (Iron Guard)
+- **UI Safety Timeout**: `ChatProcessState` içerisinde **60 saniyelik güvenlik zaman aşımı** ve iptal mekanizması kuruldu. Bu, yoğun ses işlemlerinde UI'ın kilitlenmesini engeller.
+- **Entitlements Repair**: `EliteAgent` ve `EliteAgentXPC` hedeflerine `com.apple.system-task-ports` yetkisi eklenerek kernel seviyesindeki (posix_spawn) hatalar (0x5) kalıcı olarak çözüldü.
+- **Benchmark Update**: `uma-bench` test aracındaki MLX tip uyuşmazlığı (`.float32` -> `Float.self`) giderilerek performans ölçüm hattı stabilize edildi.
+
+### 🏁 Durum: **v41.1-AUDIO-HARDENED**
+EliteAgent artık ses dosyalarını sadece bir "dosya" olarak değil, derinlemesine analiz edilmesi gereken bir "zekâ verisi" olarak görüyor ve bu süreci Apple Silicon donanımıyla %100 uyumlu otonom bir güvenlikle yönetiyor.
+
+---
+*EliteAgent Core · v41.1 · Audio Intelligence & System Resilience.*
