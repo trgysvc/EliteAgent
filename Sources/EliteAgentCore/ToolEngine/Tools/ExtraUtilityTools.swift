@@ -46,9 +46,14 @@ public struct WeatherTool: AgentTool {
             return "Üzgünüm, '\(locationName)' konumu bulunamadı."
         }
         
+        let localTz = placemarks?.first?.timeZone ?? .current
         let timeFormatter = DateFormatter()
         timeFormatter.dateStyle = .none
         timeFormatter.timeStyle = .short
+        timeFormatter.timeZone = localTz
+        
+        var localCalendar = Calendar.current
+        localCalendar.timeZone = localTz
         
         if #available(macOS 13.0, *) {
             do {
@@ -58,11 +63,13 @@ public struct WeatherTool: AgentTool {
                 if let dayText = targetDay?.lowercased() {
                     let daily = weather.dailyForecast
                     let forecast = daily.first { item in
-                        let dateString = item.date.description.lowercased()
                         let formatter = DateFormatter()
                         formatter.locale = Locale(identifier: "tr_TR")
                         formatter.dateFormat = "d MMMM"
+                        formatter.timeZone = localTz
                         let trDate = formatter.string(from: item.date).lowercased()
+                        
+                        let dateString = item.date.description.lowercased()
                         return trDate.contains(dayText) || dateString.contains(dayText)
                     }
                     
@@ -78,6 +85,17 @@ public struct WeatherTool: AgentTool {
                         tags += "\n[DUSUK] \(low)°C"
                         tags += "\n[UV] \(uv)"
                         tags += "\n[YAGIS] %\(rain)"
+                        
+                        // v24.3: Fetch representative hourly data using the location's local hour (12:00 PM)
+                        let targetDate = item.date
+                        let hourly = weather.hourlyForecast.filter { localCalendar.isDate($0.date, inSameDayAs: targetDate) }
+                        if let midDay = hourly.first(where: { localCalendar.component(.hour, from: $0.date) >= 12 }) ?? hourly.first {
+                            tags += "\n[HIS] \(Int(midDay.apparentTemperature.value))°C"
+                            tags += "\n[NEM] %\(Int(midDay.humidity * 100))"
+                            tags += "\n[RUZGAR] \(Int(midDay.wind.speed.value)) km/h"
+                            tags += "\n[PRES] \(Int(midDay.pressure.value)) hPa"
+                            tags += "\n[GORUS] \(Int(midDay.visibility.value / 1000)) km"
+                        }
                         
                         if let sunrise = item.sun.sunrise {
                             tags += "\n[DOGUM] \(timeFormatter.string(from: sunrise))"
@@ -110,8 +128,8 @@ public struct WeatherTool: AgentTool {
                 tags += "\n[PRES] \(pressure) hPa"
                 tags += "\n[GORUS] \(visibility) km"
                 
-                // Fetch daily extremes for today
-                if let today = weather.dailyForecast.first {
+                // Fetch daily extremes for today using the local calendar boundary
+                if let today = weather.dailyForecast.first(where: { localCalendar.isDateInToday($0.date) }) ?? weather.dailyForecast.first {
                     tags += "\n[YUKSEK] \(Int(today.highTemperature.value))°C"
                     tags += "\n[DUSUK] \(Int(today.lowTemperature.value))°C"
                     tags += "\n[YAGIS] %\(Int(today.precipitationChance * 100))"

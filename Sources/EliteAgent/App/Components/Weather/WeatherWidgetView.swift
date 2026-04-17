@@ -40,8 +40,6 @@ public struct WeatherWidgetView: View {
                 if s.scanString(key) != nil {
                     if let val = s.scanUpToCharacters(from: .newlines) {
                         return val.trimmingCharacters(in: .whitespaces)
-                            .replacingOccurrences(of: ":", with: "")
-                            .trimmingCharacters(in: .whitespaces)
                     }
                 }
                 // String olmayan karakterleri güvenli bir şekilde atla
