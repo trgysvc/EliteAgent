@@ -27,6 +27,7 @@ public actor OrchestratorRuntime {
     private var sourcesAnalyzed = 0
     private var currentAction = "İşleniyor..."
     private var isResearchModeActive = false
+    private var lastReflectedObservation: String? = nil // v23.1: Guard against redundant responses 
     
     private var currentState: InferenceState = .idle
     private var currentTaskCategory: TaskCategory = .other
@@ -169,8 +170,33 @@ public actor OrchestratorRuntime {
                             if let answer = finalAnswer {
                                 let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
                                 if trimmed != "TASK_DONE" && !trimmed.isEmpty {
+                                    // v24.0: Collision Guard. Enhanced semantic check.
+                                    var shouldEcho = true
+                                    if let last = lastReflectedObservation?.lowercased() {
+                                        let normalizedAnswer = trimmed.lowercased()
+                                        
+                                        // Strategy A: Shared Digits (Temperatures/Dates)
+                                        let answerDigits = normalizedAnswer.components(separatedBy: CharacterSet.decimalDigits.inverted).filter { !$0.isEmpty }
+                                        let lastDigits = last.components(separatedBy: CharacterSet.decimalDigits.inverted).filter { !$0.isEmpty }
+                                        let sharedDigits = Set(answerDigits).intersection(Set(lastDigits))
+                                        
+                                        // Strategy B: Token Overlap
+                                        let stopWords: Set<String> = ["için", "olan", "ve", "ile", "hava", "durumu", "tahmini", "sıcaklık"]
+                                        let answerTokens = Set(normalizedAnswer.components(separatedBy: .whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
+                                        let lastTokens = Set(last.components(separatedBy: .whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
+                                        let overlap = answerTokens.intersection(lastTokens)
+                                        
+                                        // If they share exact digits and a high % of tokens, it's a collision
+                                        if !sharedDigits.isEmpty || (overlap.count >= 2 && overlap.count > lastTokens.count / 2) {
+                                            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v24.0 COLLISION GUARD] Suppressing redundant narrative. Shared Digits: \(sharedDigits), Overlap: \(overlap)")
+                                            shouldEcho = false
+                                        }
+                                    }
+                                    
                                     await session.setFinalAnswer(answer) 
-                                    self.onChatMessage?(ChatMessage(role: .assistant, content: answer))
+                                    if shouldEcho {
+                                        self.onChatMessage?(ChatMessage(role: .assistant, content: answer))
+                                    }
                                 }
                             }
                             currentState = .reviewing
@@ -496,7 +522,6 @@ public actor OrchestratorRuntime {
                 if !result.isEmpty {
                     var displayContent = result.replacingOccurrences(of: "Observation:", with: "", options: .caseInsensitive)
                     
-                    // If the result contains a widget tag, extract it and discard the 'Brain-only' text report for the UI
                     if displayContent.contains("_WIDGET]") {
                         let patterns = ["\\[SystemDNA_WIDGET\\].*", "\\[WeatherDNA_WIDGET\\].*", "\\[MusicDNA_WIDGET\\].*"]
                         for pattern in patterns {
@@ -507,7 +532,8 @@ public actor OrchestratorRuntime {
                         }
                     }
                     
-                    self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent.trimmingCharacters(in: .whitespacesAndNewlines)))
+                    self.lastReflectedObservation = displayContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.onChatMessage?(ChatMessage(role: .assistant, content: self.lastReflectedObservation!))
                 }
                 
                 await context.addMessage(Message(role: "user", content: "Observation: \(result)"))

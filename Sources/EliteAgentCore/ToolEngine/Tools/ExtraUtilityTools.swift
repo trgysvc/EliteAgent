@@ -28,7 +28,7 @@ public struct CalculatorTool: AgentTool {
 public struct WeatherTool: AgentTool {
     public let name = "get_weather"
     public let summary = "Real-time weather data with native telemetry."
-    public let description = "Get weather for a location using native macOS services. Parametre: location (string)."
+    public let description = "Get weather for a location using native macOS services. Parametres: location (string), day (optional string, e.g. 'yarın', '24 nisan')."
     public let ubid: Int128 = ToolUBID.weatherReport.rawValue
     
     public init() {}
@@ -38,6 +38,7 @@ public struct WeatherTool: AgentTool {
             throw AgentToolError.missingParameter("location")
         }
         
+        let targetDay = params["day"]?.value as? String
         let geocoder = CLGeocoder()
         let placemarks = try? await geocoder.geocodeAddressString(locationName)
         
@@ -48,19 +49,45 @@ public struct WeatherTool: AgentTool {
         if #available(macOS 13.0, *) {
             do {
                 let weather = try await WeatherService.shared.weather(for: location)
+                
+                if let dayText = targetDay?.lowercased() {
+                    let daily = weather.dailyForecast
+                    // Match by localized date string or simple relative terms
+                    let forecast = daily.first { item in
+                        let dateString = item.date.description.lowercased()
+                        let formatter = DateFormatter()
+                        formatter.locale = Locale(identifier: "tr_TR")
+                        formatter.dateFormat = "d MMMM"
+                        let trDate = formatter.string(from: item.date).lowercased()
+                        
+                        return trDate.contains(dayText) || dateString.contains(dayText)
+                    }
+                    
+                    if let item = forecast {
+                        let high = Int(item.highTemperature.value)
+                        let low = Int(item.lowTemperature.value)
+                        let condition = item.condition.description
+                        return "\(locationName) için \(dayText) hava tahmini: En yüksek \(high)°C, En düşük \(low)°C, \(condition). [WeatherDNA_WIDGET]"
+                    }
+                }
+                
                 let current = weather.currentWeather
                 let temp = Int(current.temperature.value)
                 let condition = current.condition.description
                 
-                return "\(locationName) için gerçek zamanlı hava durumu: \(temp)°C, \(condition)."
+                return "\(locationName) için gerçek zamanlı hava durumu: \(temp)°C, \(condition). [WeatherDNA_WIDGET]"
             } catch {
                 AgentLogger.logAudit(level: .warn, agent: "WeatherTool", message: "WeatherKit failed. Falling back to web-based provider.")
                 
-                let urlString = "https://wttr.in/\(locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")?format=%t+%C"
+                var urlString = "https://wttr.in/\(locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")?format=%t+%C"
+                if let day = targetDay {
+                    urlString += "&date=\(day.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                }
+                
                 if let url = URL(string: urlString),
                    let (data, _) = try? await URLSession.shared.data(from: url),
                    let weatherInfo = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-                    return "\(locationName) için hava durumu (Yedek Servis): \(weatherInfo)"
+                    return "\(locationName) için \(targetDay ?? "güncel") hava durumu (Yedek Servis): \(weatherInfo) [WeatherDNA_WIDGET]"
                 }
                 
                 return "macOS sisteminden hava durumu bilgisi alınamadı: \(error.localizedDescription)"

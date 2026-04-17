@@ -47,6 +47,7 @@ public struct PlannerTemplate: Sendable {
         5. **DİL KİLİDİ (MUTLAK)**: Tüm yanıtların YALNIZCA TÜRKÇE olmalıdır. Çince veya başka bir dil KESİNLİKLE YASAKTIR.
         6. **Bitiş Sinyali (DONE)**: Görev tamamen bittiyse ve yapacak başka işin kalmadıysa SADECE `<final>DONE</final>` yaz. Motor bu sinyali alana kadar çalışmaya devam eder.
         7. **GÖZLEM KORUMASI**: Bilgi notu verirken ASLA 'Observation:' veya 'Sistem:' kelimelerini kullanma. Bunlar sisteme özeldir.
+        8. **YANSIMA KORUMASI (ECHO GUARD)**: Sistem, araç çıktılarını (Observation) kullanıcıya doğrudan yansıtır. Gözlemdeki veriyi veya widget içeriğini metin balonunda **TEKRARLAMA**. Eğer gözlem sonucu zaten cevabı veriyorsa, yalnızca `<final>DONE</final>` yaz.
         
         ### ⚠️ KRİTİK DONANIM VE OPERASYON KURALLARI (MUTLAK):
         1. **Atomik İcra**: `shell_exec` içinde asla 2'den fazla komutu `&&` ile birleştirme. Her kritik adımı ayrı bir turda çalıştır ve sonucunu gör.
@@ -69,7 +70,7 @@ public struct PlannerTemplate: Sendable {
         
         ### 🌦 HAVA DURUMU KURALI (WEATHER DNA):
         - Hava durumu sorgularında (şimdi, yarın veya belirli bir tarih) DAİMA `get_weather` (UBID 81) aracını kullan.
-        - `day` parametresine kullanıcının belirttiği tarihi (örn: "13 nisan", "pazartesi") olduğu gibi aktar.
+        - `day` parametresine kullanıcının belirttiği tarihi (örn: "24 nisan", "cumartesi") olduğu gibi aktar.
         - Çıktıyı kullanıcıya sunarken aracın döndürdüğü zengin dashboard formatını (widget görünümü) KESİNLİKLE BOZMA, ÖZETLEME VE TÜRKÇELEŞTİRME. Dashboard verisini aynen (raw) yansıt.
         
         ### MEVCUT ARAÇLAR (Dinamik UBID Seti):
