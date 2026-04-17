@@ -1,14 +1,64 @@
-Packages/
-.gemini/
+# --- macOS & System ---
 .DS_Store
-.build/
-.swiftpm/
-DerivedData/
-*.xcworkspace
+.AppleDouble
+.LSOverride
+Icon
+._*
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+*.icloud
+
+# --- Xcode & Swift ---
+# User settings (personal window layouts, etc.)
 xcuserdata/
-EliteAgent.xcodeproj/project.xcworkspace
-EliteAgent.xcodeproj/xcuserdata
-Package.resolved
-*.bak
+
+# Build artifacts
+build/
+DerivedData/
+*.gcno
+
+# Xcode internal files
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# --- EliteAgent / UNO Specific ---
+.gemini/
 eliteagent_conversations.md
+token_baselines.json
+*.bak
 *.metallib
+
+# --- MLX Models (Large Binary Files) ---
+# Modelleri repoya sokmuyoruz (LFS kullanılmıyorsa çok büyükler)
+*.gguf
+*.safetensors
+*.ckpt
+*.bin
+
+# --- Swift Package Manager ---
+.build/
+# Package.resolved dosyasını TAKİP EDİYORUZ (gitignore'da değil)
+# Böylece herkes aynı kütüphane versiyonlarını kullanıyor.
+
+# --- Local Environment ---
+.env
+.idea/
+.vscode/
+
+# --- Temporary & Clones ---
+tmp/
+scratch/
+backups/

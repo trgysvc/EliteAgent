@@ -46,40 +46,89 @@ public struct WeatherTool: AgentTool {
             return "Üzgünüm, '\(locationName)' konumu bulunamadı."
         }
         
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateStyle = .none
+        timeFormatter.timeStyle = .short
+        
         if #available(macOS 13.0, *) {
             do {
                 let weather = try await WeatherService.shared.weather(for: location)
+                var tags: String = "[WeatherDNA_WIDGET]"
                 
                 if let dayText = targetDay?.lowercased() {
                     let daily = weather.dailyForecast
-                    // Match by localized date string or simple relative terms
                     let forecast = daily.first { item in
                         let dateString = item.date.description.lowercased()
                         let formatter = DateFormatter()
                         formatter.locale = Locale(identifier: "tr_TR")
                         formatter.dateFormat = "d MMMM"
                         let trDate = formatter.string(from: item.date).lowercased()
-                        
                         return trDate.contains(dayText) || dateString.contains(dayText)
                     }
                     
                     if let item = forecast {
                         let high = Int(item.highTemperature.value)
                         let low = Int(item.lowTemperature.value)
-                        let condition = item.condition.description
-                        return "\(locationName) için \(dayText) hava tahmini: En yüksek \(high)°C, En düşük \(low)°C, \(condition). [WeatherDNA_WIDGET]"
+                        let cond = item.condition.description
+                        let uv = item.uvIndex.value
+                        let rain = Int(item.precipitationChance * 100)
+                        
+                        tags += "\n[DURUM] \(cond)"
+                        tags += "\n[YUKSEK] \(high)°C"
+                        tags += "\n[DUSUK] \(low)°C"
+                        tags += "\n[UV] \(uv)"
+                        tags += "\n[YAGIS] %\(rain)"
+                        
+                        if let sunrise = item.sun.sunrise {
+                            tags += "\n[DOGUM] \(timeFormatter.string(from: sunrise))"
+                        }
+                        if let sunset = item.sun.sunset {
+                            tags += "\n[BATIM] \(timeFormatter.string(from: sunset))"
+                        }
+                        
+                        return "\(tags)\n\(locationName) için \(dayText) tahmini: \(cond)."
                     }
                 }
                 
                 let current = weather.currentWeather
-                let temp = Int(current.temperature.value)
-                let condition = current.condition.description
+                let humidity = Int(current.humidity * 100)
+                let windSpeed = Int(current.wind.speed.value)
+                let windGust = Int(current.wind.gust?.value ?? 0)
+                let pressure = Int(current.pressure.value)
+                let visibility = Int(current.visibility.value / 1000)
+                let uv = current.uvIndex.value
+                let apparent = Int(current.apparentTemperature.value)
                 
-                return "\(locationName) için gerçek zamanlı hava durumu: \(temp)°C, \(condition). [WeatherDNA_WIDGET]"
+                tags += "\n[DURUM] \(current.condition.description)"
+                tags += "\n[HIS] \(apparent)°C"
+                tags += "\n[NEM] %\(humidity)"
+                tags += "\n[RUZGAR] \(windSpeed) km/h"
+                if windGust > 0 {
+                    tags += "\n[HAMLE] \(windGust) km/h"
+                }
+                tags += "\n[UV] \(uv)"
+                tags += "\n[PRES] \(pressure) hPa"
+                tags += "\n[GORUS] \(visibility) km"
+                
+                // Fetch daily extremes for today
+                if let today = weather.dailyForecast.first {
+                    tags += "\n[YUKSEK] \(Int(today.highTemperature.value))°C"
+                    tags += "\n[DUSUK] \(Int(today.lowTemperature.value))°C"
+                    tags += "\n[YAGIS] %\(Int(today.precipitationChance * 100))"
+                    
+                    if let sunrise = today.sun.sunrise {
+                        tags += "\n[DOGUM] \(timeFormatter.string(from: sunrise))"
+                    }
+                    if let sunset = today.sun.sunset {
+                        tags += "\n[BATIM] \(timeFormatter.string(from: sunset))"
+                    }
+                }
+                
+                return "\(tags)\n\(locationName) için güncel hava durumu: \(Int(current.temperature.value))°C."
             } catch {
                 AgentLogger.logAudit(level: .warn, agent: "WeatherTool", message: "WeatherKit failed. Falling back to web-based provider.")
                 
-                var urlString = "https://wttr.in/\(locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")?format=%t+%C"
+                var urlString = "https://wttr.in/\(locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")?format=%t+%C+%h+%w+%P"
                 if let day = targetDay {
                     urlString += "&date=\(day.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
                 }
@@ -87,7 +136,7 @@ public struct WeatherTool: AgentTool {
                 if let url = URL(string: urlString),
                    let (data, _) = try? await URLSession.shared.data(from: url),
                    let weatherInfo = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-                    return "\(locationName) için \(targetDay ?? "güncel") hava durumu (Yedek Servis): \(weatherInfo) [WeatherDNA_WIDGET]"
+                    return "[WeatherDNA_WIDGET]\n[DURUM] \(weatherInfo)\n\(locationName) \(targetDay ?? "güncel")"
                 }
                 
                 return "macOS sisteminden hava durumu bilgisi alınamadı: \(error.localizedDescription)"

@@ -1341,3 +1341,26 @@ Bugün EliteAgent'ın bellek yönetimini (10GB+ sızıntıların çözümü) ve 
 Sistem artık bellek sızıntılarından arınmış, Swift 6 katı eşzamanlılık kurallarıyla mühürlenmiş ve tip güvenliği (type-safety) en üst seviyeye taşınmış durumdadır.
 
 ---
+
+### [2026-04-17] — Git & Project Reproducibility Optimization
+**What changed:**
+- Updated `.gitignore` to use a comprehensive macOS/Swift/Xcode template, ensuring system junk is ignored while project-specific assets (MLX models, Antigravity logs) are correctly handled.
+- Transitioned the `audiointelligence` dependency in `Package.swift` from a local file path to a remote GitHub URL.
+- Enabled tracking of `Package.resolved` to enforce consistent dependency versions across different developer environments.
+**Files modified:** `.gitignore`, `Package.swift`
+**Decision made:** Switched to remote dependencies and tracked resolution files to allow seamless collaboration and cloning for external contributors without requiring manual local environment setup.
+**Next:** Verify build stability with remote dependencies in a clean environment.
+
+### [2026-04-17] — WeatherDNA Widget & Narrative Suppression Fix
+**What changed:**
+- Fixed a regex bug in `OrchestratorRuntime` that truncated multiline widget data, causing empty weather displays.
+- Enhanced `WeatherTool` in `ExtraUtilityTools.swift` to extract Sunrise, Sunset, and Wind Gust from `WeatherKit`.
+- Implemented strict narrative suppression in the Orchestrator loop when a widget is active.
+- Verified that `ChatBubble` correctly cleans widget code from conversational text.
+**Files modified:**
+- Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift
+- Sources/EliteAgentCore/ToolEngine/Tools/ExtraUtilityTools.swift
+- Sources/EliteAgent/App/Components/Weather/WeatherWidgetView.swift
+- Sources/EliteAgent/App/ChatBubble.swift
+**Decision made:** Switched to `[\s\S]*` multiline regex to preserve protocol-delimited widget data across actor boundaries.
+**Next:** Verify if other specialized widgets (Music, System) require similar regex updates.

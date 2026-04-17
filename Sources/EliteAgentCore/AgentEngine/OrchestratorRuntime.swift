@@ -186,8 +186,14 @@ public actor OrchestratorRuntime {
                                         let lastTokens = Set(last.components(separatedBy: .whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
                                         let overlap = answerTokens.intersection(lastTokens)
                                         
+                                        // Strategy C: Mandatory Widget Silence (User Request)
+                                        if last.contains("_widget]") {
+                                            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [WIDGET SILENCE] Suppressing narrative because a widget is rendered.")
+                                            shouldEcho = false
+                                        }
+                                        
                                         // If they share exact digits and a high % of tokens, it's a collision
-                                        if !sharedDigits.isEmpty || (overlap.count >= 2 && overlap.count > lastTokens.count / 2) {
+                                        if shouldEcho && (!sharedDigits.isEmpty || (overlap.count >= 2 && overlap.count > lastTokens.count / 2)) {
                                             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v24.0 COLLISION GUARD] Suppressing redundant narrative. Shared Digits: \(sharedDigits), Overlap: \(overlap)")
                                             shouldEcho = false
                                         }
@@ -523,7 +529,7 @@ public actor OrchestratorRuntime {
                     var displayContent = result.replacingOccurrences(of: "Observation:", with: "", options: .caseInsensitive)
                     
                     if displayContent.contains("_WIDGET]") {
-                        let patterns = ["\\[SystemDNA_WIDGET\\].*", "\\[WeatherDNA_WIDGET\\].*", "\\[MusicDNA_WIDGET\\].*"]
+                        let patterns = ["\\[SystemDNA_WIDGET\\][\\s\\S]*", "\\[WeatherDNA_WIDGET\\][\\s\\S]*", "\\[MusicDNA_WIDGET\\][\\s\\S]*"]
                         for pattern in patterns {
                             if let range = displayContent.range(of: pattern, options: .regularExpression) {
                                 displayContent = String(displayContent[range])
