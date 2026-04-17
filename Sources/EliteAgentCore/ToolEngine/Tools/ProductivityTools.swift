@@ -4,11 +4,11 @@ public struct ContactsTool: AgentTool {
     public let name = "contacts_find"
     public let summary = "Search and retrieve Apple Contacts."
     public let description = "Find contact information from Apple Contacts. Parametre: query (name)."
-    public let ubid = 38 // Token 'G' in Qwen 2.5
+    public let ubid: Int128 = 38 // Token 'G' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let query = params["query"]?.value as? String else {
             throw AgentToolError.missingParameter("query")
         }
@@ -24,8 +24,12 @@ public struct ContactsTool: AgentTool {
         end tell
         """
         
-        _ = try await AppleScriptRunner.shared.execute(source: script)
-        return "Rehberde '\(query)' araması yapıldı. Bulunanlar: (AppleScript result parsed)."
+        do {
+            _ = try await AppleScriptRunner.shared.execute(source: script)
+            return "Rehberde '\(query)' araması yapıldı. Bulunanlar: (AppleScript result parsed)."
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
+        }
     }
 }
 
@@ -33,11 +37,11 @@ public struct FileManagerTool: AgentTool {
     public let name = "file_manager_action"
     public let summary = "Legacy file management (create/delete)."
     public let description = "Perform file operations. Parametreler: action (create/delete/move), path, content (for create)."
-    public let ubid = 39 // Token 'H' in Qwen 2.5
+    public let ubid: Int128 = 39 // Token 'H' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let action = params["action"]?.value as? String,
               let path = params["path"]?.value as? String else {
             throw AgentToolError.missingParameter("action and path are required")
@@ -48,16 +52,20 @@ public struct FileManagerTool: AgentTool {
             ? path.replacingOccurrences(of: "~", with: fileManager.homeDirectoryForCurrentUser.path) 
             : path
         
-        switch action {
-        case "create":
-            let content = params["content"]?.value as? String ?? ""
-            try content.write(toFile: expandedPath, atomically: true, encoding: .utf8)
-            return "Dosya oluşturuldu: \(expandedPath)"
-        case "delete":
-            try fileManager.removeItem(atPath: expandedPath)
-            return "Dosya silindi: \(expandedPath)"
-        default:
-            throw AgentToolError.invalidParameter("Unknown action")
+        do {
+            switch action {
+            case "create":
+                let content = params["content"]?.value as? String ?? ""
+                try content.write(toFile: expandedPath, atomically: true, encoding: .utf8)
+                return "Dosya oluşturuldu: \(expandedPath)"
+            case "delete":
+                try fileManager.removeItem(atPath: expandedPath)
+                return "Dosya silindi: \(expandedPath)"
+            default:
+                throw AgentToolError.invalidParameter("Unknown action")
+            }
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
 }

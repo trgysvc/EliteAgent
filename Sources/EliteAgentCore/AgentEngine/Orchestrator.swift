@@ -60,7 +60,9 @@ public class Orchestrator: ObservableObject {
     private var registrationTask: Task<Void, Never>?
     
     public init() {
-        let busKey = SymmetricKey(data: SHA256.hash(data: "ELITE_BUS_SECRET".data(using: .utf8)!))
+        let secretString = "ELITE_BUS_SECRET"
+        let secretData = secretString.data(using: .utf8) ?? Data()
+        let busKey = SymmetricKey(data: SHA256.hash(data: secretData))
         let bus = SignalBus(secretKey: busKey)
         self.bus = bus
         
@@ -684,7 +686,9 @@ extension Orchestrator: ProjectObserverDelegate {
         let results = regex.matches(in: prompt, options: [], range: NSRange(location: 0, length: nsPrompt.length))
         guard let match = results.first else { return nil }
         var path = nsPrompt.substring(with: match.range)
-        if path.hasPrefix("\"") && path.hasSuffix("\"") { path = String(path.dropFirst().dropLast()) }
+        if path.hasPrefix("\"") && path.hasSuffix("\"") { 
+            path = String(path.dropFirst().dropLast()) 
+        }
         return path.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 

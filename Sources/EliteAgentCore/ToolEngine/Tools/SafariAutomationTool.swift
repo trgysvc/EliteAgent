@@ -7,11 +7,11 @@ public struct SafariAutomationTool: AgentTool {
     public let name = "safari_automation"
     public let summary = "Control Safari via Native AppleScript protocols (Search, Scrape, Open)."
     public let description = "MANDATORY: Use this for ALL web-related tasks (search, open URL, scrape content). Native AppleScript automation is superior to shell 'open' commands. Parametreler: action ('search', 'scrape', 'open', 'close'), query (arama terimi), url (target URL)."
-    public let ubid = 40 // Token 'I' in Qwen 2.5
-
+    public let ubid: Int128 = 40 // Token 'I' in Qwen 2.5
+    
     public init() {}
 
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let action = params["action"]?.value as? String else {
             throw AgentToolError.invalidParameter("Missing 'action' parameter.")
         }
@@ -46,7 +46,7 @@ public struct SafariAutomationTool: AgentTool {
 
     // MARK: - Core Actions
 
-    private func performSearch(query: String) async throws -> String {
+    private func performSearch(query: String) async throws(AgentToolError) -> String {
         AgentLogger.logAudit(level: .info, agent: "Safari", message: "Starting search for: '\(query)'")
         
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
@@ -63,10 +63,10 @@ public struct SafariAutomationTool: AgentTool {
             return "Search performed for: \(query)"
         end tell
         """
-        return try runAppleScript(script)
+        return try await runAppleScript(script)
     }
 
-    private func scrapeActiveTab() async throws -> String {
+    private func scrapeActiveTab() async throws(AgentToolError) -> String {
         AgentLogger.logAudit(level: .info, agent: "Safari", message: "Scraping content from the active tab...")
         
         let script = """
@@ -80,10 +80,10 @@ public struct SafariAutomationTool: AgentTool {
             return "TITLE: " & docName & "\\nURL: " & docURL & "\\nCONTENT:\\n" & docText
         end tell
         """
-        return try runAppleScript(script)
+        return try await runAppleScript(script)
     }
 
-    private func openURL(_ urlString: String) async throws -> String {
+    private func openURL(_ urlString: String) async throws(AgentToolError) -> String {
         AgentLogger.logAudit(level: .info, agent: "Safari", message: "Navigating to: \(urlString)")
         
         let script = """
@@ -96,10 +96,10 @@ public struct SafariAutomationTool: AgentTool {
             return "Opened URL: \(urlString)"
         end tell
         """
-        return try runAppleScript(script)
+        return try await runAppleScript(script)
     }
 
-    private func closeActiveTab() async throws -> String {
+    private func closeActiveTab() async throws(AgentToolError) -> String {
         let script = """
         tell application "Safari"
             if (exists current tab of window 1) then
@@ -110,22 +110,22 @@ public struct SafariAutomationTool: AgentTool {
             end if
         end tell
         """
-        return try runAppleScript(script)
+        return try await runAppleScript(script)
     }
 
     // MARK: - Helpers
 
-    private func verifyPermissions() async throws {
+    private func verifyPermissions() async throws(AgentToolError) {
         let checkScript = "tell application \"Safari\" to count documents"
         do {
-            _ = try runAppleScript(checkScript)
+            _ = try await runAppleScript(checkScript)
         } catch {
-            // If we can't even count documents, it's likely a permission issue
-            throw AgentToolError.executionError("Safari Otomasyon izni eksik. Lütfen Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon altından EliteAgent'a Safari için izin verin.")
+            // Already AgentToolError
+            throw error
         }
     }
 
-    private func runAppleScript(_ script: String) throws -> String {
+    private func runAppleScript(_ script: String) async throws(AgentToolError) -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         process.arguments = ["-e", script]
@@ -136,11 +136,19 @@ public struct SafariAutomationTool: AgentTool {
         process.standardError = errorPipe
 
         do {
-            try process.run()
-            process.waitUntilExit()
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                process.terminationHandler = { _ in
+                    continuation.resume()
+                }
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
 
-            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            let outputData = try outputPipe.fileHandleForReading.readToEnd() ?? Data()
+            let errorData = try errorPipe.fileHandleForReading.readToEnd() ?? Data()
 
             if process.terminationStatus != 0 {
                 let errorMsg = String(data: errorData, encoding: .utf8) ?? "Unknown AppleScript error"
@@ -149,6 +157,9 @@ public struct SafariAutomationTool: AgentTool {
 
             return String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         } catch {
+            if let toolError = error as? AgentToolError {
+                throw toolError
+            }
             throw AgentToolError.executionError(error.localizedDescription)
         }
     }

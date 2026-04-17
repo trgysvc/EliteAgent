@@ -7,11 +7,11 @@ public struct SystemTelemetryTool: AgentTool {
     public let name = "get_system_telemetry"
     public let summary = "Monitor M-series thermal/RAM pressure."
     public let description = "Retrieve real-time hardware status including thermal state, free memory, active cores, and performance metrics. Use this for ALL CPU, RAM, memory, and hardware queries."
-    public let ubid = 36 // Token 'E' in Qwen 2.5
+    public let ubid: Int128 = 36 // Token 'E' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         let processInfo = ProcessInfo.processInfo
         
         // 1. Thermal State

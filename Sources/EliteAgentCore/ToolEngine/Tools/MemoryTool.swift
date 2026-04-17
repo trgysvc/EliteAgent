@@ -4,7 +4,7 @@ public struct MemoryTool: AgentTool, Sendable {
     public let name = "memory"
     public let summary = "Search/Store long-term cognitive data."
     public let description = "Searches or saves persistent architectural memories using MemoryAgent. Actions: search (query), save (task, solution)."
-    public let ubid = 44 // Token 'M' in Qwen 2.5
+    public let ubid: Int128 = 44 // Token 'M' in Qwen 2.5
     
     private let agent: MemoryAgent
     
@@ -12,7 +12,7 @@ public struct MemoryTool: AgentTool, Sendable {
         self.agent = agent
     }
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         // v16.2: Universal Parameter Normalization
         // Accept 'param' or 'action' aliasing to handle SLM hallucinations gracefully
         let action = (params["action"]?.value as? String) ?? (params["param"]?.value as? String)

@@ -4,7 +4,7 @@ public struct SubagentTool: AgentTool, Sendable {
     public let name = "subagent_spawn"
     public let summary = "Recursive spawning for complex sub-tasks."
     public let description = "Spawn a sub-agent to handle a specific sub-task."
-    public let ubid = 19 // Token '4' in Qwen 2.5
+    public let ubid: Int128 = 19 // Token '4' in Qwen 2.5
     
     private let runtimeCreator: @Sendable (PlannerAgent, CloudProvider) -> OrchestratorRuntime
     private let planner: PlannerAgent
@@ -21,9 +21,9 @@ public struct SubagentTool: AgentTool, Sendable {
         self.runtimeCreator = runtimeCreator
     }
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let prompt = params["prompt"]?.value as? String else {
-            throw NSError(domain: "SubagentTool", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing 'prompt' parameter"])
+            throw AgentToolError.missingParameter("prompt")
         }
         
         let childSession = Session(
@@ -42,13 +42,16 @@ public struct SubagentTool: AgentTool, Sendable {
         let config = session.config
         let complexity = session.complexity
         
-        try await runtime.executeTask(
-            prompt: prompt, 
-            session: childSession, 
-            complexity: complexity, 
-            config: config
-        )
-        
-        return "Subagent task completed. (Depth: \(childSession.recursionDepth))"
+        do {
+            try await runtime.executeTask(
+                prompt: prompt, 
+                session: childSession, 
+                complexity: complexity, 
+                config: config
+            )
+            return "Subagent task completed. (Depth: \(childSession.recursionDepth))"
+        } catch {
+            throw AgentToolError.executionError("Subagent execution failed: \(error.localizedDescription)")
+        }
     }
 }

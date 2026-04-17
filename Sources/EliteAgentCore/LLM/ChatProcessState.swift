@@ -109,19 +109,9 @@ public final class ChatProcessViewModel: ObservableObject {
     
     /// Reads file safely using memory-mapped options to prevent RAM spikes.
     private func readFileSafely(from url: URL) async throws -> Data {
-        return try await withCheckedThrowingContinuation { continuation in
-            // Execute on utility queue to avoid main thread blocking
-            DispatchQueue.global(qos: .utility).async {
-                autoreleasepool {
-                    do {
-                        // HIG Recommendation: Use mappedIfSafe for 50MB+ docs
-                        let data = try Data(contentsOf: url, options: .mappedIfSafe)
-                        continuation.resume(returning: data)
-                    } catch {
-                        continuation.resume(throwing: error)
-                    }
-                }
-            }
-        }
+        try await Task.detached(priority: .utility) {
+            // HIG Recommendation: Use mappedIfSafe for 50MB+ docs
+            try Data(contentsOf: url, options: .mappedIfSafe)
+        }.value
     }
 }

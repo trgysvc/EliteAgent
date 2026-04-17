@@ -328,18 +328,20 @@ public actor InferenceActor {
         
         // v14.1: Retrieve Structural Binary Signature Tokens & Alphanumeric for Qwen 2.5
         let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\"
-        var allowedTokens: [Int] = []
+        var allowedTokens: [Int128] = []
         for char in allowedChars {
             let ids = await container.tokenizer.encode(text: String(char))
             if let first = ids.first {
-                allowedTokens.append(first)
+                allowedTokens.append(Int128(first))
             }
         }
+        
+        let allAllowed = toolUBIDs + allowedTokens
         
         // UNOGrammarLogitProcessor is @unchecked Sendable — safe to capture in @Sendable closure
         let grammarProcessor = UNOGrammarLogitProcessor(
             tokenizer: await container.tokenizer, 
-            allowedTokenIDs: toolUBIDs + allowedTokens
+            allowedTokenIDs: allAllowed
         )
         
         // GenerateParameters is Sendable — safe to capture in @Sendable closure

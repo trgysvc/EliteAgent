@@ -14,24 +14,31 @@ public struct XcodeTool: AgentTool, Sendable {
     - simulator_control: Simülatörü başlatır/durdurur veya uygulama yükler.
     Parametreler: action (String), path (String), target (String?), destination (String?)
     """
-    public let ubid = 47 // v19.7.8: Resolved collision with WebSearch (45)
+    public let ubid: Int128 = 47 // v19.7.8: Resolved collision with WebSearch (45)
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let action = params["action"]?.value as? String else {
             throw AgentToolError.missingParameter("action")
         }
         
-        switch action {
-        case "project_map":
-            return try await handleProjectMap(params: params, session: session)
-        case "build_and_fix":
-            return try await handleBuildAndFix(params: params, session: session)
-        case "simulator_control":
-            return try await handleSimulatorControl(params: params)
-        default:
-            throw AgentToolError.invalidParameter("Unknown action: \(action)")
+        do {
+            switch action {
+            case "project_map":
+                return try await handleProjectMap(params: params, session: session)
+            case "build_and_fix":
+                return try await handleBuildAndFix(params: params, session: session)
+            case "simulator_control":
+                return try await handleSimulatorControl(params: params)
+            default:
+                throw AgentToolError.invalidParameter("Unknown action: \(action)")
+            }
+        } catch {
+            if let agentError = error as? AgentToolError {
+                throw agentError
+            }
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
     
@@ -120,26 +127,31 @@ public struct XcodeTool: AgentTool, Sendable {
     }
     
     private func runShell(command: String, directory: URL) async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-            process.arguments = ["-c", command]
-            process.currentDirectoryURL = directory
-            
-            let outputPipe = Pipe()
-            process.standardOutput = outputPipe
-            process.standardError = outputPipe
-            
-            do {
-                try process.run()
-                process.waitUntilExit()
-                
-                let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                let output = String(data: data, encoding: .utf8) ?? ""
-                continuation.resume(returning: output)
-            } catch {
-                continuation.resume(throwing: AgentToolError.executionError(error.localizedDescription))
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-c", command]
+        process.currentDirectoryURL = directory
+        
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = outputPipe
+        
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                process.terminationHandler = { _ in
+                    continuation.resume()
+                }
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
             }
+            
+            let data = try outputPipe.fileHandleForReading.readToEnd() ?? Data()
+            return String(data: data, encoding: .utf8) ?? ""
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
 }

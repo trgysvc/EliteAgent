@@ -21,7 +21,7 @@ public protocol AgentTool: Sendable {
     var name: String { get }
     var summary: String { get }        // v13.8: Lightweight discovery summary
     var description: String { get }
-    var ubid: Int { get }              // v13.8: Unique Binary ID (Tokenizer Index)
+    var ubid: Int128 { get }           // v20.0: High-Precision Binary ID (Swift 6.3)
     
-    func execute(params: [String: AnyCodable], session: Session) async throws -> String
+    func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String
 }

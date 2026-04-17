@@ -5,18 +5,21 @@ public struct ImageAnalysisTool: AgentTool, Sendable {
     public let name = "analyze_image"
     public let summary = "Local OS Vision (OCR / Element Detection)."
     public let description = "Analyzes a local image file using VisionAnalyzer for text and potential interactive elements."
-    public let ubid = 48 // Token 'Q' in Qwen 2.5
+    public let ubid: Int128 = 48 // Token 'Q' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let path = params["path"]?.value as? String else {
             throw AgentToolError.missingParameter("path")
         }
         
         let fileURL: URL
         if path.hasPrefix("file://") {
-            fileURL = URL(string: path)!
+            guard let url = URL(string: path) else {
+                throw AgentToolError.invalidParameter("Geçersiz file:// URL: \(path)")
+            }
+            fileURL = url
         } else if path.hasPrefix("/") || path.hasPrefix("~") {
             let expandedPath = NSString(string: path).expandingTildeInPath
             fileURL = URL(fileURLWithPath: expandedPath)
@@ -28,7 +31,12 @@ public struct ImageAnalysisTool: AgentTool, Sendable {
             throw AgentToolError.executionError("Failed to load image from path: \(path)")
         }
         
-        let elements = try await VisionAnalyzer.shared.analyze(image: image)
+        let elements: [VisualElement]
+        do {
+            elements = try await VisionAnalyzer.shared.analyze(image: image)
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
+        }
         
         // v13.8: UNO Pure - Pure Markdown Vision Report (No JSON)
         var report = "ANALİZ TAMAMLANDI: \(elements.count) görsel öğe bulundu.\n\n"

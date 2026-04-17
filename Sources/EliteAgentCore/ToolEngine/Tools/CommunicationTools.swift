@@ -4,11 +4,11 @@ public struct WhatsAppTool: AgentTool {
     public let name = "whatsapp_send"
     public let summary = "Legacy WhatsApp sender (System Events)."
     public let description = "Send a message via WhatsApp. Parametreler: recipient (phone number or name), message (text)."
-    public let ubid = 17 // Token '2' in Qwen 2.5
+    public let ubid: Int128 = 17 // Token '2' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let recipient = params["recipient"]?.value as? String,
               let message = params["message"]?.value as? String else {
             throw AgentToolError.missingParameter("recipient and message are required")
@@ -43,11 +43,15 @@ public struct WhatsAppTool: AgentTool {
         end tell
         """
         
-        let result = try await AppleScriptRunner.shared.execute(source: script)
-        if result.contains("SUCCESS") {
-            return "WhatsApp mesajı \(recipient) kişisine iletildi komutu gönderildi."
-        } else {
-            throw AgentToolError.executionError("WhatsApp kontrolü başarısız: \(result)")
+        do {
+            let result = try await AppleScriptRunner.shared.execute(source: script)
+            if result.contains("SUCCESS") {
+                return "WhatsApp mesajı \(recipient) kişisine iletildi komutu gönderildi."
+            } else {
+                throw AgentToolError.executionError("WhatsApp kontrolü başarısız: \(result)")
+            }
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
 }
@@ -56,11 +60,11 @@ public struct EmailTool: AgentTool {
     public let name = "send_email"
     public let summary = "Legacy Apple Mail sender."
     public let description = "Send an email via Apple Mail. Parametreler: recipient, subject, body."
-    public let ubid = 22 // Token '7' in Qwen 2.5
+    public let ubid: Int128 = 22 // Token '7' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let recipient = params["recipient"]?.value as? String,
               let subject = params["subject"]?.value as? String,
               let body = params["body"]?.value as? String else {
@@ -77,7 +81,11 @@ public struct EmailTool: AgentTool {
         end tell
         """
         
-        _ = try await AppleScriptRunner.shared.execute(source: script)
-        return "E-posta \(recipient) adresine gönderildi."
+        do {
+            _ = try await AppleScriptRunner.shared.execute(source: script)
+            return "E-posta \(recipient) adresine gönderildi."
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
+        }
     }
 }

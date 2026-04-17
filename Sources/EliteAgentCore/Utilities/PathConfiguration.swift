@@ -12,24 +12,24 @@ public struct PathConfiguration: Sendable {
     
     /// ~/Library/Application Support/EliteAgent
     public var applicationSupportURL: URL {
-        let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent(bundleName, isDirectory: true)
+        let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")
+        let url = root.appendingPathComponent(bundleName, isDirectory: true)
         ensureDirectoryExists(at: url)
         return url
     }
     
     /// ~/Library/Caches/EliteAgent
     public var cachesURL: URL {
-        let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
-            .appendingPathComponent(bundleName, isDirectory: true)
+        let root = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")
+        let url = root.appendingPathComponent(bundleName, isDirectory: true)
         ensureDirectoryExists(at: url)
         return url
     }
     
     /// ~/Library/Logs/EliteAgent
     public var logsURL: URL {
-        let url = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Logs", isDirectory: true)
+        let root = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")
+        let url = root.appendingPathComponent("Logs", isDirectory: true)
             .appendingPathComponent(bundleName, isDirectory: true)
         ensureDirectoryExists(at: url)
         return url
@@ -44,8 +44,8 @@ public struct PathConfiguration: Sendable {
     
     /// ~/Documents/EliteAgentWorkspace (v14.0: User workspace, excluded from factory resets)
     public var workspaceURL: URL {
-        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("EliteAgentWorkspace", isDirectory: true)
+        let root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")
+        let url = root.appendingPathComponent("EliteAgentWorkspace", isDirectory: true)
         ensureDirectoryExists(at: url)
         return url
     }

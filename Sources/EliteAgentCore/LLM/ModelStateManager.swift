@@ -21,12 +21,20 @@ public final class ModelStateManager: ObservableObject {
     
     private init() {
         // v10.1: No hardcoded defaults. System is truly data-driven on fresh installs.
-        let initialModel: String? = UserDefaults.standard.string(forKey: "elite.ai.selectedModel")
+        let initialModel = UserDefaults.standard.string(forKey: "elite.ai.selectedModel")
         
         // 1. Validation Logic: Does the selected model actually exist? (Ghost Model Migration)
         let modelID = initialModel
-        let filesExist = modelID != nil ? ModelManager.shared.doesModelDirectoryExist(id: modelID!) : false
-        let isComplete = modelID != nil ? ModelManager.shared.isModelComplete(id: modelID!) : false
+        let filesExist: Bool
+        let isComplete: Bool
+        
+        if let id = modelID {
+            filesExist = ModelManager.shared.doesModelDirectoryExist(id: id)
+            isComplete = ModelManager.shared.isModelComplete(id: id)
+        } else {
+            filesExist = false
+            isComplete = false
+        }
         
         if isComplete, let validID = modelID {
             self.activeProvider = .localTitanEngine(modelID: validID)
@@ -47,9 +55,9 @@ public final class ModelStateManager: ObservableObject {
             self.fallbackReason = "Sistem Hazır Değil: Lütfen bir model kurun."
             
             // v10.5: Cleanup ghost selection from UserDefaults if it was invalid
-            if initialModel != nil {
+            if let ghost = initialModel {
                 UserDefaults.standard.removeObject(forKey: "elite.ai.selectedModel")
-                AgentLogger.logInfo("ModelStateManager: Ghost model '\(initialModel!)' detected and cleared.")
+                AgentLogger.logInfo("ModelStateManager: Ghost model '\(ghost)' detected and cleared.")
             }
             
             Task { 
@@ -68,10 +76,8 @@ public final class ModelStateManager: ObservableObject {
         if now.timeIntervalSince(lastPrompt) > (24 * 3600) {
             UserDefaults.standard.set(now, forKey: lastWizardPromptKey)
             
-            await MainActor.run {
-                NotificationCenter.default.post(name: Notification.Name.openModelSetup, object: nil)
-                AgentLogger.logInfo("ModelStateManager: Wizard auto-triggered (Throttled).")
-            }
+            NotificationCenter.default.post(name: Notification.Name.openModelSetup, object: nil)
+            AgentLogger.logInfo("ModelStateManager: Wizard auto-triggered (Throttled).")
             
             await UXTelemetryManager.shared.recordWizardInteraction(action: "wizard_auto_triggered")
         }
@@ -113,13 +119,11 @@ public final class ModelStateManager: ObservableObject {
         await UXTelemetryManager.shared.stopNoneStateTracking()
         
         // Show notification with Undo option via NotificationCenter
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(
-                name: NSNotification.Name("app.eliteagent.autoFallbackTriggered"),
-                object: nil,
-                userInfo: ["message": "☁️ Cloud Mode Aktif (\(reason))"]
-            )
-        }
+        NotificationCenter.default.post(
+            name: NSNotification.Name("app.eliteagent.autoFallbackTriggered"),
+            object: nil,
+            userInfo: ["message": "☁️ Cloud Mode Aktif (\(reason))"]
+        )
         
         AgentLogger.logAudit(level: .warn, agent: "MODEL_STATE", message: "Successfully transitioned to CLOUD fallback: \(reason)")
     }
@@ -138,10 +142,8 @@ public final class ModelStateManager: ObservableObject {
         
         await UXTelemetryManager.shared.stopNoneStateTracking()
         
-        DispatchQueue.main.async {
-            AISessionState.shared.isFallbackActive = false
-            AISessionState.shared.selectedModel = modelID
-        }
+        AISessionState.shared.isFallbackActive = false
+        AISessionState.shared.selectedModel = modelID
         
         AgentLogger.logAudit(level: .info, agent: "MODEL_STATE", message: "Successfully returned to LOCAL model: \(modelID)")
     }

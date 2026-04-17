@@ -36,11 +36,11 @@ public struct MusicDNATool: AgentTool {
     Interpretive Guidelines: Always reference HPSS ratios and MFCC vectors for deep timbre descriptions.
     Param: path (string) - Absolute path to the audio file.
     """
-    public let ubid = 18
+    public let ubid: Int128 = 18
 
     public init() {}
 
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
 
         guard let rawPath = params["path"]?.value as? String else {
             throw AgentToolError.missingParameter("`path` parametresi gerekli.")
@@ -64,28 +64,32 @@ public struct MusicDNATool: AgentTool {
         let intelligence = AudioIntelligence(device: .current, mode: .balanced)
         let state = ProgressState()
 
-        let result = try await intelligence.analyze(url: url) { percent, message, waveformLine in
-            // Visual feedback
-            if state.shouldSendWaveform(waveformLine), let wf = waveformLine {
-                Task { await session.streamOutput("Waveform:\n\(wf)\n\n") }
+        do {
+            let result = try await intelligence.analyze(url: url) { percent, message, waveformLine in
+                // Visual feedback
+                if state.shouldSendWaveform(waveformLine), let wf = waveformLine {
+                    Task { await session.streamOutput("Waveform:\n\(wf)\n\n") }
+                }
+
+                let bar = WaveformRenderer.progressBar(percent: percent, message: message)
+                Task { await session.streamOutput("\r\(bar)") }
             }
 
-            let bar = WaveformRenderer.progressBar(percent: percent, message: message)
-            Task { await session.streamOutput("\r\(bar)") }
+            // Populate session metadata for UI integration
+            await session.setAudioAnalysis(result.rawAnalysis)
+
+            // Final report
+            await session.streamOutput("\n\n")
+            await session.streamOutput(result.reportText)
+
+            return """
+            [MusicDNA_WIDGET] ✅ Analiz tamamlandı! (AudioIntelligence Package)
+            📄 Rapor: \(result.reportPath)
+            
+            \(result.reportText)
+            """
+        } catch {
+            throw AgentToolError.executionError("MusicDNA Analiz Hatası: \(error.localizedDescription)")
         }
-
-        // Populate session metadata for UI integration
-        await session.setAudioAnalysis(result.rawAnalysis)
-
-        // Final report
-        await session.streamOutput("\n\n")
-        await session.streamOutput(result.reportText)
-
-        return """
-        [MusicDNA_WIDGET] ✅ Analiz tamamlandı! (AudioIntelligence Package)
-        📄 Rapor: \(result.reportPath)
-        
-        \(result.reportText)
-        """
     }
 }

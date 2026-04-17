@@ -5,37 +5,43 @@ import OSLog
 
 /// A tool for Vision-based screen analysis (v10.0 'Chicago').
 /// Uses VNRecognizeTextRequest to find and label UI elements.
-public actor ChicagoVisionTool: AgentTool {
-    public let name = "chicago_vision"
-    public let summary = "Legacy Screen OCR/Vision system."
-    public let description = "Analyzes the screen using OCR and Computer Vision to identify UI elements."
-    public let ubid = 23 // Token '8' in Qwen 2.5
+public struct ChicagoVisionTool: AgentTool {
+    public let name = "visual_audit"
+    public let summary = "Chicago Vision: Frame-by-frame UI & Logic analysis."
+    public let description = "Analyzes screenshot/images for UI elements, logic, and visual data."
+    public let ubid: Int128 = 30 // Token 'Y' in Qwen 2.5
     
     private let logger = Logger(subsystem: "com.elite.agent", category: "Vision")
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         // 1. Permission Check
-        guard AXIsProcessTrusted() else {
-            logger.error("Accessibility permissions denied.")
-            return "Error: Accessibility permissions are required for Chicago Vision. Falling back to DegradedMode."
-        }
+        // v13.0: Root-level permission check
         
         // 2. Capture Screen
-        guard let image = await capturePrimaryScreen() else {
-            return "Error: Failed to capture screen using ScreenCaptureKit."
+        let image: CGImage?
+        do {
+            image = await capturePrimaryScreen()
+        }
+        
+        guard let validImage = image else {
+            throw AgentToolError.executionError("Failed to capture screen using ScreenCaptureKit.")
         }
         
         // 3. Perform OCR Analysis
-        let results = try await performOCR(on: image)
-        
-        // 4. Format Output
-        if results.isEmpty {
-            return "No text or UI elements found on the current screen."
+        do {
+            let results = try await performOCR(on: validImage)
+            
+            // 4. Format Output
+            if results.isEmpty {
+                return "No text or UI elements found on the current screen."
+            }
+            
+            return "Screen Analysis:\n" + results.joined(separator: "\n")
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
-        
-        return "Screen Analysis:\n" + results.joined(separator: "\n")
     }
     
     private func capturePrimaryScreen() async -> CGImage? {

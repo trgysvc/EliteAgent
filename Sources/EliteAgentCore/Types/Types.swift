@@ -102,11 +102,11 @@ public struct EliteAgentOutput: Codable, Sendable {
     public var thought: String?          // Akıl yürütme süreci (reasoning)
     public var content: String?          // type == .response ise
     public var action: String?           // type == .tool_call ise
-    public var ubid: Int?                // v13.8: Direct Binary ID trigger (UNO Pure)
+    public var ubid: Int128?               // v20.0: High-Precision Binary ID (Swift 6.3)
     public var params: [String: AnyCodable]? // type == .tool_call ise
     public var steps: [ToolCall]?        // v10.5.6: Çok adımlı plan desteği
     
-    public init(type: EliteOutputType?, thought: String? = nil, content: String? = nil, action: String? = nil, ubid: Int? = nil, params: [String: AnyCodable]? = nil, steps: [ToolCall]? = nil) {
+    public init(type: EliteOutputType?, thought: String? = nil, content: String? = nil, action: String? = nil, ubid: Int128? = nil, params: [String: AnyCodable]? = nil, steps: [ToolCall]? = nil) {
         self.type = type
         self.thought = thought
         self.content = content
@@ -170,10 +170,10 @@ public struct EliteAgentOutput: Codable, Sendable {
 
 public struct ToolCall: Codable, Sendable {
     public var tool: String
-    public var ubid: Int?               // v13.8: Binary Identifier (UNO Pure)
+    public var ubid: Int128?               // v20.0: High-Precision Binary ID (Swift 6.3)
     public var params: [String: AnyCodable]
     
-    public init(tool: String, ubid: Int? = nil, params: [String: AnyCodable]) {
+    public init(tool: String, ubid: Int128? = nil, params: [String: AnyCodable]) {
         self.tool = tool
         self.ubid = ubid
         self.params = params

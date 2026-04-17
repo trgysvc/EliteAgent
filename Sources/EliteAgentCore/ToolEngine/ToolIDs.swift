@@ -2,7 +2,7 @@ import Foundation
 
 /// v13.8: UNO Master Binary ID Registry (Sealed Census)
 /// These IDs map tool calls directly to Binary Signatures for zero-string routing.
-public enum ToolUBID: Int, Sendable, CaseIterable {
+public enum ToolUBID: Int128, Sendable, CaseIterable {
     // 🎼 Specialized Media Instruments
     case musicDNA = 18
     case mediaControl = 43

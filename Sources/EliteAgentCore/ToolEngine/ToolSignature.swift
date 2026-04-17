@@ -8,11 +8,11 @@ public struct UNOToolSignature: Codable, Sendable {
     public let name: String            // Slug-name (e.g. xcode_build)
     public let summary: String         // One-liner for fast discovery
     public let description: String     // Detailed instructions for LLM
-    public let ubid: Int               // Unique Binary ID for logic-level tokenization
+    public let ubid: Int128            // Unique Binary ID for logic-level tokenization
     public let parameterSchema: [String: AnyCodable] // MCP/Binary-Schema fragment
     public let requiredParameters: [String]
     
-    public init(id: String, name: String, summary: String, description: String, ubid: Int, parameterSchema: [String: AnyCodable] = [:], requiredParameters: [String] = []) {
+    public init(id: String, name: String, summary: String, description: String, ubid: Int128, parameterSchema: [String: AnyCodable] = [:], requiredParameters: [String] = []) {
         self.id = id
         self.name = name
         self.summary = summary

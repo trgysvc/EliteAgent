@@ -4,11 +4,11 @@ public struct WriteFileTool: AgentTool, Sendable {
     public let name = "write_file"
     public let summary = "Create or overwrite worker files using Native swift APIs."
     public let description = "Write or overwrite a file in the workspace or allowed home directories. MANDATORY: Use this instead of 'echo >' or shell redirection. Parameters: path (string), content (string)."
-    public let ubid = 34 // Token 'C' in Qwen 2.5
+    public let ubid: Int128 = 34 // Token 'C' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         // v19.7.7: Smart Normalization for SLM hallucinations
         var finalPath = params["path"]?.value as? String ?? ""
         var finalContent = params["content"]?.value as? String ?? ""
@@ -44,23 +44,27 @@ public struct WriteFileTool: AgentTool, Sendable {
         let workspaceURL = session.workspaceURL.standardizedFileURL
         
         guard fileURL.path.hasPrefix(workspaceURL.path) || fileURL.path.hasPrefix(homeURL.path) else {
-            throw NSError(domain: "WriteFileTool", code: 2, userInfo: [NSLocalizedDescriptionKey: "Path is outside allowed boundaries (Home or Workspace)"])
+            throw AgentToolError.executionError("Path is outside allowed boundaries (Home or Workspace)")
         }
         
         let parentURL = fileURL.deletingLastPathComponent()
         
         // v19.7.7: Robust Directory Creation
-        if !FileManager.default.fileExists(atPath: parentURL.path) {
-            try FileManager.default.createDirectory(at: parentURL, withIntermediateDirectories: true, attributes: nil)
+        do {
+            if !FileManager.default.fileExists(atPath: parentURL.path) {
+                try FileManager.default.createDirectory(at: parentURL, withIntermediateDirectories: true, attributes: nil)
+            }
+            
+            // Prevent folder overwrite (The 'EliteAgentWorkspace' bug fix)
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDir), isDir.boolValue {
+                throw AgentToolError.executionError("HATA: '\(finalPath)' bir klasördür, üzerine dosya gibi yazılamaz. Lütfen bir dosya adı belirtin (örn: WWDC.md).")
+            }
+            
+            try finalContent.write(to: fileURL, atomically: true, encoding: .utf8)
+            return "File written: \(finalPath)"
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
-        
-        // Prevent folder overwrite (The 'EliteAgentWorkspace' bug fix)
-        var isDir: ObjCBool = false
-        if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDir), isDir.boolValue {
-            throw AgentToolError.executionError("HATA: '\(finalPath)' bir klasördür, üzerine dosya gibi yazılamaz. Lütfen bir dosya adı belirtin (örn: WWDC.md).")
-        }
-        
-        try finalContent.write(to: fileURL, atomically: true, encoding: .utf8)
-        return "File written: \(finalPath)"
     }
 }

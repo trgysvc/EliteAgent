@@ -5,11 +5,11 @@ public struct ReadFileTool: AgentTool, Sendable {
     public let name = "read_file"
     public let summary = "Read content from .txt, .pdf, .docx files."
     public let description = "Read content from a file (.txt, .pdf, .docx)."
-    public let ubid = 33 // Token 'B' in Qwen 2.5
+    public let ubid: Int128 = 33 // Token 'B' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         let rawPath = params["path"]?.value as? String ?? ""
         let expandedPath = rawPath.hasPrefix("~") 
             ? rawPath.replacingOccurrences(of: "~", with: FileManager.default.homeDirectoryForCurrentUser.path) 
@@ -31,9 +31,8 @@ public struct ReadFileTool: AgentTool, Sendable {
         let isAllowed = standardizedPath.hasPrefix(workspacePath) || standardizedPath.hasPrefix(homePath)
         
         guard isAllowed else {
-            print("[ReadFileTool] Access Denied: \(standardizedPath)")
-            print("[ReadFileTool] Allowed Prefixes: [\(workspacePath), \(homePath)]")
-            throw NSError(domain: "ReadFileTool", code: 2, userInfo: [NSLocalizedDescriptionKey: "Path is outside allowed boundaries (Home or Workspace)"])
+            AgentLogger.logAudit(level: .warn, agent: "ReadFileTool", message: "Access Denied: \(standardizedPath). Allowed Prefixes: [\(workspacePath), \(homePath)]")
+            throw AgentToolError.executionError("Path is outside allowed boundaries (Home or Workspace)")
         }
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
@@ -46,31 +45,38 @@ public struct ReadFileTool: AgentTool, Sendable {
             return "AUDIO_FILE_DETECTED: This is a binary audio file. You CANNOT read its content as text. USE 'music_dna' tool with path: '\(fileURL.path)' for technical analysis."
         }
         
-        switch ext {
-        case "pdf":
-            guard let pdf = PDFDocument(url: fileURL) else {
-                throw AgentToolError.executionError("Failed to load PDF document at \(rawPath)")
+        do {
+            switch ext {
+            case "pdf":
+                guard let pdf = PDFDocument(url: fileURL) else {
+                    throw AgentToolError.executionError("Failed to load PDF document at \(rawPath)")
+                }
+                return pdf.string ?? ""
+                
+            case "docx":
+                // Use system textutil to extract text from docx
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/textutil")
+                process.arguments = ["-convert", "txt", "-stdout", fileURL.path]
+                
+                let pipe = Pipe()
+                process.standardOutput = pipe
+                
+                try process.run()
+                process.waitUntilExit()
+                
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                return String(data: data, encoding: .utf8) ?? ""
+                
+            default:
+                // Standard text files
+                return try String(contentsOf: fileURL, encoding: .utf8)
             }
-            return pdf.string ?? ""
-            
-        case "docx":
-            // Use system textutil to extract text from docx
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/textutil")
-            process.arguments = ["-convert", "txt", "-stdout", fileURL.path]
-            
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            
-            try process.run()
-            process.waitUntilExit()
-            
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            return String(data: data, encoding: .utf8) ?? ""
-            
-        default:
-            // Standard text files
-            return try String(contentsOf: fileURL, encoding: .utf8)
+        } catch {
+            if let toolError = error as? AgentToolError {
+                throw toolError
+            }
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
 }

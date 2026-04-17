@@ -12,11 +12,11 @@ public struct AppDiscoveryTool: AgentTool {
     Arama çubuğu, butonlar ve giriş alanlarını hafızaya kaydeder.
     Parametreler: application_name (Uygulamanın tam adı)
     """
-    public let ubid = 35 // Token 'D' in Qwen 2.5
+    public let ubid: Int128 = 35 // Token 'D' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let appName = params["application_name"]?.value as? String else {
             throw AgentToolError.missingParameter("application_name parametresi gereklidir.")
         }

@@ -4,11 +4,11 @@ public struct CalendarTool: AgentTool {
     public let name = "apple_calendar"
     public let summary = "Manage native Apple Calendar events."
     public let description = "Schedule and manage events in the native Apple Calendar app using direct system protocols."
-    public let ubid = 54 // Token 'W' in Qwen 2.5
+    public let ubid: Int128 = 54 // Token 'W' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let action = params["action"]?.value as? String else {
             throw AgentToolError.missingParameter("Action (list_events, add_event) is required.")
         }
@@ -28,7 +28,11 @@ public struct CalendarTool: AgentTool {
                 return output
             end tell
             """
-            return try await AppleScriptRunner.shared.execute(source: script)
+            do {
+                return try await AppleScriptRunner.shared.execute(source: script)
+            } catch {
+                throw AgentToolError.executionError(error.localizedDescription)
+            }
             
         case "add_event":
             guard let summary = params["summary"]?.value as? String,
@@ -50,11 +54,18 @@ public struct CalendarTool: AgentTool {
                 return "FAIL: " & err
             end try
             """
-            let result = try await AppleScriptRunner.shared.execute(source: script)
-            if result.contains("FAIL") {
-                throw AgentToolError.executionError("Calendar Protocol Error: \(result)")
+            do {
+                let result = try await AppleScriptRunner.shared.execute(source: script)
+                if result.contains("FAIL") {
+                    throw AgentToolError.executionError("Calendar Protocol Error: \(result)")
+                }
+                return result
+            } catch {
+                if let toolError = error as? AgentToolError {
+                    throw toolError
+                }
+                throw AgentToolError.executionError(error.localizedDescription)
             }
-            return result
             
         default:
             throw AgentToolError.invalidParameter("Unknown action: \(action)")
@@ -66,11 +77,11 @@ public struct MailTool: AgentTool {
     public let name = "apple_mail"
     public let summary = "Send/Draft native Apple Mail emails."
     public let description = "Directly manage Apple Mail drafts and sending."
-    public let ubid = 55 // Token 'X' in Qwen 2.5
+    public let ubid: Int128 = 55 // Token 'X' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let action = params["action"]?.value as? String else {
             throw AgentToolError.missingParameter("Action (list_unread, create_draft, send_email) is required.")
         }
@@ -87,7 +98,11 @@ public struct MailTool: AgentTool {
                 return output
             end tell
             """
-            return try await AppleScriptRunner.shared.execute(source: script)
+            do {
+                return try await AppleScriptRunner.shared.execute(source: script)
+            } catch {
+                throw AgentToolError.executionError(error.localizedDescription)
+            }
             
         case "create_draft":
             guard let subject = params["subject"]?.value as? String,
@@ -104,8 +119,12 @@ public struct MailTool: AgentTool {
                 save newMessage
             end tell
             """
-            _ = try await AppleScriptRunner.shared.execute(source: script)
-            return "Successfully created a DRAFT in Mail (Preview active)."
+            do {
+                _ = try await AppleScriptRunner.shared.execute(source: script)
+                return "Successfully created a DRAFT in Mail (Preview active)."
+            } catch {
+                throw AgentToolError.executionError(error.localizedDescription)
+            }
             
         case "send_email":
             guard let subject = params["subject"]?.value as? String,
@@ -127,11 +146,18 @@ public struct MailTool: AgentTool {
                 return "FAIL: " & err
             end try
             """
-            let result = try await AppleScriptRunner.shared.execute(source: script)
-            if result.contains("FAIL") {
-                throw AgentToolError.executionError("Mail Protocol Error: \(result)")
+            do {
+                let result = try await AppleScriptRunner.shared.execute(source: script)
+                if result.contains("FAIL") {
+                    throw AgentToolError.executionError("Mail Protocol Error: \(result)")
+                }
+                return result
+            } catch {
+                if let toolError = error as? AgentToolError {
+                    throw toolError
+                }
+                throw AgentToolError.executionError(error.localizedDescription)
             }
-            return result
             
         default:
             throw AgentToolError.invalidParameter("Unknown action: \(action)")
@@ -145,18 +171,22 @@ public struct SystemVolumeTool: AgentTool {
     public let name = "set_volume"
     public let summary = "Adjust macOS system speaker volume."
     public let description = "Set the system output volume level (0-100) using native Core Audio protocols. Use this for all volume adjustments. Parametre: level (int)."
-    public let ubid = 56 // Token 'Y' in Qwen 2.5
+    public let ubid: Int128 = 56 // Token 'Y' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let level = params["level"]?.value as? Int else {
             throw AgentToolError.missingParameter("level")
         }
         
         let script = "set volume output volume \(level)"
-        _ = try await AppleScriptRunner.shared.execute(source: script)
-        return "Sistem sesi %\(level) olarak ayarlandı."
+        do {
+            _ = try await AppleScriptRunner.shared.execute(source: script)
+            return "Sistem sesi %\(level) olarak ayarlandı."
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
+        }
     }
 }
 
@@ -164,11 +194,11 @@ public struct BrightnessControlTool: AgentTool {
     public let name = "set_brightness"
     public let summary = "Adjust macOS screen brightness level."
     public let description = "Set the screen brightness level (0.0 - 1.0). Parametre: level (float)."
-    public let ubid = 57 // Token 'Z' in Qwen 2.5
+    public let ubid: Int128 = 57 // Token 'Z' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let level = params["level"]?.value as? Double else {
             throw AgentToolError.missingParameter("level")
         }
@@ -184,14 +214,18 @@ public struct SleepControlTool: AgentTool {
     public let name = "system_sleep"
     public let summary = "Force macOS system to sleep mode."
     public let description = "Put the system to sleep immediately using native AppleScript protocols. Preferred over shell commands."
-    public let ubid = 15 // Token '0' in Qwen 2.5
+    public let ubid: Int128 = 15 // Token '0' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         let script = "tell application \"System Events\" to sleep"
-        _ = try await AppleScriptRunner.shared.execute(source: script)
-        return "Sistem uyku moduna alınıyor..."
+        do {
+            _ = try await AppleScriptRunner.shared.execute(source: script)
+            return "Sistem uyku moduna alınıyor..."
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
+        }
     }
 }
 

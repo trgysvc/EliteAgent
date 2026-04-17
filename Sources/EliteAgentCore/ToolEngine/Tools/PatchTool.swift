@@ -4,11 +4,11 @@ public struct PatchTool: AgentTool, Sendable {
     public let name = "patch_file"
     public let summary = "Atomic hot-patch for code snippets."
     public let description = "Atomically patches an existing file by exactly matching 'old_content' and replacing it with 'new_content'. Do NOT use sed/awk."
-    public let ubid = 41 // Token 'J' in Qwen 2.5
+    public let ubid: Int128 = 41 // Token 'J' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let path = params["path"]?.value as? String else {
             throw AgentToolError.missingParameter("path")
         }
@@ -21,7 +21,10 @@ public struct PatchTool: AgentTool, Sendable {
         
         let fileURL: URL
         if path.hasPrefix("file://") {
-            fileURL = URL(string: path)!
+            guard let url = URL(string: path) else {
+                throw AgentToolError.invalidParameter("Geçersiz file:// URL: \(path)")
+            }
+            fileURL = url
         } else if path.hasPrefix("/") || path.hasPrefix("~") {
             let expandedPath = NSString(string: path).expandingTildeInPath
             fileURL = URL(fileURLWithPath: expandedPath)
@@ -33,7 +36,12 @@ public struct PatchTool: AgentTool, Sendable {
             throw AgentToolError.executionError("File does not exist: \(fileURL.path)")
         }
         
-        var originalText = try String(contentsOf: fileURL, encoding: .utf8)
+        let originalText: String
+        do {
+            originalText = try String(contentsOf: fileURL, encoding: .utf8)
+        } catch {
+            throw AgentToolError.executionError("Dosya okunamadı: \(error.localizedDescription)")
+        }
         
         // Count occurrences to ensure we only patch if there's exactly one match,
         // to avoid ambiguous patching.
@@ -56,9 +64,13 @@ public struct PatchTool: AgentTool, Sendable {
             throw AgentToolError.executionError("Target snippet 'old_content' matches MULTIPLE times (\(matchCount) matches). Context is ambiguous, please provide a larger unique block or use full write_file.")
         }
         
-        originalText = originalText.replacingOccurrences(of: oldContent, with: newContent)
+        let updatedText = originalText.replacingOccurrences(of: oldContent, with: newContent)
         
-        try originalText.write(to: fileURL, atomically: true, encoding: .utf8)
+        do {
+            try updatedText.write(to: fileURL, atomically: true, encoding: .utf8)
+        } catch {
+            throw AgentToolError.executionError("Dosya yazılamadı: \(error.localizedDescription)")
+        }
         
         return "SUCCESS: File patched securely (\(fileURL.lastPathComponent))."
     }

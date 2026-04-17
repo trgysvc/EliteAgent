@@ -4,11 +4,11 @@ public struct ShellTool: AgentTool, Sendable {
     public let name = "shell_exec"
     public let summary = "Execute zsh/terminal commands."
     public let description = "THIS IS YOUR SOLE AND ONLY TERMINAL TOOL. Use it for all shell, zsh, and terminal-level commands. Parameter: command (string)."
-    public let ubid = 32 // Token 'A' in Qwen 2.5
+    public let ubid: Int128 = 32 // Token 'A' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let command = params["command"]?.value as? String else {
             throw AgentToolError.missingParameter("'command' parameter is required.")
         }
@@ -26,43 +26,44 @@ public struct ShellTool: AgentTool, Sendable {
         
         print("[SHELL] Executing: \(command)")
         
-        return try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-            process.arguments = ["-c", command]
-            process.currentDirectoryURL = session.workspaceURL
-            
-            let outputPipe = Pipe()
-            let errorPipe = Pipe()
-            process.standardOutput = outputPipe
-            process.standardError = errorPipe
-            
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: AgentToolError.executionError("Failed to launch process: \(error.localizedDescription)"))
-                return
-            }
-            
-            // Run waitUntilExit on a background thread to avoid blocking the actor
-            DispatchQueue.global(qos: .userInitiated).async {
-                process.waitUntilExit()
-                
-                let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                
-                let output = String(data: outputData, encoding: .utf8) ?? ""
-                let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
-                
-                let exitCode = process.terminationStatus
-                
-                if exitCode != 0 && !errorOutput.isEmpty {
-                    let fullResult = output.isEmpty ? errorOutput : "\(output)\n[STDERR]: \(errorOutput)"
-                    continuation.resume(returning: fullResult)
-                } else {
-                    continuation.resume(returning: output.isEmpty ? "(command completed, no output)" : output)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-c", command]
+        process.currentDirectoryURL = session.workspaceURL
+        
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+        
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                process.terminationHandler = { _ in
+                    continuation.resume()
+                }
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(throwing: error)
                 }
             }
+            
+            let outputData = try outputPipe.fileHandleForReading.readToEnd() ?? Data()
+            let errorData = try errorPipe.fileHandleForReading.readToEnd() ?? Data()
+            
+            let output = String(data: outputData, encoding: .utf8) ?? ""
+            let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
+            
+            let exitCode = process.terminationStatus
+            
+            if exitCode != 0 && !errorOutput.isEmpty {
+                let fullResult = output.isEmpty ? errorOutput : "\(output)\n[STDERR]: \(errorOutput)"
+                return fullResult
+            } else {
+                return output.isEmpty ? "(command completed, no output)" : output
+            }
+        } catch {
+            throw AgentToolError.executionError("Failed to execute process: \(error.localizedDescription)")
         }
     }
 }

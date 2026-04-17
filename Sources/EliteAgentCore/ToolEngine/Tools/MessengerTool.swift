@@ -14,11 +14,11 @@ public struct MessengerTool: AgentTool {
     CRITICAL: The 'message' parameter is ONLY for the raw content to be sent to the recipient. 
     Do NOT include task status, system reports, or your own results (e.g., 'İşlem tamamlandı') here.
     """
-    public let ubid = 37 // Token 'F' in Qwen 2.5
+    public let ubid: Int128 = 37 // Token 'F' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let platform = params["platform"]?.value as? String,
               let recipient = params["recipient"]?.value as? String,
               let message = params["message"]?.value as? String else {
@@ -70,21 +70,25 @@ public struct MessengerTool: AgentTool {
                     return try await sendIMessage(handle: resolvedPhone, message: message)
                 }
             } catch {
-                return "[ERROR] Contacts erişimi başarısız: \(error.localizedDescription)"
+                throw AgentToolError.executionError("Contacts erişimi başarısız: \(error.localizedDescription)")
             }
         }
         
-        if platform.lowercased() == "whatsapp" {
-            return try await sendWhatsApp(phone: recipient, message: message)
-        } else {
-            return try await sendIMessage(handle: recipient, message: message)
+        do {
+            if platform.lowercased() == "whatsapp" {
+                return try await sendWhatsApp(phone: recipient, message: message)
+            } else {
+                return try await sendIMessage(handle: recipient, message: message)
+            }
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
     
     // MARK: - WhatsApp
     // Düzeltme: Swift """ multiline string AppleScript içine sızıyordu (Error -2741).
     // Çözüm: URL opening için NSWorkspace (AppleScript YOK), keystroke için temp dosya.
-    private func sendWhatsApp(phone: String, message: String) async throws -> String {
+    private func sendWhatsApp(phone: String, message: String) async throws(AgentToolError) -> String {
         let digits = phone.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
 
         guard !digits.isEmpty else {
@@ -102,7 +106,11 @@ public struct MessengerTool: AgentTool {
         print("[WHATSAPP] URL açıldı: \(urlString)")
 
         // Step 2: Wait 3 seconds for WhatsApp to be ready
-        try await Task.sleep(nanoseconds: 3_000_000_000)
+        do {
+            try await Task.sleep(nanoseconds: 3_000_000_000)
+        } catch {
+            // Task cancellation is acceptable but we must catch it
+        }
 
         // Step 3: Write AppleScript to temp file — avoids Swift """ conflict entirely
         let keystrokeScript = [
@@ -141,16 +149,18 @@ public struct MessengerTool: AgentTool {
         process.standardError = pipe
 
         do {
-            try process.run()
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                process.terminationHandler = { _ in
+                    continuation.resume()
+                }
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
         } catch {
             return "[ERROR] osascript başlatılamadı: \(error.localizedDescription)"
-        }
-
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            DispatchQueue.global(qos: .userInitiated).async {
-                process.waitUntilExit()
-                cont.resume()
-            }
         }
 
         let data = pipe.fileHandleForReading.readDataToEndOfFile()

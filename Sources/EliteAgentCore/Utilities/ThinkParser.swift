@@ -74,7 +74,7 @@ public final class ThinkParser {
         
         for match in matches {
             let ubidStr = nsString.substring(with: match.range(at: 1))
-            guard let ubid = Int(ubidStr) else { continue }
+            guard let ubid = Int128(ubidStr) else { continue }
             
             // Start scanning for the balancing brace from the start of the '{'
             let paramsStart = match.range.lowerBound + (nsString.substring(with: match.range).range(of: "{")?.upperBound.utf16Offset(in: nsString.substring(with: match.range)) ?? 0) - 1

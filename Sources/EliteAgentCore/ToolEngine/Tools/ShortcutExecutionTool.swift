@@ -23,69 +23,58 @@ public struct ShortcutExecutionTool: AgentTool {
     - name (string - zorunlu)
     - input_text (string - isteğe bağlı)
     """
-    public let ubid = 49 // Token 'R' in Qwen 2.5
+    public let ubid: Int128 = 49 // Token 'R' in Qwen 2.5
     
     public init() {}
     
-    public func execute(params: [String: AnyCodable], session: Session) async throws -> String {
+    public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
         guard let name = params["name"]?.value as? String else {
             throw AgentToolError.missingParameter("Kısayol adı (name) gereklidir.")
         }
         
         let inputText = params["input_text"]?.value as? String ?? ""
         
-        return try await withThrowingTaskGroup(of: String.self) { group in
-            group.addTask {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
-                process.arguments = ["run", name]
-                
-                let outputPipe = Pipe()
-                let errorPipe = Pipe()
-                process.standardOutput = outputPipe
-                process.standardError = errorPipe
-                
-                if !inputText.isEmpty {
-                    let inputPipe = Pipe()
-                    process.standardInput = inputPipe
-                    
-                    // stdin üzerinden input gönderme
-                    if let data = inputText.data(using: .utf8) {
-                        try? inputPipe.fileHandleForWriting.write(contentsOf: data)
-                        inputPipe.fileHandleForWriting.closeFile()
-                    }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
+        process.arguments = ["run", name]
+        
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+        
+        if !inputText.isEmpty {
+            let inputPipe = Pipe()
+            process.standardInput = inputPipe
+            if let data = inputText.data(using: .utf8) {
+                try? inputPipe.fileHandleForWriting.write(contentsOf: data)
+                try? inputPipe.fileHandleForWriting.close()
+            }
+        }
+        
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                process.terminationHandler = { _ in
+                    continuation.resume()
                 }
-                
                 do {
                     try process.run()
-                    process.waitUntilExit()
-                    
-                    if process.terminationStatus == 0 {
-                        let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                        let output = String(data: data, encoding: .utf8) ?? ""
-                        return "[SUCCESS] '\(name)' kısayolu çalıştırıldı. Çıktı: \(output)"
-                    } else {
-                        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                        let errorMsg = String(data: errorData, encoding: .utf8) ?? "Bilinmeyen Hata"
-                        throw ShortcutError.executionFailed(errorMsg)
-                    }
                 } catch {
-                    throw ShortcutError.executionFailed(error.localizedDescription)
+                    continuation.resume(throwing: error)
                 }
             }
             
-            // 15s Timeout
-            group.addTask {
-                try await Task.sleep(nanoseconds: 15_000_000_000)
-                throw ShortcutError.timeout
+            if process.terminationStatus == 0 {
+                let data = try outputPipe.fileHandleForReading.readToEnd() ?? Data()
+                let output = String(data: data, encoding: .utf8) ?? ""
+                return "[SUCCESS] '\(name)' kısayolu çalıştırıldı. Çıktı: \(output)"
+            } else {
+                let errorData = try errorPipe.fileHandleForReading.readToEnd() ?? Data()
+                let errorMsg = String(data: errorData, encoding: .utf8) ?? "Bilinmeyen Hata"
+                throw AgentToolError.executionError(errorMsg)
             }
-            
-            guard let firstResult = try await group.next() else {
-                throw ShortcutError.executionFailed("İşlem başlatılamadı.")
-            }
-            
-            group.cancelAll()
-            return firstResult
+        } catch {
+            throw AgentToolError.executionError(error.localizedDescription)
         }
     }
 }

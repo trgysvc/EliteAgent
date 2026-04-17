@@ -133,6 +133,17 @@ EliteAgent artık sadece sesi duymakla kalmıyor, onun "adli parmak izini" çık
 ---
 *EliteAgent Core · v6.1 · Forensic & Biologic Excellence.*
 
+### [2026-04-17] — Swift 6.3 Hardening & Architectural Modernization
+**What changed:** 
+- Enforced strict type safety across the Tool Engine by refactoring `AgentTool` to use `throws(AgentToolError)`.
+- Standardized all Unique Binary IDs (`ubid`) to `Int128` across all components (Registry, Grammar, Tools).
+- Resolved persistent compiler crashes (Segmentation Faults) in Swift 6.3 by simplifying actor usage in tools and fixing ambiguous typed throws.
+- Eliminated all remaining legacy concurrency patterns (`DispatchQueue`) and force unwraps (`!`) in core path logic.
+- Modernized `SafariAutomationTool`, `MessengerTool`, `MusicDNATool`, and others for full Swift 6.3 protocol compliance.
+**Files modified:** `AgentTool.swift`, `ToolRegistry.swift`, `Types.swift`, `UNOGrammarLogitProcessor.swift`, `AccessibilityTool.swift`, `ChicagoVisionTool.swift`, `SafariAutomationTool.swift`, `MessengerTool.swift`, `ImageAnalysisTool.swift`, `ChatProcessState.swift`, and various tool files.
+**Decision made:** Adopted `Int128` as the universal binary identifier standard to prevent token collisions and improve model steering. Enforced typed throws for clearer diagnostics in the diagnostic-mode enabled system.
+**Next:** Runtime stability testing of the UNO XPC layer under high tool-call frequency.
+
 ## 📅 [2026-04-01] — HIG Compliance & DSP Performance Overhaul (v6.2)
 
 Bugün, EliteAgent'ın dosya sistemi mimarisini tamamen Apple'ın "macOS Human Interface Guidelines (HIG)" standartlarına taşıdık ve Music DNA motorunu yüksek performanslı veri yapılarıyla senkronize ettik.

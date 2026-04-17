@@ -18,7 +18,7 @@ public actor ToolRegistry {
     public static let shared = ToolRegistry()
     
     private var tools: [String: any AgentTool] = [:]
-    private var ubidMap: [Int: any AgentTool] = [:] // v13.8: Binary ID Map
+    private var ubidMap: [Int128: any AgentTool] = [:] // v20.0: High-Precision ID Map
     private var statusMap: [String: ToolStatus] = [:]
     
     private init() {}
@@ -48,11 +48,11 @@ public actor ToolRegistry {
         return tools[name]
     }
     
-    public func getTool(ubid: Int) -> (any AgentTool)? {
+    public func getTool(ubid: Int128) -> (any AgentTool)? {
         return ubidMap[ubid]
     }
     
-    public func getToolIndices() -> [Int] {
+    public func getToolIndices() -> [Int128] {
         return Array(ubidMap.keys)
     }
     
@@ -91,29 +91,23 @@ public actor ToolRegistry {
         
         do {
             // v16.2: Global Parameter Normalization
-            // If the model hallucinates 'param' instead of 'action', normalize it here 
-            // to protect all tools from SLM-specific calling slips.
             var normalizedParams = toolCall.params
             if normalizedParams["action"] == nil, let paramValue = normalizedParams["param"] {
                 normalizedParams["action"] = paramValue
             }
             
-            // v10.5.5: Full Transparency - Log Dispatch
             AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🛠 Executing Tool: \(tool.name) | Params: \(normalizedParams)")
             
             let result = try await tool.execute(params: normalizedParams, session: session)
             
-            // v10.5.5: Full Transparency - Log Result Size
             AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "✅ Tool Result: \(tool.name) | Output Size: \(result.count) chars")
             
-            // Reset crash count on success if it was healthy
             updateStatus(named: tool.name) { status in
                 if status.crashCount < 3 { status.crashCount = 0 }
                 status.lastError = nil
             }
             return result
         } catch {
-            // v10.5.5: Full Transparency - Log Error
             AgentLogger.logAudit(level: .error, agent: "ToolRegistry", message: "❌ Tool Error: \(tool.name) | Error: \(error.localizedDescription)")
             
             updateStatus(named: tool.name) { status in
@@ -123,6 +117,7 @@ public actor ToolRegistry {
                     status.isAvailable = false
                 }
             }
+            
             throw error
         }
     }
