@@ -1,5 +1,5 @@
 // MusicDNATool.swift
-// Elite Music DNA Engine — Phase 4
+// Elite Music DNA Engine — Phase 6 (v56.0 Infinity)
 //
 // AgentTool implementasyonu. ToolRegistry'e kaydedilmek üzere tasarlanmıştır.
 
@@ -24,16 +24,19 @@ private final class ProgressState: @unchecked Sendable {
 
 public struct MusicDNATool: AgentTool {
     public let name = "music_dna"
-    public let summary = "Infinity Engine: 100% Depth Mastering, Forensic & Audio Science Audit (v28.0)."
+    public let summary = "Infinity Engine: 100% Depth Mastering, Forensic, Semantic & Instrument Science Audit (v56.0)."
     public let description = """
     CRITICAL: Full-Disclosure professional audio analysis. NEVER shorten results.
-    V28.0 Infinity Capabilities:
-    - Mastering: LUFS (Int/Mom/Short), True Peak, Phase Correlation, L/R Balance.
-    - Pitch DNA: Mean F0 (Hz), Voiced Ratio, Entonation Stability.
-    - Timbre: 20 MFCCs, 7nd-Band Spectral Contrast chart, Flatness, ZCR. 
-    - Forensic: Bit-Depth Entropy, Upsampling detection, Encoder Footprint.
-    - Structure: Automated segment detection (Intro, Chorus, etc.).
-    - MIR: BPM (Ellis DP), Chromagram (C-B notes), Key Detection.
+    V56.0 Infinity Capabilities:
+    - Mastering: LUFS (Int/Mom/Short), True Peak, Stereo Width, MS Balance, Side Energy.
+    - Semantic: Theme Dominance, Presence Score, Technical Role, Texture Analysis.
+    - Instruments: AI-driven instrument identification and confidence scores.
+    - Science: AES17 Dynamic Range, THD+N, SMPTE IMD, SNR, Noise Floor (ITU-R 468).
+    - Pitch DNA: Fundamental tracking (F0), Stability, Voicing Ratio.
+    - Timbre: 20 MFCCs, 7-Band Contrast, Flux, Skewness, Kurtosis. 
+    - Forensic: Bit-Depth Entropy Audit, Upsampling Detection, Codec Cutoff analysis.
+    - Structure: Automated Segment Analysis (Intro, Verse, Chorus, Outro, Bridge).
+    - MIR: BPM (Ellis DP), Chromagram, Key & Major/Minor Tendency.
     
     Param: path (string) - Absolute path to the audio file.
     Param: features (list, optional) - Custom focus: 'spectral', 'rhythm', 'forensic'.
@@ -134,10 +137,15 @@ public struct MusicDNATool: AgentTool {
             let forensicMsg = result.rawAnalysis.forensic.isUpsampled ? "⚠️ FAKE HI-RES (Upsampled)" : "✅ NATIVE BIT-DEPTH"
             let segmentsMsg = "\(result.rawAnalysis.segments.count) segments detected"
 
+            let instrumentsMsg = result.rawAnalysis.instruments.primaryLabel
+            let semanticMsg = result.rawAnalysis.semantic.primaryRole
+
             return """
-            [MusicDNA_INFINITY] ✅ v28.0 Deep Audit Complete.
+            [MusicDNA_INFINITY] ✅ v56.0 Deep Audit Complete.
             🛡 Integrity: \(forensicMsg) (\(result.rawAnalysis.forensic.effectiveBits)-bit)
-            🧩 Structure: \(segmentsMsg)
+            🎸 Instruments: \(instrumentsMsg)
+            🧠 Semantic: \(semanticMsg)
+            🧩 Structure: \(segmentsMsg) (ANE + Metal Optimized)
             📄 Rapor: \(targetPath)
             
             \(result.reportText)
