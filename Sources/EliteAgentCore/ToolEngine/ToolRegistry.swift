@@ -82,7 +82,10 @@ public actor ToolRegistry {
             // v11.9: Smart Feedback for miscalled sub-actions
             let miscalledActions = ["play_content", "volume", "pause", "play", "next", "stop"]
             if miscalledActions.contains(toolCall.tool) {
-                throw AgentToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' aracının bir aksiyonudur. Doğru kullanım: CALL([18]) WITH {\"action\": \"\(toolCall.tool)\", ...}")
+                throw AgentToolError.executionError("Tool not found: \(toolCall.tool). LÜTFEN DİKKAT: '\(toolCall.tool)' bağımsız bir araç değildir, 'media_control' (UBID 43) aracının bir aksiyonudur. Doğru kullanım: CALL([43]) WITH {\"action\": \"\(toolCall.tool)\", ...}")
+            }
+            if toolCall.ubid == 18 {
+                throw AgentToolError.executionError("UBID 18, `music_dna` (Müzik Analizi) aracıdır. Eğer medya kontrolü yapmak istiyorsan UBID 43 kullanmalısın.")
             }
             throw AgentToolError.executionError("Tool not found: \(toolCall.tool) / UBID \(toolCall.ubid ?? 0)")
         }

@@ -13,12 +13,14 @@ public struct PlannerTemplate: Sendable {
         } else {
             // Default to Master Toolset if no subset provided (Full Escalation Mode)
             toolsToDisplay = [
+                "- [18] `music_dna`: Professional audio/music analysis (LUFS, BPM, MFCC). Param: path (string).",
                 "- [32] `shell_exec`: Terminal komutu çalıştırır (zsh). Parametre: command (string).",
                 "- [33] `read_file`: Dosya içeriğini yerel Swift API'leri ile okur. Parametre: path (string).",
                 "- [34] `write_file`: Dosya içeriğini yerel Swift API'leri ile yazar (MANDATORY). Parametreler: path, content.",
                 "- [37] `messenger`: iMessage/WhatsApp mesajı gönderir (Native).",
                 "- [40] `safari_automation`: Safari otomasyonu ve Google arama (NATIVE).",
-                "- [45] `web_search`: Google araması yapar (WebFetch). Parametre: query (string)."
+                "- [45] `web_search`: Google araması yapar (WebFetch). Parametre: query (string).",
+                "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string)."
             ]
         }
         
