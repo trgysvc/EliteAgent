@@ -533,9 +533,17 @@ public class Orchestrator: ObservableObject {
             let finalAnswer = await session.finalAnswer ?? (widgetShown ? "" : "Task completed.")
             let elapsed = CFAbsoluteTimeGetCurrent() - taskStart
             
-            // v19.9: UI Integrity Check - Ensure the final result is in chat history
-            if !self.currentMessages.contains(where: { $0.role == .assistant && $0.content == finalAnswer }) {
-                self.currentMessages.append(ChatMessage(role: .assistant, content: finalAnswer))
+            // v23.1: Selective UI Completion - Ensure we don't create redundant chat bubbles
+            // if the direct reflection or widget already provided the info.
+            let trimmedAnswer = finalAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedAnswer.isEmpty {
+                let isDuplicate = self.currentMessages.contains { msg in
+                    msg.role == .assistant && msg.content.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedAnswer
+                }
+                
+                if !isDuplicate {
+                    self.currentMessages.append(ChatMessage(role: .assistant, content: trimmedAnswer))
+                }
             }
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))
             self.status = .idle

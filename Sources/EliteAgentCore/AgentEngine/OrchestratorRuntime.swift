@@ -175,8 +175,10 @@ public actor OrchestratorRuntime {
                             }
                             currentState = .reviewing
                         } else {
-                            // v20.5: Force transition to reporting if tool(s) were executed
-                            currentState = .reporting
+                            // v23.1: Adaptive Convergence. After a tool call, return to PLANNING
+                            // instead of forcing a redundant report. The model will see its own 
+                            // reflected output and can choose to output DONE.
+                            currentState = .planning
                         }
                     } catch {
                         healingAttempts += 1
@@ -341,12 +343,13 @@ public actor OrchestratorRuntime {
         let rawReport = response.content
         let cleanedReport = ThinkParser.cleanForUI(text: rawReport)
         
-        // v22.0: Intellectual Continuity Check - Do not silence if reporting a complex follow-up
-        let widgetShown = await session.wasWidgetRendered
-        let isFollowUp = prompt.lowercased().contains("nereden") || prompt.lowercased().contains("neden") || prompt.lowercased().contains("how")
+        // v20.6: Direct Reflection - The System reflects data immediately to UI
+        // v23.1: Minimalist Deduplication. If a tool was run in this turn and reflected, 
+        // we suppress the narrative if it provides no new information.
+        let turnHasReflection = !self.currentTurnObservations.isEmpty
         
-        if widgetShown && cleanedReport.count < 150 && !isFollowUp {
-            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v22.0 SILENCE GUARD] Widget already rendered. Suppressing redundant summary.")
+        if turnHasReflection && (cleanedReport.count < 150 || cleanedReport.uppercased().contains("DONE")) {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [v23.1 SILENCE GUARD] Information already reflected. Suppressing redundant report.")
             await context.addMessage(Message(role: "assistant", content: response.content))
             return
         }
