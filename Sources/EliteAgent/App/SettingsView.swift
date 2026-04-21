@@ -401,6 +401,25 @@ struct DataPrivacySettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             }
             
+            Section("Sistem Logları") {
+                Button {
+                    NSWorkspace.shared.open(PathConfiguration.shared.auditLogURL)
+                } label: {
+                    Label("Audit Logu Aç", systemImage: "doc.text.magnifyingglass")
+                }
+                
+                Button {
+                    let debugLogURL = PathConfiguration.shared.logsURL.appendingPathComponent("debug.log")
+                    NSWorkspace.shared.open(debugLogURL)
+                } label: {
+                    Label("Debug Logu Aç", systemImage: "doc.text.magnifyingglass")
+                }
+                
+                Text("Log dosyaları sadece yerel olarak Mac'inizde saklanır ve sorun giderme amacıyla kullanılır.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            
             Section("Konum Bilgisi") {
                 LabeledContent("Geçmiş Dosyası", value: "history.json")
                 LabeledContent("Güvenli Kasa", value: "vault.plist")

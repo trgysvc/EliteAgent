@@ -19,6 +19,10 @@ public final class ModelManager: NSObject, ObservableObject {
     private var retryCounts: [String: Int] = [:]
     private var downloadStartTimes: [String: Date] = [:]
     
+    // v21.3: Shard Progress Aggregator
+    // baseModelID -> [taskID: (bytesWritten, totalBytes)]
+    private var shardProgress: [String: [String: (Int64, Int64)]] = [:]
+    
     public let modelsDirectory: URL
     private var session: URLSession!
     
@@ -361,29 +365,54 @@ extension Notification.Name {
 extension ModelManager: URLSessionDownloadDelegate {
     
     nonisolated public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        guard let modelID = downloadTask.taskDescription else { return }
-        
-        let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        guard let taskID = downloadTask.taskDescription else { return }
+        let baseModelID = taskID.components(separatedBy: "_shard_").first ?? taskID
         
         Task { [weak self] in
             guard let self = self else { return }
-            let startTime = await self.downloadStartTimes[modelID]
             
+            // 1. Update shard-specific progress
+            await MainActor.run {
+                var current = self.shardProgress[baseModelID] ?? [:]
+                current[taskID] = (totalBytesWritten, totalBytesExpectedToWrite)
+                self.shardProgress[baseModelID] = current
+            }
+            
+            // 2. Aggregate data for unified reporting
+            let stats = await MainActor.run { self.shardProgress[baseModelID] ?? [:] }
+            var combinedWritten: Int64 = 0
+            var combinedTotal: Int64 = 0
+            
+            for (_, progress) in stats {
+                combinedWritten += progress.0
+                combinedTotal += progress.1
+            }
+            
+            guard combinedTotal > 0 else { return }
+            let overallProgress = Double(combinedWritten) / Double(combinedTotal)
+            
+            // 3. Calculate Speed and Time based on aggregate
+            let startTime = await self.downloadStartTimes[baseModelID]
             if let startTime = startTime {
                 let elapsed = Date().timeIntervalSince(startTime)
                 if elapsed > 0 {
-                    let bytesPerSecond = Double(totalBytesWritten) / elapsed
-                    let speedMBs = bytesPerSecond / 1_048_576.0 // MB/s
+                    let bytesPerSecond = Double(combinedWritten) / elapsed
+                    let speedMBs = bytesPerSecond / 1_048_576.0
                     
-                    let remainingBytes = Double(totalBytesExpectedToWrite - totalBytesWritten)
+                    let remainingBytes = Double(combinedTotal - combinedWritten)
                     let remainingSeconds = remainingBytes / bytesPerSecond
                     let remainingMins = Int(remainingSeconds / 60)
                     
-                    let status = String(format: "%.1f MB/s • Kalan: %d dk", speedMBs, remainingMins)
+                    // v21.3: Premium Status String (MB/s + Progress MB/GB + Time)
+                    let writtenGB = Double(combinedWritten) / 1_073_741_824.0
+                    let totalGB = Double(combinedTotal) / 1_073_741_824.0
+                    
+                    let status = String(format: "%.1f MB/s • %.1f/%.1f GB • Kalan: %d dk", 
+                                      speedMBs, writtenGB, totalGB, remainingMins)
                     
                     await MainActor.run {
-                        self.downloadProgress[modelID] = progress
-                        self.downloadStatus[modelID] = status
+                        self.downloadProgress[baseModelID] = overallProgress
+                        self.downloadStatus[baseModelID] = status
                     }
                 }
             }
@@ -391,10 +420,13 @@ extension ModelManager: URLSessionDownloadDelegate {
     }
     
     nonisolated public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        guard let modelID = downloadTask.taskDescription else { return }
+        guard let taskID = downloadTask.taskDescription else { return }
+        
+        // v21.2: Resolve base model ID from shard task ID
+        let baseModelID = taskID.components(separatedBy: "_shard_").first ?? taskID
         
         let modelsDir = self.modelsDirectory
-        let destinationURL = modelsDir.appendingPathComponent(modelID)
+        let destinationURL = modelsDir.appendingPathComponent(baseModelID)
         try? FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true)
         
         let originalFileName = downloadTask.originalRequest?.url?.lastPathComponent ?? "model.bin"
@@ -408,10 +440,18 @@ extension ModelManager: URLSessionDownloadDelegate {
             
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
-                self.downloadTasks.removeValue(forKey: modelID)
-                self.downloadProgress[modelID] = 1.0
-                self.downloadStatus[modelID] = "Yüklendi (Hazır)"
-                self.refreshInstalledModels()
+                self.downloadTasks.removeValue(forKey: taskID)
+                
+                // Aggregated Completion Check
+                let relatedTasks = self.downloadTasks.keys.filter { $0 == baseModelID || $0.hasPrefix("\(baseModelID)_shard_") }
+                
+                if relatedTasks.isEmpty {
+                    self.downloadProgress[baseModelID] = 1.0
+                    self.downloadStatus[baseModelID] = "Yüklendi (Hazır)"
+                    self.refreshInstalledModels()
+                } else {
+                    self.downloadStatus[baseModelID] = "Parçalar birleştiriliyor (\(relatedTasks.count) parça kaldı)..."
+                }
             }
         } catch {
             print("[ModelManager] CRITICAL: Failed to save model file: \(error)")
