@@ -9,7 +9,8 @@ public final class ModelManager: NSObject, ObservableObject {
     
     @Published public var downloadProgress: [String: Double] = [:] // modelID -> %
     @Published public var downloadStatus: [String: String] = [:]   // modelID -> "42 MB/s • Kalan: 5 dk"
-    @Published public var loadedModels: Set<String> = []
+    @Published public var installedModelIDs: Set<String> = []
+    @Published public var vramModelID: String? = nil
     @Published public var loadingModelID: String? = nil
     @Published public var isAutoUnloadEnabled: Bool = true 
     
@@ -39,7 +40,7 @@ public final class ModelManager: NSObject, ObservableObject {
         
         self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
         
-        self.refreshLoadedModels()
+        self.refreshInstalledModels()
     }
     
     // MARK: - API
@@ -68,7 +69,7 @@ public final class ModelManager: NSObject, ObservableObject {
         // Note: Auto-load on finish is handled via URLSession delegate when download finishes
     }
     
-    public func refreshLoadedModels() {
+    public func refreshInstalledModels() {
         guard let contents = try? FileManager.default.contentsOfDirectory(at: modelsDirectory, includingPropertiesForKeys: nil) else { return }
         
         var found: Set<String> = []
@@ -80,7 +81,7 @@ public final class ModelManager: NSObject, ObservableObject {
                 found.insert(modelID)
             }
         }
-        self.loadedModels = found
+        self.installedModelIDs = found
     }
     
     public func download(_ model: ModelCatalog) async throws {
@@ -115,7 +116,7 @@ public final class ModelManager: NSObject, ObservableObject {
     public func repairModel(_ modelID: String) async throws {
         guard let catalog = ModelRegistry.availableModels.first(where: { $0.id == modelID }) else { return }
         try await downloadModelMetadata(catalog)
-        refreshLoadedModels()
+        refreshInstalledModels()
     }
     
     /// Strict verification of all mandatory files.
@@ -257,7 +258,7 @@ public final class ModelManager: NSObject, ObservableObject {
         }
         
         try await InferenceActor.shared.loadModel(at: modelURL)
-        self.loadedModels.insert(modelID)
+        self.vramModelID = modelID
         
         // v9.9.6: Notify observers that models have changed (Sync fix)
         NotificationCenter.default.post(name: .modelsDidChange, object: nil)
@@ -278,11 +279,14 @@ public final class ModelManager: NSObject, ObservableObject {
     
     public func unload(_ modelID: String) async {
         await InferenceActor.shared.unloadModel()
-        self.loadedModels.remove(modelID)
+        if self.vramModelID == modelID {
+            self.vramModelID = nil
+        }
     }
     
     private func unloadActiveLocalModel() async {
         await InferenceActor.shared.unloadModel()
+        self.vramModelID = nil
     }
     
     private func updateProgress(for modelID: String, progress: Double) {
@@ -349,7 +353,7 @@ extension ModelManager: URLSessionDownloadDelegate {
                 self.downloadTasks.removeValue(forKey: modelID)
                 self.downloadProgress[modelID] = 1.0
                 self.downloadStatus[modelID] = "Yüklendi (Hazır)"
-                self.refreshLoadedModels()
+                self.refreshInstalledModels()
             }
         } catch {
             print("[ModelManager] CRITICAL: Failed to save model file: \(error)")

@@ -77,7 +77,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     
     private var requiredFiles: [String] {
         let base = ["tokenizer.json", "config.json", "tokenizer_config.json"]
-        if activeModelID.contains("3.5") || activeModelID.contains("9B") {
+        if activeModelID.contains("3.5") || activeModelID.contains("9b") {
             // MLX 9B 4-bit models are typically sharded into 2 parts (~3GB each)
             return base + ["model-00001-of-00002.safetensors", "model-00002-of-00002.safetensors"]
         }
@@ -216,7 +216,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         }
         
         let path = getModelDirectory()
-        let isComplete = ModelManager.shared.verifyIntegrity(id: activeModelID)
+        let isComplete = ModelManager.shared.isModelComplete(id: activeModelID)
         
         if isComplete {
             self.isModelReady = true

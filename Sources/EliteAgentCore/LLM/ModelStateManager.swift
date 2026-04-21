@@ -40,6 +40,16 @@ public final class ModelStateManager: ObservableObject {
             self.activeProvider = .localTitanEngine(modelID: validID)
             self.currentModelID = validID
             self.isCloudFallback = false
+            
+            // v10.9: Automatic VRAM Priming on Startup
+            Task {
+                AgentLogger.logAudit(level: .info, agent: "MODEL_STATE", message: "Auto-Priming \(validID) into VRAM on startup...")
+                do {
+                    try await ModelManager.shared.load(validID)
+                } catch {
+                    AgentLogger.logAudit(level: .error, agent: "MODEL_STATE", message: "Failed to auto-prime \(validID): \(error.localizedDescription)")
+                }
+            }
         } else if filesExist && !isComplete, let repairID = modelID {
             self.pendingRepairModelID = repairID
             self.activeProvider = .none

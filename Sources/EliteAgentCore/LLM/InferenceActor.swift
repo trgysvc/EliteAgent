@@ -84,7 +84,7 @@ public actor InferenceActor {
         switch activeProvider {
         case .localTitanEngine(let modelID):
             // 2. Atomic Load Check: Ensure model is in VRAM
-            if await !ModelManager.shared.loadedModels.contains(modelID) {
+            if await self.loadedModelID != modelID {
                 AgentLogger.logAudit(level: .warn, agent: "UniversalInference", message: "Model \(modelID) not in VRAM. Auto-loading...")
                 try await ModelManager.shared.load(modelID)
             }
