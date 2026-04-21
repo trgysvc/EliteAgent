@@ -54,17 +54,17 @@ public struct ModelRegistry {
         // MARK: - LOCAL TITAN MODELS (MLX Optimized)
         
         ModelCatalog(
-            id: "qwen-3.5-9b-sushi-coder-rl-4bit",
-            author: "bigatuna",
-            name: "Qwen 3.5 9B Sushi Coder RL",
-            size: "5.1 GB",
+            id: "qwen-2.5-14b-coder-4bit",
+            author: "mlx-community",
+            name: "Qwen 2.5 Coder 14B",
+            size: "8.5 GB",
             quantization: "4-bit",
-            minRAM: "12 GB",
+            minRAM: "16 GB",
             recommendedContext: "32K",
-            downloadURL: "https://huggingface.co/bigatuna/Qwen3.5-9b-Sushi-Coder-RL-MLX/resolve/main/model-00001-of-00002.safetensors",
+            downloadURL: "https://huggingface.co/mlx-community/Qwen2.5-Coder-14B-Instruct-4bit/resolve/main/model-00001-of-00002.safetensors",
             sha256: "b4c1...", 
-            estimatedSpeed: "~28 tok/s on M4",
-            provider: .localTitanEngine(modelID: "qwen-3.5-9b-sushi-coder-rl-4bit")
+            estimatedSpeed: "~20 tok/s on M4",
+            provider: .localTitanEngine(modelID: "qwen-2.5-14b-coder-4bit")
         ),
         
         ModelCatalog(
