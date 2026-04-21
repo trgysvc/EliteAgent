@@ -75,12 +75,8 @@ public final class ModelManager: NSObject, ObservableObject {
         for url in contents where url.hasDirectoryPath {
             let modelID = url.lastPathComponent
             
-            // Strict Validation: Need weights AND config
-            let weightsExist = FileManager.default.fileExists(atPath: url.appendingPathComponent("model.safetensors").path) ||
-                               FileManager.default.fileExists(atPath: url.appendingPathComponent("weights.npz").path)
-            let configExists = FileManager.default.fileExists(atPath: url.appendingPathComponent("config.json").path)
-            
-            if weightsExist && configExists {
+            // v10.7: Centralized Integrity Check
+            if verifyIntegrity(id: modelID) {
                 found.insert(modelID)
             }
         }
@@ -124,32 +120,39 @@ public final class ModelManager: NSObject, ObservableObject {
     
     /// Strict verification of all mandatory files.
     public func verifyModelComplete(_ modelID: String) throws {
+        if !verifyIntegrity(id: modelID) {
+            throw ModelError.incompleteDownload(missing: "Kritik dosyalar veya parçalar (shards) eksik.")
+        }
+    }
+    
+    /// v10.7: Single Source of Truth for Model Integrity
+    public func verifyIntegrity(id modelID: String) -> Bool {
         let modelURL = modelsDirectory.appendingPathComponent(modelID)
         
-        // Check for weights
-        let weightsExist = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model.safetensors").path) ||
-                           FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("weights.npz").path)
-        guard weightsExist else {
-            throw ModelError.incompleteDownload(missing: "model.safetensors")
+        let mandatory = ["config.json", "tokenizer.json"]
+        for file in mandatory {
+            if !FileManager.default.fileExists(atPath: modelURL.appendingPathComponent(file).path) { return false }
         }
         
-        // Check for metadata
-        for file in mandatoryFiles {
-            let path = modelURL.appendingPathComponent(file)
-            guard FileManager.default.fileExists(atPath: path.path) else {
-                throw ModelError.incompleteDownload(missing: file)
-            }
+        // Weight Detection (Support Shards)
+        let weightsExist = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model.safetensors").path) ||
+                           FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("weights.npz").path)
+        
+        if weightsExist { return true }
+        
+        // Multi-shard check for 9B/3.5 models
+        if modelID.contains("3.5") || modelID.contains("9b") {
+            let shard1 = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model-00001-of-00002.safetensors").path)
+            let shard2 = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model-00002-of-00002.safetensors").path)
+            return shard1 && shard2 // MUST HAVE BOTH
         }
+        
+        return false
     }
     
     /// Safety check for UI to verify model presence without throwing.
     public func isModelComplete(id: String) -> Bool {
-        do {
-            try verifyModelComplete(id)
-            return true
-        } catch {
-            return false
-        }
+        return verifyIntegrity(id: id)
     }
     
     /// Utility for Resilient Self-Healing to distinguish between "Not Installed" and "Corrupted"
@@ -158,22 +161,61 @@ public final class ModelManager: NSObject, ObservableObject {
         return FileManager.default.fileExists(atPath: modelURL.path)
     }
     
+    /// v10.8: Architecture Aliasing Fix
+    /// Some models (like sushi-coder) use non-standard architecture names in config.json.
+    /// This method maps them to MLX-supported base architectures (e.g., qwen3_5 -> qwen2).
+    /// Note: Uses string replacement to strictly adhere to the "No JSON library" rule.
+    public func patchConfigForArchitectureAliasing(id: String) {
+        let configURL = modelsDirectory.appendingPathComponent(id).appendingPathComponent("config.json")
+        guard FileManager.default.fileExists(atPath: configURL.path),
+              let content = try? String(contentsOf: configURL, encoding: .utf8) else {
+            return
+        }
+        
+        var modifiedContent = content
+        let mappings = [
+            "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2\"",
+            "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2\""
+        ]
+        
+        var changed = false
+        for (pattern, replacement) in mappings {
+            if modifiedContent.contains(pattern) {
+                modifiedContent = modifiedContent.replacingOccurrences(of: pattern, with: replacement)
+                changed = true
+            }
+        }
+        
+        if changed {
+            try? modifiedContent.write(to: configURL, atomically: true, encoding: .utf8)
+            AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Aliased qwen3_5 to qwen2 for \(id)")
+        }
+    }
+    
     private func downloadModelMetadata(_ model: ModelCatalog) async throws {
         let baseRepoURL = URL(string: model.downloadURL)!.deletingLastPathComponent()
         let destinationDir = modelsDirectory.appendingPathComponent(model.id)
         try? FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
         
-        for fileName in mandatoryFiles {
+        var filesToDownload = mandatoryFiles
+        
+        // v10.0: Automatic Shard Detection for large models
+        if model.id.contains("3.5") || model.id.contains("9b") {
+            filesToDownload.append("model-00001-of-00002.safetensors")
+            filesToDownload.append("model-00002-of-00002.safetensors")
+        }
+        
+        for fileName in filesToDownload {
             let fileURL = baseRepoURL.appendingPathComponent(fileName)
             let destFile = destinationDir.appendingPathComponent(fileName)
             
             if !FileManager.default.fileExists(atPath: destFile.path) {
-                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching metadata: \(fileName)")
+                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching file: \(fileName)")
                 do {
                     let (data, _) = try await URLSession.shared.data(from: fileURL)
                     try data.write(to: destFile)
                 } catch {
-                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Optional metadata missing: \(fileName)")
+                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Failed to fetch: \(fileName)")
                 }
             }
         }

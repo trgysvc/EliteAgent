@@ -197,7 +197,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         let architectures = UNOExternalBridge.resolveArchitectures(from: data)
         
         // Qwen 3.5 might use Qwen2ForCausalLM as its base architecture or its own.
-        let supported = ["Qwen2ForCausalLM", "MistralForCausalLM", "Qwen2MoEForCausalLM"]
+        let supported = ["Qwen2ForCausalLM", "MistralForCausalLM", "Qwen2MoEForCausalLM", "Qwen3_5ForConditionalGeneration"]
         return architectures.contains { supported.contains($0) }
     }
     
@@ -216,21 +216,9 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         }
         
         let path = getModelDirectory()
-        let configURL = path.appendingPathComponent("config.json")
+        let isComplete = ModelManager.shared.verifyIntegrity(id: activeModelID)
         
-        let allExist = requiredFiles.allSatisfy { 
-            FileManager.default.fileExists(atPath: path.appendingPathComponent($0).path)
-        }
-        
-        var isCorrupted = false
-        if allExist, let data = try? Data(contentsOf: configURL), let content = String(data: data, encoding: .utf8) {
-            if content.contains("Invalid username") || data.count < 100 {
-                isCorrupted = true
-                print("[ModelSetup] CRITICAL: Corrupted model files detected. Forcing recovery state.")
-            }
-        }
-        
-        if allExist && !isCorrupted {
+        if isComplete {
             self.isModelReady = true
             self.modelPath = path
             self.loadState = .ready
@@ -239,8 +227,14 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
             self.isModelReady = false
             self.loadState = .idle
             self.state = .idle
-            if isCorrupted {
-                try? FileManager.default.removeItem(at: path)
+            
+            // Check for severe corruption (manifest exists but can't be read)
+            let configURL = path.appendingPathComponent("config.json")
+            if FileManager.default.fileExists(atPath: configURL.path) {
+                if let data = try? Data(contentsOf: configURL), data.count < 100 {
+                    print("[ModelSetup] CRITICAL: Corrupted config detected. Cleaning...")
+                    try? FileManager.default.removeItem(at: path)
+                }
             }
         }
     }

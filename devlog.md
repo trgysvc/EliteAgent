@@ -1534,3 +1534,63 @@ Sistem artık bellek sızıntılarından arınmış, Swift 6 katı eşzamanlıl�
 **Files modified:** `Package.swift`, `.github/workflows/ci.yml`
 **Decision made:** Standardized the project to use remote SPM resolution for all shared dependencies. This ensures that CI environments can resolve packages automatically without complex folder setup.
 **Next:** Monitor CI stability across different branches.
+
+### [2026-04-21] — Titan Local Model Detection Fix & UI Enhancements
+**What changed:** 
+- Updated ModelManager to support sharded safetensors patterns, allowing detection of 9B models.
+- Enhanced download logic to automatically fetch multiple shards for 3.5/9B models.
+- Added 'Kapat' (Quit) buttons to MenuBarView and ChatWindowView.
+**Files modified:** 
+- Sources/EliteAgentCore/LLM/ModelManager.swift
+- Sources/EliteAgent/App/MenuBarView.swift
+- Sources/EliteAgent/App/ChatWindowView.swift
+**Decision made:** Unified shard detection string patterns in ModelManager to ensure cross-component consistency with ModelSetupManager.
+**Next:** Monitor user feedback on shard download reliability during repair cycles.
+
+### [2026-04-21] — LLM Status Sync & Visibility Fix
+**What changed:** 
+- Added 'loadedModelID' and 'isModelLoaded' to InferenceActor to track VRAM residency.
+- Updated LocalModelWatchdog to prioritize VRAM status over file-system checks, resolving the 'Offline but working' bug.
+- Replaced static 'Healthy' status with dynamic 'IDLE' and 'WORKING' states in MenuBarView and ChatWindowView.
+- Clearly displayed the loaded model ID in the popover header.
+**Files modified:** 
+- Sources/EliteAgentCore/LLM/InferenceActor.swift
+- Sources/EliteAgentCore/LLM/LocalModelWatchdog.swift
+- Sources/EliteAgent/App/MenuBarView.swift
+- Sources/EliteAgent/App/ChatWindowView.swift
+**Decision made:** Switched to a hybrid health state where VRAM residency takes precedence for 'Online' status, allowing for graceful operation even during partial file corruption/missing shards.
+**Next:** Monitor performance during long-running generation tasks to ensure 'WORKING' state correctly reflects token-by-token activity.
+
+### [2026-04-21] — UI Truth & System Integrity Fix
+**What changed:** 
+- Centralized model verification logic into 'ModelManager.verifyIntegrity(id:)'; now strictly validates multi-shard models (e.g. 9B/3.5).
+- Synchronized 'ModelSetupManager' with centralised verification to eliminate contradictory 'Online/Offline' states.
+- Refactored 'ModelCard' UI to unmask incomplete models; replaced misleading green checkmarks with warning icons and a functional '🔧 Onar' (Repair) button.
+- Localized and clarified status badges in 'ChatWindowView' (Hazır/Çalışıyor) and prioritized VRAM residency in 'LocalModelWatchdog'.
+**Files modified:** 
+- Sources/EliteAgentCore/LLM/ModelManager.swift
+- Sources/EliteAgentCore/LLM/ModelSetupManager.swift
+- Sources/EliteAgent/App/ModelSetupView.swift
+- Sources/EliteAgent/App/ChatWindowView.swift
+- Sources/EliteAgentCore/LLM/LocalModelWatchdog.swift
+**Decision made:** Unified the 'source of truth' for model integrity across all managers to ensure UI consistency. Prioritized engine-state reporting over file-system flags to prevent 'Offline' ghosting during partial file corruption.
+
+### [2026-04-21] — Model Lifecycle Management Improvements
+**What changed:** 
+- Added a permanent 'Sil' (Delete) button to all model cards in the Model Hub, allowing users to remove any model with files on disk (even if incomplete or corrupted).
+- Integrated 'ModelSetupManager.deleteModel' into the UI for full file-system cleanup.
+**Files modified:** 
+- Sources/EliteAgent/App/ModelSetupView.swift
+**Decision made:** Provided explicit deletion controls for all model states to empower users in managing their local disk space and cleaning up corrupted downloads.
+
+### [2026-04-21] — Architecture Aliasing Fix (Qwen 3.5 Support)
+**What changed:** 
+- Implemented 'patchConfigForArchitectureAliasing' in 'ModelManager' to map non-standard 'qwen3_5' model types to 'qwen2' base architecture.
+- Integrated the patch into 'InferenceActor.loadModel' flow to ensure seamless loading of Sushi Coder and other Qwen 3.5 fine-tunes.
+- Updated 'ModelSetupManager' to recognize 'Qwen3_5ForConditionalGeneration' as a valid architecture.
+- Adhered to 'No JSON library' rule by using string-based manipulation for local config patching.
+**Files modified:** 
+- Sources/EliteAgentCore/LLM/ModelManager.swift
+- Sources/EliteAgentCore/LLM/InferenceActor.swift
+- Sources/EliteAgentCore/LLM/ModelSetupManager.swift
+**Decision made:** Aliased Qwen 3.5 to Qwen 2 to bypass MLX compatibility limits without modifying external dependencies. Used string manipulation for config patching to stay compliant with elite-agent-rules.md (Binary-only / No JSON).

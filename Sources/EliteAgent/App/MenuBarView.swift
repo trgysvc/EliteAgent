@@ -119,7 +119,7 @@ public struct MenuBarView: View {
                 
                 StatusItem(
                     label: "LLM",
-                    status: watchdog.status.rawValue.uppercased(),
+                    status: llmStatusLabel,
                     color: statusColor,
                     icon: "brain.head.profile"
                 )
@@ -168,7 +168,7 @@ public struct MenuBarView: View {
         HStack(spacing: 12) {
             modelIcon
             VStack(alignment: .leading, spacing: 2) {
-                Text(modelPickerVM.selected?.name.uppercased() ?? "MODEL SEÇİNİZ")
+                Text(watchdog.loadedModelID?.uppercased() ?? modelPickerVM.selected?.name.uppercased() ?? "MODEL SEÇİNİZ")
                     .font(.subheadline.bold())
                 Text(modelLocationLabel)
                     .font(.caption)
@@ -205,6 +205,8 @@ public struct MenuBarView: View {
             ActionButton(icon: "cpu", label: "Kurulum") { showModelPicker() }
             ActionButton(icon: "gearshape.fill", label: "Ayarlar") { openSettingsWindow() }
             ActionButton(icon: "message.fill", label: "Sohbet") { openChatWindow() }
+            ActionButton(icon: "power", label: "Kapat") { NSApplication.shared.terminate(nil) }
+                .foregroundStyle(.red)
         }
         .padding(.top, 4)
     }
@@ -278,15 +280,16 @@ public struct MenuBarView: View {
         }
     }
     
+    private var llmStatusLabel: String {
+        if watchdog.status == .offline { return "OFFLINE" }
+        return watchdog.isBusy ? "WORKING" : "IDLE"
+    }
+    
     private var statusColor: Color {
-        guard modelPickerVM.selected != nil else { return .secondary }
-        
-        switch watchdog.status {
-        case .healthy: return .green
-        case .degraded: return .orange
-        case .critical: return .red
-        case .offline: return .red
-        }
+        guard modelPickerVM.selected != nil || watchdog.loadedModelID != nil else { return .secondary }
+        if watchdog.status == .offline { return .red }
+        if watchdog.isBusy { return .orange }
+        return .green
     }
     
     private var modelIcon: some View {

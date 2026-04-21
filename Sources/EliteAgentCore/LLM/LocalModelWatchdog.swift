@@ -10,6 +10,10 @@ public final class LocalModelWatchdog: ObservableObject {
     @Published public var metrics: InferenceMetrics = .zero
     @Published public var history: [MetricSample] = []
     
+    // v10.6: Live Activity
+    @Published public var isBusy: Bool = false
+    @Published public var loadedModelID: String? = nil
+    
     private var healthTimer: Timer?
     private var lastMetricsFetch: Date = .distantPast
     private var lastRecoveryAttempt: Date = .distantPast
@@ -30,16 +34,31 @@ public final class LocalModelWatchdog: ObservableObject {
     }
     
     public func runHealthCheck() async {
-        // v9.9.9: Data-Driven Availability Check
-        let isReady = ModelSetupManager.shared.isModelReady
+        // v10.7: Hybrid Availability Check (VRAM + File)
+        let isActuallyLoaded = await InferenceActor.shared.isModelLoaded
+        let isFilesReady = ModelSetupManager.shared.isModelReady
         
-        if !isReady {
+        // v10.7: Prioritize Live VRAM Presence
+        if !isActuallyLoaded && !isFilesReady {
             if self.status != .offline {
                 self.status = .offline
-                AgentLogger.logInfo("WATCHDOG: Local model is not loaded. Status set to OFFLINE.")
+                self.isBusy = false
+                self.loadedModelID = nil
+                AgentLogger.logInfo("WATCHDOG: System is TRULY OFFLINE. No VRAM model and no valid files.")
             }
             return
         }
+        
+        // If we reach here, we are either Loaded in VRAM OR Files are Ready (or both).
+        // If we were offline, we MUST move back to healthy.
+        if self.status == .offline {
+            self.status = .healthy
+            AgentLogger.logAudit(level: .info, agent: "WATCHDOG", message: "System activity detected. Moving to ONLINE state.")
+        }
+        
+        // v10.6: Sync Live Activity
+        self.isBusy = await InferenceActor.shared.isBusy
+        self.loadedModelID = await InferenceActor.shared.loadedModelID
 
         let currentMetrics = await collectMetrics()
         self.metrics = currentMetrics

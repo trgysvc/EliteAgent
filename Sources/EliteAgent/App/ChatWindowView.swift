@@ -228,6 +228,15 @@ public struct ChatWindowView: View {
             Spacer()
             
             SessionStatsView(orchestrator: orchestrator, showingSettings: $showingSettings)
+            
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                Image(systemName: "power")
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
+            .help("EliteAgent'ı Kapat")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -376,7 +385,12 @@ struct HealthStatusBadge: View {
     @StateObject private var watchdog = LocalModelWatchdog.shared
     
     var body: some View {
-        Text(watchdog.status.rawValue)
+        let text: String = {
+            if watchdog.status == .offline { return "Offline" }
+            return watchdog.isBusy ? "Çalışıyor" : "Hazır"
+        }()
+        
+        Text(text)
             .font(.caption2.bold())
             .padding(.horizontal, 6)
             .background(statusColor.opacity(0.1))
@@ -384,12 +398,8 @@ struct HealthStatusBadge: View {
     }
     
     private var statusColor: Color {
-        switch watchdog.status {
-        case .healthy: return .green
-        case .degraded: return .orange
-        case .critical: return .red
-        case .offline: return .red
-        }
+        if watchdog.status == .offline { return .red }
+        return watchdog.isBusy ? .orange : .green
     }
 }
 
@@ -400,8 +410,12 @@ struct StatusIndicator: View {
     @StateObject private var watchdog = LocalModelWatchdog.shared
     
     var body: some View { 
+        let color: Color = {
+            if watchdog.status == .offline { return .red }
+            return watchdog.isBusy ? .orange : .green
+        }()
         Circle()
-            .fill(watchdog.status == .healthy ? .green : .red)
+            .fill(color)
             .frame(width: 8, height: 8) 
     }
 }

@@ -24,6 +24,10 @@ public actor InferenceActor {
     private var modelContainer: ModelContainer?
     private var maxContextTokens: Int = 16384
     
+    // v10.6: State Tracking
+    public private(set) var loadedModelID: String?
+    public var isModelLoaded: Bool { modelContainer != nil }
+    
     // v9.6: Self-Healing Metrics
     private var lastTPS: Double = 0
     private var lastLatency: Int = 0
@@ -187,6 +191,7 @@ public actor InferenceActor {
     public func unloadModel() async {
         cancelOngoingGenerations()
         self.modelContainer = nil
+        self.loadedModelID = nil
         self.clearCache()
         
         await MainActor.run {
@@ -202,9 +207,12 @@ public actor InferenceActor {
             ModelSetupManager.shared.loadState = .transferringToVRAM
             ModelSetupManager.shared.isModelReady = false
         }
+        // v10.8: Structural Architecture Aliasing
+        await ModelManager.shared.patchConfigForArchitectureAliasing(id: url.lastPathComponent)
         
         let config = ModelConfiguration(directory: url)
         self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: config)
+        self.loadedModelID = url.lastPathComponent
         
         await MainActor.run {
             ModelSetupManager.shared.loadState = .ready

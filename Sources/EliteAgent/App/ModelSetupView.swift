@@ -198,8 +198,10 @@ struct ModelCard: View {
                     .font(.headline)
                     .lineLimit(1)
                 Spacer()
-                if isDownloaded {
+                if manager.verifyIntegrity(id: model.id) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                } else if manager.doesModelDirectoryExist(id: model.id) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
                 }
             }
             
@@ -222,26 +224,27 @@ struct ModelCard: View {
                         .foregroundStyle(.secondary)
                 }
             } else {
-                // v9.9.2: Double Check Presence
-                let isActuallyInstalled = isDownloaded && manager.isModelComplete(id: model.id)
+                // v10.7: Unified Integrity Logic
+                let isActuallyInstalled = manager.verifyIntegrity(id: model.id)
                 let directoryExists = manager.doesModelDirectoryExist(id: model.id)
                 
-                if isActive && isActuallyInstalled {
-                    Label("🟢 Aktif", systemImage: "checkmark.circle.fill")
-                        .font(.caption2.bold())
-                        .foregroundStyle(.green)
-                } else if isActive && directoryExists && !isActuallyInstalled {
-                    // GHOST STATE: Selected but files are CORRUPTED
+                if isActuallyInstalled {
+                    if isActive {
+                        Label("🟢 Aktif", systemImage: "checkmark.circle.fill")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.green)
+                    } else {
+                        actionButton
+                    }
+                } else if directoryExists {
+                    // INCOMPLETE or CORRUPTED
                     HStack {
                         Label("⚠️ Eksik", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption2.bold())
                             .foregroundStyle(.red)
                         Spacer()
-                        actionButton // This will be 'Onar/İndir'
+                        repairButton
                     }
-                } else if isActive && !directoryExists {
-                    // FIRST INSTALL: Selected but directory doesn't exist yet
-                    actionButton // Show normal 'İndir' or 'Kur'
                 } else {
                     actionButton
                 }
@@ -262,8 +265,48 @@ struct ModelCard: View {
     }
     
     @ViewBuilder
+    private var repairButton: some View {
+        HStack {
+            Button {
+                isLoading = true
+                Task {
+                    do {
+                        try await manager.repairModel(model.id)
+                        isLoading = false
+                    } catch {
+                        errorMessage = "Onarım başarısız: \(error.localizedDescription)"
+                        isLoading = false
+                    }
+                }
+            } label: {
+                if isLoading {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Text("🔧 Onar")
+                }
+            }
+            .buttonStyle(.bordered)
+            .foregroundStyle(.orange)
+            
+            Button("Sil") {
+                Task {
+                    do {
+                        try await ModelSetupManager.shared.deleteModel(model.id)
+                        showToast("🗑️ \(model.name) silindi.", .info)
+                    } catch {
+                        errorMessage = error.localizedDescription
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.red)
+            .font(.caption2)
+        }
+    }
+
+    @ViewBuilder
     private var actionButton: some View {
-        if isDownloaded {
+        if manager.verifyIntegrity(id: model.id) {
             HStack {
                 Button {
                     Task {
@@ -285,7 +328,14 @@ struct ModelCard: View {
                 .disabled(isCurrentlyLoading)
                 
                 Button("Sil") {
-                    Task { await manager.unload(model.id) }
+                    Task {
+                        do {
+                            try await ModelSetupManager.shared.deleteModel(model.id)
+                            showToast("🗑️ \(model.name) silindi.", .info)
+                        } catch {
+                            errorMessage = error.localizedDescription
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.red)
@@ -293,6 +343,7 @@ struct ModelCard: View {
                 .disabled(isCurrentlyLoading)
             }
         } else if case .cloudOpenRouter = model.provider {
+
             Button("Bağlan") {
                 isLoading = true
                 Task { 
