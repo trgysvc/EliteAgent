@@ -71,7 +71,11 @@ public struct MusicDNATool: AgentTool {
         // Pre-flight Scientific Calibration Sweep (SIR)
         let auditor = ScientificAuditor()
         let calibrationResult = auditor.runScenarioA()
-        let sirStatus = calibrationResult.passed ? "✅ CERTIFIED (EBU R128)" : "⚠️ CALIBRATION DRIFT"
+        
+        // v8.1.5: Runtime check for calibration status via Mirror to bypass accessibility-level desync in some build environments
+        let mirror = Mirror(reflecting: calibrationResult)
+        let isPassed = mirror.children.first { $0.label == "passed" }?.value as? Bool ?? false
+        let sirStatus = isPassed ? "✅ CERTIFIED (EBU R128)" : "⚠️ CALIBRATION DRIFT"
 
         do {
             let result = try await intelligence.analyze(url: stagedURL, features: selectedFeatures) { percent, message, _ in
