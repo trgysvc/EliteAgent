@@ -148,15 +148,25 @@ public final class ModelManager: NSObject, ObservableObject {
         // 2. Prepare download queue
         var urlsToDownload: [URL] = []
         if let mainURL = URL(string: model.downloadURL) {
-            urlsToDownload.append(mainURL)
+            let dest = modelsDirectory.appendingPathComponent(model.id)
+            
+            // Add primary file if missing
+            if !FileManager.default.fileExists(atPath: dest.appendingPathComponent(mainURL.lastPathComponent).path) {
+                urlsToDownload.append(mainURL)
+            }
             
             // v21.0: Proper Shard Discovery for multi-file models
-            if model.id.contains("3.5") || model.id.contains("9b") {
+            if mainURL.lastPathComponent.contains("-00001-of-00002") {
                 let base = mainURL.deletingLastPathComponent()
-                // If it's a shard, detect sibling shards
-                if mainURL.lastPathComponent.contains("-00001-of-") {
-                    let shard2 = base.appendingPathComponent("model-00002-of-00002.safetensors")
+                
+                let shard2 = base.appendingPathComponent("model-00002-of-00002.safetensors")
+                if !FileManager.default.fileExists(atPath: dest.appendingPathComponent("model-00002-of-00002.safetensors").path) {
                     urlsToDownload.append(shard2)
+                }
+                
+                let indexFile = base.appendingPathComponent("model.safetensors.index.json")
+                if !FileManager.default.fileExists(atPath: dest.appendingPathComponent("model.safetensors.index.json").path) {
+                    urlsToDownload.append(indexFile) // CRITICAL for mapping shards
                 }
             }
         }
@@ -219,11 +229,13 @@ public final class ModelManager: NSObject, ObservableObject {
         
         if weightsExist { return true }
         
-        // Multi-shard check for 9B/3.5 models
-        if modelID.contains("3.5") || modelID.contains("9b") {
-            let shard1 = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model-00001-of-00002.safetensors").path)
-            let shard2 = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model-00002-of-00002.safetensors").path)
-            return shard1 && shard2 // MUST HAVE BOTH
+        // Dynamic Multi-shard check
+        let shard1 = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model-00001-of-00002.safetensors").path)
+        let shard2 = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model-00002-of-00002.safetensors").path)
+        let indexFile = FileManager.default.fileExists(atPath: modelURL.appendingPathComponent("model.safetensors.index.json").path)
+        
+        if shard1 || shard2 {
+            return shard1 && shard2 && indexFile // MUST HAVE BOTH SHARDS AND INDEX
         }
         
         return false
