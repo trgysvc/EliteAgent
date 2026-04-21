@@ -162,10 +162,10 @@ public final class ModelManager: NSObject, ObservableObject {
         return FileManager.default.fileExists(atPath: modelURL.path)
     }
     
-    /// v10.8: Architecture Aliasing Fix
-    /// Some models (like sushi-coder) use non-standard architecture names in config.json.
-    /// This method maps them to MLX-supported base architectures (e.g., qwen3_5 -> qwen2).
-    /// Note: Uses string replacement to strictly adhere to the "No JSON library" rule.
+    /// v10.8: Architecture Aliasing & Configuration Hoisting Fix
+    /// Some models (like sushi-coder or unsloth exports) use non-standard architecture names 
+    /// or hide critical fields (hidden_size) inside a 'text_config' block.
+    /// This method maps them to MLX-supported base architectures and hoists missing fields.
     public func patchConfigForArchitectureAliasing(id: String) {
         let configURL = modelsDirectory.appendingPathComponent(id).appendingPathComponent("config.json")
         guard FileManager.default.fileExists(atPath: configURL.path),
@@ -174,9 +174,12 @@ public final class ModelManager: NSObject, ObservableObject {
         }
         
         var modifiedContent = content
+        
+        // 1. Architecture Aliasing
         let mappings = [
             "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2\"",
-            "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2\""
+            "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2\"",
+            "\"architectures\": [\n        \"Qwen3_5ForConditionalGeneration\"\n    ]": "\"architectures\": [\n        \"Qwen2ForCausalLM\"\n    ]"
         ]
         
         var changed = false
@@ -187,9 +190,36 @@ public final class ModelManager: NSObject, ObservableObject {
             }
         }
         
+        // 2. Configuration Hoisting (v11.0: Fix for "Missing field 'hidden_size'")
+        // If hidden_size is not at the root but is inside text_config, hoist it.
+        let criticalFields = ["hidden_size", "intermediate_size", "num_hidden_layers", "num_attention_heads", "num_key_value_heads", "vocab_size"]
+        
+        for field in criticalFields {
+            let rootPattern = "\"\(field)\":"
+            let textConfigPattern = "\"text_config\": {"
+            
+            // If it's NOT at the root but text_config exists
+            if !modifiedContent.contains(rootPattern) && modifiedContent.contains(textConfigPattern) {
+                // Find the value inside text_config using regex
+                let pattern = "\"text_config\":\\s*\\{[^}]*\"\(field)\":\\s*(\\d+)"
+                if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+                   let match = regex.firstMatch(in: modifiedContent, options: [], range: NSRange(modifiedContent.startIndex..<modifiedContent.endIndex, in: modifiedContent)),
+                   let range = Range(match.range(at: 1), in: modifiedContent) {
+                    let value = modifiedContent[range]
+                    // Insert at the beginning of the JSON object (after the first {)
+                    if let firstBrace = modifiedContent.firstIndex(of: "{") {
+                        let insertIndex = modifiedContent.index(after: firstBrace)
+                        modifiedContent.insert(contentsOf: "\n    \"\(field)\": \(value),", at: insertIndex)
+                        changed = true
+                        AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "HOIST: Moved \(field) (\(value)) to root for \(id)")
+                    }
+                }
+            }
+        }
+        
         if changed {
             try? modifiedContent.write(to: configURL, atomically: true, encoding: .utf8)
-            AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Aliased qwen3_5 to qwen2 for \(id)")
+            AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Configuration normalized for \(id)")
         }
     }
     
@@ -267,7 +297,11 @@ public final class ModelManager: NSObject, ObservableObject {
     public func switchTo(_ modelID: String) async throws {
         do {
             self.loadingModelID = modelID
-            if isAutoUnloadEnabled { await unloadActiveLocalModel() }
+            // v11.1: Use restart() for a complete hard reset before loading the new model
+            if isAutoUnloadEnabled { 
+                AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Hard Resetting engine before switching to \(modelID)")
+                await InferenceActor.shared.restart() 
+            }
             try await load(modelID)
             self.loadingModelID = nil
             NotificationCenter.default.post(name: .activeProviderChanged, object: modelID)
@@ -278,14 +312,14 @@ public final class ModelManager: NSObject, ObservableObject {
     }
     
     public func unload(_ modelID: String) async {
-        await InferenceActor.shared.unloadModel()
+        await InferenceActor.shared.restart()
         if self.vramModelID == modelID {
             self.vramModelID = nil
         }
     }
     
     private func unloadActiveLocalModel() async {
-        await InferenceActor.shared.unloadModel()
+        await InferenceActor.shared.restart()
         self.vramModelID = nil
     }
     

@@ -9,12 +9,7 @@ public actor ConfigManager {
     private var cachedConfig: InferenceConfig?
     
     private init() {
-        let home = fileManager.homeDirectoryForCurrentUser
-        let eliteDir = home.appendingPathComponent(".eliteagent")
-        self.configURL = eliteDir.appendingPathComponent("config.plist")
-        
-        // Ensure directory exists
-        try? fileManager.createDirectory(at: eliteDir, withIntermediateDirectories: true)
+        self.configURL = PathConfiguration.shared.applicationSupportURL.appendingPathComponent("config.plist")
     }
     
     public func get() async -> InferenceConfig {

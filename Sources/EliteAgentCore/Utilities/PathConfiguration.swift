@@ -81,7 +81,7 @@ public struct PathConfiguration: Sendable {
         // v7.5.1: Only proceed if the legacy folder exists AND hasn't been marked as migrated
         guard FileManager.default.fileExists(atPath: legacy.path) else { return }
         
-        let filesToMove = ["vault.plist", "history.json", "memory.db", "task_history.jsonl"]
+        let filesToMove = ["vault.plist", "history.json", "memory.db", "task_history.jsonl", "config.plist", "metrics.plist"]
         let hasActualFiles = filesToMove.contains { file in
             FileManager.default.fileExists(atPath: legacy.appendingPathComponent(file).path)
         }

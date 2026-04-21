@@ -1,6 +1,6 @@
 import Foundation
 import Network
-import os
+import Network
 
 /// A lightweight, native macOS HTTP server that exposes the InferenceActor via an Ollama-compatible API.
 /// Defaults to port 11500.
@@ -9,7 +9,6 @@ public actor LocalInferenceServer {
     
     private var listener: NWListener?
     private var port: NWEndpoint.Port = 11500
-    private let logger = Logger(subsystem: "app.eliteagent", category: "LocalServer")
     
     @MainActor public private(set) var isRunning = false
     
@@ -30,13 +29,13 @@ public actor LocalInferenceServer {
                     self.isRunning = true 
                     AISessionState.shared.isLocalServerRunning = true
                 }
-                self.logger.info("Titan Local API Server ready on port \(portToUse.rawValue)")
+                AgentLogger.logInfo("Titan Local API Server ready on port \(portToUse.rawValue)", agent: "LocalServer")
             case .failed(let error):
                 Task { @MainActor in 
                     self.isRunning = false 
                     AISessionState.shared.isLocalServerRunning = false
                 }
-                self.logger.error("Local Server failed: \(error.localizedDescription)")
+                AgentLogger.logError("Local Server failed: \(error.localizedDescription)", agent: "LocalServer")
             default:
                 break
             }
@@ -57,23 +56,54 @@ public actor LocalInferenceServer {
             isRunning = false 
             AISessionState.shared.isLocalServerRunning = false
         }
-        logger.info("Titan Local API Server stopped.")
+        AgentLogger.logInfo("Titan Local API Server stopped.", agent: "LocalServer")
     }
     
     private func handleConnection(_ connection: NWConnection) {
         connection.start(queue: .global(qos: .userInitiated))
-        receiveRequest(on: connection)
+        receiveRequest(on: connection, accumulated: Data())
     }
     
-    private func receiveRequest(on connection: NWConnection) {
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, isComplete, error in
-            if let data = data, !data.isEmpty {
-                Task { await self.processRequest(data, on: connection) }
-            }
-            if error != nil || isComplete {
-                connection.cancel()
+    private func receiveRequest(on connection: NWConnection, accumulated: Data) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, error in
+            guard let self = self else { return }
+            Task {
+                await self.handleReceivedData(data, isComplete: isComplete, error: error, on: connection, accumulated: accumulated)
             }
         }
+    }
+    
+    private func handleReceivedData(_ data: Data?, isComplete: Bool, error: Error?, on connection: NWConnection, accumulated: Data) {
+        var current = accumulated
+        if let data = data {
+            current.append(data)
+        }
+        
+        if isRequestComplete(current) {
+            processRequest(current, on: connection)
+        } else if error == nil && !isComplete {
+            receiveRequest(on: connection, accumulated: current)
+        } else {
+            connection.cancel()
+        }
+    }
+    
+    private func isRequestComplete(_ data: Data) -> Bool {
+        guard let requestString = String(data: data, encoding: .utf8) else { return false }
+        guard let headerEndRange = requestString.range(of: "\r\n\r\n") else { return false }
+        
+        let headers = requestString[..<headerEndRange.lowerBound]
+        if let contentLengthRange = headers.range(of: "Content-Length: ", options: .caseInsensitive) {
+            let start = contentLengthRange.upperBound
+            let end = headers[start...].range(of: "\r\n")?.lowerBound ?? headers.endIndex
+            if let length = Int(headers[start..<end].trimmingCharacters(in: .whitespaces)) {
+                let bodyData = data.advanced(by: requestString.distance(from: requestString.startIndex, to: headerEndRange.upperBound))
+                return bodyData.count >= length
+            }
+        }
+        
+        // If no Content-Length, assume complete if we have headers (for GET) or just return true for now
+        return true
     }
     
     private func processRequest(_ data: Data, on connection: NWConnection) {
@@ -88,7 +118,7 @@ public actor LocalInferenceServer {
         let path = parts[1]
         
         if method == "POST" && (path == "/api/generate" || path == "/v1/chat/completions") {
-            handleInferenceRequest(requestString, on: connection)
+            handleInferenceRequest(data: data, on: connection)
         } else if method == "GET" && path == "/api/tags" {
             handleTagsRequest(on: connection)
         } else {
@@ -96,43 +126,51 @@ public actor LocalInferenceServer {
         }
     }
     
-    private func handleInferenceRequest(_ request: String, on connection: NWConnection) {
-        // Simple JSON extractor for proof-of-concept
-        // In a real scenario, we'd use a proper HTTP parser to get the body.
-        guard let bodyRange = request.range(of: "\r\n\r\n") else {
+    private func handleInferenceRequest(data: Data, on connection: NWConnection) {
+        guard let headerEndRange = data.range(of: "\r\n\r\n".data(using: .utf8)!) else {
             sendResponse(on: connection, statusCode: 400, body: "Bad Request")
             return
         }
         
-        let bodyData = Data(request[bodyRange.upperBound...].utf8)
+        let bodyData = data.advanced(by: headerEndRange.upperBound)
         
         Task {
             do {
-                // v9.0: Native Binary-Safe Inference Pipeline
-                // We extract the prompt from the JSON body
-                let json = try JSONSerialization.jsonObject(with: bodyData) as? [String: Any]
-                let prompt = json?["prompt"] as? String ?? (json?["messages"] as? [[String: Any]])?.last?["content"] as? String ?? ""
+                // v11.0: Pure Binary Property List Inference (No JSON)
+                let decoder = PropertyListDecoder()
+                let request = try decoder.decode(InferenceRequest.self, from: bodyData)
+                
+                let prompt = request.prompt ?? request.messages?.last?["content"] ?? ""
+                let maxTokens = request.max_tokens ?? 200
                 
                 let stream = await InferenceActor.shared.generate(
                     messages: [Message(role: "user", content: prompt)],
-                    maxTokens: json?["max_tokens"] as? Int ?? 200
+                    maxTokens: maxTokens
                 )
                 
                 sendStreamHeader(on: connection)
                 
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .binary
+                
                 for await chunk in stream {
-                    let responseObj: [String: Any] = ["response": chunk, "done": false]
-                    let responseData = try JSONSerialization.data(withJSONObject: responseObj)
-                    connection.send(content: responseData + "\n".data(using: .utf8)!, completion: .contentProcessed({ _ in }))
+                    let response = InferenceResponse(response: chunk, done: false)
+                    let responseData = try encoder.encode(response)
+                    
+                    // HTTP Chunked encoding: <length in hex>\r\n<data>\r\n
+                    let hexLength = String(responseData.count, radix: 16)
+                    connection.send(content: "\(hexLength)\r\n".data(using: .utf8)! + responseData + "\r\n".data(using: .utf8)!, completion: .contentProcessed({ _ in }))
                 }
                 
-                let finalObj: [String: Any] = ["done": true]
-                let finalData = try JSONSerialization.data(withJSONObject: finalObj)
-                connection.send(content: finalData + "\n".data(using: .utf8)!, completion: .contentProcessed({ _ in 
+                let finalResponse = InferenceResponse(response: nil, done: true)
+                let finalData = try encoder.encode(finalResponse)
+                let finalHex = String(finalData.count, radix: 16)
+                connection.send(content: "\(finalHex)\r\n".data(using: .utf8)! + finalData + "\r\n0\r\n\r\n".data(using: .utf8)!, completion: .contentProcessed({ _ in 
                     connection.cancel()
                 }))
                 
             } catch {
+                AgentLogger.logError("Inference Request Failed (Binary): \(error.localizedDescription)", agent: "LocalServer")
                 sendResponse(on: connection, statusCode: 500, body: "Internal Error: \(error.localizedDescription)")
             }
         }
@@ -140,28 +178,48 @@ public actor LocalInferenceServer {
     
     private func handleTagsRequest(on connection: NWConnection) {
         let models = ModelRegistry.availableModels.map { ["name": $0.name, "id": $0.id] }
-        let body: [String: Any] = ["models": models]
-        if let data = try? JSONSerialization.data(withJSONObject: body) {
-            sendJSONResponse(on: connection, data: data)
+        let body: [String: [[String: String]]] = ["models": models]
+        
+        do {
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            let data = try encoder.encode(body)
+            sendBinaryResponse(on: connection, data: data)
+        } catch {
+            sendResponse(on: connection, statusCode: 500, body: "Internal Error")
         }
     }
     
     private func sendResponse(on connection: NWConnection, statusCode: Int, body: String) {
-        let response = "HTTP/1.1 \(statusCode) OK\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n\(body)"
+        let bodyData = body.data(using: .utf8) ?? Data()
+        let response = "HTTP/1.1 \(statusCode) OK\r\nContent-Length: \(bodyData.count)\r\nConnection: close\r\n\r\n\(body)"
         connection.send(content: response.data(using: .utf8), completion: .contentProcessed({ _ in 
             connection.cancel()
         }))
     }
     
-    private func sendJSONResponse(on connection: NWConnection, data: Data) {
-        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n"
+    private func sendBinaryResponse(on connection: NWConnection, data: Data) {
+        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/x-apple-binary-plist\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n"
         connection.send(content: header.data(using: .utf8)! + data, completion: .contentProcessed({ _ in 
             connection.cancel()
         }))
     }
     
     private func sendStreamHeader(on connection: NWConnection) {
-        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nTransfer-Encoding: chunked\r\n\r\n"
+        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/x-apple-binary-plist\r\nTransfer-Encoding: chunked\r\n\r\n"
         connection.send(content: header.data(using: .utf8), completion: .contentProcessed({ _ in }))
     }
+}
+
+// MARK: - Binary DTOs
+
+struct InferenceRequest: Codable {
+    let prompt: String?
+    let messages: [[String: String]]?
+    let max_tokens: Int?
+}
+
+struct InferenceResponse: Codable {
+    let response: String?
+    let done: Bool
 }

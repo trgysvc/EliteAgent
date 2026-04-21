@@ -19,11 +19,7 @@ public actor MetricsStore {
     private var metrics: [String: ModelMetrics] = [:]
     
     private init() {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        fileURL = home.appendingPathComponent(".eliteagent/metrics.plist")
-        
-        // Ensure directory exists
-        try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        self.fileURL = PathConfiguration.shared.applicationSupportURL.appendingPathComponent("metrics.plist")
         
         // v13.8: Using PropertyListDecoder for UNO Pure (No JSON Artıkları)
         if let data = try? Data(contentsOf: fileURL),
