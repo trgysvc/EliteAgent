@@ -1,6 +1,15 @@
 {
-  "originHash" : "9a4d610bca26e181ab8384128c09312baffef59ffb201e93e7395da8d37842a7",
+  "originHash" : "81e40dc69d6471deb273ee0be127a41d97a547aa25ae9de0791113e823aae783",
   "pins" : [
+    {
+      "identity" : "audiointelligence",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/trgysvc/audiointelligence.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "f9cc7195b04ce1077236bc77b905f797fafda0ce"
+      }
+    },
     {
       "identity" : "eventsource",
       "kind" : "remoteSourceControl",

@@ -241,7 +241,9 @@ struct AISettingsView: View {
                         get: { orchestrator.config.isLocalServerEnabled },
                         set: { val in
                             Task {
-                                await ConfigManager.shared.update { $0.isLocalServerEnabled = val }
+                                await ConfigManager.shared.update { @Sendable in 
+                                    $0.isLocalServerEnabled = val 
+                                }
                                 await orchestrator.syncLocalServer()
                             }
                         }
@@ -281,7 +283,9 @@ struct AISettingsView: View {
                         get: { orchestrator.config.localServerPort },
                         set: { val in
                             Task {
-                                await ConfigManager.shared.update { $0.localServerPort = val }
+                                await ConfigManager.shared.update { @Sendable in 
+                                    $0.localServerPort = val 
+                                }
                                 await orchestrator.syncLocalServer()
                             }
                         }

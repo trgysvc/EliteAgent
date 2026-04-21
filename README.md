@@ -12,7 +12,7 @@
 
 EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
 
-> **[v19.8.0 UNO Pure]**: Zero-JSON Binary-Native Architecture, 100% Stateless Inference Engine (Memory Leak Prevention), and Actor-Isolated ToolRegistry.
+> **[v20.0.0 TITAN HUB]**: Zero-JSON Binary-Native Architecture, Native Local API Server (Ollama/OpenAI compatible), and Automated GitHub Actions CI.
 
 ## 🔥 Key Features
 
@@ -33,6 +33,12 @@ EliteAgent combines the analytical prowess of frontier cloud models (e.g., via O
 - **Pure UNO Architecture [v19.5]:** Zero-JSON binary-native orchestration. All structural control is handled via `[UNOB: ...]` binary tags, eliminating parsing hallucinations and infinite loops.
 - **Legacy Bridge Purge:** Complete removal of Ollama (Port 11434) and third-party bridge dependencies. 100% self-contained local inference.
 - **Biometric Guard:** Secured WhatsApp/iMessage communication with mandatory TouchID/Apple ID verification.
+
+### 3. Titan Hub: Local Inference Infrastructure [NEW v20.0]
+- **API Server:** Built-in Ollama and OpenAI compatible HTTP server running natively on port `11500`.
+- **Infrastructure Hub:** Exposes `/api/generate`, `/api/tags`, and `/v1/chat/completions` endpoints to allow external apps to use local models.
+- **Dynamic Model Catalog:** Supports any Hugging Face author/repository (e.g., `bigatuna/Qwen3.5-9b-Sushi-Coder-RL-MLX`).
+- **Real-Time Monitoring:** Real-time status indicators in both Settings and Menu Bar popover, synchronized via `AISessionState`.
 
 ### 3. Purpose Lock & Context Isolation [v14.5 - CORE]
 - **Strict Context Isolation:** Each task in the queue starts with a "Tabula Rasa" (clean page), preventing previous errors from leaking into new prompts.
@@ -123,6 +129,7 @@ EliteAgent is compiled strictly using Apple's most modern concurrency standards 
 - **Processor:** Apple Silicon (M1/M2/M3/M4, etc.).
 - **Memory:** 16GB RAM minimum recommended.
 - **Development Environment:** Xcode 16.0 or later.
+- **CI/CD:** Integrated GitHub Actions pipeline for automated `swift build` and `swift test` on macOS 15 runners.
 
 ---
 
