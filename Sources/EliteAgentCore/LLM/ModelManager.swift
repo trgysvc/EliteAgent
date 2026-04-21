@@ -86,28 +86,45 @@ public final class ModelManager: NSObject, ObservableObject {
     
     public func download(_ model: ModelCatalog) async throws {
         guard !model.downloadURL.isEmpty else { return }
-        if downloadTasks[model.id] != nil { return } 
+        guard downloadTasks[model.id] == nil else { return }
         
         AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Starting download: \(model.name)")
         
-        // 1. Fetch metadata first (small files, done immediately)
+        // 1. Fetch metadata first (Only SMALL configuration files)
         try await downloadModelMetadata(model)
         
-        // 2. Start main weight download
-        let url = URL(string: model.downloadURL)!
-        let task: URLSessionDownloadTask
-        
-        if let data = resumeData[model.id] {
-            task = session.downloadTask(withResumeData: data)
-            resumeData.removeValue(forKey: model.id)
-        } else {
-            task = session.downloadTask(with: url)
+        // 2. Prepare download queue
+        var urlsToDownload: [URL] = []
+        if let mainURL = URL(string: model.downloadURL) {
+            urlsToDownload.append(mainURL)
+            
+            // v21.0: Proper Shard Discovery for multi-file models
+            if model.id.contains("3.5") || model.id.contains("9b") {
+                let base = mainURL.deletingLastPathComponent()
+                // If it's a shard, detect sibling shards
+                if mainURL.lastPathComponent.contains("-00001-of-") {
+                    let shard2 = base.appendingPathComponent("model-00002-of-00002.safetensors")
+                    urlsToDownload.append(shard2)
+                }
+            }
         }
         
-        task.taskDescription = model.id
-        downloadTasks[model.id] = task
-        downloadStartTimes[model.id] = Date()
-        task.resume()
+        // 3. Kick off background tasks
+        for (index, url) in urlsToDownload.enumerated() {
+            let taskID = index == 0 ? model.id : "\(model.id)_shard_\(index)"
+            let task = session.downloadTask(with: url)
+            task.taskDescription = taskID
+            
+            if index == 0 {
+                downloadTasks[model.id] = task
+                downloadStartTimes[model.id] = Date()
+            } else {
+                // Secondary shards don't update the primary UI progress but must be tracked
+                downloadTasks[taskID] = task
+            }
+            
+            task.resume()
+        }
         
         updateProgress(for: model.id, progress: 0.01)
     }
@@ -115,8 +132,17 @@ public final class ModelManager: NSObject, ObservableObject {
     /// User-facing repair trigger.
     public func repairModel(_ modelID: String) async throws {
         guard let catalog = ModelRegistry.availableModels.first(where: { $0.id == modelID }) else { return }
+        
+        // 1. Refresh basic metadata (small files)
         try await downloadModelMetadata(catalog)
-        refreshInstalledModels()
+        
+        // 2. If it's still not complete, trigger full download for weights
+        if !verifyIntegrity(id: modelID) {
+            AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Integrity check failed after metadata repair for \(modelID). Triggering weight download...")
+            try await self.download(catalog)
+        } else {
+            refreshInstalledModels()
+        }
     }
     
     /// Strict verification of all mandatory files.
@@ -232,25 +258,19 @@ public final class ModelManager: NSObject, ObservableObject {
         let destinationDir = modelsDirectory.appendingPathComponent(model.id)
         try? FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
         
-        var filesToDownload = mandatoryFiles
-        
-        // v10.0: Automatic Shard Detection for large models
-        if model.id.contains("3.5") || model.id.contains("9b") {
-            filesToDownload.append("model-00001-of-00002.safetensors")
-            filesToDownload.append("model-00002-of-00002.safetensors")
-        }
+        let filesToDownload = mandatoryFiles // v21.0: Strictly metadata only. No shards here.
         
         for fileName in filesToDownload {
             let fileURL = baseRepoURL.appendingPathComponent(fileName)
             let destFile = destinationDir.appendingPathComponent(fileName)
             
             if !FileManager.default.fileExists(atPath: destFile.path) {
-                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching file: \(fileName)")
+                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching metadata: \(fileName)")
                 do {
                     let (data, _) = try await URLSession.shared.data(from: fileURL)
                     try data.write(to: destFile)
                 } catch {
-                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Failed to fetch: \(fileName)")
+                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Failed to fetch metadata: \(fileName)")
                 }
             }
         }

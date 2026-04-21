@@ -232,8 +232,10 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
             let configURL = path.appendingPathComponent("config.json")
             if FileManager.default.fileExists(atPath: configURL.path) {
                 if let data = try? Data(contentsOf: configURL), data.count < 100 {
-                    print("[ModelSetup] CRITICAL: Corrupted config detected. Cleaning...")
-                    try? FileManager.default.removeItem(at: path)
+                    let timestamp = Int(Date().timeIntervalSince1970)
+                    let corruptedPath = path.deletingLastPathComponent().appendingPathComponent("\(path.lastPathComponent)_corrupted_\(timestamp)")
+                    print("[ModelSetup] CRITICAL: Corrupted config detected. Moving to \(corruptedPath.lastPathComponent) for safety.")
+                    try? FileManager.default.moveItem(at: path, to: corruptedPath)
                 }
             }
         }

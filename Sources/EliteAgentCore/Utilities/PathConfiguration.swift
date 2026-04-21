@@ -81,7 +81,7 @@ public struct PathConfiguration: Sendable {
         // v7.5.1: Only proceed if the legacy folder exists AND hasn't been marked as migrated
         guard FileManager.default.fileExists(atPath: legacy.path) else { return }
         
-        let filesToMove = ["vault.plist", "history.json", "memory.db", "task_history.jsonl", "config.plist", "metrics.plist"]
+        let filesToMove = ["vault.plist", "history.json", "memory.db", "task_history.jsonl", "config.plist", "metrics.plist", "Models"]
         let hasActualFiles = filesToMove.contains { file in
             FileManager.default.fileExists(atPath: legacy.appendingPathComponent(file).path)
         }
@@ -109,18 +109,13 @@ public struct PathConfiguration: Sendable {
     }
     
     private func cleanupLegacyFolder(legacy: URL) {
-        let items = (try? FileManager.default.contentsOfDirectory(atPath: legacy.path)) ?? []
-        if items.isEmpty {
-            try? FileManager.default.removeItem(at: legacy)
-        } else {
-            // Rename to avoid re-triggering migration logic
-            let renamed = legacy.deletingLastPathComponent().appendingPathComponent(".eliteagent_migrated_bak")
-            if !FileManager.default.fileExists(atPath: renamed.path) {
-                try? FileManager.default.moveItem(at: legacy, to: renamed)
-            } else {
-                // If bak already exists, just try to delete the contents or items
-                try? FileManager.default.removeItem(at: legacy)
-            }
+        // v21.0: HARDENED - Never delete. Only rename to prevent data loss.
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let renamed = legacy.deletingLastPathComponent().appendingPathComponent(".eliteagent_migrated_bak_\(timestamp)")
+        
+        if !FileManager.default.fileExists(atPath: renamed.path) {
+            try? FileManager.default.moveItem(at: legacy, to: renamed)
+            print("[MIGRATION] Legacy folder safely backed up to \(renamed.lastPathComponent)")
         }
     }
     
