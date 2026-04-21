@@ -214,7 +214,19 @@ struct ModelCard: View {
             
             Spacer()
             
-            if let p = progress, p < 1.0 {
+            // v10.7: Unified Integrity Logic
+            let isActuallyInstalled = manager.verifyIntegrity(id: model.id)
+            let directoryExists = manager.doesModelDirectoryExist(id: model.id)
+            
+            if isActuallyInstalled {
+                if isActive {
+                    Label("🟢 Aktif", systemImage: "checkmark.circle.fill")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.green)
+                } else {
+                    actionButton
+                }
+            } else if let p = progress, p < 1.0 {
                 VStack(spacing: 4) {
                     ProgressView(value: p)
                         .progressViewStyle(.linear)
@@ -223,31 +235,17 @@ struct ModelCard: View {
                         .font(.system(size: 9).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
-            } else {
-                // v10.7: Unified Integrity Logic
-                let isActuallyInstalled = manager.verifyIntegrity(id: model.id)
-                let directoryExists = manager.doesModelDirectoryExist(id: model.id)
-                
-                if isActuallyInstalled {
-                    if isActive {
-                        Label("🟢 Aktif", systemImage: "checkmark.circle.fill")
-                            .font(.caption2.bold())
-                            .foregroundStyle(.green)
-                    } else {
-                        actionButton
-                    }
-                } else if directoryExists {
-                    // INCOMPLETE or CORRUPTED
-                    HStack {
-                        Label("⚠️ Eksik", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption2.bold())
-                            .foregroundStyle(.red)
-                        Spacer()
-                        repairButton
-                    }
-                } else {
-                    actionButton
+            } else if directoryExists {
+                // INCOMPLETE or CORRUPTED
+                HStack {
+                    Label("⚠️ Eksik", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.red)
+                    Spacer()
+                    repairButton
                 }
+            } else {
+                actionButton
             }
         }
         .padding(16)

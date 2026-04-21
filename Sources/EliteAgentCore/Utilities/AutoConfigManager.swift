@@ -40,8 +40,6 @@ public final class AutoConfigManager: Sendable {
         // MLX handles this dynamically, but we can set constraints for specific models.
         let gpuLayers = (preset == .performance) ? 100 : 80
         
-        AgentLogger.logAudit(level: .info, agent: "AutoConfig", message: "Hardware Tuned: \(preset) | \(context) tokens | \(gpuLayers)% GPU")
-        
         return (preset, context, gpuLayers)
     }
     

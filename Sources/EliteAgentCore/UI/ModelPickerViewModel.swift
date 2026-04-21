@@ -93,9 +93,7 @@ public class ModelPickerViewModel: ObservableObject {
         let localTitanModels = registry.filter { if case .localTitanEngine = $0.provider { return true }; return false }
         
         for catalog in localTitanModels {
-            let path = ModelManager.shared.modelsDirectory.appendingPathComponent(catalog.id)
-            let configExists = FileManager.default.fileExists(atPath: path.appendingPathComponent("config.json").path)
-            if configExists {
+            if ModelManager.shared.verifyIntegrity(id: catalog.id) {
                 installed.append(catalog)
             }
         }
@@ -129,7 +127,7 @@ public class ModelPickerViewModel: ObservableObject {
             // Selection Sync: Only sync if the model is actually in our NEW filtered list
             if let activeID = ModelSetupManager.shared.activeModelID.isEmpty ? nil : ModelSetupManager.shared.activeModelID, 
                let current = models.first(where: { $0.id == activeID }) {
-                self.selected = current
+                self.selectModel(current)
             } else {
                 autoSelectPreferredModel()
             }

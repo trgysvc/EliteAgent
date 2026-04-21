@@ -45,6 +45,42 @@ public final class ModelManager: NSObject, ObservableObject {
         self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
         
         self.refreshInstalledModels()
+        self.restoreBackgroundTasks()
+    }
+    
+    // v21.6: Background Task Recovery & Race Prevention
+    private func restoreBackgroundTasks() {
+        session.getAllTasks { [weak self] tasks in
+            guard let self = self else { return }
+            
+            for task in tasks {
+                guard let downloadTask = task as? URLSessionDownloadTask,
+                      let taskID = downloadTask.taskDescription else {
+                    task.cancel()
+                    continue
+                }
+                
+                let baseModelID = taskID.components(separatedBy: "_shard_").first ?? taskID
+                
+                Task { @MainActor in
+                    // If we already have a task for this specific shard, cancel the duplicate to prevent race condition
+                    if self.downloadTasks[taskID] != nil {
+                        AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Killed duplicate ghost task for: \(taskID)")
+                        downloadTask.cancel()
+                    } else {
+                        self.downloadTasks[taskID] = downloadTask
+                        if self.downloadStartTimes[baseModelID] == nil {
+                            self.downloadStartTimes[baseModelID] = Date()
+                        }
+                        
+                        if self.downloadProgress[baseModelID] == nil {
+                            self.downloadProgress[baseModelID] = 0.01
+                            self.downloadStatus[baseModelID] = "Bağlantı sürdürülüyor..."
+                        }
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - API
@@ -91,6 +127,18 @@ public final class ModelManager: NSObject, ObservableObject {
     public func download(_ model: ModelCatalog) async throws {
         guard !model.downloadURL.isEmpty else { return }
         guard downloadTasks[model.id] == nil else { return }
+        
+        // v21.5: Prevent redundant ghost downloads if files are already fully intact
+        if verifyIntegrity(id: model.id) {
+            AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Download requested for \(model.name), but integrity check passed. Skipping redundant download.")
+            
+            await MainActor.run {
+                self.downloadProgress[model.id] = 1.0
+                self.downloadStatus[model.id] = "Yüklendi (Hazır)"
+                self.refreshInstalledModels()
+            }
+            return
+        }
         
         AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Starting download: \(model.name)")
         
@@ -220,22 +268,31 @@ public final class ModelManager: NSObject, ObservableObject {
             }
         }
         
+        // 1.5. Unsloth `lm_head` stripping bug workaround:
+        // Unsloth often strips lm_head.weight to save space during 4-bit export but forgets to set tie_word_embeddings to true.
+        if modifiedContent.contains("\"unsloth_version\"") {
+            if modifiedContent.contains("\"tie_word_embeddings\": false") {
+                modifiedContent = modifiedContent.replacingOccurrences(of: "\"tie_word_embeddings\": false", with: "\"tie_word_embeddings\": true")
+                changed = true
+                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Fixed Unsloth tie_word_embeddings bug for \(id)")
+            }
+        }
+        
         // 2. Configuration Hoisting (v11.0: Fix for "Missing field 'hidden_size'")
         // If hidden_size is not at the root but is inside text_config, hoist it.
-        let criticalFields = ["hidden_size", "intermediate_size", "num_hidden_layers", "num_attention_heads", "num_key_value_heads", "vocab_size"]
+        let criticalFields = ["hidden_size", "intermediate_size", "num_hidden_layers", "num_attention_heads", "num_key_value_heads", "vocab_size", "rms_norm_eps", "max_position_embeddings"]
         
         for field in criticalFields {
             // v11.2: Precise Root Detection. 
-            // We search for the field indented exactly at the root level (4 spaces).
-            // This prevents false positives from nested vision_config blocks.
-            let rootPattern = "\n    \"\(field)\":"
+            // We search for the field indented exactly at the root level (4 spaces) or right after an opening brace.
+            let rootPattern1 = "\n    \"\(field)\":"
+            let rootPattern2 = "{\n    \"\(field)\":"
             let textConfigPattern = "\"text_config\": {"
             
             // If it's NOT at the root but text_config exists
-            if !modifiedContent.contains(rootPattern) && modifiedContent.contains(textConfigPattern) {
-                // v11.2: Robust Search. Use a regex that skips one level of nesting (like rope_parameters)
-                // and correctly extracts the value from the text_config block.
-                let pattern = "\"text_config\":\\s*\\{(?:[^{}]|\\{[^{}]*\\})*\"\(field)\":\\s*(\\d+)"
+            if !modifiedContent.contains(rootPattern1) && !modifiedContent.contains(rootPattern2) && modifiedContent.contains(textConfigPattern) {
+                // v11.3: Robust Search supporting floats/exponents (e.g. 1e-06)
+                let pattern = "\"text_config\":\\s*\\{(?:[^{}]|\\{[^{}]*\\})*\"\(field)\":\\s*([^,}]+)"
                 if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]),
                    let match = regex.firstMatch(in: modifiedContent, options: [], range: NSRange(modifiedContent.startIndex..<modifiedContent.endIndex, in: modifiedContent)),
                    let range = Range(match.range(at: 1), in: modifiedContent) {
@@ -389,30 +446,48 @@ extension ModelManager: URLSessionDownloadDelegate {
             }
             
             guard combinedTotal > 0 else { return }
-            let overallProgress = Double(combinedWritten) / Double(combinedTotal)
             
             // 3. Calculate Speed and Time based on aggregate
             let startTime = await self.downloadStartTimes[baseModelID]
             if let startTime = startTime {
                 let elapsed = Date().timeIntervalSince(startTime)
                 if elapsed > 0 {
-                    let bytesPerSecond = Double(combinedWritten) / elapsed
-                    let speedMBs = bytesPerSecond / 1_048_576.0
+                    // v21.4: Unified Reporting with Fallback Sizes
+                    let catalogSizeInBytes: Int64 = {
+                        if baseModelID.contains("3.5") || baseModelID.contains("9b") { return 5_476_083_302 } // 5.1 GB approx
+                        return 4_509_715_660 // 4.2 GB approx
+                    }()
                     
-                    let remainingBytes = Double(combinedTotal - combinedWritten)
-                    let remainingSeconds = remainingBytes / bytesPerSecond
-                    let remainingMins = Int(remainingSeconds / 60)
+                    let effectiveTotal = combinedTotal > 0 ? combinedTotal : catalogSizeInBytes
+                    let overallProgress = Double(combinedWritten) / Double(effectiveTotal)
                     
-                    // v21.3: Premium Status String (MB/s + Progress MB/GB + Time)
-                    let writtenGB = Double(combinedWritten) / 1_073_741_824.0
-                    let totalGB = Double(combinedTotal) / 1_073_741_824.0
-                    
-                    let status = String(format: "%.1f MB/s • %.1f/%.1f GB • Kalan: %d dk", 
-                                      speedMBs, writtenGB, totalGB, remainingMins)
-                    
-                    await MainActor.run {
-                        self.downloadProgress[baseModelID] = overallProgress
-                        self.downloadStatus[baseModelID] = status
+                    let startTime = await self.downloadStartTimes[baseModelID]
+                    if let startTime = startTime {
+                        let elapsed = Date().timeIntervalSince(startTime)
+                        if elapsed > 0 {
+                            let bytesPerSecond = Double(combinedWritten) / elapsed
+                            let speedMBs = bytesPerSecond / 1_048_576.0
+                            
+                            let remainingBytes = Double(effectiveTotal - combinedWritten)
+                            let remainingSeconds = remainingBytes / bytesPerSecond
+                            let remainingMins = Int(remainingSeconds / 60)
+                            
+                            let writtenGB = Double(combinedWritten) / 1_073_741_824.0
+                            let totalGB = Double(effectiveTotal) / 1_073_741_824.0
+                            
+                            let status: String
+                            if speedMBs < 0.1 {
+                                status = "Bağlantı kuruluyor..."
+                            } else {
+                                status = String(format: "%.1f MB/s • %.1f/%.1f GB • Kalan: %d dk", 
+                                              speedMBs, writtenGB, totalGB, remainingMins)
+                            }
+                            
+                            await MainActor.run {
+                                self.downloadProgress[baseModelID] = min(0.99, overallProgress)
+                                self.downloadStatus[baseModelID] = status
+                            }
+                        }
                     }
                 }
             }
