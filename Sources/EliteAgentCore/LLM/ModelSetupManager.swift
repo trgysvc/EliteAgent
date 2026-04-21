@@ -202,7 +202,9 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     }
     
     private func getHuggingFaceURL(for modelID: String) -> String {
-        return "https://huggingface.co/mlx-community/\(modelID)/resolve/main/"
+        // v10.0: Dynamic author resolution from Registry
+        let author = ModelRegistry.availableModels.first(where: { $0.id == modelID })?.author ?? "mlx-community"
+        return "https://huggingface.co/\(author)/\(modelID)/resolve/main/"
     }
     
     public func verifyModelStatus() {

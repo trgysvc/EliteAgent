@@ -60,6 +60,9 @@ public final class AISessionState {
         set { UserDefaults.standard.set(newValue, forKey: "aisession_fallback_count") }
     }
     
+    // v10.0: Local Server Runtime Status
+    public var isLocalServerRunning: Bool = false
+    
     private init() {
         if let policyRaw = UserDefaults.standard.string(forKey: fallbackPolicyKey),
            let policy = FallbackPolicy(rawValue: policyRaw) {

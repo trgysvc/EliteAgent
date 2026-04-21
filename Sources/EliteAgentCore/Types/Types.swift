@@ -281,6 +281,10 @@ public struct InferenceConfig: Codable, Sendable {
     public var maxTokens: Int = 1024
     public var systemPrompt: String? = nil
     
+    // v10.0: Titan Hub (Local API Server)
+    public var isLocalServerEnabled: Bool = false
+    public var localServerPort: Int = 11500
+    
     public init(
         providerPriority: [ProviderID] = [.mlx, .openrouter],
         strictLocal: Bool = false,
@@ -293,7 +297,9 @@ public struct InferenceConfig: Codable, Sendable {
         autoSaveReports: Bool = false,
         preferredSearchProvider: String = "Serper (Google)",
         maxTokens: Int = 1024,
-        systemPrompt: String? = nil
+        systemPrompt: String? = nil,
+        isLocalServerEnabled: Bool = false,
+        localServerPort: Int = 11500
     ) {
         self.providerPriority = providerPriority
         self.strictLocal = strictLocal
@@ -307,6 +313,8 @@ public struct InferenceConfig: Codable, Sendable {
         self.preferredSearchProvider = preferredSearchProvider
         self.maxTokens = maxTokens
         self.systemPrompt = systemPrompt
+        self.isLocalServerEnabled = isLocalServerEnabled
+        self.localServerPort = localServerPort
     }
     
     public static let `default` = InferenceConfig(
@@ -326,7 +334,9 @@ public struct InferenceConfig: Codable, Sendable {
         autoSaveReports: false,
         preferredSearchProvider: "Serper (Google)",
         maxTokens: 1024,
-        systemPrompt: "You are EliteAgent, a high-performance AI assistant."
+        systemPrompt: "You are EliteAgent, a high-performance AI assistant.",
+        isLocalServerEnabled: false,
+        localServerPort: 11500
     )
 }
 

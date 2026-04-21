@@ -35,7 +35,7 @@ public struct SettingsView: View {
                 case "Security":
                     SecuritySettingsView()
                 case "AI":
-                    AISettingsView(modelPickerVM: modelPickerVM, showingTitanSetup: $showingTitanSetup)
+                    AISettingsView(orchestrator: orchestrator, modelPickerVM: modelPickerVM, showingTitanSetup: $showingTitanSetup)
                 case "Tools":
                     ToolsSettingsView()
                 case "Analytics":
@@ -113,6 +113,7 @@ struct SecuritySettingsView: View {
 }
 
 struct AISettingsView: View {
+    @ObservedObject var orchestrator: Orchestrator
     @ObservedObject var modelPickerVM: ModelPickerViewModel
     @Binding var showingTitanSetup: Bool
     @State private var sessionState = AISessionState.shared
@@ -232,6 +233,70 @@ struct AISettingsView: View {
                 Text("OpenRouter modellerini kullanabilmek için geçerli bir API anahtarı gereklidir. Anahtarınız macOS Keychain (Anahtar Zinciri) üzerinde güvenli bir şekilde saklanır.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            
+            Section {
+                HStack {
+                    Toggle("Yerel API Sunucusunu Etkinleştir (Titan Hub)", isOn: Binding(
+                        get: { orchestrator.config.isLocalServerEnabled },
+                        set: { val in
+                            Task {
+                                await ConfigManager.shared.update { $0.isLocalServerEnabled = val }
+                                await orchestrator.syncLocalServer()
+                            }
+                        }
+                    ))
+                    
+                    Spacer()
+                    
+                    if sessionState.isLocalServerRunning {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 8, height: 8)
+                            Text("Sunucu Hazır")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.green)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.1), in: Capsule())
+                    } else {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.secondary)
+                                .frame(width: 8, height: 8)
+                            Text("Durduruldu")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                
+                HStack {
+                    Text("API Portu")
+                        .font(.subheadline)
+                    Spacer()
+                    TextField("11500", value: Binding(
+                        get: { orchestrator.config.localServerPort },
+                        set: { val in
+                            Task {
+                                await ConfigManager.shared.update { $0.localServerPort = val }
+                                await orchestrator.syncLocalServer()
+                            }
+                        }
+                    ), format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 80)
+                    .multilineTextAlignment(.trailing)
+                }
+                
+                Text("Titan Hub üzerinden Ollama ve OpenAI SDK uyumlu araçlarla yerel modellerinize erişebilirsiniz.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    
+            } header: {
+                Label("Titan Hub (Yerel API Sunucusu)", systemImage: "antenna.radiowaves.left.and.right")
             }
             
             Section("Yapılandırma") {

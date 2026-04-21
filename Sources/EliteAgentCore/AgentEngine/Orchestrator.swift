@@ -84,6 +84,7 @@ public class Orchestrator: ObservableObject {
             Task {
                 let savedConfig = await ConfigManager.shared.get()
                 self.config = savedConfig
+                await self.syncLocalServer()
             }
             
             do {
@@ -682,6 +683,21 @@ public class Orchestrator: ObservableObject {
                 } catch {
                     print("[ORCHESTRATOR] Local summarization also failed: \(error)")
                 }
+            }
+        }
+    }
+
+    @MainActor
+    public func syncLocalServer() async {
+        let isEnabled = config.isLocalServerEnabled
+        let port = config.localServerPort
+        let server = LocalInferenceServer.shared
+        
+        Task.detached {
+            if isEnabled {
+                try? await server.start(portNumber: port)
+            } else {
+                await server.stop()
             }
         }
     }

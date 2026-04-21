@@ -135,6 +135,15 @@ public struct MenuBarView: View {
                 
                 Spacer()
                 
+                StatusItem(
+                    label: "HUB",
+                    status: AISessionState.shared.isLocalServerRunning ? "READY" : "OFF",
+                    color: AISessionState.shared.isLocalServerRunning ? .green : .secondary,
+                    icon: "antenna.radiowaves.left.and.right"
+                )
+            }
+            
+            HStack(spacing: 16) {
                 // Detailed Tool Health
                 HStack(spacing: 4) {
                     Image(systemName: "hammer.fill")

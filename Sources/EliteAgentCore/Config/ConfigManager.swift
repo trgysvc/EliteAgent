@@ -47,7 +47,7 @@ public actor ConfigManager {
         }
     }
     
-    public func update(_ block: (inout InferenceConfig) -> Void) async {
+    public func update(_ block: @Sendable (inout InferenceConfig) -> Void) async {
         var current = await get()
         block(&current)
         await save(current)

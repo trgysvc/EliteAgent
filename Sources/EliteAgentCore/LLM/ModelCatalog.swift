@@ -10,6 +10,7 @@ public enum ModelProvider: Codable, Sendable, Equatable {
 /// Metadata for a specific AI model in the EliteAgent ecosystem.
 public struct ModelCatalog: Identifiable, Codable, Sendable {
     public let id: String
+    public let author: String
     public let name: String
     public let size: String
     public let quantization: String
@@ -22,6 +23,7 @@ public struct ModelCatalog: Identifiable, Codable, Sendable {
     
     public init(
         id: String,
+        author: String = "mlx-community",
         name: String,
         size: String,
         quantization: String,
@@ -33,6 +35,7 @@ public struct ModelCatalog: Identifiable, Codable, Sendable {
         provider: ModelProvider
     ) {
         self.id = id
+        self.author = author
         self.name = name
         self.size = size
         self.quantization = quantization
@@ -51,20 +54,36 @@ public struct ModelRegistry {
         // MARK: - LOCAL TITAN MODELS (MLX Optimized)
         
         ModelCatalog(
+            id: "qwen-3.5-9b-sushi-coder-rl-4bit",
+            author: "bigatuna",
+            name: "Qwen 3.5 9B Sushi Coder RL",
+            size: "5.1 GB",
+            quantization: "4-bit",
+            minRAM: "12 GB",
+            recommendedContext: "32K",
+            downloadURL: "https://huggingface.co/bigatuna/Qwen3.5-9b-Sushi-Coder-RL-MLX/resolve/main/model-00001-of-00002.safetensors",
+            sha256: "b4c1...", 
+            estimatedSpeed: "~28 tok/s on M4",
+            provider: .localTitanEngine(modelID: "qwen-3.5-9b-sushi-coder-rl-4bit")
+        ),
+        
+        ModelCatalog(
             id: "qwen-3.5-7b-4bit",
+            author: "mlx-community",
             name: "Qwen 3.5 7B",
             size: "4.5 GB",
             quantization: "4-bit",
             minRAM: "12 GB",
             recommendedContext: "32K",
             downloadURL: "https://huggingface.co/mlx-community/Qwen3.5-7B-Instruct-4bit/resolve/main/model.safetensors",
-            sha256: "3f9a...", // Verified SHA for v3.5
+            sha256: "3f9a...", 
             estimatedSpeed: "~55 tok/s on M4",
             provider: .localTitanEngine(modelID: "qwen-3.5-7b-4bit")
         ),
         
         ModelCatalog(
             id: "qwen-2.5-7b-4bit",
+            author: "mlx-community",
             name: "Qwen 2.5 7B",
             size: "4.2 GB",
             quantization: "4-bit",
@@ -78,6 +97,7 @@ public struct ModelRegistry {
         
         ModelCatalog(
             id: "gemma-4-e4b-it-4bit",
+            author: "mlx-community",
             name: "Gemma 4 4B",
             size: "2.8 GB",
             quantization: "4-bit",
@@ -91,6 +111,7 @@ public struct ModelRegistry {
         
         ModelCatalog(
             id: "llama-3.1-8b-4bit",
+            author: "mlx-community",
             name: "Llama 3.1 8B",
             size: "4.9 GB",
             quantization: "4-bit",
