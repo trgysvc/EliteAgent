@@ -186,7 +186,7 @@ struct ModelCard: View {
     @State private var errorMessage: String?
     @State private var isLoading = false
     
-    private var isDownloaded: Bool { manager.loadedModels.contains(model.id) }
+    private var isDownloaded: Bool { manager.installedModelIDs.contains(model.id) }
     private var isActive: Bool { AISessionState.shared.selectedModel == model.id }
     private var isCurrentlyLoading: Bool { ModelManager.shared.loadingModelID == model.id }
     private var progress: Double? { manager.downloadProgress[model.id] }

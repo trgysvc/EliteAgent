@@ -9,13 +9,14 @@ let package = Package(
     products: [
         .executable(name: "EliteAgent", targets: ["EliteAgent"]),
         .library(name: "EliteAgentCore", type: .dynamic, targets: ["EliteAgentCore"]),
+        .library(name: "EliteAgentUI", targets: ["EliteAgentUI"]),
         .executable(name: "EliteAgentXPC", targets: ["EliteAgentXPC"]),
         .executable(name: "elite", targets: ["elite"]),
         .executable(name: "uma-bench", targets: ["uma-bench"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.19.0"),
-        .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.31.3")),
+        .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.30.6")),
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.30.6")),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
         .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main")
     ],
@@ -24,6 +25,7 @@ let package = Package(
             name: "EliteAgent",
             dependencies: [
                 "EliteAgentCore",
+                "EliteAgentUI",
                 .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "Sparkle", package: "Sparkle"),
                 .product(name: "AudioIntelligence", package: "audiointelligence")
@@ -49,6 +51,14 @@ let package = Package(
                 .process("Resources/default.metallib")
             ],
             linkerSettings: []
+        ),
+        .target(
+            name: "EliteAgentUI",
+            dependencies: [
+                "EliteAgentCore",
+                .product(name: "MLX", package: "mlx-swift")
+            ],
+            path: "Sources/EliteAgentUI"
         ),
         .executableTarget(
             name: "EliteAgentXPC",

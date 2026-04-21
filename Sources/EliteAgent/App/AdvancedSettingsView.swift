@@ -126,7 +126,7 @@ struct AdvancedSettingsView: View {
         // 1. Wipe In-Memory State
         AISessionState.shared.selectedModel = ""
         AISessionState.shared.isInputLocked = false
-        ModelManager.shared.loadedModels.removeAll()
+        ModelManager.shared.installedModelIDs.removeAll()
         
         // 2. Wipe Local Filesystem (v14.0 SMART RESET: Does NOT touch Workspace in Documents)
         try? FileManager.default.removeItem(at: appSupport)

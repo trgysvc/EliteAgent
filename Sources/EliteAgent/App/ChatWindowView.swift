@@ -153,16 +153,14 @@ public struct ChatWindowView: View {
                     inputArea
                 }
                 
-                if ModelManager.shared.loadedModels.isEmpty && !VaultManager.shared.hasCloudProvider() {
+                if ModelManager.shared.installedModelIDs.isEmpty && !VaultManager.shared.hasCloudProvider() {
                     emptyStateOverlay
                 }
             }
             .sheet(isPresented: $showingOnboarding) {
                 OnboardingWizardView()
             }
-            .overlay {
-                SelfHealingOverlay()
-            }
+            .overlay(content: { SelfHealingOverlay() })
             .sheet(isPresented: $showingSettings) {
                 SettingsView(orchestrator: orchestrator, modelPickerVM: modelPickerVM)
             }
