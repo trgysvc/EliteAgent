@@ -15,6 +15,9 @@ public actor LocalInferenceServer {
     private init() {}
     
     public func start(portNumber: Int? = nil) throws {
+        // v11.1: Guard against port conflicts by ensuring the previous listener is closed.
+        self.stop()
+        
         if let p = portNumber {
             self.port = NWEndpoint.Port(integerLiteral: UInt16(p))
         }

@@ -195,14 +195,18 @@ public final class ModelManager: NSObject, ObservableObject {
         let criticalFields = ["hidden_size", "intermediate_size", "num_hidden_layers", "num_attention_heads", "num_key_value_heads", "vocab_size"]
         
         for field in criticalFields {
-            let rootPattern = "\"\(field)\":"
+            // v11.2: Precise Root Detection. 
+            // We search for the field indented exactly at the root level (4 spaces).
+            // This prevents false positives from nested vision_config blocks.
+            let rootPattern = "\n    \"\(field)\":"
             let textConfigPattern = "\"text_config\": {"
             
             // If it's NOT at the root but text_config exists
             if !modifiedContent.contains(rootPattern) && modifiedContent.contains(textConfigPattern) {
-                // Find the value inside text_config using regex
-                let pattern = "\"text_config\":\\s*\\{[^}]*\"\(field)\":\\s*(\\d+)"
-                if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+                // v11.2: Robust Search. Use a regex that skips one level of nesting (like rope_parameters)
+                // and correctly extracts the value from the text_config block.
+                let pattern = "\"text_config\":\\s*\\{(?:[^{}]|\\{[^{}]*\\})*\"\(field)\":\\s*(\\d+)"
+                if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]),
                    let match = regex.firstMatch(in: modifiedContent, options: [], range: NSRange(modifiedContent.startIndex..<modifiedContent.endIndex, in: modifiedContent)),
                    let range = Range(match.range(at: 1), in: modifiedContent) {
                     let value = modifiedContent[range]

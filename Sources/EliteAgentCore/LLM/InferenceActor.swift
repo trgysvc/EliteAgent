@@ -84,7 +84,7 @@ public actor InferenceActor {
         switch activeProvider {
         case .localTitanEngine(let modelID):
             // 2. Atomic Load Check: Ensure model is in VRAM
-            if await self.loadedModelID != modelID {
+            if self.loadedModelID != modelID {
                 AgentLogger.logAudit(level: .warn, agent: "UniversalInference", message: "Model \(modelID) not in VRAM. Auto-loading...")
                 try await ModelManager.shared.load(modelID)
             }
@@ -144,7 +144,7 @@ public actor InferenceActor {
         cancelOngoingGenerations()
     }
     
-    public func restart() async {
+    public func restart(reload: Bool = false) async {
         AgentLogger.logAudit(level: .warn, agent: "titan", message: "Hard Reset: Titan Motoru Yeniden Başlatılıyor...")
         
         await MainActor.run {
@@ -158,8 +158,10 @@ public actor InferenceActor {
         // MLX Emergency Purge
         await MLXEngineGuardian.shared.emergencyPurge()
         
-        // Reload current model
-        await ModelSetupManager.shared.reloadCurrentModel()
+        // v11.3: Conditional reload.
+        if reload {
+            await ModelSetupManager.shared.reloadCurrentModel()
+        }
         
         await MainActor.run {
             AISessionState.shared.isRestartingEngine = false
@@ -298,7 +300,7 @@ public actor InferenceActor {
                                 if case .timeout = error {
                                     await MainActor.run { self.handleEngineTimeout() }
                                 } else if case .outOfMemory = error {
-                                    Task { await self.restart() }
+                                    Task { await self.restart(reload: true) }
                                 }
                                 innerContinuation.finish()
                             } catch {
