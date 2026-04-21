@@ -386,9 +386,6 @@ public final class ModelManager: NSObject, ObservableObject {
         
         try await InferenceActor.shared.loadModel(at: modelURL)
         self.vramModelID = modelID
-        
-        // v9.9.6: Notify observers that models have changed (Sync fix)
-        NotificationCenter.default.post(name: .modelsDidChange, object: nil)
     }
     
     public func switchTo(_ modelID: String) async throws {
