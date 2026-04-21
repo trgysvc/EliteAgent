@@ -216,7 +216,6 @@ struct ModelCard: View {
             
             // v10.7: Unified Integrity Logic
             let isActuallyInstalled = manager.verifyIntegrity(id: model.id)
-            let directoryExists = manager.doesModelDirectoryExist(id: model.id)
             
             if isActuallyInstalled {
                 if isActive {
@@ -234,15 +233,6 @@ struct ModelCard: View {
                     Text("%\(Int(p * 100)) • \(manager.downloadStatus[model.id] ?? "Başlatılıyor...")")
                         .font(.system(size: 9).monospacedDigit())
                         .foregroundStyle(.secondary)
-                }
-            } else if directoryExists {
-                // INCOMPLETE or CORRUPTED
-                HStack {
-                    Label("⚠️ Eksik", systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption2.bold())
-                        .foregroundStyle(.red)
-                    Spacer()
-                    repairButton
                 }
             } else {
                 actionButton
@@ -262,45 +252,6 @@ struct ModelCard: View {
         }
     }
     
-    @ViewBuilder
-    private var repairButton: some View {
-        HStack {
-            Button {
-                isLoading = true
-                Task {
-                    do {
-                        try await manager.repairModel(model.id)
-                        isLoading = false
-                    } catch {
-                        errorMessage = "Onarım başarısız: \(error.localizedDescription)"
-                        isLoading = false
-                    }
-                }
-            } label: {
-                if isLoading {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Text("🔧 Onar")
-                }
-            }
-            .buttonStyle(.bordered)
-            .foregroundStyle(.orange)
-            
-            Button("Sil") {
-                Task {
-                    do {
-                        try await ModelSetupManager.shared.deleteModel(model.id)
-                        showToast("🗑️ \(model.name) silindi.", .info)
-                    } catch {
-                        errorMessage = error.localizedDescription
-                    }
-                }
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.red)
-            .font(.caption2)
-        }
-    }
 
     @ViewBuilder
     private var actionButton: some View {
@@ -357,51 +308,20 @@ struct ModelCard: View {
             .buttonStyle(.borderedProminent)
             .disabled(isLoading)
         } else {
-            // Check if repair is needed (weights exist but metadata might be missing)
-            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            let modelDir = appSupport.appendingPathComponent("EliteAgent/Models").appendingPathComponent(model.id)
-            let weightsExist = FileManager.default.fileExists(atPath: modelDir.appendingPathComponent("model.safetensors").path) || 
-                               FileManager.default.fileExists(atPath: modelDir.appendingPathComponent("weights.npz").path)
-            
-            if weightsExist && !isDownloaded {
-                Button {
-                    isLoading = true
-                    Task {
-                        do {
-                            try await manager.repairModel(model.id)
-                            isLoading = false
-                        } catch {
-                            errorMessage = "Onarım başarısız: \(error.localizedDescription)"
-                            isLoading = false
-                        }
-                    }
-                } label: {
-                    if isLoading {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Text("🔧 Tamamla")
+            Button("İndir") {
+                isLoading = true
+                Task { 
+                    do {
+                        try await manager.download(model) 
+                        isLoading = false
+                    } catch {
+                        errorMessage = error.localizedDescription
+                        isLoading = false
                     }
                 }
-                .buttonStyle(.bordered)
-                .foregroundStyle(.orange)
-                .help("Eksik metadata dosyalarını indir")
-                .disabled(isLoading)
-            } else {
-                Button("İndir") {
-                    isLoading = true
-                    Task { 
-                        do {
-                            try await manager.download(model) 
-                            isLoading = false
-                        } catch {
-                            errorMessage = error.localizedDescription
-                            isLoading = false
-                        }
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isLoading)
             }
+            .buttonStyle(.borderedProminent)
+            .disabled(isLoading)
         }
     }
 }

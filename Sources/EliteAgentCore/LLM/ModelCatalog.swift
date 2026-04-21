@@ -56,7 +56,7 @@ public struct ModelRegistry {
         ModelCatalog(
             id: "qwen-2.5-14b-coder-4bit",
             author: "mlx-community",
-            name: "Qwen 2.5 Coder 14B",
+            name: "Qwen 2.5 Coder 14B (Instruct)",
             size: "8.5 GB",
             quantization: "4-bit",
             minRAM: "16 GB",
@@ -65,6 +65,20 @@ public struct ModelRegistry {
             sha256: "b4c1...", 
             estimatedSpeed: "~20 tok/s on M4",
             provider: .localTitanEngine(modelID: "qwen-2.5-14b-coder-4bit")
+        ),
+        
+        ModelCatalog(
+            id: "qwen-2.5-14b-coder-abliterated-4bit",
+            author: "mlx-community",
+            name: "Qwen 2.5 Coder 14B (Abliterated)",
+            size: "8.5 GB",
+            quantization: "4-bit",
+            minRAM: "16 GB",
+            recommendedContext: "32K",
+            downloadURL: "https://huggingface.co/mlx-community/Qwen2.5-Coder-14B-Instruct-abliterated-4bit/resolve/main/model-00001-of-00002.safetensors",
+            sha256: "d5e2...", 
+            estimatedSpeed: "~20 tok/s on M4",
+            provider: .localTitanEngine(modelID: "qwen-2.5-14b-coder-abliterated-4bit")
         ),
         
         ModelCatalog(
