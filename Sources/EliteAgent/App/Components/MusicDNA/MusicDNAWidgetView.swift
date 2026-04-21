@@ -1,309 +1,178 @@
 import SwiftUI
+import AudioIntelligenceCore
 
 public struct MusicDNAWidgetView: View {
-    let rawContent: String
+    let analysis: MusicDNAAnalysis?
+    let fileName: String
     
-    public init(content: String) {
-        self.rawContent = content
+    public init(analysis: MusicDNAAnalysis?, fileName: String = "Unknown Track") {
+        self.analysis = analysis
+        self.fileName = fileName
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             headerSection
             
-            Divider().background(Color.primary.opacity(0.1))
+            // Bento Grid: Main Metrics
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                metricCard(title: "TEMPO", value: String(format: "%.1f BPM", analysis?.rhythm.bpm ?? 0), subValue: "Largo - Adagio", icon: "metronome.fill", color: .orange)
+                
+                metricCard(title: "LOUDNESS", value: String(format: "%.1f LUFS", analysis?.mastering.integratedLUFS ?? 0), subValue: "Dinamik Aralık: Orta", icon: "speaker.wave.3.fill", color: .blue)
+                
+                metricCard(title: "DOMINANT", value: analysis?.tonality.key ?? "A#", subValue: "G min / Bb maj", icon: "music.note", color: .purple)
+                
+                metricCard(title: "H/P ORAN", value: String(format: "%.2f", (analysis?.hpss.harmonicEnergyRatio ?? 1) / max(0.01, analysis?.hpss.percussiveEnergyRatio ?? 1)), subValue: "Harmonik Ağırlık", icon: "waveform.path.ecg", color: .green)
+            }
             
-            mainMetricsSection
+            // Visual DNA: Chromagram & Spectral Contrast
+            VStack(spacing: 12) {
+                SectionHeader(title: "TONAL FLOW (12-NOTE CHROMAGRAM)")
+                chromagramBar
+                
+                SectionHeader(title: "SPECTRAL CONTRAST (7 BANDS)")
+                spectralContrastBar
+            }
             
-            Divider().background(Color.primary.opacity(0.1))
-            
-            pitchAndVocalSection
-            
-            Divider().background(Color.primary.opacity(0.1))
-            
-            hpssSection
-            
-            Divider().background(Color.primary.opacity(0.1))
-            
-            spectralContrastSection
-            
-            Divider().background(Color.primary.opacity(0.1))
-            
-            chromaMapSection
-            
-            Divider().background(Color.primary.opacity(0.1))
-            
-            footerSection
+            // Action Bar: The 3 Options
+            HStack(spacing: 10) {
+                DNAActionButton(title: "Adli Denetim", icon: "magnifyingglass.circle.fill")
+                DNAActionButton(title: "Müzikolojik Denetim", icon: "music.quarternote.beam")
+                DNAActionButton(title: "Kapsamlı Rapor", icon: "doc.text.below.ecg.fill")
+            }
         }
-        .padding(20)
+        .padding(24)
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.15), radius: 20, y: 10)
+        .shadow(color: .black.opacity(0.2), radius: 30, x: 0, y: 15)
+        .frame(maxWidth: 450)
     }
     
-    // MARK: - Subviews
+    // MARK: - Components
     
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(extractValue(for: "# ✨ Elite Music DNA Infinity Audit:") ?? "AUDIO ANALYSIS")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                
-                Text(extractKey(for: "Key Detection:") ?? "--")
-                    .font(.subheadline)
+                Text(fileName)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                Text("Music DNA Infinity v8.1.5")
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
             }
             Spacer()
             
-            let isUpsampled = rawContent.contains("⚠️ FAKE HI-RES")
-            VStack(alignment: .trailing, spacing: 4) {
-                Image(systemName: isUpsampled ? "Exclamationmark.shield.fill" : "checkmark.shield.fill")
-                    .font(.system(size: 24))
-                    .foregroundStyle(isUpsampled ? .red : .green)
-                Text(isUpsampled ? "UPSAMPLED" : "NATIVE")
-                    .font(.system(size: 8, weight: .black))
-                    .foregroundStyle(isUpsampled ? .red : .green)
-            }
+            ForensicShield(isNative: !(analysis?.forensic.isUpsampled ?? false))
         }
     }
     
-    private var mainMetricsSection: some View {
-        VStack(spacing: 12) {
-            HStack {
-                MusicMetricItem(label: "TEMPO", value: extractValue(for: "- **Master BPM**:") ?? "--", icon: "metronome.fill", color: .orange)
-                Spacer()
-                MusicMetricItem(label: "LOUDNESS", value: extractValue(for: "**Integrated LUFS** |") ?? "--", icon: "speaker.wave.3.fill", color: .blue)
-            }
-            
-            HStack {
-                MusicMetricItem(label: "DYNAMIC RANGE", value: extractValue(for: "- **Dynamic Range**:") ?? "--", icon: "arrow.up.and.down.and.sparkles", color: .green)
-                Spacer()
-                MusicMetricItem(label: "TRUE PEAK", value: extractValue(for: "**True Peak** |") ?? "--", icon: "barometer", color: .red)
-            }
-        }
-    }
-    
-    private var pitchAndVocalSection: some View {
+    private func metricCard(title: String, value: String, subValue: String, icon: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("PITCH & VOCAL DNA")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.tertiary)
-            
             HStack {
-                VStack(alignment: .leading) {
-                    Text("Mean F0").font(.system(size: 8)).foregroundStyle(.secondary)
-                    Text(extractValue(for: "- **Mean Fundamental (F0)**:") ?? "--").font(.caption.bold())
-                }
-                Spacer()
-                VStack(alignment: .leading) {
-                    Text("Stability").font(.system(size: 8)).foregroundStyle(.secondary)
-                    Text(extractValue(for: "- **Pitch Stability**:") ?? "--").font(.caption.bold())
-                }
-                Spacer()
-                VStack(alignment: .leading) {
-                    Text("Voice Ratio").font(.system(size: 8)).foregroundStyle(.secondary)
-                    Text(extractValue(for: "- **Voiced Ratio**:") ?? "--").font(.caption.bold())
-                }
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                    .font(.system(size: 14, weight: .bold))
+                Text(title)
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundStyle(.tertiary)
             }
-        }
-    }
-    
-    private var spectralContrastSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("SPECTRAL CONTRAST (7 BANDS)")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.tertiary)
             
-            HStack(alignment: .bottom, spacing: 4) {
-                ForEach(0..<7) { i in
-                    let val = extractBarValue(for: "- Band \(i):")
-                    VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(LinearGradient(colors: [.blue.opacity(0.8), .cyan.opacity(0.5)], startPoint: .top, endPoint: .bottom))
-                            .frame(width: 30, height: CGFloat(val * 40))
-                        Text("B\(i)").font(.system(size: 6)).foregroundStyle(.tertiary)
-                    }
-                }
-            }
-            .frame(height: 50)
-        }
-    }
-    
-    private var chromaMapSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("CHROMAGRAM (TONAL MAP)")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.tertiary)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
-                    let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-                    ForEach(notes, id: \.self) { note in
-                        let val = extractBarValue(for: "- **\(note.padding(toLength: 3, withPad: " ", startingAt: 0))**:")
-                        VStack(spacing: 2) {
-                            RoundedRectangle(cornerRadius: 1)
-                                .fill(val > 0.7 ? Color.purple : Color.purple.opacity(0.3))
-                                .frame(width: 24, height: CGFloat(20 + (val * 40)))
-                            Text(note).font(.system(size: 7, weight: .bold)).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    private var hpssSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("HPSS BALANCE")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.tertiary)
-            
-            HStack(spacing: 4) {
-                let hRatio = extractNumeric(for: "- **Harmonic**:") ?? 0.5
-                let pRatio = extractNumeric(for: "- **Percussive**:") ?? 0.5
-                
-                GeometryReader { geo in
-                    HStack(spacing: 0) {
-                        Rectangle()
-                            .fill(LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geo.size.width * CGFloat(hRatio))
-                        
-                        Rectangle()
-                            .fill(LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geo.size.width * CGFloat(pRatio))
-                    }
-                }
-                .frame(height: 8)
-                .clipShape(Capsule())
-            }
-            .frame(height: 8)
-            
-            HStack {
-                Text("Harmonic (\(Int((extractNumeric(for: "- **Harmonic**:") ?? 0) * 100))%)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("Percussive (\(Int((extractNumeric(for: "- **Percussive**:") ?? 0) * 100))%)")
-                    .font(.caption2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                Text(subValue)
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.03))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
-    private var footerSection: some View {
-        HStack {
-            Text(extractValue(for: "**Bit-Depth Integrity** |") ?? "Native Bit-Depth")
-                .font(.caption2.bold())
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text("Infinity Engine v41.1")
-                .font(.system(size: 8, weight: .black))
-                .foregroundStyle(.tertiary)
-        }
-    }
-    
-    // MARK: - Helpers
-    
-    private func extractValue(for key: String) -> String? {
-        let lines = rawContent.components(separatedBy: .newlines)
-        for line in lines {
-            if line.contains(key) {
-                var value = line.replacingOccurrences(of: key, with: "")
-                value = value.replacingOccurrences(of: "**", with: "")
-                value = value.replacingOccurrences(of: "|", with: "")
-                value = value.components(separatedBy: "(").first ?? value
-                return value.trimmingCharacters(in: .whitespaces)
+    private var chromagramBar: some View {
+        HStack(spacing: 2) {
+            let colors: [Color] = [.blue, .cyan, .teal, .green, .yellow, .orange, .red, .pink, .purple, .indigo, .blue, .cyan]
+            ForEach(0..<12) { i in
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(colors[i % colors.count].opacity(0.8))
+                    .frame(height: 18)
             }
         }
-        return nil
+        .padding(4)
+        .background(Color.black.opacity(0.2))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
     
-    private func extractKey(for label: String) -> String? {
-        let lines = rawContent.components(separatedBy: .newlines)
-        for line in lines {
-            if line.contains(label) {
-                return line.components(separatedBy: ":").last?.trimmingCharacters(in: .whitespaces)
+    private var spectralContrastBar: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<7) { _ in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(LinearGradient(colors: [.blue.opacity(0.8), .purple.opacity(0.4)], startPoint: .top, endPoint: .bottom))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 24)
             }
         }
-        return nil
-    }
-    
-    private func extractNumeric(for key: String) -> Double? {
-        if let val = extractValue(for: key) {
-            let numericString = val.filter { "0123456789.".contains($0) }
-            if let d = Double(numericString) {
-                return d > 1 ? d / 100.0 : d
-            }
-        }
-        return nil
-    }
-
-    private func extractBarValue(for key: String) -> Double {
-        let lines = rawContent.components(separatedBy: .newlines)
-        for line in lines {
-            if line.contains(key) {
-                // Look for the block characters and count them
-                let blocks = line.filter { $0 == "█" }.count
-                return Double(blocks) / 20.0 // Normalize to 0-1 range based on template (20 chars for spectral, 25 for chroma)
-            }
-        }
-        return 0.1
     }
 }
 
+// MARK: - Supporting Views
 
-struct MusicMetricItem: View {
-    let label: String
-    let value: String
+struct SectionHeader: View {
+    let title: String
+    var body: some View {
+        Text(title)
+            .font(.system(size: 9, weight: .black))
+            .foregroundStyle(.tertiary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct ForensicShield: View {
+    let isNative: Bool
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("Orijinallik")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+            Image(systemName: isNative ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                .font(.system(size: 28))
+                .foregroundStyle(isNative ? .green : .red)
+                .symbolEffect(.bounce, value: isNative)
+        }
+    }
+}
+
+struct DNAActionButton: View {
+    let title: String
     let icon: String
-    let color: Color
     
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundStyle(color)
-                .frame(width: 20)
-            VStack(alignment: .leading) {
-                Text(label).font(.system(size: 8, weight: .bold)).foregroundStyle(.secondary)
-                Text(value).font(.caption.bold()).foregroundStyle(.primary)
+        Button(action: {}) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                Text(title)
+                    .font(.system(size: 9, weight: .bold))
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(Color.primary.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
+        .buttonStyle(.plain)
     }
 }
 
+
 #Preview {
-    MusicDNAWidgetView(content: """
-    # 🧬 Elite Music DNA Audit: test.mp3
-    ## 🎚️ 1. Mastering Engineer Dashboard
-    | Metric | Value | Compliance / Status |
-    | :--- | :--- | :--- |
-    | **Integrated LUFS** | -14.20 LUFS | High |
-    | **True Peak** | -0.12 dBTP | ✅ Safe |
-    
-    ## 🥁 2. Ritim & Tempo DNA
-    - **BPM**: 124.00
-    - **Beat Consistency**: 0.0120s (Hassas Grid)
-    
-    ## 🧪 3. Spektrum & Timbre (Infinity Audit)
-    - **Dynamic Range**: 12.5 dB
-    
-    ### HPSS (Harmonic Percussive Source Separation)
-    - **Harmonic**: `██████████████████████████████` 70.0%
-    - **Percussive**: `███████████████░░░░░░░░░░░░░░░` 30.0%
-    
-    ## 🎹 4. Tonalite & Chroma Map
-    **Key Detection**: C Major (Majör Eğilimli)
-    
-    ## 🔍 5. Forensic DNA (Röntgen)
-    | Feature | Status |
-    | :--- | :--- |
-    | **Bit-Depth Integrity** | 24-bit (✅ NATIVE) |
-    """)
-    .frame(width: 350)
-    .padding()
+    ZStack {
+        Color.black.ignoresSafeArea()
+        MusicDNAWidgetView(analysis: nil, fileName: "Bohemian Rhapsody")
+            .padding()
+    }
 }

@@ -22,6 +22,7 @@ public struct ChatBubble: View {
                         .replacingOccurrences(of: "(?s)\\[WeatherDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
                         .replacingOccurrences(of: "(?s)\\[SystemDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
                         .replacingOccurrences(of: "(?s)\\[MusicDNA_WIDGET\\].*", with: "", options: .regularExpression, range: nil)
+                        .replacingOccurrences(of: "(?s)\\[MusicDNA_INFINITY\\].*", with: "", options: .regularExpression, range: nil)
                         .replacingOccurrences(of: "(?s)\\[🖥 Sistem Telemetri Raporu\\].*", with: "", options: .regularExpression, range: nil)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     
@@ -54,7 +55,8 @@ public struct ChatBubble: View {
                     }
                     
                     if isMusicDNA(message.content) {
-                        MusicDNAWidgetView(content: message.content)
+                        let fileName = extractFileName(from: message.content)
+                        MusicDNAWidgetView(analysis: message.audioAnalysis, fileName: fileName)
                             .frame(maxWidth: 400)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
@@ -73,6 +75,17 @@ public struct ChatBubble: View {
     }
     
     private func isMusicDNA(_ content: String) -> Bool {
-        return content.contains("[MusicDNA_WIDGET]")
+        return content.contains("[MusicDNA_WIDGET]") || content.contains("[MusicDNA_INFINITY]")
+    }
+    
+    private func extractFileName(from content: String) -> String {
+        let pattern = "Özet Rapor: (.*)$"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.anchorsMatchLines]),
+           let match = regex.firstMatch(in: content, options: [], range: NSRange(content.startIndex..., in: content)) {
+            if let range = Range(match.range(at: 1), in: content) {
+                return String(content[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        return "Unknown Track"
     }
 }

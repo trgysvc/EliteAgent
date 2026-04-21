@@ -542,7 +542,8 @@ public class Orchestrator: ObservableObject {
                 }
                 
                 if !isDuplicate {
-                    self.currentMessages.append(ChatMessage(role: .assistant, content: trimmedAnswer))
+                    let audioAnalysis = await session.audioAnalysis
+                    self.currentMessages.append(ChatMessage(role: .assistant, content: trimmedAnswer, audioAnalysis: audioAnalysis))
                 }
             }
             self.steps.append(TaskStep(name: "Task Completed", status: "done", latency: "\(Int(elapsed))s", depth: 0, thought: finalAnswer))

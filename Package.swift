@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.19.0"),
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.31.3")),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
-        .package(url: "https://github.com/trgysvc/audiointelligence", branch: "main")
+        .package(path: "/Users/trgysvc/Developer/audiointelligence")
     ],
     targets: [
         .executableTarget(

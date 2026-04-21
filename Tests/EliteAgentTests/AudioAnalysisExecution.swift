@@ -21,7 +21,8 @@ final class AudioAnalysisExecution: XCTestCase {
         let expectation = XCTestExpectation(description: "Analysis completion")
         
         do {
-            let (analysis, report, mdPath) = try await DNAReportBuilder.analyze(url: url) { progress, message, _ in
+            let builder = DNAReportBuilder()
+            let (_, report, mdPath) = try await builder.analyze(url: url) { progress, message, _ in
                 print("[\(Int(progress))%] \(message)")
             }
             

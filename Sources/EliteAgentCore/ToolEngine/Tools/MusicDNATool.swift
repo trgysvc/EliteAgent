@@ -1,48 +1,28 @@
 // MusicDNATool.swift
-// Elite Music DNA Engine — Phase 6 (v56.0 Infinity)
+// Elite Music DNA Engine — Phase 8 (v8.1.5 Infinity)
 //
 // AgentTool implementasyonu. ToolRegistry'e kaydedilmek üzere tasarlanmıştır.
 
 import Foundation
 import AudioIntelligence
-import AudioIntelligenceCore // For raw data mapping if needed
-
-// Helper to track progress state across @Sendable closures
-private final class ProgressState: @unchecked Sendable {
-    var lastWaveform: String? = nil
-    private let lock = NSLock()
-    
-    func shouldSendWaveform(_ wf: String?) -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        if wf != nil && lastWaveform == nil {
-            lastWaveform = wf
-            return true
-        }
-        return false
-    }
-}
+import AudioIntelligenceCore
 
 public struct MusicDNATool: AgentTool {
     public let name = "music_dna"
-    public let summary = "Infinity Engine: 100% Depth Mastering, Forensic, Semantic & Instrument Science Audit (v56.0)."
+    public let summary = "Infinity Engine v8.1.5: 100% Depth Mastering, Forensic, Scholarly Musicology & Scientific SIR Audit."
     public let description = """
-    CRITICAL: Full-Disclosure professional audio analysis. NEVER shorten results.
-    V56.0 Infinity Capabilities:
-    - Mastering: LUFS (Int/Mom/Short), True Peak, Stereo Width, MS Balance, Side Energy.
-    - Semantic: Theme Dominance, Presence Score, Technical Role, Texture Analysis.
-    - Instruments: AI-driven instrument identification and confidence scores.
-    - Science: AES17 Dynamic Range, THD+N, SMPTE IMD, SNR, Noise Floor (ITU-R 468).
-    - Pitch DNA: Fundamental tracking (F0), Stability, Voicing Ratio.
-    - Timbre: 20 MFCCs, 7-Band Contrast, Flux, Skewness, Kurtosis. 
-    - Forensic: Bit-Depth Entropy Audit, Upsampling Detection, Codec Cutoff analysis.
-    - Structure: Automated Segment Analysis (Intro, Verse, Chorus, Outro, Bridge).
-    - MIR: BPM (Ellis DP), Chromagram, Key & Major/Minor Tendency.
+    CRITICAL: Full-Disclosure professional audio analysis (v8.1.5 Infinity).
+    Capabilities:
+    - Bilimsel Denetim (SIR): EBU R128 & AES17 Kalibrasyon Sertifikalı Analiz.
+    - Donanım Telemetrisi: M4 Silicon (AMX/ANE) Hızlandırma Durumu.
+    - Adli Denetim: Bit-Depth Entropy, Codec Cutoff, Clipping Audit, Forgery Detection.
+    - Müzikolojik Denetim: Ur-Note Reduction, Ursatz Structure, Counterpoint, Historical Context.
+    - Kapsamlı Araştırma: Full 26-engine deep dive (STFT, NMF, Tonnetz, Wavelet, Rhythm).
     
     Param: path (string) - Absolute path to the audio file.
-    Param: features (list, optional) - Custom focus: 'spectral', 'rhythm', 'forensic'.
+    Param: depth (string, optional) - 'forensic', 'musicology', 'comprehensive'. Default: 'summary'.
     """
     public let ubid: Int128 = 18
-
 
     public init() {}
 
@@ -62,97 +42,100 @@ public struct MusicDNATool: AgentTool {
             throw AgentToolError.executionError("Dosya bulunamadı: \(expandedPath)")
         }
 
-        // Header Banner
-        let header = WaveformRenderer.header(filename: url.lastPathComponent)
-        await session.streamOutput(header + "\n\n")
-
-        // v26.0: Copy-on-Process (Safety Cloning)
+        // v8.1.5: Copy-on-Process (Safety Cloning)
         let fm = FileManager.default
         let stagingDir = fm.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Caches/com.trgysvc.EliteAgent/Processing/MusicDNA", isDirectory: true)
         
         try? fm.createDirectory(at: stagingDir, withIntermediateDirectories: true)
-        
         let stagedURL = stagingDir.appendingPathComponent(UUID().uuidString + "_" + url.lastPathComponent)
         
         do {
             try fm.copyItem(at: url, to: stagedURL)
-            AgentLogger.logAudit(level: .info, agent: "MusicDNATool", message: "🛡 Safe Clone Created: \(stagedURL.path)")
         } catch {
-            throw AgentToolError.executionError("GÜVENLİK HATASI: Çalışma kopyası oluşturulamadı. Orijinal dosyayı korumak için analiz durduruldu. Hata: \(error.localizedDescription)")
+            throw AgentToolError.executionError("GÜVENLİK HATASI: Çalışma kopyası oluşturulamadı.")
         }
         
-        // v26.1: Automatic Cleanup - Delete clone after execution (Success or Failure)
-        defer {
-            try? fm.removeItem(at: stagedURL)
-            AgentLogger.logAudit(level: .info, agent: "MusicDNATool", message: "🧹 Staging Cleaned: \(stagedURL.path)")
-        }
+        defer { try? fm.removeItem(at: stagedURL) }
 
+        // v8.1.5: Modern Feature Mapping
+        let depth = params["depth"]?.value as? String ?? "summary"
+        var selectedFeatures: Set<AudioFeature> = [.spectral, .rhythm, .forensic, .mastering, .harmonic, .pitch, .semantic, .separation]
+        
+        if depth == "forensic" { selectedFeatures = [.forensic, .mastering, .spectral] }
+        if depth == "musicology" { selectedFeatures = [.harmonic, .pitch, .semantic, .rhythm] }
+        if depth == "comprehensive" { selectedFeatures = Set(AudioFeature.allCases) }
 
-        // v28.0: Map features
-        var selectedFeatures: Set<AudioFeature> = [.spectral, .rhythm, .forensic]
-        if let customFeatures = params["features"]?.value as? [String] {
-            selectedFeatures = Set(customFeatures.compactMap { AudioFeature(rawValue: $0) })
-            if selectedFeatures.isEmpty { selectedFeatures = [.spectral, .rhythm, .forensic] }
-        }
+        let intelligence = AudioIntelligence(device: AudioIntelligenceCore.Device.automatic, mode: AudioIntelligenceCore.Mode.performance)
 
-        // Analiz — Using the Professional Package Actor on the SAFE CLONE
-        let intelligence = AudioIntelligence(device: .current, mode: .balanced)
-        let state = ProgressState()
+        // Pre-flight Scientific Calibration Sweep (SIR)
+        let auditor = ScientificAuditor()
+        let calibrationResult = auditor.runScenarioA()
+        let sirStatus = calibrationResult.passed ? "✅ CERTIFIED (EBU R128)" : "⚠️ CALIBRATION DRIFT"
 
         do {
-            let result = try await intelligence.analyze(url: stagedURL, features: selectedFeatures) { percent, message, waveformLine in
-                // Visual feedback
-
-                if state.shouldSendWaveform(waveformLine), let wf = waveformLine {
-                    Task { await session.streamOutput("Waveform:\n\(wf)\n\n") }
-                }
-
-                let bar = WaveformRenderer.progressBar(percent: percent, message: message)
+            let result = try await intelligence.analyze(url: stagedURL, features: selectedFeatures) { percent, message, _ in
+                let bar = WaveformRenderer.progressBar(percent: percent, message: "Infinity Engine v8.1.5: \(message)")
                 Task { await session.streamOutput("\r\(bar)") }
             }
 
-            // Populate session metadata for UI integration
-            await session.setAudioAnalysis(result.rawAnalysis)
+            // M4 Telemetry
+            let hwStats = await intelligence.getHardwareStats()
 
-            // v25.0: Relocate report to User Workspace
-            let workspaceReportsDir = "/Users/trgysvc/Documents/EliteAgentWorkspace/Reports/MusicDNA"
-            let fm = FileManager.default
-            try? fm.createDirectory(atPath: workspaceReportsDir, withIntermediateDirectories: true)
+            // Populate session metadata for the new Bento-Box UI
+            await session.setAudioAnalysis(result.rawAnalysis)
+            await session.markWidgetAsRendered()
+
+            // Forensic & Musicology Gists
+            let forensicStatus = result.rawAnalysis.forensic.isUpsampled ? "⚠️ FAKE HI-RES" : "✅ NATIVE BIT-DEPTH (\(result.rawAnalysis.forensic.effectiveBits)-bit)"
+            let musicologyGist = "Ur-Note: \(result.rawAnalysis.reduction.fundamentalNote) | Context: \(result.rawAnalysis.musicology.context.suggestedPeriod)"
+
+            let response = """
+            [MusicDNA_INFINITY] v8.1.5 Analiz Tamamlandı.
             
-            let sourcePath = result.reportPath
-            let fileName = URL(fileURLWithPath: sourcePath).lastPathComponent
-            let targetPath = (workspaceReportsDir as NSString).appendingPathComponent(fileName)
+            ### 🧬 Özet Rapor: \(url.lastPathComponent)
+            - **Doğrulama (SIR)**: \(sirStatus)
+            - **M4 Hızlandırma**: \(hwStats.acceleration) (\(hwStats.activeThreads) Threads)
+            - **Orijinallik**: \(forensicStatus)
+            - **Tempo**: \(String(format: "%.1f", result.rawAnalysis.rhythm.bpm)) BPM (\(result.rawAnalysis.rhythm.characterize))
+            - **Tonalite**: \(result.rawAnalysis.tonality.key) (\(result.rawAnalysis.tonality.tendency))
+            - **Müzikoloji**: \(musicologyGist)
+            - **Sinyal/Gürültü (SNR)**: \(String(format: "%.2f", result.rawAnalysis.science.snr)) dB
             
-            // Move file if not already there
-            if sourcePath != targetPath {
-                try? fm.removeItem(atPath: targetPath)
-                try? fm.moveItem(atPath: sourcePath, toPath: targetPath)
+            ---
+            **Daha Fazla Detay İçin Seçenekler:**
+            1. **Adli Denetim (Forensic)**: Bit-depth ve teknik doğrulama için odaklanmış rapor.
+            2. **Müzikolojik Denetim (Musicology)**: Schenkerian analizi ve yapısal iskelet detayları.
+            3. **Kapsamlı Rapor (Comprehensive)**: 26+ motorlu tam spektrum ve ham ikili (.plist) dökümü.
+            
+            📄 Detaylı Rapor: \(result.reportPath ?? targetPath(for: url))
+            💾 Binary İmza: \( (result.reportPath as NSString?)?.deletingPathExtension ?? "N/A" ).plist
+            """
+            
+            // Move report if needed (Legacy Support)
+            if let sourcePath = result.reportPath {
+                let target = targetPath(for: url)
+                try? fm.removeItem(atPath: target)
+                try? fm.moveItem(atPath: sourcePath, toPath: target)
+                
+                // Move plist as well (v8.1.5 Binary Standard)
+                let sourcePlist = (sourcePath as NSString).deletingPathExtension + ".plist"
+                let targetPlist = (target as NSString).deletingPathExtension + ".plist"
+                try? fm.removeItem(atPath: targetPlist)
+                try? fm.moveItem(atPath: sourcePlist, toPath: targetPlist)
             }
 
-            // Final report
-            await session.streamOutput("\n\n")
-            await session.streamOutput(result.reportText)
-
-            let forensicMsg = result.rawAnalysis.forensic.isUpsampled ? "⚠️ FAKE HI-RES (Upsampled)" : "✅ NATIVE BIT-DEPTH"
-            let segmentsMsg = "\(result.rawAnalysis.segments.count) segments detected"
-
-            let instrumentsMsg = result.rawAnalysis.instruments.primaryLabel
-            let semanticMsg = result.rawAnalysis.semantic.primaryRole
-
-            return """
-            [MusicDNA_INFINITY] ✅ v56.0 Deep Audit Complete.
-            🛡 Integrity: \(forensicMsg) (\(result.rawAnalysis.forensic.effectiveBits)-bit)
-            🎸 Instruments: \(instrumentsMsg)
-            🧠 Semantic: \(semanticMsg)
-            🧩 Structure: \(segmentsMsg) (ANE + Metal Optimized)
-            📄 Rapor: \(targetPath)
-            
-            \(result.reportText)
-            """
+            return response
         } catch {
             throw AgentToolError.executionError("MusicDNA Analiz Hatası: \(error.localizedDescription)")
         }
-
+    }
+    
+    private func targetPath(for url: URL) -> String {
+        let workspaceReportsDir = "/Users/trgysvc/Documents/EliteAgentWorkspace/Reports/MusicDNA"
+        try? FileManager.default.createDirectory(atPath: workspaceReportsDir, withIntermediateDirectories: true)
+        let fileName = url.deletingPathExtension().lastPathComponent + ".dna.md"
+        return (workspaceReportsDir as NSString).appendingPathComponent(fileName)
     }
 }
+
