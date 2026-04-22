@@ -1,6 +1,6 @@
 import Foundation
 import WeatherKit
-import CoreLocation
+@preconcurrency import CoreLocation
 
 // MARK: - CalculatorTool
 public struct CalculatorTool: AgentTool {
@@ -144,50 +144,17 @@ public struct WeatherTool: AgentTool {
                 
                 return "\(tags)\n\(locationName) için güncel hava durumu: \(Int(current.temperature.value))°C."
             } catch {
-                AgentLogger.logAudit(level: .warn, agent: "WeatherTool", message: "WeatherKit failed (XPC/Auth). Falling back to web-based provider. Error: \(error.localizedDescription)")
+                AgentLogger.logAudit(level: .warn, agent: "WeatherTool", message: "WeatherKit failed. Falling back to web-based provider.")
                 
-                // v24.3: Robust Fallback with Tag Support
-                // We use wttr.in format that includes the most critical telemetry tags
-                // format: %t (temp), %C (condition), %h (humidity), %w (wind), %P (pressure), %p (precip)
-                let queryLocation = locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-                var urlString = "https://wttr.in/\(queryLocation)?format=%t|%C|%h|%w|%P|%p|%u"
-                
-                // Convert relative days to wttr.in format (1 for tomorrow, 2 for day after)
-                if let day = targetDay?.lowercased() {
-                    if day.contains("yarın") || day.contains("tomorrow") {
-                        urlString = "https://wttr.in/\(queryLocation)?1&format=%t|%C|%h|%w|%P|%p|%u"
-                    }
+                var urlString = "https://wttr.in/\(locationName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")?format=%t+%C+%h+%w+%P"
+                if let day = targetDay {
+                    urlString += "&date=\(day.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
                 }
                 
                 if let url = URL(string: urlString),
                    let (data, _) = try? await URLSession.shared.data(from: url),
-                   let raw = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-                    
-                    let parts = raw.components(separatedBy: "|")
-                    if parts.count >= 6 {
-                        let temp = parts[0]
-                        let cond = parts[1]
-                        let hum = parts[2]
-                        let wind = parts[3]
-                        let pres = parts[4]
-                        let rain = parts[5]
-                        let uv = parts.indices.contains(6) ? parts[6] : "3"
-                        
-                        var fallbackTags = "[WeatherDNA_WIDGET]"
-                        fallbackTags += "\n[DURUM] \(cond)"
-                        fallbackTags += "\n[HIS] \(temp)"
-                        fallbackTags += "\n[NEM] \(hum)"
-                        fallbackTags += "\n[RUZGAR] \(wind)"
-                        fallbackTags += "\n[PRES] \(pres)"
-                        fallbackTags += "\n[YAGIS] \(rain)"
-                        fallbackTags += "\n[UV] \(uv)"
-                        fallbackTags += "\n[YUKSEK] \(temp)" // Fallback approximation
-                        fallbackTags += "\n[DUSUK] \(temp)"
-                        
-                        return "\(fallbackTags)\n\(locationName) için \(targetDay ?? "güncel") hava durumu (Web yedek): \(temp), \(cond)."
-                    }
-                    
-                    return "[WeatherDNA_WIDGET]\n[DURUM] \(raw)\n\(locationName) \(targetDay ?? "güncel")"
+                   let weatherInfo = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    return "[WeatherDNA_WIDGET]\n[DURUM] \(weatherInfo)\n\(locationName) \(targetDay ?? "güncel")"
                 }
                 
                 return "macOS sisteminden hava durumu bilgisi alınamadı: \(error.localizedDescription)"

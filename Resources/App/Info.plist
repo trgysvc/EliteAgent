@@ -2,31 +2,31 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleIdentifier</key>
-    <string>com.trgysvc.EliteAgent</string>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.utilities</string>
-    <key>CFBundleDisplayName</key>
-    <string>Elite Agent</string>
-    <key>CFBundleName</key>
-    <string>EliteAgent</string>
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-    <key>SUFeedURL</key>
-    <string>https://eliteagent.app/appcast.xml</string>
-    <key>CFBundleShortVersionString</key>
-    <string>7.8.5</string>
-    <key>CFBundleVersion</key>
-    <string>7.8.5</string>
-    <key>SUPublicEDKey</key>
-    <string>dummy_eddsa_public_key_for_silencing_warnings_v13</string>
-    <key>NSAppleEventsUsageDescription</key>
-    <string>EliteAgent needs to control other apps to provide autonomous automation and workflow management.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
+	<key>CFBundleDisplayName</key>
+	<string>Elite Agent</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.trgysvc.EliteAgent</string>
+	<key>CFBundleName</key>
+	<string>EliteAgent</string>
+	<key>CFBundleShortVersionString</key>
+	<string>7.8.5</string>
+	<key>CFBundleVersion</key>
+	<string>7.8.5</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>EliteAgent needs to control other apps to provide autonomous automation and workflow management.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>SUFeedURL</key>
+	<string>https://eliteagent.app/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>dummy_eddsa_public_key_for_silencing_warnings_v13</string>
 </dict>
 </plist>
