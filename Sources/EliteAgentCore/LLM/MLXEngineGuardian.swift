@@ -2,6 +2,17 @@ import Foundation
 import MLX
 import Metal
 
+#if canImport(Numerics)
+import Numerics
+
+// Linker shim: ensure at least one Numerics symbol is referenced so object files are not stripped as empty.
+@inline(__always)
+private func __ensureNumericsLinked() {
+    // Use a trivial value from Numerics to create a reference without runtime cost.
+    let _ = Double.pi as Double
+}
+#endif
+
 public enum EngineError: LocalizedError {
     case timeout
     case outOfMemory
@@ -25,6 +36,14 @@ public actor MLXEngineGuardian {
     private var currentTask: Task<Sendable, Error>? // v24.7: Serialization Queue
     
     private init() {}
+    
+    #if canImport(Numerics)
+    @usableFromInline
+    static let __numericsLinkerAnchor: Void = {
+        __ensureNumericsLinked()
+        return ()
+    }()
+    #endif
     
     /// Executes an inference task with safety guardrails.
     public func execute<T: Sendable>(
@@ -103,3 +122,4 @@ public actor MLXEngineGuardian {
         return min(current / maxAvailable, 1.0)
     }
 }
+
