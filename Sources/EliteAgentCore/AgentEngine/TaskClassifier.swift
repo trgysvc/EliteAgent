@@ -40,6 +40,13 @@ public struct TaskClassifier: Sendable {
         if p.contains("tıkla") || p.contains("click") { return .computerUseAX }
         if p.contains("whatsapp") || p.contains("mesaj") || p.contains("gönder") || p.contains("ileti") || p.contains("send message") { return .applicationAutomation }
         
+        // v24.4: Vision & Screen Analysis (High Priority to prevent AI hallucinations)
+        if p.contains("gör") || p.contains("bak") || p.contains("pencere") || p.contains("ekran")
+            || p.contains("analiz") || p.contains("screenshot") || p.contains("vision")
+            || p.contains("masaüstü") || p.contains("desktop") || p.contains("ne var") || p.contains("neler var") {
+            return .vision
+        }
+        
         return .other
     }
 }

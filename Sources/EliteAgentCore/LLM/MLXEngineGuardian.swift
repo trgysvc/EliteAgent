@@ -22,7 +22,7 @@ public actor MLXEngineGuardian {
     public static let shared = MLXEngineGuardian()
     
     private let timeoutLimit: TimeInterval = 180.0 // v9.8: 3 minutes for long research reports
-    private var isEvaluating = false // v24.1: Concurrency Guard
+    private var currentTask: Task<Sendable, Error>? // v24.7: Serialization Queue
     
     private init() {}
     
@@ -31,34 +31,32 @@ public actor MLXEngineGuardian {
         operation: @escaping @Sendable () async throws -> T
     ) async throws -> T {
         
-        // v24.1: Strict Re-entrancy Check
-        if isEvaluating {
-            AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "Concurrent evaluation detected. Aborting nested execution to prevent mutex crash.")
-            throw EngineError.unknown("Motor meşgul.")
-        }
+        // v24.7: Serialization Logic
+        // We await the completion of any existing task before starting the next one.
+        // This prevents the 'Engine Busy' errors and ensures thread-safety for MLX.
+        let previousTask = currentTask
         
-        isEvaluating = true
-        
-        // 1. Smart Cache Sanitization (v9.8)
-        // Only clears VRAM if usage exceeds 90% or thermal is serious.
-        let vramUsage = calculateVRAMUsage()
-        let thermalState = ProcessInfo.processInfo.thermalState
-        
-        if vramUsage > 0.90 || thermalState == .serious || thermalState == .critical {
-            AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "[SMART CACHE] VRAM at \((vramUsage * 100).rounded())%. Purging cache to maintain stability.")
-            MLX.eval()
-            MLX.Memory.clearCache()
-        }
-        
-        // 2. Hardware Thermal Check
-        if thermalState == .critical {
-            isEvaluating = false
-            throw EngineError.thermalCritical
-        }
-        
-        // 3. Timeout Wrapper
-        do {
-            let result = try await withThrowingTaskGroup(of: T.self) { group in
+        let newTask = Task { [previousTask] in
+            // Wait for the previous task to finish (ignore its result/error)
+            _ = await previousTask?.result
+            
+            // 1. Smart Cache Sanitization (v9.8)
+            let vramUsage = self.calculateVRAMUsage()
+            let thermalState = ProcessInfo.processInfo.thermalState
+            
+            if vramUsage > 0.90 || thermalState == .serious || thermalState == .critical {
+                AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "[SMART CACHE] VRAM at \((vramUsage * 100).rounded())%. Purging cache.")
+                MLX.eval()
+                MLX.Memory.clearCache()
+            }
+            
+            // 2. Hardware Thermal Check
+            if thermalState == .critical {
+                throw EngineError.thermalCritical
+            }
+            
+            // 3. Timeout Wrapper
+            return try await withThrowingTaskGroup(of: T.self) { group in
                 group.addTask {
                     try await operation()
                 }
@@ -68,24 +66,27 @@ public actor MLXEngineGuardian {
                     throw EngineError.timeout
                 }
                 
-                // Return first result or first error
                 let result = try await group.next()!
-                group.cancelAll() // Cancel the other task (either timeout or the operation)
+                group.cancelAll()
                 return result
             }
-            isEvaluating = false
-            return result
+        }
+        
+        self.currentTask = Task { try await newTask.value }
+        
+        do {
+            let value = try await newTask.value
+            return value
         } catch {
-            isEvaluating = false
             throw error
         }
     }
     
     /// Helper to perform emergency memory purge.
     public func emergencyPurge() {
-        // v24.1: Do NOT purge if MLX is actively evaluating. This corrupts the C++ Mutex.
-        if isEvaluating {
-            AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "Skipping Emergency Purge: Engine is actively evaluating. Purging now would crash the ThreadPool.")
+        // v24.7: Do NOT purge if MLX is actively evaluating.
+        if currentTask != nil {
+            AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "Skipping Emergency Purge: Engine is actively evaluating.")
             return
         }
         

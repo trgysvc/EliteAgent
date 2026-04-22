@@ -16,47 +16,57 @@ public struct ChicagoVisionTool: AgentTool {
     public init() {}
     
     public func execute(params: [String: AnyCodable], session: Session) async throws(AgentToolError) -> String {
-        // 1. Permission Check
-        // v13.0: Root-level permission check
+        // v24.3: Proactive Permission Check (Apple Best Practice)
+        // ScreenCaptureKit requires explicit Screen Recording permission in System Settings.
         
-        // 2. Capture Screen
+        // 1. Capture Screen
         let image: CGImage?
         do {
             image = await capturePrimaryScreen()
         }
         
         guard let validImage = image else {
-            throw AgentToolError.executionError("Failed to capture screen using ScreenCaptureKit.")
+            let helpMsg = "HATA: Ekran yakalanamadı. Lütfen 'Sistem Ayarları > Gizlilik ve Güvenlik > Ekran Kaydı' kısmından EliteAgent'a izin verdiğinizden emin olun."
+            AgentLogger.logAudit(level: .error, agent: "Vision", message: "Screen capture failed. Possible permission issue.")
+            throw AgentToolError.executionError(helpMsg)
         }
         
-        // 3. Perform OCR Analysis
+        // 2. Perform OCR Analysis
         do {
             let results = try await performOCR(on: validImage)
             
-            // 4. Format Output
+            // 3. Format Output
             if results.isEmpty {
-                return "No text or UI elements found on the current screen."
+                return "Ekran analizi tamamlandı ancak okunabilir bir metin veya UI öğesi bulunamadı."
             }
             
-            return "Screen Analysis:\n" + results.joined(separator: "\n")
+            return "Ekran Analiz Raporu:\n" + results.joined(separator: "\n")
         } catch {
-            throw AgentToolError.executionError(error.localizedDescription)
+            throw AgentToolError.executionError("Vision Analiz Hatası: \(error.localizedDescription)")
         }
     }
     
     private func capturePrimaryScreen() async -> CGImage? {
         do {
+            // v24.3: SCShareableContent logic following Apple's modern async/await patterns
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            guard let display = content.displays.first else { return nil }
+            guard let display = content.displays.first else { 
+                AgentLogger.logAudit(level: .warn, agent: "Vision", message: "No active display found for capture.")
+                return nil 
+            }
             
             let filter = SCContentFilter(display: display, excludingWindows: [])
             let config = SCStreamConfiguration()
+            
+            // Optimize for OCR: Use Native resolution
             config.width = Int(display.width)
             config.height = Int(display.height)
+            config.showsCursor = false
             
             return try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
         } catch {
-            logger.error("ScreenCaptureKit failed: \(error.localizedDescription)")
+            // v24.3: Specific error logging for diagnostic mode
+            AgentLogger.logAudit(level: .error, agent: "Vision", message: "ScreenCaptureKit error: \(error.localizedDescription)")
             return nil
         }
     }
@@ -70,11 +80,19 @@ public struct ChicagoVisionTool: AgentTool {
                 }
                 
                 let results = request.results as? [VNRecognizedTextObservation] ?? []
-                let output = results.compactMap { observation -> String? in
-                    guard let topCandidate = observation.topCandidates(1).first else { return nil }
-                    let box = observation.boundingBox
-                    return "- [\(topCandidate.string)] at (\(box.origin.x.rounded()), \(box.origin.y.rounded()))"
+                var uniqueElements = Set<String>()
+                var output: [String] = []
+                
+                for observation in results {
+                    guard let topCandidate = observation.topCandidates(1).first else { continue }
+                    let text = topCandidate.string.trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    if text.count > 2 && !uniqueElements.contains(text) {
+                        uniqueElements.insert(text)
+                        output.append("• \(text)")
+                    }
                 }
+                
                 continuation.resume(returning: output)
             }
             

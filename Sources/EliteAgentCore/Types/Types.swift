@@ -81,6 +81,7 @@ public enum TaskCategory: String, Codable, Sendable, CaseIterable {
     case hardware
     case status
     case weather
+    case vision
     case chat
     case task
     case other

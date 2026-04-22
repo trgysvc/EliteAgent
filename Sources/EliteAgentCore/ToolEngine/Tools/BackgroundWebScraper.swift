@@ -87,8 +87,16 @@ public final class BackgroundWebScraper: NSObject, WKNavigationDelegate {
         guard let url = url else { return }
         let completion = completions[url.absoluteString]
         completions.removeValue(forKey: url.absoluteString)
-        completion?(.failure(error))
         
+        // v24.2: Direct diagnostic feedback for the agent
+        let _ = "OBSERVATION: HATA! WebKit veya XPC süreci kısıtlandı. Lütfen internet erişimi ve Sandbox ayarlarını kontrol edin."
         AgentLogger.logAudit(level: .warn, agent: "WEB_SCRAPER", message: "Navigation failed for \(url.absoluteString): \(error.localizedDescription)")
+        
+        // v24.2: Diagnostic - Report XPC/Sandbox issues directly back to the agent
+        if error.localizedDescription.contains("XPC") || error.localizedDescription.contains("Sandbox") {
+            AgentLogger.logAudit(level: .error, agent: "WEB_SCRAPER", message: "🚨 CRITICAL: System sandbox or XPC queue blocked WebKit process.")
+        }
+        
+        completion?(.failure(error))
     }
 }

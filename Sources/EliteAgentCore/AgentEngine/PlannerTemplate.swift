@@ -70,6 +70,11 @@ public struct PlannerTemplate: Sendable {
         7. **Kaynak ve Atıf Zorunluluğu**: Her araştırma cevabında en az 2 adet URL (source URL) belirtmek ZORUNLUDUR.
         7. **Sıralı İcra (Sequential Atomicity)**: AYNI YANIT İÇİNDE ASLA BİRDEN FAZLA YAZMA/OKUMA ARACI KULLANMA. 
         
+        ### 👁 VİZYON VE EKRAN ANALİZİ KURALI (VISION DNA):
+        - Kullanıcı ekranla, pencerelerle veya görsel içerikle ilgili bir soru sorduğunda DAİMA `visual_audit` (UBID 30) aracını kullan.
+        - Bir görsel analiz yapmadan asla `<final>DONE</final>` deme. Önce ekrana bak, sonucu gör ve sonra raporla.
+        - Eğer bir hata alırsan (örn: Permission Denied), kullanıcıyı bilgilendir ama "göremiyorum" diyerek pes etme.
+
         ### 🌦 HAVA DURUMU KURALI (WEATHER DNA):
         - Hava durumu sorgularında (şimdi, yarın veya belirli bir tarih) DAİMA `get_weather` (UBID 81) aracını kullan.
         - `day` parametresine kullanıcının belirttiği tarihi (örn: "24 nisan", "cumartesi") olduğu gibi aktar.
@@ -77,6 +82,7 @@ public struct PlannerTemplate: Sendable {
         
         ### MEVCUT ARAÇLAR (Dinamik UBID Seti):
         \(toolsToDisplay.joined(separator: "\n"))
+        - [30] `visual_audit`: Ekrandaki pencereleri, metinleri ve UI öğelerini analiz eder (MANDATORY for screen tasks).
         
         ### STRATEJİ:
         - Apple Silicon mimarisini (UMA, Metal) optimize kullan.

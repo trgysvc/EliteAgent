@@ -18,6 +18,8 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>EliteAgent needs to control other apps to provide autonomous automation and workflow management.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>EliteAgent needs screen recording access to analyze visual errors and provide UI-based automation.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

@@ -62,6 +62,36 @@ public final class ThinkParser {
         throw ParserError.protocolMismatch("UNO Protokol İmzası (CALL[UBID]) bulunamadı veya hatalı formatta.")
     }
 
+    /// v25.0: UNO Pure Standardized Parameter Extractor
+    /// Completely bypasses JSONSerialization to avoid recurring quote escaping failures.
+    /// Standardizes communication by extracting key-value pairs directly from the signal.
+    private static func extractUNOParsedParameters(_ text: String) -> [String: AnyCodable] {
+        var params: [String: AnyCodable] = [:]
+        
+        // v25.0 Pattern: Matches "key": "value" pairs with support for complex nested quotes
+        // We use a non-greedy scan that respects the binary-like structure of UNO signals.
+        let pattern = "\"([^\"]+)\"\\s*:\\s*\"([\\s\\S]*?)\"(?=\\s*[,\\}])"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return [:] }
+        
+        let nsString = text as NSString
+        let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count))
+        
+        for match in matches {
+            let key = nsString.substring(with: match.range(at: 1))
+            var value = nsString.substring(with: match.range(at: 2))
+            
+            // v25.0: Explicit Sanitization for Binary Integrity
+            // We only unescape what is absolutely necessary for the tool execution
+            value = value.replacingOccurrences(of: "\\\"", with: "\"")
+            value = value.replacingOccurrences(of: "\\'", with: "'")
+            value = value.replacingOccurrences(of: "\\n", with: "\n")
+            
+            params[key] = AnyCodable(value)
+        }
+        
+        return params
+    }
+
     /// v13.8: UNO Pure Binary Parser
     /// Extracts ALL CALL([UBID]) WITH { ... } blocks directly, handling nested structures for parameters.
     private static func tryParseUNOBinary(_ text: String) -> [EliteAgentOutput] {
@@ -76,7 +106,6 @@ public final class ThinkParser {
             let ubidStr = nsString.substring(with: match.range(at: 1))
             guard let ubid = Int128(ubidStr) else { continue }
             
-            // Start scanning for the balancing brace from the start of the '{'
             let paramsStart = match.range.lowerBound + (nsString.substring(with: match.range).range(of: "{")?.upperBound.utf16Offset(in: nsString.substring(with: match.range)) ?? 0) - 1
             
             var bracketCount = 0
@@ -100,12 +129,11 @@ public final class ThinkParser {
             }
             
             if foundEnd {
-                var params: [String: AnyCodable] = [:]
-                // v13.8: UNO Pure - Shielded parameter extraction via Bridge
-                if let rawDict = UNOExternalBridge.resolveActionParameters(from: paramsStr) {
-                    params = rawDict.mapValues { AnyCodable($0) }
-                } else {
-                    AgentLogger.logAudit(level: .warn, agent: "Parser", message: "Failed to resolve params for UBID \(ubid): \(paramsStr)")
+                // v25.0: Transition to Standardized Parameter Extraction (No JSON Serialization)
+                let params = extractUNOParsedParameters(paramsStr)
+                
+                if params.isEmpty && paramsStr.count > 4 {
+                    AgentLogger.logAudit(level: .warn, agent: "Parser", message: "🛡 [UNO-PURE] Fallback required for complex params: \(paramsStr)")
                 }
                 
                 results.append(EliteAgentOutput(type: .tool_call, thought: "UNO Binary Action Triggered", ubid: ubid, params: params))
