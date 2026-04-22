@@ -62,3 +62,4 @@ token_baselines.json
 tmp/
 scratch/
 backups/
+*.xcarchive
