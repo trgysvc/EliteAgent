@@ -32,8 +32,8 @@ public final class AutoConfigManager: Sendable {
         let context: Int
         switch preset {
         case .performance: context = 32768
-        case .balanced:    context = 16384
-        case .lowPower:    context = 8192
+        case .balanced:    context = 8192 // v22.1: Reduced from 16K to 8K for 16GB stability
+        case .lowPower:    context = 4096 // v22.1: Reduced from 8K to 4K for 8GB stability
         }
         
         // 3. GPU Allocation (Layers to offload)

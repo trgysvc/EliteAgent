@@ -52,12 +52,13 @@ public actor InferenceActor {
         self.sharedBuffer = MetalBufferWrapper(buffer)
         
         // v13.9: Official MLX Unified Memory Optimization (PRD v17.4)
-        // Set GPU cache limit to 55% of physical memory for zero-copy inference
-        let memoryInfo = ProcessInfo.processInfo.physicalMemory
-        let cacheLimit = Int(Double(memoryInfo) * 0.55)
-        MLX.Memory.cacheLimit = cacheLimit
+        // v24.1 FIX: Set cacheLimit to a low fixed value (256MB) according to official MLX Swift 
+        // best practices to prevent memory hoarding which causes OOM and swapping on 16GB Macs.
+        // cacheLimit is ONLY for unused buffers, not active weights!
+        let cacheLimit = 256 * 1024 * 1024 // 256 MB
+        AgentLogger.logInfo("[MLX-Opt] Setting strictly capped Cache Limit: 256 MB to prevent swap thrashing.")
         
-        AgentLogger.logInfo("[MLX-Opt] Unified Memory GPU Cache set to \(cacheLimit / 1024 / 1024) MB")
+        MLX.Memory.cacheLimit = cacheLimit
         _ = LLMModelFactory.shared
     }
     
@@ -212,6 +213,14 @@ public actor InferenceActor {
         // v10.8: Structural Architecture Aliasing
         await ModelManager.shared.patchConfigForArchitectureAliasing(id: url.lastPathComponent)
         
+        // v24.2: KV Cache Context Window Enforcement
+        // The model's config.json defines max_position_embeddings which MLX uses to
+        // statically allocate the KV Cache at load time. For Qwen 2.5 7B, the default
+        // is 32768 (32K) tokens, which allocates ~6-8GB of extra RAM on top of the 8.5GB weights,
+        // causing swap on 16GB devices. We patch this to the autoTune-recommended value BEFORE
+        // the model is loaded so MLX allocates the correct (smaller) KV Cache.
+        patchContextWindow(modelDirectory: url)
+        
         let config = ModelConfiguration(directory: url)
         self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: config)
         self.loadedModelID = url.lastPathComponent
@@ -219,6 +228,57 @@ public actor InferenceActor {
         await MainActor.run {
             ModelSetupManager.shared.loadState = .ready
             ModelSetupManager.shared.isModelReady = true
+        }
+    }
+    
+    /// v24.2: Patches max_position_embeddings and sliding_window in the model's config.json
+    /// to the hardware-appropriate context window BEFORE MLX loads the model into VRAM.
+    /// This is the ONLY correct way to limit KV Cache allocation in MLX Swift —
+    /// the value must be set at load time, not at inference time.
+    private func patchContextWindow(modelDirectory: URL) {
+        let configURL = modelDirectory.appendingPathComponent("config.json")
+        guard FileManager.default.fileExists(atPath: configURL.path),
+              var content = try? String(contentsOf: configURL, encoding: .utf8) else {
+            AgentLogger.logAudit(level: .warn, agent: "titan", message: "[KVPatch] config.json not found, skipping context window patch.")
+            return
+        }
+
+        let targetContext = AutoConfigManager.shared.autoTune().context
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "[KVPatch] Hardware autoTune context target: \(targetContext) tokens.")
+
+        var changed = false
+
+        // Patch max_position_embeddings
+        if let regex = try? NSRegularExpression(pattern: "\"max_position_embeddings\":\\s*(\\d+)"),
+           let match = regex.firstMatch(in: content, range: NSRange(content.startIndex..., in: content)),
+           let fullRange = Range(match.range, in: content),
+           let valueRange = Range(match.range(at: 1), in: content) {
+            let currentValue = Int(content[valueRange]) ?? targetContext
+            if currentValue > targetContext {
+                content = content.replacingCharacters(in: fullRange, with: "\"max_position_embeddings\": \(targetContext)")
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "[KVPatch] Patched max_position_embeddings: \(currentValue) → \(targetContext)")
+                changed = true
+            }
+        }
+
+        // Patch sliding_window if present and larger than target
+        if let regex = try? NSRegularExpression(pattern: "\"sliding_window\":\\s*(\\d+)"),
+           let match = regex.firstMatch(in: content, range: NSRange(content.startIndex..., in: content)),
+           let fullRange = Range(match.range, in: content),
+           let valueRange = Range(match.range(at: 1), in: content) {
+            let currentValue = Int(content[valueRange]) ?? targetContext
+            if currentValue > targetContext {
+                content = content.replacingCharacters(in: fullRange, with: "\"sliding_window\": \(targetContext)")
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "[KVPatch] Patched sliding_window: \(currentValue) → \(targetContext)")
+                changed = true
+            }
+        }
+
+        if changed {
+            try? content.write(to: configURL, atomically: true, encoding: .utf8)
+            AgentLogger.logAudit(level: .info, agent: "titan", message: "[KVPatch] config.json updated. MLX will now allocate \(targetContext)-token KV Cache.")
+        } else {
+            AgentLogger.logAudit(level: .info, agent: "titan", message: "[KVPatch] max_position_embeddings already within target. No patch needed.")
         }
     }
     
@@ -315,9 +375,8 @@ public actor InferenceActor {
                         continuation.yield(chunk)
                     }
                     
-                    // v10.5.6: Aggressive Memory Recovery
-                    self.clearCache()
-                    
+                    // v24.1 FIX: Removed aggressive self.clearCache() here.
+                    // The strictly capped 256MB cacheLimit makes this redundant and helps prevent mutex crashes.
                     continuation.finish()
             }
         }

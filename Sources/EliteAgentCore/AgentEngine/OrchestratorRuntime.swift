@@ -584,9 +584,11 @@ public actor OrchestratorRuntime {
         
         // v20.5: Programmatic Fidelity Guard (Veto Power)
         // If the pass is hallucinated (i.e. report is empty/DONE only but observation has data), we VETO.
+        // v23.2 FIX: Do NOT veto if the observation contains a WIDGET tag, as the LLM is explicitly trained to stay silent (ECHO GUARD).
         let reportText = lastResponse.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         if passed && (reportText == "DONE" || reportText == "<FINAL>DONE</FINAL>" || reportText.isEmpty) {
-            if lastObservation != "No observation found." && lastObservation.count > 50 {
+            let isWidget = lastObservation.contains("_WIDGET]")
+            if !isWidget && lastObservation != "No observation found." && lastObservation.count > 50 {
                 AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [v20.5 VETO] Critic passed a silent report. Forcing failure.")
                 return false // Vetoed! Force back to planning/reporting.
             }

@@ -21,10 +21,7 @@ public class ModelPickerViewModel: ObservableObject {
     @Published public var hasOpenRouter: Bool = false
     
     public init() {
-        // v9.9.8: Immediate load on startup (Atomic Sync)
-        Task {
-            await loadModels()
-        }
+        // Initialization is handled by EliteAgentApp at launch to prevent race conditions
         
         // Listen for model setup errors to show alerts
         ModelSetupManager.shared.$errorMessage
