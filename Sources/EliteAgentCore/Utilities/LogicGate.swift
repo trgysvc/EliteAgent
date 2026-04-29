@@ -24,7 +24,8 @@ public final class LogicGate: Sendable {
         "host_statistics64": "Use 'ProcessInfo.processInfo.physicalMemory' for memory stats.",
         "top": "Use 'ProcessInfo.processInfo.processorCount' for basic CPU info.",
         "curl | sh": "Piping remote scripts directly is restricted. Review source first.",
-        "afplay": "Audio playback/analysis via shell is restricted. Use the 'music_dna' tool for AI-powered audio intelligence."
+        "afplay": "Audio playback/analysis via shell is restricted. Use the 'music_dna' tool for AI-powered audio intelligence.",
+        "blender": "3D modeling/rendering tasks must use the 'blender_3d' tool (UBID 60), not shell commands. It provides safe, sandboxed Blender automation."
     ]
     
     private let allowedResearchDomains = [

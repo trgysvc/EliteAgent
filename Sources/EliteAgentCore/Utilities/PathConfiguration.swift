@@ -42,6 +42,13 @@ public struct PathConfiguration: Sendable {
         return url
     }
     
+    /// ~/Library/Application Support/EliteAgent/Trajectories (v27.0: Structured session analysis)
+    public var trajectoriesURL: URL {
+        let url = applicationSupportURL.appendingPathComponent("Trajectories", isDirectory: true)
+        ensureDirectoryExists(at: url)
+        return url
+    }
+    
     /// ~/Documents/EliteAgentWorkspace (v14.0: User workspace, excluded from factory resets)
     public var workspaceURL: URL {
         let root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")

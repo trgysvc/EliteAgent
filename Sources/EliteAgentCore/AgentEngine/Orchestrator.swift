@@ -211,6 +211,9 @@ public class Orchestrator: ObservableObject {
             await group.register(AccessibilityTool())
             await group.register(XcodeTool()) // v16.0: Autonomous App Builder Engine
             
+            // v25.0: Creative 3D Tools (Blender Headless Automation)
+            await group.register(BlenderBridgeTool())
+            
             let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
                 Task { @MainActor [weak self] in
                     self?.steps.append(step)
@@ -581,18 +584,32 @@ public class Orchestrator: ObservableObject {
         } catch let error as InferenceError {
             if case .localProviderUnavailable(let reason) = error {
                 sessionState.fallbackReason = reason
-                // sessionState.activeProvider is now derived from ModelStateManager.shared.activeProvider
                 
+                // v27.0: Local Model Failure Diagnostic (Analytical Hardening)
+                let failureReason: LocalModelFailureReason
+                if reason.lowercased().contains("context") || reason.lowercased().contains("too long") {
+                    failureReason = .contextWindowOverflow(usedTokens: 0, maxTokens: 8192)
+                } else if reason.lowercased().contains("memory") || reason.lowercased().contains("ram") {
+                    failureReason = .outOfMemory(availableGB: 0, requiredGB: 4.0)
+                } else if reason.lowercased().contains("thermal") || reason.lowercased().contains("heat") {
+                    failureReason = .thermalThrottling(state: "serious")
+                } else {
+                    failureReason = .taskComplexityExceeded(evidence: reason)
+                }
+                
+                let diagnosticReport = failureReason.buildUserNotification(modelName: "Titan (Local)")
+                AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🩺 [DIAGNOSTIC] \(failureReason.userFacingExplanation)")
+
                 if effectiveConfig.fallbackPolicy == .promptBeforeSwitch && (promptOnFallback ?? true) {
                     sessionState.requiresUserAcknowledgement = true
                     sessionState.isInputLocked = true
                     self.pendingTask = PendingTask(prompt: prompt, forceProviders: forceProviders, promptWithContext: prompt, complexity: 3, untrustedContext: finalUntrustedContext)
-                    self.status = .awaitingFallbackApproval(taskID: UUID().uuidString, error: reason)
-                    self.steps.append(TaskStep(name: "Titan Hazır Değil", status: "warning", latency: "ANE", thought: reason))
+                    self.status = .awaitingFallbackApproval(taskID: UUID().uuidString, error: diagnosticReport) // Inject full report
+                    self.steps.append(TaskStep(name: "Titan Capacity Exceeded", status: "warning", latency: "ANE", thought: failureReason.userFacingExplanation))
                 } else if effectiveConfig.fallbackPolicy == .strictLocal {
                     sessionState.isInputLocked = false
                     self.status = .error
-                    self.steps.append(TaskStep(name: "Strict Local Error", status: "failed", latency: "0s", thought: "Cloud fallback disabled by policy."))
+                    self.steps.append(TaskStep(name: "Strict Local Error", status: "failed", latency: "0s", thought: "Cloud fallback disabled. Reason: \(failureReason.userFacingExplanation)"))
                 } else {
                     sessionState.isInputLocked = false
                 }
@@ -614,6 +631,9 @@ public class Orchestrator: ObservableObject {
         let lower = prompt.lowercased()
         if lower.contains(".mp3") || lower.contains(".wav") || lower.contains(".m4a") || lower.contains("analiz") {
             return .audioAnalysis
+        }
+        if lower.contains(".blend") || lower.contains("blender") {
+            return .creative3D
         }
         return TaskClassifier().classify(prompt: prompt)
     }

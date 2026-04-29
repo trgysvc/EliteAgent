@@ -84,6 +84,7 @@ public enum TaskCategory: String, Codable, Sendable, CaseIterable {
     case vision
     case chat
     case task
+    case creative3D
     case other
 }
 
@@ -327,7 +328,7 @@ public struct InferenceConfig: Codable, Sendable {
             "shell_exec": true, "read_file": true, "write_file": true,
             "app_discovery": true, "system_telemetry": true, "patch_tool": true,
             "git_tool": true, "messenger": true, "calendar": true, "mail": true,
-            "safari_automation": true, "music_dna": true
+            "safari_automation": true, "music_dna": true, "blender_3d": true
         ],
         isSafariAutomationEnabled: true,
         isDeepResearchEnabled: false,

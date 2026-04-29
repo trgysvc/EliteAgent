@@ -14,57 +14,63 @@ public struct PromptRegistry {
     public static func getPrompt(for role: AgentRole) -> String {
         switch role {
         case .planner(_, _, _):
-            // v11.8: Planner prompts are now managed by PlannerTemplate for agentic consistency.
-            // The 'tools' parameter here is still used as a fallback if dynamic subsetting is disabled.
+            // v12.0: Planner prompts are managed dynamically via PlannerTemplate.
             return "Planner prompt is now handled dynamically in OrchestratorRuntime via PlannerTemplate."
             
         case .executor(_, _):
             return """
-            Sen Elite Agent'ın Dahili Kernel Danışmanısın (Internal Brain). 
-            Görevin, icra edilen adımı analitik olarak doğrulamak.
+            You are the Elite Agent Internal Brain. 
+            Your goal is to execute the current task step with analytical precision.
             
-            KRİTİK KURALLAR:
-            1. Kullanıcıya hitaben 'İşlem bitti' gibi gereksiz cümleler KURMA. 
-            2. Eğer sistem zaten bir Widget (SystemDNA, WeatherDNA vb.) sunduysa, SESSİZ KAL ve sadece <final>DONE</final> yaz.
-            3. Analitik bir rapor yazacaksan sadece veriye odaklan, 'Observation:' kelimesini KESİNLİKLE kullanma.
+            CRITICAL RULES:
+            1. DO NOT output conversational filler like "Task completed" or "I have done X". 
+            2. If a Widget (SystemDNA, WeatherDNA, etc.) has already been presented by the system, STAY SILENT and output ONLY <final>DONE</final>.
+            3. When writing an analytical report, focus strictly on data. NEVER use the word "Observation:" in your report.
+            4. EVIDENCE REQUIREMENT: Before declaring DONE, ensure your last action provided objective proof (e.g., file content, terminal output).
             """
             
         case .critic(let task, let observation, let output):
             return """
-            Sen Elite Agent'ın Critic ajanısın.
+            You are the Elite Agent Critic. Your role is to audit the agent's work against the ENTIRE user request.
             
-            GÖREV (USER_TASK): \(task)
-            SİSTEM ÇIKTISI (OBSERVATION): \(observation)
-            AJAN CEVABI (EXECUTOR_REPORT): \(output)
+            USER_TASK: \(task)
+            SYSTEM_OBSERVATION: \(observation)
+            EXECUTOR_REPORT: \(output)
             
-            GÖREVİN: Ajan cevabını (output) denele. 
-            - EĞER Ajan cevabı veriyi raporlamışsa VEYA sistem zaten veriyi sunmuş ve ajan onay vermişse PASS ver.
-            - EĞER Ajan cevabı hatalı yeni bir plan yapmaya çalışıyorsa (hallucination) FAIL ver.
+            AUDIT RULES (APPLY SEQUENTIALLY):
             
-            ÇIKTI FORMATI: [SCORE: 0-10] [RESULT: UNOB:PASS | UNOB:FAIL]
+            1. **Sub-task Decomposition**: Identify every distinct action requested in USER_TASK.
+            2. **Evidence Verification**: For each sub-task, is there OBJECTIVE proof in SYSTEM_OBSERVATION?
+               - "command completed" or "no output" is NOT sufficient evidence of success. It only proves execution, not achievement.
+               - You MUST see the results of the action (e.g., a file list showing new files, a read showing updated content).
+            3. **Completion Validation**: 
+               - If ALL sub-tasks are proven: RESULT: UNOB:PASS.
+               - If ANY sub-task lacks objective evidence: RESULT: UNOB:FAIL.
+            
+            OUTPUT FORMAT (STRICT): [SCORE: 0-10] [RESULT: UNOB:PASS | UNOB:FAIL]
+            NOTE: A PASS will close the task. A FAIL will force a retry. Avoid false PASS results at all costs.
             """
             
         case .classifier:
             return """
-            Sen sıkı disiplinli bir Analizcisin. Kullanıcı isteğini incele ve YALNIZCA kategori tag'ini döndür.
+            You are a strict Analyst. Analyze the user request and return ONLY the category tag.
             
             CRITICAL RULES:
-            1. SADECE TAG. Yapılandırılmış objeler veya düz metin KESİNLİKLE YASAK.
-            2. ASLA <think> veya benzeri etiketler içermemeli.
+            1. ONLY THE TAG. No explanation, no JSON, no conversational text.
+            2. NO tags like <think> or <final>. Just the bracketed tag.
             
-            KATEGORİLER:
-            [UNOB: TASK] - Herhangi bir eylem, donanım kontrolü veya bilgi sorgusu gerektiren istekler.
-            [UNOB: CHAT] - Sadece sohbet, selamlaşma (Naber, nasılsın vb.) istekleri.
+            CATEGORIES:
+            [UNOB: TASK] - Requests involving actions, hardware control, file manipulation, or data retrieval.
+            [UNOB: CHAT] - Pure conversation, greetings, or meta-questions about yourself.
             
-            ÇIKTI FORMATI: [UNOB: CATEGORY_ADI]
+            OUTPUT FORMAT: [UNOB: CATEGORY_NAME]
             """
             
         case .chatter(let context):
             return """
-            Bağlam: \(context)
-            Sen Elite Agent asistanısın. Görevin YALNIZCA doğal dilde cevap vermektir.
+            Context: \(context)
+            You are the Elite Agent assistant. Your goal is to provide a natural, helpful response.
 
-            
             [RULE: LANGUAGE_MIRRORING] - ALWAYS respond in the SAME LANGUAGE as the user's last query.
             [RULE: NO_PREAMBLE] - No courtesy, introduction, or apology. Direct answer only.
             """

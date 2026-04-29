@@ -23,8 +23,8 @@ public actor SelfHealingEngine {
                 name: "TCC_PERMISSION",
                 command: nil,
                 description: """
-                [İZİN HATASI] macOS, EliteAgent'ın bu uygulamayı kontrol etmesini engelledi.
-                Çözüm: Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon > EliteAgent satırını bul ve ilgili uygulamaya (Mesajlar, WhatsApp, Takvim) izin ver.
+                [PERMISSION ERROR] macOS blocked EliteAgent from controlling this application.
+                REMEDY: Go to System Settings > Privacy & Security > Automation > EliteAgent and enable permissions for the target app (Messages, WhatsApp, Calendar, etc.).
                 """
             )
         }
@@ -35,8 +35,8 @@ public actor SelfHealingEngine {
                 name: "APP_NOT_FOUND",
                 command: nil,
                 description: """
-                [UYGULAMA HATASI] Hedef uygulama bulunamadı veya eski bir API çağrısı başarısız oldu (FSFindFolder -43).
-                WhatsApp için bu genellikle URL Scheme yöntemiyle aşılır. Uygulama kurulu mu kontrol edin.
+                [APP ERROR] Target application not found or legacy API call failed (FSFindFolder -43).
+                For WhatsApp, this is usually bypassed using the URL Scheme method. Verify if the app is installed.
                 """
             )
         }
@@ -47,8 +47,8 @@ public actor SelfHealingEngine {
                 name: "XPC_FAILURE",
                 command: nil,
                 description: """
-                [XPC HATASI] Servis bağlantısı kurulamadı. EliteAgent'ın sandboxsuz çalıştığından emin olun.
-                Bu hata ShellTool XPC servisinden kaynaklanıyordu — artık doğrudan Process() kullanılıyor.
+                [XPC ERROR] Service connection failed. Ensure EliteAgent is running without sandbox restrictions.
+                This error used to originate from ShellTool XPC service — now native Process() is used directly.
                 """
             )
         }
@@ -59,8 +59,24 @@ public actor SelfHealingEngine {
                 name: "IMESSAGE_HANDLE",
                 command: nil,
                 description: """
-                [iMESSAGE HATASI] İsimle kişi bulunamadı. iMessage için 'buddy' değil 'participant' kullanılmalı.
-                Alıcıyı isim olarak değil telefon numarası (+905XXXXXXXXX) veya Apple ID e-postası olarak gir.
+                [iMESSAGE ERROR] Person not found by name. For iMessage, use 'participant' instead of 'buddy'.
+                Provide the recipient as a phone number (+1XXXXXXXXXX) or Apple ID email instead of a display name.
+                """
+            )
+        }
+        
+        // Shell glob/quoting failure: & and special chars not quoted correctly
+        if err.contains("no matches found") || (err.contains("no such file or directory") && (err.contains("shell_error") || err.contains("[shell_error]"))) {
+            return HealingStrategy(
+                name: "SHELL_QUOTE_ERROR",
+                command: nil,
+                description: """
+                [SHELL QUOTE ERROR] The file path in your command was incorrectly escaped.
+                ROOT CAUSE: Using backslashes (\\) in paths with '&' or spaces breaks the shell.
+                REMEDY: Wrap ALL file paths in SINGLE QUOTES ('):
+                  WRONG: cp -r /path/Sonar\\-&GlobalGrooves/* /dest/
+                  CORRECT: cp -r '/path/Sonar-&GlobalGrooves/'* '/dest/'
+                IMPORTANT: Verify folder existence with 'ls' before copying.
                 """
             )
         }

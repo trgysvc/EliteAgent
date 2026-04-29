@@ -13,27 +13,22 @@ public actor HardwareMonitor {
     public func getMemoryStats() -> (used: Double, total: Double) {
         let totalRAMBytes = ProcessInfo.processInfo.physicalMemory
         
-        // v20.5: Global safe memory retrieval via sysctl
-        // hw.memsize (Total) ve vm.page_free_count (Free) kullanarak hesaplama yapacağız.
-        var pagesize: Int32 = 0
-        var size = MemoryLayout<Int32>.size
-        sysctlbyname("hw.pagesize", &pagesize, &size, nil, 0)
-        
-        var freeCount: Int32 = 0
-        var freeSize = MemoryLayout<Int32>.size
-        sysctlbyname("vm.page_page_dict.free_count", &freeCount, &freeSize, nil, 0)
-        
-        // vm_statistics64 kullanımı genellikle TaskPort gerektirir, 
-        // bu yüzden sysctl hw.usermem (kullanılabilir bellek) üzerinden gitmek daha güvenlidir.
+        // v20.5: Global safe memory retrieval via sysctl hw.usermem
+        // Bu yöntem TaskPort/Accessibility yetkisi gerektirmez, 0x5 hatalarını önler.
         var userMem: UInt64 = 0
         var userMemSize = MemoryLayout<UInt64>.size
-        sysctlbyname("hw.usermem", &userMem, &userMemSize, nil, 0)
+        let result = sysctlbyname("hw.usermem", &userMem, &userMemSize, nil, 0)
         
         let totalGB = Double(totalRAMBytes) / (1024 * 1024 * 1024)
-        let availableGB = Double(userMem) / (1024 * 1024 * 1024)
-        let usedGB = max(0, totalGB - availableGB)
         
-        return (usedGB, totalGB)
+        if result == 0 {
+            let availableGB = Double(userMem) / (1024 * 1024 * 1024)
+            let usedGB = max(0, totalGB - availableGB)
+            return (usedGB, totalGB)
+        } else {
+            // Fallback: sysctl başarısız olursa sadece total RAM dön
+            return (0, totalGB)
+        }
     }
     
     /// IOHIDEventSystem üzerinden tüm termal sensörlerin ortalamasını okur (M-Serisi uyumlu).

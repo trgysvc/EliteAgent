@@ -21,11 +21,11 @@ public actor OrchestratorRuntime {
     
     private var turnsWithoutProgress = 0
     private let MAX_TURNS_WITHOUT_PROGRESS = 5
-    private let MAX_PHASE_DURATION: TimeInterval = 120 // 2 minutes 
+    private let MAX_PHASE_DURATION: TimeInterval = 600.0 // 10 minutes (Increased for extensive tasks)
     private var isInterrupted = false
     private var activeContextManager: DynamicContextManager?
     private var sourcesAnalyzed = 0
-    private var currentAction = "İşleniyor..."
+    private var currentAction = "Processing..."
     private var isResearchModeActive = false
     private var lastReflectedObservation: String? = nil // v23.1: Guard against redundant responses 
     
@@ -33,6 +33,13 @@ public actor OrchestratorRuntime {
     private var currentTaskCategory: TaskCategory = .other
     private var isEscalatedToFullTools = false
     private var currentTurnObservations: [String] = [] // v21.0: Isolate current Turn data
+    private let loopDetector = ToolLoopDetector() // v12.0: Deterministic Loop Guard
+    private let chunker = AdaptiveTaskChunker() // v27.0: Adaptive Workload Partitioning
+    private var activeChunks: [AdaptiveTaskChunker.TaskChunk] = []
+    private var currentChunkIndex = 0
+    private var isChunkedMode = false
+    private var trajectoryRecorder: TrajectoryRecorder? // v27.0: Observability
+    private var bootstrapContext: String = "" // v27.0: Workspace context
     
     public init(
         planner: PlannerAgent,
@@ -79,7 +86,7 @@ public actor OrchestratorRuntime {
     
     private func handleRetryParse() async {
         AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "User requested a re-parse.")
-        let retryMsg = "Observation: UNO Protokol İmzası okunamadı. Lütfen çıktıyı geçerli CALL([UBID]) formatında tekrarla."
+        let retryMsg = "Observation: [PROTOCOL_ERROR] UNO Protocol Signature could not be read. Please repeat the output in valid CALL([UBID]) format."
         await activeContextManager?.addMessage(Message(role: "user", content: retryMsg))
     }
     
@@ -97,6 +104,15 @@ public actor OrchestratorRuntime {
         self.currentState = .classifying
         self.currentTaskCategory = .other
         self.isEscalatedToFullTools = false
+        self.trajectoryRecorder = TrajectoryRecorder(sessionId: session.id)
+        await trajectoryRecorder?.record(.userMessage(content: prompt, timestamp: Date()))
+        
+        // v27.0: Workspace Bootstrap Loading
+        self.bootstrapContext = await WorkspaceBootstrapLoader.load(workspaceURL: session.workspaceURL)
+        if !bootstrapContext.isEmpty {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [BOOTSTRAP] Injected workspace context (\(bootstrapContext.count) chars)")
+        }
+        
         self.sourcesAnalyzed = 0 
         
         let contextManager = DynamicContextManager(maxTokens: 8000, provider: cloudProvider)
@@ -142,7 +158,7 @@ public actor OrchestratorRuntime {
                 
                 if isInterrupted {
                     currentState = .completed
-                    await session.setFinalAnswer("İşlem kullanıcı tarafından durduruldu.")
+                    await session.setFinalAnswer("Process interrupted by user.")
                     break
                 }
                 
@@ -159,6 +175,42 @@ public actor OrchestratorRuntime {
                     try await handleChatting(prompt: prompt, provider: provider, context: contextManager, session: session, untrustedContext: untrustedContext)
                     currentState = .completed
                 case .planning:
+                    if let loopWarning = await loopDetector.detectLoop() {
+                        await contextManager.addMessage(Message(role: "user", content: "Observation: [LOOP_GUARD] \(loopWarning)"))
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [LOOP DETECTED] \(loopWarning)")
+                        await trajectoryRecorder?.record(.loopDetected(detector: "v2", count: 1, timestamp: Date()))
+                    }
+                    
+                    // v27.0: Context Window Guard — check before every planning turn
+                    let guardMessages = await contextManager.getMessages()
+                    let guardResult = ContextWindowGuard.evaluate(
+                        messages: guardMessages,
+                        systemPromptTokens: 1_500,
+                        maxTokens: (provider.providerType == .local) ? 8_192 : 128_000
+                    )
+                    switch guardResult {
+                    case .compact(let msg, _, _):
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "📦 \(msg)")
+                        let tokensBefore = ContextWindowGuard.estimateTokens(messages: await contextManager.getMessages())
+                        try await contextManager.compress(sessionID: UUID().uuidString, localProvider: self.localProvider)
+                        let tokensAfter = ContextWindowGuard.estimateTokens(messages: await contextManager.getMessages())
+                        await trajectoryRecorder?.record(.compaction(tokensBefore: tokensBefore, tokensAfter: tokensAfter, timestamp: Date()))
+                    case .block(let msg, _, _):
+                        AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚫 \(msg)")
+                        // Force compaction before blocking
+                        let tokensBefore = ContextWindowGuard.estimateTokens(messages: await contextManager.getMessages())
+                        try await contextManager.compress(sessionID: UUID().uuidString, localProvider: self.localProvider)
+                        let tokensAfter = ContextWindowGuard.estimateTokens(messages: await contextManager.getMessages())
+                        await trajectoryRecorder?.record(.compaction(tokensBefore: tokensBefore, tokensAfter: tokensAfter, timestamp: Date()))
+                        await contextManager.addMessage(Message(role: "user", content: "Observation: \(msg) Context was compacted. Be concise."))
+                    case .warn(let msg, let used, let max):
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "⚠️ \(msg)")
+                        await contextManager.addMessage(Message(role: "user", content: "Observation: \(msg)"))
+                        await trajectoryRecorder?.record(.contextGuard(usedTokens: used, maxTokens: max, action: "warn", timestamp: Date()))
+                    case .ok:
+                        break
+                    }
+                    
                     self.currentTurnObservations.removeAll() // v21.0: Start fresh on new task
                     try await handlePlanning(prompt: prompt, provider: provider, context: contextManager, session: session, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                     currentState = .executing
@@ -214,7 +266,7 @@ public actor OrchestratorRuntime {
                         }
                     } catch {
                         healingAttempts += 1
-                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Tetiklendi (Attempt \(healingAttempts)): \(error.localizedDescription)")
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [STATE: HEALING] Triggered (Attempt \(healingAttempts)): \(error.localizedDescription)")
                         
                         if healingAttempts >= 3 {
                             AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚨 [HEALING LIMIT] Max attempts reached.")
@@ -228,13 +280,14 @@ public actor OrchestratorRuntime {
                             }
                             
                             let errorMsg = """
-                            SİSTEM UYARISI: Bir hata oluştu. 
-                            HATA: \(error.localizedDescription)
+                            SYSTEM WARNING: An error occurred.
+                            ERROR: \(error.localizedDescription)
                             
-                            TALİMAT: Yukarıdaki hatayı gidererek asıl hedefine (**\(prompt)**) ulaşmak için yeni bir yol/plan oluştur. 
-                            KURAL: YALNIZCA <think> bloğu ve ardından gelen <final> içindeki CALL([UBID]) bloğunu kullan. Harici yapılandırılmış tablolar KESİNLİKLE YASAK.
-                            💡 İPUCU: Araç açıklamalarını (descriptions) dikkatlice oku ve ZORUNLU parametreleri (location, text vb.) doldurduğundan emin ol.
-                            KRİTİK: Eğer geçmiş mesajlarda kalan başka bir görevle uğraşıyorsan (örn: hava durumu) onu tamamen UNUT ve SADECE güncel göreve (**\(prompt)**) odaklan.
+                            INSTRUCTION: Resolve the error above and create a new path/plan to reach your goal (**\(prompt)**).
+                            RULE: Use ONLY the <think> block followed by the <final> block with CALL([UBID]). External structured tables are strictly FORBIDDEN.
+                            💡 TIP: Read tool descriptions carefully and fill in MANDATORY parameters.
+                            🚨 CRITICAL SAFETY: If you received this error due to a long bash command chain, DO NOT REPEAT THE SAME COMMAND. Use simpler commands or create a Swift script. Swift scripts are more stable on macOS.
+                            CRITICAL: Forget any previous tasks from older messages and focus ONLY on the current goal.
                             """
                             await contextManager.addMessage(Message(role: "user", content: errorMsg))
                             currentState = .planning // Retry planning with knowledge of the error
@@ -245,14 +298,22 @@ public actor OrchestratorRuntime {
                     currentState = .reviewing
                 case .reviewing:
                     let passed = try await handleReview(prompt: prompt, provider: provider, context: contextManager)
-                    currentState = passed ? .completed : .planning
+                    if passed {
+                        currentState = .completed
+                    } else {
+                        // v24.1: Critic Feedback Injection
+                        // Add English Critic error to context.
+                        let criticWarning = "Observation: [CRITIC_FAIL] The system auditor determined that the task is not complete or objective evidence is missing. Please review the TASK PROGRESS STATUS and continue executing the remaining steps sequentially."
+                        await contextManager.addMessage(Message(role: "user", content: criticWarning))
+                        currentState = .planning
+                    }
                 case .completed, .idle:
                     break
                 }
             }
         } catch {
             AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "Critical failure: \(error.localizedDescription)")
-            await session.setFinalAnswer("⚠️ Kritik hata: \(error.localizedDescription)")
+            await session.setFinalAnswer("⚠️ Critical error: \(error.localizedDescription)")
         }
         
         self.currentState = .idle
@@ -260,7 +321,7 @@ public actor OrchestratorRuntime {
     }
     
     private func handleClassification(prompt: String, provider: any LLMProvider, context: DynamicContextManager, untrustedContext: [UntrustedData]? = nil) async throws -> TaskCategory {
-        self.currentAction = "İstek Sınıflandırılıyor..."
+        self.currentAction = "Classifying Request..."
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🏷 [CLASSIFY INPUT] \(prompt)")
 
         // v19.0: ANE Offloading - Attempt classification on the Neural Engine first
@@ -303,12 +364,12 @@ public actor OrchestratorRuntime {
             return category
         }
         
-        return .chat // Varsayılan: Güvenli sohbet modu
+        return .chat // Default: Safe chat mode
     }
     
     private func handleChatting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, untrustedContext: [UntrustedData]? = nil) async throws {
-        self.currentAction = "Cevap Veriliyor..."
-        let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Kullanıcı ile saf sohbet"))
+        self.currentAction = "Responding..."
+        let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Pure conversation with user"))
         var history = await context.getMessages()
         if !history.contains(where: { $0.role == "user" && $0.content == prompt }) {
             history.append(Message(role: "user", content: prompt))
@@ -327,7 +388,7 @@ public actor OrchestratorRuntime {
     }
     
     private func handleReporting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, untrustedContext: [UntrustedData]? = nil) async throws {
-        self.currentAction = "Bulgular Raporlanıyor..."
+        self.currentAction = "Reporting Findings..."
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [STATE: REPORTING]")
         
         let history = await context.getMessages()
@@ -369,6 +430,7 @@ public actor OrchestratorRuntime {
         
         let response = try await provider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📝 [REPORT RESPONSE] \(response.content)")
+        await trajectoryRecorder?.record(.assistantMessage(content: response.content, timestamp: Date()))
         
         // v20.6: Hallucination Suppression
         // We filter out any protocol junk (THINK, CALL, DONE) from appearing in the ChatView.
@@ -403,7 +465,7 @@ public actor OrchestratorRuntime {
     }
     
     private func handlePlanning(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, useSafeMode: Bool = false, untrustedContext: [UntrustedData]? = nil) async throws {
-        self.currentAction = "Plan Hazırlanıyor..."
+        self.currentAction = "Preparing Plan..."
         
         // v11.8: Dynamic Tool Filtering & Escalation Logic
         var toolSubset: [any AgentTool]? = nil
@@ -421,11 +483,18 @@ public actor OrchestratorRuntime {
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [FULL TOOLS MODE] Escalated due to complexity or errors.")
         }
         
-        let systemPrompt = await PlannerTemplate.generateAgenticPrompt(
-            session: session, 
-            ragContext: "", 
+        let baseSystemPrompt = await PlannerTemplate.generateAgenticPrompt(
+            session: session,
+            ragContext: self.bootstrapContext, // Inject bootstrap context here
             toolSubset: toolSubset
         )
+        
+        // v1.1: Task Progress Injection — her planning turuna güncel adım durumunu ekle
+        let progressBlock = await session.progressTracker.statusBlock()
+        let systemPrompt = progressBlock.isEmpty ? baseSystemPrompt : baseSystemPrompt + progressBlock
+        if !progressBlock.isEmpty {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📋 [PROGRESS INJECT] \(progressBlock.prefix(200))")
+        }
         
         var history = await context.getMessages()
         if !history.contains(where: { $0.role == "user" && $0.content == prompt }) {
@@ -439,7 +508,20 @@ public actor OrchestratorRuntime {
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: isLocal ? 1 : 3, untrustedContext: untrustedContext)
         let response = try await provider.complete(request, useSafeMode: useSafeMode)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
+        await trajectoryRecorder?.record(.assistantMessage(content: response.content, timestamp: Date()))
         if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
+        
+        // v1.1: İlk planning turunda model adım listesi üretirse tracker'a kaydet
+        let tracker = session.progressTracker
+        let isFirstPlan = await !tracker.isInitialized
+        if isFirstPlan {
+            let steps = PlannerTemplate.extractSteps(from: response.content)
+            if !steps.isEmpty {
+                await tracker.setSteps(steps)
+                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📋 [STEPS REGISTERED] \(steps.count) adım kaydedildi: \(steps.joined(separator: " | "))")
+            }
+        }
+        
         await context.addMessage(Message(role: "assistant", content: response.content))
     }
     
@@ -469,15 +551,31 @@ public actor OrchestratorRuntime {
         
         if toolBlocks.isEmpty { 
             // If no tools but we have a final answer, return it.
-            if let answer = finalAnswer { return (false, answer) }
+            if let answer = finalAnswer { 
+                // v12.1: Evidence Guard for DONE hallucination
+                if answer.uppercased().contains("DONE") {
+                    let lastObs = currentTurnObservations.last?.lowercased() ?? ""
+                    let verificationKeywords = ["ls", "total", "content", "file", "id3", "lufs", "metadata", "status", "output", "read"]
+                    let hasEvidence = verificationKeywords.contains(where: { lastObs.contains($0) })
+                    
+                    if !hasEvidence && !currentTurnObservations.isEmpty {
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [EVIDENCE GUARD] Rejected DONE hallucination. No verification in history.")
+                        await trajectoryRecorder?.record(.evidenceGuardVeto(reason: "No verification in history", timestamp: Date()))
+                        let warning = "Observation: [CRITIC_FAIL] You declared DONE, but the last tool output (\(lastObs.prefix(50))...) does not provide objective verification of success. You MUST verify the state (e.g., list files or check tags) before concluding."
+                        await context.addMessage(Message(role: "user", content: warning))
+                        return (true, nil) // Force rethink
+                    }
+                }
+                return (false, answer) 
+            }
             // If no tools and no answer, the model might have failed to plan.
-            throw ParserError.protocolMismatch("Model geçerli bir UNO planı veya yanıt üretmedi.")
+            throw ParserError.protocolMismatch("Model failed to produce a valid UNO plan or response.")
         }
         
         // v19.7.10: Atomicity Guard - Force sequential execution for integrity
         if toolBlocks.count > 1 {
             AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [ATOMICITY GUARD] Blocked multi-call response (\(toolBlocks.count) steps).")
-            let warning = "Observation: SİSTEM UYARISI: HATA! Aynı anda birden fazla CALL bloğu kullandın (Sıralı İcra Kuralı İhlali). Özellikle bağımlı görevlerde (arama yapıp dosyaya yazmak gibi) ÖNCE veriyi çeken aracı çalıştır, sonucunu (Observation) gör ve gerçek veriyi aldıktan sonra bir sonraki adımı planla. Şimdi sadece İLK öncelikli adımı icra et."
+            let warning = "Observation: SYSTEM WARNING: ERROR! You used multiple CALL blocks at once (Sequential Execution Rule Violation). For dependent tasks, execute the data-gathering tool FIRST, see the Observation, and then plan the next step based on real data. Execute ONLY the first priority step now."
             await context.addMessage(Message(role: "user", content: warning))
             return (true, nil) // Force rethink
         }
@@ -488,7 +586,7 @@ public actor OrchestratorRuntime {
             let placeholders = ["[ilgili bilgi]", "[bilgi]", "[tag]", "[buraya", "taslak", "[...]", "[ ]"]
             if placeholders.contains(where: { paramString.contains($0) }) {
                 AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [PLACEHOLDER GUARD] Blocked tool: \(toolCall.tool)")
-                let warning = "Observation: HATA! Bu parametrede taslak veri (placeholder) kullandın. LÜTFEN ÖNCE gerekli bilgiyi çekecek araçları (google_search, weather, read_file vb.) çalıştır ve gerçek veriyi aldıktan sonra bu işlemi yap."
+                let warning = "Observation: ERROR! You used placeholder data in this parameter. Please FIRST run tools to fetch the required information (google_search, weather, read_file, etc.) and perform this action ONLY after receiving real data."
                 await context.addMessage(Message(role: "user", content: warning))
                 return (true, nil) // Force back to planning
             }
@@ -502,16 +600,102 @@ public actor OrchestratorRuntime {
                 let remedialPatterns = ["purge", "free -m", "killall", "rm -rf", "sudo bash"]
                 if remedialPatterns.contains(where: { lowerParams.contains($0) }) {
                     AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [MISSION GUARD] Blocked unrequested remedial action: \(toolCall.tool)")
-                    let warning = "Observation: SİSTEM UYARISI: Bu eylem (sistem müdahalesi) mevcut görevin kapsamı dışındadır. Lütfen sadece kullanıcı tarafından talep edilen işlemi yap. Eğer bellek doluysa kullanıcıyı uyar ama müdahale etme."
+                    let warning = "Observation: SYSTEM WARNING: This action (system intervention) is outside the scope of the current task. Please perform only the action requested by the user. If memory is full, warn the user but do not intervene."
                     await context.addMessage(Message(role: "user", content: warning))
                     return (true, nil)
                 }
             }
+            
+            // v24.2: Anti-Repetition Guard
+            // Model aynı komutu/parametreleri tekrar tekrar üretiyorsa döngüyü (loop) kır.
+            let toolSignature = "\(toolCall.tool):\(toolCall.params)"
+            if await session.hasToolBeenExecuted(signature: toolSignature) {
+                AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [ANTI-REPETITION GUARD] Blocked identical tool call: \(toolSignature)")
+                let warning = "Observation: SYSTEM WARNING: ERROR! You have already executed this command/tool. Please check the TASK PROGRESS STATUS table and execute the NEXT uncompleted step. DO NOT REPEAT THE SAME OPERATION."
+                await context.addMessage(Message(role: "user", content: warning))
+                return (true, nil) // Force rethink
+            }
+            
+            await session.markToolAsExecuted(signature: toolSignature)
+
+            let startTime = Date()
+            await trajectoryRecorder?.record(.toolCall(name: toolCall.tool, ubid: toolCall.ubid ?? 0, params: toolCall.params, timestamp: startTime))
 
             do {
                 let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
+                let durationMs = Int(Date().timeIntervalSince(startTime) * 1000)
+                await trajectoryRecorder?.record(.toolResult(name: toolCall.tool, ubid: toolCall.ubid ?? 0, result: result, durationMs: durationMs, timestamp: Date()))
                 self.currentTurnObservations.append(result)
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
+                
+                // v1.0: Shell Error Detection — if ShellTool tagged the output with [SHELL_ERROR],
+                // consult SelfHealingEngine and inject corrective guidance before re-planning.
+                if result.hasPrefix("[SHELL_ERROR]") {
+                    let strategy = await SelfHealingEngine.shared.analyze(error: result.lowercased(), tool: toolCall.tool)
+                    let healingHint = strategy?.description ?? "Fix the command and wrap file paths in single quotes (')."
+                    let shellErrorObservation = """
+                    Observation: [SHELL_ERROR] Command failed.
+                    Raw Error: \(result)
+                    
+                    \(healingHint)
+                    
+                    IMPORTANT: Analyze this error. DO NOT repeat the same command. Fix the file path and try again.
+                    """
+                    await context.addMessage(Message(role: "user", content: shellErrorObservation))
+                    AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛠 [SHELL_HEAL] Injected correction for: \(strategy?.name ?? "UNKNOWN")")
+                    return (true, nil) // Return to planning with correction context
+                }
+                
+                // v12.0 → v27.0: Record for Loop Detection (OpenClaw-Inspired)
+                // Records both the call and its outcome for no-progress detection.
+                await loopDetector.recordOutcome(toolName: toolCall.tool, params: toolCall.params, result: result)
+                
+                // v27.0: Adaptive Task Chunking (Analytical Hardening)
+                // If the observation contains a massive list of items, we intercept and chunk it.
+                if result.count > 2000 {
+                    let items = self.extractWorkItems(from: result)
+                    if items.count > 20 {
+                        let hwState = await AdaptiveTaskChunker.captureHardwareState()
+                        let budget = AdaptiveTaskChunker.ContextBudget(
+                            maxTokens: (provider.providerType == .local) ? 8192 : 128000,
+                            currentUsedTokens: ContextWindowGuard.estimateTokens(messages: await context.getMessages())
+                        )
+                        
+                        let decision = await chunker.chunkIfNeeded(items: items, hardwareState: hwState, contextBudget: budget)
+                        if case .chunked(let chunks) = decision {
+                            self.activeChunks = chunks
+                            self.currentChunkIndex = 0
+                            self.isChunkedMode = true
+                            
+                            let firstChunk = chunks[0]
+                            let chunkReason = "High workload detected (\(items.count) items). Partitioning into \(chunks.count) chunks to preserve context window."
+                            let overlayMsg = AdaptiveTaskChunker.progressNotification(chunk: firstChunk, completedItems: 0, totalItems: items.count, reason: chunkReason)
+                            self.onOverlayUpdate?(overlayMsg)
+                            
+                            let chunkedObservation = """
+                            Observation: [ADAPTIVE_CHUNKING] \(chunkReason)
+                            
+                            CURRENT BATCH (Chunk 1/\(chunks.count)):
+                            \(firstChunk.items.joined(separator: "\n"))
+                            
+                            INSTRUCTIONS: Process ONLY these \(firstChunk.items.count) items. Once finished, conclude this turn. The system will automatically provide the next batch.
+                            """
+                            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚙️ [CHUNKING] Split \(items.count) items into \(chunks.count) chunks.")
+                            await context.addMessage(Message(role: "user", content: chunkedObservation))
+                            return (true, nil)
+                        }
+                    }
+                }
+
+                // v1.1: TaskProgressTracker — başarılı tool çalışmasını adım ilerlemesi olarak kaydet
+                let tracker = session.progressTracker
+                if await tracker.isInitialized {
+                    // Sonraki bekleyen adımı bu gözlemle tamamla
+                    if let pendingIdx = await tracker.nextPendingStepIndex() {
+                        await tracker.markCompleted(stepIndex: pendingIdx, evidence: result)
+                        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📋 [STEP DONE] Step \(pendingIdx) completed. Remaining: \(await tracker.steps.filter { !$0.isCompleted }.count)")
+                    }
+                }
                 
                 // v22.0: Deep Continuity - Sync finding to the MemoryAgent (RAG)
                 Task {
@@ -546,17 +730,53 @@ public actor OrchestratorRuntime {
             } catch let error as AgentToolError {
                 // v10.5.6: Specific diagnostic for missing tools (UBID hallucination)
                 if case .toolNotFound(let identifier) = error {
-                    let diagnostic = "Observation: HATA! Araç bulunamadı (Identifier: \(identifier)). Lütfen UBID listesini tekrar kontrol et ve SADECE mevcut UBID'leri kullan. OS Version/Bilgi için UBID 58, Hava durumu için UBID 81 kullanmalısın."
+                    let diagnostic = "Observation: [TOOL_ERROR] Tool not found (Identifier: \(identifier)). Please double check the UBID list and use ONLY available UBIDs. For OS Version/Info use UBID 58, for Weather use UBID 81."
                     await context.addMessage(Message(role: "user", content: diagnostic))
                     AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🛠 [UBID DIAGNOSTIC] Hallucination detected for \(identifier). Sent correction.")
                 } else {
-                    await context.addMessage(Message(role: "user", content: "Observation: HATA! \(error.localizedDescription)"))
+                    await context.addMessage(Message(role: "user", content: "Observation: [TOOL_ERROR] \(error.localizedDescription)"))
                 }
                 return (true, nil)
             }
             if ["google_search", "web_search", "safari_automation", "web_fetch"].contains(toolCall.tool) { self.sourcesAnalyzed += 1 }
         }
         
+        // v27.0: Chunked Mode Continuation (Analytical Hardening)
+        // If we are in chunked mode and the model signals completion of the current batch, feed the next one.
+        if isChunkedMode {
+            let lastAssistantMsg = lastMessage.uppercased()
+            if lastAssistantMsg.contains("DONE") || lastAssistantMsg.contains("TASK_DONE") {
+                currentChunkIndex += 1
+                if currentChunkIndex < activeChunks.count {
+                    let nextChunk = activeChunks[currentChunkIndex]
+                    let totalItems = activeChunks.reduce(0) { $0 + $1.items.count }
+                    let completedSoFar = activeChunks.prefix(currentChunkIndex).reduce(0) { $0 + $1.items.count }
+                    
+                    let overlayMsg = AdaptiveTaskChunker.progressNotification(chunk: nextChunk, completedItems: completedSoFar, totalItems: totalItems, reason: "Moving to next data batch.")
+                    self.onOverlayUpdate?(overlayMsg)
+                    
+                    let nextObservation = """
+                    Observation: [CHUNK_CONTINUATION] Batch \(currentChunkIndex + 1)/\(activeChunks.count) started.
+                    
+                    NEXT ITEMS TO PROCESS:
+                    \(nextChunk.items.joined(separator: "\n"))
+                    
+                    INSTRUCTIONS: Continue your work with these items. Do NOT repeat previous items.
+                    """
+                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚙️ [CHUNKING] Moving to chunk \(currentChunkIndex + 1)/\(activeChunks.count)")
+                    await context.addMessage(Message(role: "user", content: nextObservation))
+                    return (true, nil) // Force back to planning with new data
+                } else {
+                    // All chunks completed
+                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚙️ [CHUNKING] All chunks processed successfully.")
+                    isChunkedMode = false
+                    activeChunks = []
+                    currentChunkIndex = 0
+                    self.onOverlayUpdate?(nil)
+                }
+            }
+        }
+
         // v19.7.12: Minimalist ReAct Loop
         // After any tool execution, we immediately return to Planning (true).
         // This leverages the Orchestrator's main loop (max 15 turns) as the safety net.
@@ -567,7 +787,7 @@ public actor OrchestratorRuntime {
     }
     
     private func handleReview(prompt: String, provider: any LLMProvider, context: DynamicContextManager) async throws -> Bool {
-        self.currentAction = "Sonuç Denetleniyor..."
+        self.currentAction = "Auditing Results..."
         let lastHistory = await context.getMessages()
         let lastResponse = lastHistory.last?.content ?? ""
         
@@ -614,7 +834,7 @@ public actor OrchestratorRuntime {
             if pid == .mlx, let p = localProvider { return p }
             if pid == .openrouter, let p = cloudProvider { return p }
         }
-        if config.strictLocal { throw InferenceError.localProviderUnavailable("Titan hazır değil.") }
+        if config.strictLocal { throw InferenceError.localProviderUnavailable("Titan is not ready.") }
         throw InferenceError.localProviderUnavailable("No provider.")
     }
     
@@ -629,18 +849,29 @@ public actor OrchestratorRuntime {
     
     private func getFriendlyActionName(for tool: String) -> String {
         switch tool {
-        case "google_search", "web_search", "native_browser": return "İnternette Arama Yapılıyor..."
-        case "safari_automation", "web_fetch", "read_file": return "İçerik Okunuyor..."
-        case "media_control", "music_dna": return "Medya Ayarlanıyor..."
-        case "system_volume", "brightness_control", "sleep_control": return "Sistem Ayarlanıyor..."
-        case "app_discovery", "shortcut_discovery", "shortcut_execution": return "Sistem Komutları Taranıyor..."
-        case "file_manager", "write_file": return "Dosya İşlemi Yapılıyor..."
-        case "shell_tool", "patch_tool", "git_tool": return "Sistem Komutu Çalıştırılıyor..."
-        case "whatsapp", "messenger", "email", "mail": return "Mesaj İletişimi Kuruluyor..."
-        case "weather", "calculator", "timer": return "Uygulama Verisi Sorgulanıyor..."
-        case "vision", "chicago_vision": return "Görüntü Analizi Yapılıyor..."
-        default: return "Sistem Çağrısı Yapılıyor..."
+        case "google_search", "web_search", "native_browser": return "Searching the Web..."
+        case "safari_automation", "web_fetch", "read_file": return "Reading Content..."
+        case "media_control", "music_dna": return "Configuring Media..."
+        case "system_volume", "brightness_control", "sleep_control": return "Adjusting System Settings..."
+        case "app_discovery", "shortcut_discovery", "shortcut_execution": return "Scanning System Commands..."
+        case "file_manager", "write_file": return "Performing File Operation..."
+        case "shell_tool", "patch_tool", "git_tool": return "Executing System Command..."
+        case "whatsapp", "messenger", "email", "mail": return "Establishing Messaging Communication..."
+        case "weather", "calculator", "timer": return "Querying Application Data..."
+        case "vision", "chicago_vision": return "Performing Image Analysis..."
+        default: return "Executing System Call..."
         }
+    }
+    
+    private func extractWorkItems(from text: String) -> [String] {
+        let lines = text.components(separatedBy: .newlines)
+        return lines.filter { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            // Path-like, ID-like, or list-like patterns
+            return (trimmed.contains("/") && !trimmed.contains(" ")) || 
+                   (trimmed.contains(".") && !trimmed.contains(" ") && trimmed.count > 5) ||
+                   (trimmed.count >= 2 && Int(trimmed) != nil)
+        }.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 }
 

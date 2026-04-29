@@ -164,17 +164,18 @@ struct ToolsSettingsView: View {
     }
     
     private var sortedToolNames: [String] {
-        config.enabledTools.keys.sorted()
+        toolStatuses.keys.sorted()
     }
     
     private func refresh() {
         Task {
             let currentConfig = await ConfigManager.shared.get()
             let registry = ToolRegistry.shared
+            let allTools = await registry.listTools()
             var newStatuses: [String: ToolStatus] = [:]
             
-            for name in currentConfig.enabledTools.keys {
-                newStatuses[name] = await registry.getToolStatus(named: name)
+            for tool in allTools {
+                newStatuses[tool.name] = await registry.getToolStatus(named: tool.name)
             }
             
             await MainActor.run {

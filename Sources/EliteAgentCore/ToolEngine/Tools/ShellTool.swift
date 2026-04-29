@@ -56,9 +56,13 @@ public struct ShellTool: AgentTool, Sendable {
             
             let exitCode = process.terminationStatus
             
-            if exitCode != 0 && !errorOutput.isEmpty {
-                let fullResult = output.isEmpty ? errorOutput : "\(output)\n[STDERR]: \(errorOutput)"
-                return fullResult
+            if exitCode != 0 {
+                let combinedOutput = [output, errorOutput]
+                    .filter { !$0.isEmpty }
+                    .joined(separator: "\n[STDERR]: ")
+                let taggedResult = "[SHELL_ERROR] Exit \(exitCode): \(combinedOutput)"
+                AgentLogger.logAudit(level: .warn, agent: "ShellTool", message: taggedResult)
+                return taggedResult
             } else {
                 return output.isEmpty ? "(command completed, no output)" : output
             }

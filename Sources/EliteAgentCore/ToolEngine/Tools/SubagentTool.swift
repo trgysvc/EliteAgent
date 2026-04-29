@@ -34,6 +34,8 @@ public struct SubagentTool: AgentTool, Sendable {
         )
         
         let runtime = runtimeCreator(planner, cloudProvider)
+        let subagentID = UUID()
+        await SubagentRegistry.shared.register(id: subagentID, runtime: runtime)
         
         if let handler = onStepUpdate {
             await runtime.setStepUpdateHandler(handler)
@@ -43,6 +45,9 @@ public struct SubagentTool: AgentTool, Sendable {
         let complexity = session.complexity
         
         do {
+            defer {
+                Task { await SubagentRegistry.shared.unregister(id: subagentID) }
+            }
             try await runtime.executeTask(
                 prompt: prompt, 
                 session: childSession, 

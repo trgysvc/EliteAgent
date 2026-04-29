@@ -47,6 +47,15 @@ public struct TaskClassifier: Sendable {
             return .vision
         }
         
+        // v25.0: Blender / 3D Creative Tasks
+        if p.contains("blender") || p.contains("3d") || p.contains("3 boyut") || p.contains("render")
+            || p.contains("sahne") || p.contains("scene") || p.contains("mesh") || p.contains("küp")
+            || p.contains("küre") || p.contains("model") || p.contains(".blend") || p.contains(".obj")
+            || p.contains(".fbx") || p.contains(".gltf") || p.contains(".stl")
+            || p.contains("turntable") || p.contains("export") {
+            return .creative3D
+        }
+        
         return .other
     }
 }
