@@ -46,7 +46,7 @@ public struct ChatBubble: View {
                                 Text(line2)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                         .padding(12)

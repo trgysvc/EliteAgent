@@ -388,8 +388,8 @@ struct WorkflowView: View {
                 Text(step.name)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(12)

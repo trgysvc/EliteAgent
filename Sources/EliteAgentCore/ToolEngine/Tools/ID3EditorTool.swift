@@ -9,8 +9,8 @@ fileprivate extension UInt32 {
 
 public struct ID3EditorTool: AgentTool {
     public let name = "id3_processor"
-    public let summary = "Recursive Native Swift Music Processor (Complete Metadata Injection)."
-    public let description = "Embeds Title, Artist, Album, Tags, Prompt, and Lyrics into MP3. Renames files cleanly. Param: directory (string)."
+    public let summary = "Recursive Native Swift Music Processor (Universal ID3 Tag Support)."
+    public let description = "Embeds all metadata from JSON/TXT and supports manual overrides for ANY ID3 tag. Param: directory (string), custom_tags (dictionary, optional - e.g. {'TPE1': 'Artist', 'TALB': 'Album'})."
     public let ubid: Int128 = 85
     
     public init() {}
@@ -19,6 +19,8 @@ public struct ID3EditorTool: AgentTool {
         guard let dirPath = params["directory"]?.value as? String else {
             throw AgentToolError.missingParameter("directory")
         }
+        
+        let customOverrides = params["custom_tags"]?.value as? [String: String] ?? [:]
         
         let expandedPath = dirPath.hasPrefix("~")
             ? dirPath.replacingOccurrences(of: "~", with: FileManager.default.homeDirectoryForCurrentUser.path)
@@ -69,7 +71,7 @@ public struct ID3EditorTool: AgentTool {
                 }
             }
             
-            // 2. Process TXT (Lyrics/Unsynchronized Lyrics)
+            // 2. Process TXT
             if fm.fileExists(atPath: txtURL.path), let text = try? String(contentsOf: txtURL, encoding: .utf8) {
                 metadata["USLT"] = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if metadata["TIT2"] == nil {
@@ -77,11 +79,17 @@ public struct ID3EditorTool: AgentTool {
                 }
             }
             
+            // 3. Apply CUSTOM OVERRIDES (Turgay's explicit request)
+            for (key, value) in customOverrides {
+                metadata[key] = value
+            }
+            
             let finalTitle = metadata["TIT2"] ?? baseName
             
             do {
                 try writeID3Native(to: fileURL, metadata: metadata, jpegURL: fm.fileExists(atPath: jpegURL.path) ? jpegURL : nil)
                 
+                // Clean Rename
                 let allowedChars = CharacterSet.letters.union(CharacterSet.whitespaces)
                 var cleanTitle = String(finalTitle.unicodeScalars.filter { allowedChars.contains($0) }).trimmingCharacters(in: .whitespaces)
                 if cleanTitle.isEmpty { cleanTitle = "UnknownTrack" }
@@ -116,7 +124,7 @@ public struct ID3EditorTool: AgentTool {
             }
         }
         
-        return "İŞLEM TAMAM: \(processedCount) dosya işlendi. Tüm JSON verileri (Tags, Prompt) ve TXT içeriği (Lyrics) MP3 içine gömüldü."
+        return "İŞLEM TAMAM: \(processedCount) dosya işlendi. Manuel girilen etiketler (Artist: \(customOverrides["TPE1"] ?? "N/A"), Album: \(customOverrides["TALB"] ?? "N/A")) başarıyla uygulandı."
     }
     
     private func writeID3Native(to mp3URL: URL, metadata: [String: String], jpegURL: URL?) throws {
@@ -137,15 +145,14 @@ public struct ID3EditorTool: AgentTool {
         for (key, value) in metadata {
             guard !value.isEmpty else { continue }
             
-            // Use UTF-16 with BOM
             let encodingByte: UInt8 = 0x01
             guard let textData = value.data(using: .utf16) else { continue }
             
             var frameBody = Data()
             if key == "COMM" || key == "USLT" {
                 frameBody.append(encodingByte)
-                frameBody.append("eng".data(using: .ascii)!) // Language
-                frameBody.append(Data([0xFE, 0xFF, 0x00, 0x00])) // Empty description (BOM + Null)
+                frameBody.append("eng".data(using: .ascii)!)
+                frameBody.append(Data([0xFE, 0xFF, 0x00, 0x00]))
                 frameBody.append(textData)
                 frameBody.append(Data([0x00, 0x00]))
             } else {
@@ -160,11 +167,10 @@ public struct ID3EditorTool: AgentTool {
             framesData.append(frameBody)
         }
         
-        // APIC
         if let jpeg = jpegURL, let jpegData = try? Data(contentsOf: jpeg) {
-            var apicData = Data([0x00]) // ISO-8859-1
+            var apicData = Data([0x00])
             apicData.append("image/jpeg".data(using: .ascii)!)
-            apicData.append(Data([0x00, 0x03, 0x00])) // Separator, Cover, Description separator
+            apicData.append(Data([0x00, 0x03, 0x00]))
             apicData.append(jpegData)
             
             framesData.append("APIC".data(using: .ascii)!)

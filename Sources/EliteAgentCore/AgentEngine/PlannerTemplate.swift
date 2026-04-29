@@ -21,7 +21,7 @@ public struct PlannerTemplate: Sendable {
                 "- [40] `safari_automation`: Safari automation and Google search (NATIVE).",
                 "- [45] `web_search`: Performs Google search (WebFetch). Param: query (string).",
                 "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string).",
-                "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata embed, cover art, clean rename, cleanup). Param: directory (string)."
+                "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata, cover art, clean rename). Param: directory (string), custom_tags (dictionary, optional - e.g. {'TPE1': 'Artist', 'TALB': 'Album'})."
             ]
         }
         
