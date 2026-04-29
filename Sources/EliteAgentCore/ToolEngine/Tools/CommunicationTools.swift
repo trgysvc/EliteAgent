@@ -14,6 +14,14 @@ public struct WhatsAppTool: AgentTool {
             throw AgentToolError.missingParameter("recipient and message are required")
         }
         
+        let isBiometricEnabled = await AppSettings.shared.isBiometricEnabledForActions
+        if isBiometricEnabled {
+            let authReason = "WhatsApp üzerinden '\(recipient)' kişisine mesaj göndermek için onayınız gerekiyor."
+            guard await SecuritySentinel.shared.authenticateUser(reason: authReason) else {
+                return "[SECURITY_BLOCK] Biyometrik doğrulama başarısız. WhatsApp mesajı gönderilemedi."
+            }
+        }
+        
         let script = """
         tell application "WhatsApp"
             activate
@@ -69,6 +77,14 @@ public struct EmailTool: AgentTool {
               let subject = params["subject"]?.value as? String,
               let body = params["body"]?.value as? String else {
             throw AgentToolError.missingParameter("recipient, subject, and body are required")
+        }
+        
+        let isBiometricEnabled = await AppSettings.shared.isBiometricEnabledForActions
+        if isBiometricEnabled {
+            let authReason = "Mail üzerinden '\(recipient)' adresine e-posta göndermek için onayınız gerekiyor."
+            guard await SecuritySentinel.shared.authenticateUser(reason: authReason) else {
+                return "[SECURITY_BLOCK] Biyometrik doğrulama başarısız. E-posta gönderilemedi."
+            }
         }
         
         let script = """

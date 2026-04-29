@@ -49,10 +49,11 @@ public struct PathConfiguration: Sendable {
         return url
     }
     
-    /// ~/Documents/EliteAgentWorkspace (v14.0: User workspace, excluded from factory resets)
+    /// ~/Workspaces/EliteAgent (v27.0: User workspace, excluded from factory resets)
     public var workspaceURL: URL {
-        let root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: "/tmp")
-        let url = root.appendingPathComponent("EliteAgentWorkspace", isDirectory: true)
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        let url = home.appendingPathComponent("Workspaces", isDirectory: true)
+                      .appendingPathComponent("EliteAgent", isDirectory: true)
         ensureDirectoryExists(at: url)
         return url
     }

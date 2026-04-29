@@ -32,6 +32,16 @@ public struct PatchTool: AgentTool, Sendable {
             fileURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(path)
         }
         
+        let workspacePath = session.workspaceURL.standardizedFileURL.path
+        let standardizedPath = fileURL.standardizedFileURL.path
+        
+        let isIsolationEnabled = await AppSettings.shared.isWorkspaceIsolationEnabled
+        if isIsolationEnabled {
+            guard standardizedPath.hasPrefix(workspacePath) else {
+                throw AgentToolError.executionError("GÜVENLİK ENGELİ: Çalışma Alanı İzolasyonu AÇIK. Sadece '\(workspacePath)' altındaki dosyaları yamalayabilirsiniz. (İzolasyonu Ayarlar'dan kapatabilirsiniz)")
+            }
+        }
+        
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
             throw AgentToolError.executionError("File does not exist: \(fileURL.path)")
         }

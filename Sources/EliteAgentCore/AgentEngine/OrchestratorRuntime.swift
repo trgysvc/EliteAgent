@@ -449,14 +449,15 @@ public actor OrchestratorRuntime {
         }
 
         // Strictly block any 'thinking' or 'planning' hallucinations from the UI bubble
-        if !cleanedReport.isEmpty && 
-           !cleanedReport.uppercased().contains("CALL[") && 
-           !cleanedReport.contains("THINK>") && 
-           cleanedReport.uppercased() != "DONE" &&
-           cleanedReport.uppercased() != "TASK_DONE" {
+        let upperCleaned = cleanedReport.uppercased()
+        let hasProtocol = upperCleaned.contains("CALL(") || upperCleaned.contains("WITH {") || upperCleaned.contains("<FINAL>")
+        let hasThinking = upperCleaned.contains("<THINK>") || upperCleaned.contains("THINK>")
+        
+        if !cleanedReport.isEmpty && !hasProtocol && !hasThinking &&
+           upperCleaned != "DONE" && upperCleaned != "TASK_DONE" {
             await session.setFinalAnswer(cleanedReport)
             self.onChatMessage?(ChatMessage(role: .assistant, content: cleanedReport))
-        } else if (cleanedReport.uppercased() == "DONE" || cleanedReport.isEmpty || cleanedReport.uppercased() == "TASK_DONE") {
+        } else if (upperCleaned == "DONE" || cleanedReport.isEmpty || upperCleaned == "TASK_DONE") {
             // v23.5: Structured Completion Bubble
             let summary = lastObservation.isEmpty ? "İşlem başarıyla tamamlandı." : lastObservation
             let completionMsg = "[TASK_COMPLETED]\nTask completed.\n\(summary)"

@@ -28,14 +28,27 @@ public final class AppSettings: ObservableObject, Sendable {
         }
     }
     
+    /// Ajanın sadece belirlenen workspace dizininde mi çalışacağı (Workspace Jailing).
+    @Published public var isWorkspaceIsolationEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isWorkspaceIsolationEnabled, forKey: "isWorkspaceIsolationEnabled")
+        }
+    }
+    
     private init() {
         // v13.9: Sensitive actions default to SECURE (true)
         if UserDefaults.standard.object(forKey: "isBiometricEnabledForActions") == nil {
             UserDefaults.standard.set(true, forKey: "isBiometricEnabledForActions")
         }
         
+        // v27.0: Workspace Isolation defaults to SECURE (true)
+        if UserDefaults.standard.object(forKey: "isWorkspaceIsolationEnabled") == nil {
+            UserDefaults.standard.set(true, forKey: "isWorkspaceIsolationEnabled")
+        }
+        
         self.isBiometricEnabledForStartup = UserDefaults.standard.bool(forKey: "isBiometricEnabledForStartup")
         self.isBiometricEnabledForActions = UserDefaults.standard.bool(forKey: "isBiometricEnabledForActions")
         self.isQuietModeEnabled = UserDefaults.standard.bool(forKey: "isQuietModeEnabled")
+        self.isWorkspaceIsolationEnabled = UserDefaults.standard.bool(forKey: "isWorkspaceIsolationEnabled")
     }
 }

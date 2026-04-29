@@ -27,12 +27,19 @@ public struct ReadFileTool: AgentTool, Sendable {
         let workspacePath = session.workspaceURL.standardizedFileURL.path
         let standardizedPath = fileURL.standardizedFileURL.path
         
-        // v7.7.1 Robust Path Comparison
-        let isAllowed = standardizedPath.hasPrefix(workspacePath) || standardizedPath.hasPrefix(homePath)
+        let isIsolationEnabled = await AppSettings.shared.isWorkspaceIsolationEnabled
         
-        guard isAllowed else {
-            AgentLogger.logAudit(level: .warn, agent: "ReadFileTool", message: "Access Denied: \(standardizedPath). Allowed Prefixes: [\(workspacePath), \(homePath)]")
-            throw AgentToolError.executionError("Path is outside allowed boundaries (Home or Workspace)")
+        if isIsolationEnabled {
+            guard standardizedPath.hasPrefix(workspacePath) else {
+                AgentLogger.logAudit(level: .warn, agent: "ReadFileTool", message: "Access Denied (Isolation): \(standardizedPath)")
+                throw AgentToolError.executionError("GÜVENLİK ENGELİ: Çalışma Alanı İzolasyonu AÇIK. Sadece '\(workspacePath)' altındaki dosyaları okuyabilirsiniz. (İzolasyonu Ayarlar'dan kapatabilirsiniz)")
+            }
+        } else {
+            let isAllowed = standardizedPath.hasPrefix(workspacePath) || standardizedPath.hasPrefix(homePath)
+            guard isAllowed else {
+                AgentLogger.logAudit(level: .warn, agent: "ReadFileTool", message: "Access Denied: \(standardizedPath). Allowed Prefixes: [\(workspacePath), \(homePath)]")
+                throw AgentToolError.executionError("Path is outside allowed boundaries (Home or Workspace)")
+            }
         }
         
         guard FileManager.default.fileExists(atPath: fileURL.path) else {

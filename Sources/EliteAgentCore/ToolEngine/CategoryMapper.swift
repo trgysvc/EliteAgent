@@ -23,7 +23,7 @@ public struct CategoryMapper {
     ]
     
     /// Evrensel olarak her zaman görünür olması gereken emniyet araçları.
-    public static let globalTools = ["shell_exec", "memory"]
+    public static let globalTools = ["shell_exec", "memory", "app_launcher"]
 
     public static func getTools(for category: TaskCategory) -> [String] {
         var tools = categoryMap[category] ?? []

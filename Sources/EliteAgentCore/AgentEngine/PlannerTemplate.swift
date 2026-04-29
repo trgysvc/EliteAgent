@@ -21,7 +21,8 @@ public struct PlannerTemplate: Sendable {
                 "- [40] `safari_automation`: Safari automation and Google search (NATIVE).",
                 "- [45] `web_search`: Performs Google search (WebFetch). Param: query (string).",
                 "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string).",
-                "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata, cover art, clean rename). Param: directory (string), custom_tags (dictionary, optional - e.g. {'TPE1': 'Artist', 'TALB': 'Album'})."
+                "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata, cover art, clean rename). Param: directory (string), custom_tags (dictionary, optional - e.g. {'TPE1': 'Artist', 'TALB': 'Album'}).",
+                "- [88] `app_launcher`: Natively launch macOS applications (Safe & Sandbox-friendly). Param: app_name (string)."
             ]
         }
         
@@ -40,8 +41,9 @@ public struct PlannerTemplate: Sendable {
         3. **Stall Prevention**: If a command returns "no output" or an error, do NOT repeat the same command. Analyze, fix, and vary your approach.
         4. **Thinking**: Start every turn with a `<think>...</think>` block for internal reasoning.
         5. **Observation**: Wait for tool results (Observation) before assuming success.
-        6. **Action Format**: Use the format strictly inside a `<final>` block: CALL([UBID]) WITH { "param": "value" }.
-        7. **Echo Guard**: Do NOT repeat data already shown in an observation. If the observation contains the answer, output ONLY `<final>DONE</final>`.
+        6. **Action Format**: Use the format strictly inside a `<final>` block: CALL([UBID]) WITH { "param": "value" }. NEVER use tool names like 'shell_exec' inside the final block; ONLY use the numeric [UBID]. Failure to do so causes system instability and protocol leaks.
+        7. **Privacy & UI**: Never include internal thoughts, plan steps, or 'think' tags in your final conversational response. The UI automatically handles status reporting.
+        8. **App Launching**: For opening macOS applications, ALWAYS prefer `app_launcher` [88] over `shell_exec` [32] to avoid permission issues.
         
         ### CURRENT TOOLS (STABLE):
         \(toolsToDisplay.joined(separator: "\n"))

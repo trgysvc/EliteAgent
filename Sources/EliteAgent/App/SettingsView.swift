@@ -101,6 +101,15 @@ struct SecuritySettingsView: View {
                 Toggle("Hassas İşlemlerde Onay İste", isOn: $settings.isBiometricEnabledForActions)
             }
             
+            Section("Dosya Sistemi Güvenliği") {
+                Toggle("Katı Çalışma Alanı İzolasyonu", isOn: $settings.isWorkspaceIsolationEnabled)
+                    .help("Açık olduğunda, ajan sadece ~/Workspaces/EliteAgent klasörü altındaki dosyalara müdahale edebilir.")
+                
+                Text("İzolasyon kapalıyken ajanın sisteminizdeki herhangi bir dosyaya erişip değiştirmesine izin vermiş olursunuz (Kernel Modu).")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+            
             Section {
                 Text("Biyometrik verileriniz Apple'ın güvenli Secure Enclave katmanında saklanır.")
                     .font(.footnote)

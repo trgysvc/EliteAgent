@@ -48,8 +48,16 @@ public struct WriteFileTool: AgentTool, Sendable {
         let homeURL = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
         let workspaceURL = session.workspaceURL.standardizedFileURL
         
-        guard fileURL.path.hasPrefix(workspaceURL.path) || fileURL.path.hasPrefix(homeURL.path) else {
-            throw AgentToolError.executionError("Path is outside allowed boundaries (Home or Workspace)")
+        let isIsolationEnabled = await AppSettings.shared.isWorkspaceIsolationEnabled
+        
+        if isIsolationEnabled {
+            guard fileURL.path.hasPrefix(workspaceURL.path) else {
+                throw AgentToolError.executionError("GÜVENLİK ENGELİ: Çalışma Alanı İzolasyonu AÇIK. Sadece '\(workspaceURL.path)' içerisine dosya yazabilirsiniz. (İzolasyonu Ayarlar'dan kapatabilirsiniz)")
+            }
+        } else {
+            guard fileURL.path.hasPrefix(workspaceURL.path) || fileURL.path.hasPrefix(homeURL.path) else {
+                throw AgentToolError.executionError("Path is outside allowed boundaries (Home or Workspace)")
+            }
         }
         
         let parentURL = fileURL.deletingLastPathComponent()

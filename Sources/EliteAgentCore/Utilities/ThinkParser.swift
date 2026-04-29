@@ -5,12 +5,17 @@ public final class ThinkParser {
     /// UNO Pure: Cleans the output for UI display by stripping internal protocol tags and thinking blocks.
     public static func cleanForUI(text: String) -> String {
         var cleaned = text
-        // v11.9: Strip <think> blocks
-        cleaned = cleaned.replacingOccurrences(of: "<think>[\\s\\S]*?</think>", with: "", options: .regularExpression, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "<think>[\\s\\S]*?$", with: "", options: .regularExpression, range: nil)
+        
+        // v26.0: Global XML-Style Tag Purge (Covers <think>, <final>, <step>, etc.)
+        // This is a catch-all for any model-generated protocol tags.
+        let xmlPattern = "<[^>]+>[\\s\\S]*?<\\/[^>]+>"
+        cleaned = cleaned.replacingOccurrences(of: xmlPattern, with: "", options: .regularExpression, range: nil)
+        
+        // v26.0: Unclosed Tag Purge (Covers cases where model cuts off)
+        let unclosedPattern = "<[^>]+>[\\s\\S]*?$"
+        cleaned = cleaned.replacingOccurrences(of: unclosedPattern, with: "", options: .regularExpression, range: nil)
         
         // v20.6: Aggressive Hallucination Stripping
-        // Strip common hallucinated technical headers
         let technicalPatterns = [
             "THINK>.*$",
             "Planlanıyor.*$",
@@ -20,20 +25,19 @@ public final class ThinkParser {
             "Sistem:.*$",
             "Dahili Rapor:.*$",
             "Analiz:*$",
-            "Kernel Observation:.*$"
+            "Kernel Observation:.*$",
+            "CALL\\s*\\([\\s\\S]*?\\)\\s*WITH\\s*\\{[\\s\\S]*?\\}" // Catch-all for CALL blocks
         ]
         
         for pattern in technicalPatterns {
             cleaned = cleaned.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive], range: nil)
         }
         
-        // UNO Pure: Strip protocol CALL blocks from UI
-        cleaned = cleaned.replacingOccurrences(of: "CALL\\(\\[\\d+\\]\\)\\s*WITH\\s*\\{[\\s\\S]*?\\}", with: "", options: .regularExpression, range: nil)
-        
-        // Strip final/signal tags
-        cleaned = cleaned.replacingOccurrences(of: "<final>[\\s\\S]*?</final>", with: "", options: .regularExpression, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "DONE", with: "", options: .caseInsensitive, range: nil)
-        cleaned = cleaned.replacingOccurrences(of: "<[\\|｜][^|｜]*[\\|｜]>", with: "", options: .regularExpression, range: nil)
+        // v26.0: Strip any remaining lone protocol keywords
+        let keywords = ["DONE", "TASK_DONE", "CALL", "WITH"]
+        for word in keywords {
+            cleaned = cleaned.replacingOccurrences(of: "\\b\(word)\\b", with: "", options: [.regularExpression, .caseInsensitive], range: nil)
+        }
         
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
