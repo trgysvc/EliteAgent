@@ -456,9 +456,13 @@ public actor OrchestratorRuntime {
            cleanedReport.uppercased() != "TASK_DONE" {
             await session.setFinalAnswer(cleanedReport)
             self.onChatMessage?(ChatMessage(role: .assistant, content: cleanedReport))
-        } else if !lastObservation.isEmpty && (cleanedReport.uppercased() == "DONE" || cleanedReport.isEmpty) {
-            // If model is just saying 'DONE', the direct reflection from handleExecution was already enough.
-            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [REPORT MUTE] Model emitted protocol-only response. Relying on Direct Reflection.")
+        } else if (cleanedReport.uppercased() == "DONE" || cleanedReport.isEmpty || cleanedReport.uppercased() == "TASK_DONE") {
+            // v23.5: Structured Completion Bubble
+            let summary = lastObservation.isEmpty ? "İşlem başarıyla tamamlandı." : lastObservation
+            let completionMsg = "[TASK_COMPLETED]\nTask completed.\n\(summary)"
+            await session.setFinalAnswer(completionMsg)
+            self.onChatMessage?(ChatMessage(role: .assistant, content: completionMsg))
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [COMPLETION BUBBLE] Task finished with summary: \(summary)")
         }
         
         await context.addMessage(Message(role: "assistant", content: response.content))

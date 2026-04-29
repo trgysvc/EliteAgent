@@ -89,7 +89,7 @@ public struct ChatWindowView: View {
                                         .id(message.id)
                                 }
                                 
-                                if !orchestrator.steps.isEmpty {
+                                if orchestrator.status == .working && !orchestrator.steps.isEmpty {
                                     WorkflowView(orchestrator: orchestrator)
                                         .padding(.horizontal)
                                 }
@@ -367,43 +367,35 @@ struct WorkflowView: View {
             // Header
             HStack(spacing: 12) {
                 if orchestrator.status == .working {
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(Color.accentColor)
-                        .font(.title3)
-                        .symbolEffect(.pulse, options: .repeating)
+                    Image("AppIcon") // Assuming AppIcon is available or using a generic elite icon
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                        .clipShape(Circle())
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                         .font(.title3)
                 }
                 
-                Text(orchestrator.status == .working ? "Working" : "Completed")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+                Text(orchestrator.status == .working ? "Working" : "Task completed.")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, 4)
             
-            // Active Step
+            // Active Step (Second Line)
             if let step = orchestrator.steps.last {
-                HStack(alignment: .top, spacing: 16) {
-                    VStack(spacing: 0) {
-                        StepIconDesign(status: step.status, actionName: step.name)
-                            .frame(width: 24, height: 24)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(step.name)
-                            .font(.subheadline)
-                            .foregroundStyle(.primary.opacity(0.9))
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                    }
-                    .padding(.top, 2)
-                }
+                Text(step.name)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
         }
-        .padding()
-        .background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
+        .padding(12)
+        .background(Color.secondary.opacity(0.1))
+        .cornerRadius(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

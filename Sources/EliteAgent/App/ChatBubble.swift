@@ -26,7 +26,33 @@ public struct ChatBubble: View {
                         .replacingOccurrences(of: "(?s)\\[🖥 Sistem Telemetri Raporu\\].*", with: "", options: .regularExpression, range: nil)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     
-                    if !cleanText.isEmpty {
+                    if cleanText.starts(with: "[TASK_COMPLETED]") {
+                        let lines = cleanText.components(separatedBy: .newlines)
+                        let line1 = lines.indices.contains(1) ? lines[1] : "Task completed."
+                        let line2 = lines.indices.contains(2) ? lines[2] : ""
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 8) {
+                                Image("AppIcon") // EliteAgent Icon
+                                    .resizable()
+                                    .frame(width: 18, height: 18)
+                                    .clipShape(Circle())
+                                
+                                Text(line1)
+                                    .font(.subheadline.bold())
+                            }
+                            
+                            if !line2.isEmpty {
+                                Text(line2)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color.secondary.opacity(0.1))
+                        .cornerRadius(14)
+                    } else if !cleanText.isEmpty {
                         Text(cleanText)
                             .font(.subheadline)
                             .textSelection(.enabled)
