@@ -361,20 +361,94 @@ struct ModelPickerMenu: View {
 
 struct WorkflowView: View {
     @ObservedObject var orchestrator: Orchestrator
+    
     var body: some View {
-        DisclosureGroup {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(orchestrator.steps) { step in
-                    HStack {
-                        StepIcon(status: step.status)
-                        Text(step.name).font(.subheadline)
-                        Spacer()
-                        Text(step.latency).font(.caption2).foregroundStyle(.secondary)
-                    }
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack(spacing: 12) {
+                if orchestrator.status == .working {
+                    Image(systemName: "rays")
+                        .foregroundStyle(.orange)
+                        .font(.title3)
+                        .symbolEffect(.pulse, options: .repeating)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.title3)
                 }
-            }.padding()
-        } label: {
-            Label("İş Adımları", systemImage: "cpu.fill").font(.caption.bold())
+                
+                Text(orchestrator.status == .working ? "Working" : "Completed")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.bottom, 16)
+            
+            // Steps
+            ForEach(Array(orchestrator.steps.enumerated()), id: \.element.id) { index, step in
+                HStack(alignment: .top, spacing: 16) {
+                    // Line and Icon Column
+                    VStack(spacing: 0) {
+                        StepIconDesign(status: step.status, actionName: step.name)
+                            .frame(width: 24, height: 24)
+                        
+                        if index < orchestrator.steps.count - 1 {
+                            Rectangle()
+                                .fill(Color.secondary.opacity(0.3))
+                                .frame(width: 1)
+                                .frame(minHeight: 20)
+                                .padding(.vertical, 4)
+                        }
+                    }
+                    
+                    // Content Column
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(step.name)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary.opacity(0.9))
+                        
+                        if (step.thought ?? "").lowercased().contains("script") || step.name.lowercased().contains("shell") {
+                            Text("Script")
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.secondary.opacity(0.2))
+                                .cornerRadius(4)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.top, 2)
+                    .padding(.bottom, index < orchestrator.steps.count - 1 ? 16 : 0)
+                }
+            }
+        }
+        .padding()
+        .background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct StepIconDesign: View {
+    let status: String
+    let actionName: String
+    
+    var body: some View {
+        Group {
+            if status == "Executing" {
+                ProgressView().controlSize(.small)
+            } else if status == "failed" || status == "error" || status == "warning" {
+                Image(systemName: "xmark.circle").foregroundStyle(.red)
+            } else {
+                let lower = actionName.lowercased()
+                let iconName: String = {
+                    if lower.contains("shell") || lower.contains("terminal") { return "terminal" }
+                    if lower.contains("read") || lower.contains("check") || lower.contains("audit") { return "doc.text" }
+                    if lower.contains("search") { return "magnifyingglass" }
+                    if lower.contains("write") || lower.contains("save") { return "square.and.pencil" }
+                    return "checkmark.circle"
+                }()
+                
+                Image(systemName: iconName)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }

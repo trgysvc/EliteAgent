@@ -213,6 +213,7 @@ public class Orchestrator: ObservableObject {
             
             // v25.0: Creative 3D Tools (Blender Headless Automation)
             await group.register(BlenderBridgeTool())
+            await group.register(ID3EditorTool())
             
             let handler: @Sendable (TaskStep) -> Void = { [weak self] step in
                 Task { @MainActor [weak self] in

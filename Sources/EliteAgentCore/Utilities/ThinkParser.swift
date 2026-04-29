@@ -55,7 +55,7 @@ public final class ThinkParser {
         
         // If no binary signatures are found and it's not a clear DONE signal,
         // we check if it's just a conversation turn.
-        if !text.contains("CALL([") {
+        if !text.contains("CALL(") {
              return [EliteAgentOutput(type: .response, content: text)]
         }
         
@@ -97,7 +97,7 @@ public final class ThinkParser {
     private static func tryParseUNOBinary(_ text: String) -> [EliteAgentOutput] {
         var results: [EliteAgentOutput] = []
         let nsString = text as NSString
-        let pattern = "CALL\\(\\[(\\d+)\\]\\)\\s*WITH\\s*\\{"
+        let pattern = "CALL\\(\\[?(\\d+)\\]?\\)\\s*WITH\\s*\\{"
         
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return [] }
         let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count))

@@ -561,7 +561,11 @@ public actor OrchestratorRuntime {
                     if !hasEvidence && !currentTurnObservations.isEmpty {
                         AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [EVIDENCE GUARD] Rejected DONE hallucination. No verification in history.")
                         await trajectoryRecorder?.record(.evidenceGuardVeto(reason: "No verification in history", timestamp: Date()))
-                        let warning = "Observation: [CRITIC_FAIL] You declared DONE, but the last tool output (\(lastObs.prefix(50))...) does not provide objective verification of success. You MUST verify the state (e.g., list files or check tags) before concluding."
+                        let warning = """
+                        Observation: [CRITIC_FAIL] You declared DONE, but the last tool output (\(lastObs.prefix(50))...) does not provide objective verification of success. 
+                        You MUST verify the state (e.g., list files with 'ls' or check content with 'cat' or 'tag_check') before concluding. 
+                        If your previous command failed or produced no output, TROUBLESHOOT and FIX the command (check paths, quotes, and parameters) instead of assuming success.
+                        """
                         await context.addMessage(Message(role: "user", content: warning))
                         return (true, nil) // Force rethink
                     }

@@ -20,7 +20,8 @@ public struct PlannerTemplate: Sendable {
                 "- [37] `messenger`: Sends iMessage/WhatsApp messages (Native).",
                 "- [40] `safari_automation`: Safari automation and Google search (NATIVE).",
                 "- [45] `web_search`: Performs Google search (WebFetch). Param: query (string).",
-                "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string)."
+                "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string).",
+                "- [85] `id3_editor`: Embeds ID3 tags and a JPEG cover art into an MP3 file. Params: path, title, coverPath."
             ]
         }
         
@@ -48,7 +49,11 @@ public struct PlannerTemplate: Sendable {
         - [30] `visual_audit`: Analyzes screen windows, text, and UI elements.
         
         ### 🛡 SHELL SAFETY:
-        - Wrap paths in SINGLE QUOTES `'`. Do NOT use backslash `\\` escaping.
+        - Wrap EACH path or argument in its own SEPARATE set of SINGLE QUOTES `'`.
+        - NEVER combine multiple arguments into one pair of quotes.
+        - Correct: `cp -r '/source/path' '/dest/path'`
+        - Incorrect: `cp -r '/source/path /dest/path'`
+        - Preservation: Always use EXACT characters for paths, including non-English (Turkish, etc.) characters. DO NOT transliterate.
         
         ### SESSION PARAMETERS (DYNAMIC):
         - Workspace: \(workspace)

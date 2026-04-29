@@ -23,6 +23,7 @@
 		AE69BFDC2F8FD1520080DB7D /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
 		AE7BBEDA2F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
 		AE7BD8DD2F895B6D00FDE202 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
+		AE883F5B2FA20C1000FFF7EC /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
 		AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
 		AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
 		AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
@@ -112,6 +113,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE883F5B2FA20C1000FFF7EC /* Numerics in Frameworks */,
 				AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */,
 				AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */,
 				AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */,
@@ -373,9 +375,6 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				COPY_PHASE_STRIP = NO;
-				MTL_LANGUAGE_REVISION = metal3.1;
-				STRIP_INSTALLED_PRODUCT = NO;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -422,8 +421,10 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				MTL_LANGUAGE_REVISION = metal3.1;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRIP_INSTALLED_PRODUCT = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -440,9 +441,6 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				COPY_PHASE_STRIP = NO;
-				MTL_LANGUAGE_REVISION = metal3.1;
-				STRIP_INSTALLED_PRODUCT = NO;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -483,7 +481,9 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				MTL_LANGUAGE_REVISION = metal3.1;
 				SDKROOT = macosx;
+				STRIP_INSTALLED_PRODUCT = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 6.0;
 			};
@@ -619,9 +619,9 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=$(OBJROOT)/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=$(OBJROOT)/GeneratedModuleMaps/yyjson.modulemap";
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) $(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include $(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include $(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
 				SWIFT_VERSION = 6.0;
@@ -650,9 +650,9 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=$(OBJROOT)/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=$(OBJROOT)/GeneratedModuleMaps/yyjson.modulemap";
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) $(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include $(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include $(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
 				SWIFT_VERSION = 6.0;
