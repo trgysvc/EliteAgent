@@ -623,12 +623,13 @@ public actor OrchestratorRuntime {
             await session.markToolAsExecuted(signature: toolSignature)
 
             let startTime = Date()
-            await trajectoryRecorder?.record(.toolCall(name: toolCall.tool, ubid: toolCall.ubid ?? 0, params: toolCall.params, timestamp: startTime))
+            let ubidValue = Int64(toolCall.ubid ?? 0)
+            await trajectoryRecorder?.record(.toolCall(name: toolCall.tool, ubid: ubidValue, params: toolCall.params, timestamp: startTime))
 
             do {
                 let result = try await self.toolRegistry.execute(toolCall: toolCall, session: session)
                 let durationMs = Int(Date().timeIntervalSince(startTime) * 1000)
-                await trajectoryRecorder?.record(.toolResult(name: toolCall.tool, ubid: toolCall.ubid ?? 0, result: result, durationMs: durationMs, timestamp: Date()))
+                await trajectoryRecorder?.record(.toolResult(name: toolCall.tool, ubid: ubidValue, result: result, durationMs: durationMs, timestamp: Date()))
                 self.currentTurnObservations.append(result)
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📡 [OBSERVATION] \(toolCall.tool) result size: \(result.count)")
                 
@@ -721,13 +722,13 @@ public actor OrchestratorRuntime {
                         for pattern in patterns {
                             if let range = displayContent.range(of: pattern, options: .regularExpression) {
                                 displayContent = String(displayContent[range])
+                                // Widget's are still reflected so they render.
+                                self.lastReflectedObservation = displayContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                                self.onChatMessage?(ChatMessage(role: .assistant, content: self.lastReflectedObservation!))
                                 break
                             }
                         }
                     }
-                    
-                    self.lastReflectedObservation = displayContent.trimmingCharacters(in: .whitespacesAndNewlines)
-                    self.onChatMessage?(ChatMessage(role: .assistant, content: self.lastReflectedObservation!))
                 }
                 
                 await context.addMessage(Message(role: "user", content: "Observation: \(result)"))

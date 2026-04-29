@@ -11,8 +11,8 @@ public actor TrajectoryRecorder {
     public enum TrajectoryEvent: Codable, Sendable {
         case userMessage(content: String, timestamp: Date)
         case assistantMessage(content: String, timestamp: Date)
-        case toolCall(name: String, ubid: Int128, params: [String: AnyCodable], timestamp: Date)
-        case toolResult(name: String, ubid: Int128, result: String, durationMs: Int, timestamp: Date)
+        case toolCall(name: String, ubid: Int64, params: [String: AnyCodable], timestamp: Date)
+        case toolResult(name: String, ubid: Int64, result: String, durationMs: Int, timestamp: Date)
         case compaction(tokensBefore: Int, tokensAfter: Int, timestamp: Date)
         case loopDetected(detector: String, count: Int, timestamp: Date)
         case evidenceGuardVeto(reason: String, timestamp: Date)

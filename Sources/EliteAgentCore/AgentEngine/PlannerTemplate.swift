@@ -21,7 +21,7 @@ public struct PlannerTemplate: Sendable {
                 "- [40] `safari_automation`: Safari automation and Google search (NATIVE).",
                 "- [45] `web_search`: Performs Google search (WebFetch). Param: query (string).",
                 "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string).",
-                "- [85] `id3_editor`: Embeds ID3 tags and a JPEG cover art into an MP3 file. Params: path, title, coverPath."
+                "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata embed, cover art, clean rename, cleanup). Param: directory (string)."
             ]
         }
         
@@ -42,7 +42,6 @@ public struct PlannerTemplate: Sendable {
         5. **Observation**: Wait for tool results (Observation) before assuming success.
         6. **Action Format**: Use the format strictly inside a `<final>` block: CALL([UBID]) WITH { "param": "value" }.
         7. **Echo Guard**: Do NOT repeat data already shown in an observation. If the observation contains the answer, output ONLY `<final>DONE</final>`.
-        8. **Batch Strategy**: For >10 items, use `write_file` (UBID 34) to create a `.swift` script and execute it via `shell_exec` (UBID 32).
         
         ### CURRENT TOOLS (STABLE):
         \(toolsToDisplay.joined(separator: "\n"))
