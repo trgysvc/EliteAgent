@@ -284,6 +284,7 @@ public struct BlenderScriptLibrary: Sendable {
         case "sphere": return "bpy.ops.mesh.primitive_uv_sphere_add(radius=\(size/2), location=\(locStr))"
         case "cylinder": return "bpy.ops.mesh.primitive_cylinder_add(radius=\(size/2), location=\(locStr))"
         case "torus": return "bpy.ops.mesh.primitive_torus_add(location=\(locStr))"
+        case "monkey", "suzanne": return "bpy.ops.mesh.primitive_monkey_add(size=\(size), location=\(locStr))"
         default: return "bpy.ops.mesh.primitive_cube_add(size=\(size), location=\(locStr))"
         }
     }
@@ -296,6 +297,38 @@ public struct BlenderScriptLibrary: Sendable {
         bpy.ops.object.light_add(type='\(lightType)', location=\(locStr))
         light = bpy.context.object
         light.data.energy = \(energy)
+        """
+    }
+    
+    // MARK: - API Explorer
+    
+    /// Belirli bir modül veya nesne için kullanılabilir öznitelikleri ve dökümantasyonu listeler.
+    public static func apiExplorer(target: String) -> String {
+        return """
+        import bpy
+        import inspect
+        
+        # EliteAgent BlenderBridge — Auto-generated API Explorer
+        target_path = '\(target)'
+        
+        try:
+            # Dinamik olarak hedefi bul (örn: 'bpy.ops.mesh')
+            target_obj = eval(target_path)
+            
+            print(f'[BLENDER_OK] API Explorer for: {target_path}')
+            print(f'Type: {type(target_obj)}')
+            
+            # Üyeleri listele
+            members = [m for m in dir(target_obj) if not m.startswith('_')]
+            print(f'Available Members ({len(members)}):')
+            for m in members:
+                attr = getattr(target_obj, m)
+                doc = inspect.getdoc(attr) or "No docstring available."
+                first_line_doc = doc.split('\\n')[0]
+                print(f'  - {m}: {first_line_doc}')
+                
+        except Exception as e:
+            print(f'[BLENDER_ERROR] API Explorer failed for {target_path}: {e}')
         """
     }
 }

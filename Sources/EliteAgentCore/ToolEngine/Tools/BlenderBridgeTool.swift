@@ -18,11 +18,12 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
     Advanced Blender 5.1 automation tool. Provides FULL access to Blender Python API (bpy).
     
     Actions:
-    - 'execute_script': Execute any valid Blender Python code. Use this for ALL complex tasks.
+    - 'execute_script': Execute any valid Blender Python code. Use this for ALL complex tasks (modifiers, materials, physics).
       Params: script (string) - Your bpy code.
+    - 'get_api_info': Discover available bpy features. Params: target (string, e.g., 'bpy.ops.mesh').
     - 'create_scene': Reset and start fresh. Params: engine, res_x, res_y.
-    - 'render': Render current scene to image. Param: output (filename). Saves to sandbox 'outputs' folder.
-    - 'add_mesh' / 'add_light': Fast shortcuts for primitives.
+    - 'render': Render current scene to image. Param: output (filename).
+    - 'add_mesh' / 'add_light': Fast shortcuts for basic primitives.
     
     API Usage Guidelines:
     1. Your script is executed in an environment with 'bpy', 'math', and 'os' pre-imported.
@@ -31,10 +32,13 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
     4. PATHS: All file paths are relative to the sandbox. Do NOT use absolute paths.
        Files are saved to: ~/Documents/EliteAgentWorkspace/Blender/outputs/
     
-    Example (Advanced):
+    CRITICAL: For monkey (Suzanne), use action 'add_mesh' with type 'monkey' or 'execute_script'.
+    For materials and modifiers, you MUST use 'execute_script'.
+    
+    Example (Professional):
     CALL(60) WITH {
       "action": "execute_script",
-      "script": "bpy.ops.mesh.primitive_monkey_add(); obj = bpy.context.object; mat = bpy.data.materials.new(name='Gold'); mat.use_nodes = True; obj.data.materials.append(mat);"
+      "script": "bpy.ops.mesh.primitive_monkey_add(); obj = bpy.context.object; obj.name = 'Monkey'; mod = obj.modifiers.new(name='Subdiv', type='SUBSURF'); mod.levels = 2; mat = bpy.data.materials.new(name='Gold'); mat.use_nodes = True; obj.data.materials.append(mat);"
     }
     """
     public let ubid: Int128 = 60
@@ -102,6 +106,14 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
             if !reservedKeys.contains(key) {
                 operationParams[key] = val.value
             }
+        }
+        
+        // v30.5: Robust Parameter Aliasing
+        if let objectAlias = operationParams["object"] as? String, operationParams["object_name"] == nil {
+            operationParams["object_name"] = objectAlias
+        }
+        if let pathAlias = operationParams["path"] as? String, operationParams["output"] == nil {
+            operationParams["output"] = pathAlias
         }
         
         // 5. Action'a göre Python script üret
@@ -262,6 +274,10 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
             }
             pythonScript = BlenderScriptLibrary.importModel(importPath: importFile, importFormat: ext)
             
+        case "get_api_info":
+            let target = operationParams["target"] as? String ?? operationParams["module"] as? String ?? "bpy"
+            pythonScript = BlenderScriptLibrary.apiExplorer(target: target)
+            
         case "info":
             pythonScript = BlenderScriptLibrary.sceneInfo()
             
@@ -364,7 +380,10 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
                                 .filter { $0.contains("[BLENDER_ERROR]") }
                                 .joined(separator: "\n")
                             
-                            let errorDetail = blenderErrors.isEmpty ? String(stderr.prefix(500)) : blenderErrors
+                            // v30.5: Full traceback inclusion for self-debugging
+                            let stderrDetail = String(stderr.prefix(2000))
+                            let errorDetail = blenderErrors.isEmpty ? stderrDetail : "\(blenderErrors)\n\nTraceback:\n\(stderrDetail)"
+                            
                             continuation.resume(returning: "[BLENDER_FAIL] Process exited with status \(terminatedProcess.terminationStatus).\nDetails: \(errorDetail)")
                         } else {
                             // [BLENDER_OK] satırlarını çıkar
