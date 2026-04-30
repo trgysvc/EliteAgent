@@ -13,20 +13,34 @@ import Foundation
 /// - CLI üzerinden --cycles-device kullanılmaz, GPU ataması Python API (bpy) ile yapılır.
 public struct BlenderBridgeTool: AgentTool, Sendable {
     public let name = "blender_3d"
-    public let summary = "Blender 3D: Create scenes, render images, export/import models, turntable animation."
+    public let summary = "Professional Blender Operator: Full access to Blender Python API (bpy) for 3D modeling, rendering, and simulation."
     public let description = """
-    Blender 5.1 headless otomasyon aracı. 3D sahne oluşturma, render, format dönüştürme ve düzenleme.
-    Apple Metal GPU hızlandırma yerel olarak desteklenir (M-Serisi).
+    Advanced Blender 5.1 automation tool. Provides FULL access to Blender Python API (bpy).
     
-    Param: action (string) - 'create_scene', 'render', 'export', 'import', 'info', 'modify', 'turntable'
-    Param: path (string, optional) - Kaynak .blend dosya yolu (export/render/info için)
-    Param: output (string, optional) - Çıktı dosya adı (örnek: result.png veya model.gltf)
-    Param: params (dict, optional) - İşleme özel parametreler (engine, res_x, res_y, objects, object_name, format)
+    Actions:
+    - 'execute_script': Execute any valid Blender Python code. Use this for ALL complex tasks.
+      Params: script (string) - Your bpy code.
+    - 'create_scene': Reset and start fresh. Params: engine, res_x, res_y.
+    - 'render': Render current scene to image. Param: output (filename). Saves to sandbox 'outputs' folder.
+    - 'add_mesh' / 'add_light': Fast shortcuts for primitives.
+    
+    API Usage Guidelines:
+    1. Your script is executed in an environment with 'bpy', 'math', and 'os' pre-imported.
+    2. 'workspace.blend' is automatically loaded before your script and saved after.
+    3. Use 'bpy.ops.*' for operators and 'bpy.data.*' for data access.
+    4. PATHS: All file paths are relative to the sandbox. Do NOT use absolute paths.
+       Files are saved to: ~/Documents/EliteAgentWorkspace/Blender/outputs/
+    
+    Example (Advanced):
+    CALL(60) WITH {
+      "action": "execute_script",
+      "script": "bpy.ops.mesh.primitive_monkey_add(); obj = bpy.context.object; mat = bpy.data.materials.new(name='Gold'); mat.use_nodes = True; obj.data.materials.append(mat);"
+    }
     """
     public let ubid: Int128 = 60
     
-    /// Blender process timeout: 300 saniye (uzun renderlar için)
-    private let processTimeout: TimeInterval = 300.0
+    /// Blender process timeout: 600 saniye (karmaşık işlemler için uzatıldı)
+    private let processTimeout: TimeInterval = 600.0
     
     public init() {}
     
@@ -38,9 +52,28 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
             )
         }
         
-        // 2. Zorunlu parametre kontrolü
-        guard let action = params["action"]?.value as? String else {
-            throw .missingParameter("'action' parameter is required. Allowed: create_scene, render, export, import, info, modify, turntable")
+        // 2. Zorunlu parametre kontrolü (Handle flattened 'command' or 'action')
+        let rawAction = params["action"]?.value as? String ?? params["command"]?.value as? String
+        guard var action = rawAction else {
+            throw .missingParameter("'action' parameter is required. Allowed: create_scene, render, add_mesh, add_light, modify, export, import")
+        }
+        
+        // v28.0: Robust Parsing - Handle cases where model puts params in the action string (e.g. "add_mesh plane")
+        let actionParts = action.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        if actionParts.count > 1 {
+            action = actionParts[0]
+            // If the model put extra parts, try to treat them as 'type' or other params if they aren't already set
+            var operationParams: [String: Any] = [:]
+            if let paramsAnyCodable = params["params"]?.value as? [String: Any] {
+                operationParams = paramsAnyCodable
+            }
+            
+            if action == "add_mesh" && operationParams["type"] == nil {
+                operationParams["type"] = actionParts[1]
+            } else if action == "add_light" && operationParams["type"] == nil {
+                operationParams["type"] = actionParts[1]
+            }
+            // Update params indirectly by ensuring operationParams is used
         }
         
         // 3. Sandbox oluştur
@@ -51,24 +84,79 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
             throw .executionError("Failed to initialize Blender sandbox: \(error.localizedDescription)")
         }
         
-        // 4. Operasyon parametrelerini çöz
-        let operationParams: [String: Any]
+        // 4. Operasyon parametrelerini çöz (Handle flattening from ThinkParser)
+        var operationParams: [String: Any] = [:]
         if let paramsAnyCodable = params["params"]?.value as? [String: Any] {
             operationParams = paramsAnyCodable
-        } else {
-            operationParams = [:]
+        }
+        
+        // Re-apply parts if we split them
+        if actionParts.count > 1 {
+            if action == "add_mesh" && operationParams["type"] == nil { operationParams["type"] = actionParts[1] }
+            if action == "add_light" && operationParams["type"] == nil { operationParams["type"] = actionParts[1] }
+        }
+        
+        // Flatten top-level params into operationParams if they are not reserved
+        let reservedKeys = ["action", "command", "path", "output", "params"]
+        for (key, val) in params {
+            if !reservedKeys.contains(key) {
+                operationParams[key] = val.value
+            }
         }
         
         // 5. Action'a göre Python script üret
         let pythonScript: String
         let scriptName = "blender_task_\(UUID().uuidString.prefix(8)).py"
         
+        let workspaceBlend: String
+        do {
+            workspaceBlend = try sandbox.resolvePath(for: "workspace.blend", in: sandbox.workspaceURL)
+        } catch {
+            throw .executionError("Failed to resolve workspace path: \(error.localizedDescription)")
+        }
+        
         switch action {
+        case "execute_script":
+            guard let script = operationParams["script"] as? String ?? operationParams["command"] as? String else {
+                throw .missingParameter("'script' parameter is required for execute_script.")
+            }
+            
+            // v30.0: Full API Power - LLM can now use all bpy features.
+            pythonScript = """
+            import bpy
+            import math
+            import os
+            
+            # Auto-chaining: Load workspace.blend if it exists
+            workspace_path = r'\(workspaceBlend)'
+            output_dir = r'\(sandbox.outputsURL.path)'
+            render_path = os.path.join(output_dir, 'render.png')
+            
+            if os.path.exists(workspace_path) and not bpy.data.filepath:
+                try:
+                    bpy.ops.wm.open_mainfile(filepath=workspace_path)
+                except:
+                    pass
+            
+            # LLM-Generated Logic
+            try:
+                \(script.replacingOccurrences(of: "\n", with: "\n    "))
+                print('[BLENDER_OK] Custom script executed.')
+            except Exception as e:
+                print(f'[BLENDER_ERROR] Script failed: {e}')
+                
+            # Auto-save for next turn
+            bpy.ops.wm.save_as_mainfile(filepath=workspace_path)
+            """
+            
         case "create_scene", "render":
             let engine = operationParams["engine"] as? String ?? "BLENDER_EEVEE_NEXT"
             let resX = operationParams["res_x"] as? Int ?? 1920
             let resY = operationParams["res_y"] as? Int ?? 1080
-            let outputName = params["output"]?.value as? String ?? "render_output.png"
+            
+            // v30.1: Handle path/output alias and strip absolute paths for sandbox safety
+            let rawOutput = params["output"]?.value as? String ?? params["path"]?.value as? String ?? "render_output.png"
+            let outputName = (rawOutput as NSString).lastPathComponent
             
             let outputPath: String
             do {
@@ -86,10 +174,72 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
                 objectBlocks: objects
             )
             
-        case "export":
-            guard let outputName = params["output"]?.value as? String else {
-                throw .missingParameter("'output' parameter is required for export (e.g., 'model.gltf')")
+        case "add_mesh":
+            let type = operationParams["type"] as? String ?? "cube"
+            let sizeStr = "\(operationParams["size"] ?? "2")"
+            let size = Double(sizeStr) ?? 2.0
+            
+            let location: (Double, Double, Double)
+            if let loc = operationParams["location"] as? [Double], loc.count == 3 {
+                location = (loc[0], loc[1], loc[2])
+            } else if let locStr = operationParams["location"] as? String {
+                let parts = locStr.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+                location = parts.count == 3 ? (parts[0], parts[1], parts[2]) : (0, 0, 0)
+            } else {
+                location = (0, 0, 0)
             }
+            
+            let addCode = BlenderScriptLibrary.addMesh(type: type, size: size, location: location)
+            
+            pythonScript = """
+            import bpy
+            import os
+            
+            # Auto-chaining: Load workspace.blend if it exists and we didn't specify a path
+            if os.path.exists(r'\(workspaceBlend)') and not bpy.data.filepath:
+                bpy.ops.wm.open_mainfile(filepath=r'\(workspaceBlend)')
+            
+            \(addCode)
+            bpy.ops.wm.save_as_mainfile(filepath=r'\(workspaceBlend)')
+            print('[BLENDER_OK] Added mesh: \(type)')
+            """
+            
+        case "add_light":
+            let type = operationParams["type"] as? String ?? "POINT"
+            let energyStr = "\(operationParams["energy"] ?? "10")"
+            let energy = Double(energyStr) ?? 10.0
+            
+            let location: (Double, Double, Double)
+            if let loc = operationParams["location"] as? [Double], loc.count == 3 {
+                location = (loc[0], loc[1], loc[2])
+            } else if let locStr = operationParams["location"] as? String {
+                let parts = locStr.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+                location = parts.count == 3 ? (parts[0], parts[1], parts[2]) : (0, 0, 0)
+            } else {
+                location = (0, 0, 0)
+            }
+            
+            let addCode = BlenderScriptLibrary.addLight(type: type, location: location, energy: energy)
+            
+            pythonScript = """
+            import bpy
+            import os
+            
+            if os.path.exists(r'\(workspaceBlend)') and not bpy.data.filepath:
+                bpy.ops.wm.open_mainfile(filepath=r'\(workspaceBlend)')
+                
+            \(addCode)
+            bpy.ops.wm.save_as_mainfile(filepath=r'\(workspaceBlend)')
+            print('[BLENDER_OK] Added light: \(type)')
+            """
+            
+        case "export":
+            // v30.1: Robust parameter resolution for export
+            let rawOutput = params["output"]?.value as? String ?? params["path"]?.value as? String
+            guard let outputVal = rawOutput else {
+                throw .missingParameter("'output' or 'path' parameter is required for export (e.g., 'model.gltf')")
+            }
+            let outputName = (outputVal as NSString).lastPathComponent
             let outputPath: String
             do {
                 outputPath = try sandbox.resolvePath(for: outputName)
@@ -160,7 +310,7 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
             
         default:
             throw .invalidParameter(
-                "Unsupported action '\(action)'. Allowed actions: create_scene, render, export, import, info, modify, turntable"
+                "Unsupported action '\(action)'. Allowed actions: execute_script, create_scene, render, add_mesh, add_light, export, import, info, modify, turntable"
             )
         }
         
@@ -219,7 +369,7 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
                         } else {
                             // [BLENDER_OK] satırlarını çıkar
                             let successLines = stdout.components(separatedBy: "\n")
-                                .filter { $0.contains("[BLENDER_OK]") || $0.contains("[BLENDER_WARN]") }
+                                .filter { $0.contains("[BLENDER_OK]") || $0.contains("[BLENDER_WARN]") || $0.contains("[BLENDER_ERROR]") }
                                 .joined(separator: "\n")
                             
                             let report = successLines.isEmpty ? "(Blender completed, no status output)" : successLines

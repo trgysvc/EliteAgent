@@ -60,8 +60,11 @@ public struct PromptRegistry {
             2. NO tags like <think> or <final>. Just the bracketed tag.
             
             CATEGORIES:
-            [UNOB: TASK] - Requests involving actions, hardware control, file manipulation, or data retrieval.
-            [UNOB: CHAT] - Pure conversation, greetings, or meta-questions about yourself.
+            [UNOB: TASK] - General actions, file manipulation, or system commands.
+            [UNOB: CREATIVE3D] - 3D modeling, Blender tasks, rendering, and scene manipulation.
+            [UNOB: RESEARCH] - Complex queries requiring deep web search or safari automation.
+            [UNOB: VISION] - Analyzing the screen, windows, or visual elements.
+            [UNOB: CHAT] - Pure conversation, greetings, or meta-questions.
             
             OUTPUT FORMAT: [UNOB: CATEGORY_NAME]
             """

@@ -20,6 +20,7 @@ public struct PlannerTemplate: Sendable {
                 "- [37] `messenger`: Sends iMessage/WhatsApp messages (Native).",
                 "- [40] `safari_automation`: Safari automation and Google search (NATIVE).",
                 "- [45] `web_search`: Performs Google search (WebFetch). Param: query (string).",
+                "- [60] `blender_3d`: Professional Blender Operator (Full API Access). Create 3D scenes, objects, materials, and render. Params: action (execute_script, create_scene, add_mesh, add_light, render), script (Python bpy code for execute_script).",
                 "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string).",
                 "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata, cover art, clean rename). Param: directory (string), custom_tags (dictionary, optional - e.g. {'TPE1': 'Artist', 'TALB': 'Album'}).",
                 "- [88] `app_launcher`: Natively launch macOS applications (Safe & Sandbox-friendly). Param: app_name (string)."

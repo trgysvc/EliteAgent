@@ -181,7 +181,7 @@ public struct ID3EditorTool: AgentTool {
         
         let tagSize = framesData.count
         let b = [UInt8((tagSize >> 21) & 0x7F), UInt8((tagSize >> 14) & 0x7F), UInt8((tagSize >> 7) & 0x7F), UInt8(tagSize & 0x7F)]
-        var finalData = Data([0x49, 0x44, 0x33, 0x03, 0x00, 0x00]) + Data(b) + framesData + audioData
+        let finalData = Data([0x49, 0x44, 0x33, 0x03, 0x00, 0x00]) + Data(b) + framesData + audioData
         try finalData.write(to: mp3URL, options: .atomic)
     }
 }

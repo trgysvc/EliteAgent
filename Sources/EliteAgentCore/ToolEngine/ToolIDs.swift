@@ -10,6 +10,7 @@ public enum ToolUBID: Int128, Sendable, CaseIterable {
     case systemBrightness = 57 // Corrected from EcosystemTools.swift
     case systemSleep = 15 // Corrected from EcosystemTools.swift
     case systemInfo = 58 // Assigned new for SystemInfo
+    case blender3D = 60 // Blender Headless Automation
     
     // 🌐 Web & Research Suite
     case webSearch = 45

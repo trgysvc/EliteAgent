@@ -19,7 +19,9 @@ public struct CategoryMapper {
         .status: ["system_date", "get_system_telemetry", "system_status"],
         .vision: ["visual_audit"],
         .creative3D: ["blender_3d", "read_file", "write_file"],
-        .chat: ["memory"]
+        .chat: ["memory"],
+        .task: ["read_file", "write_file", "shell_exec", "app_launcher", "path_tool", "patch_tool", "blender_3d"],
+        .other: ["google_search", "read_file", "write_file", "shell_exec"]
     ]
     
     /// Evrensel olarak her zaman görünür olması gereken emniyet araçları.

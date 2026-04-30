@@ -272,4 +272,30 @@ public struct BlenderScriptLibrary: Sendable {
                 print(f'[BLENDER_ERROR] Animation render failed: {e}')
         """
     }
+    
+    // MARK: - Primitives
+    
+    /// Sahneye bir mesh nesnesi ekleyen Python komutunu döner.
+    public static func addMesh(type: String, size: Double, location: (Double, Double, Double)) -> String {
+        let locStr = "(\(location.0), \(location.1), \(location.2))"
+        switch type.lowercased() {
+        case "plane": return "bpy.ops.mesh.primitive_plane_add(size=\(size), location=\(locStr))"
+        case "cube": return "bpy.ops.mesh.primitive_cube_add(size=\(size), location=\(locStr))"
+        case "sphere": return "bpy.ops.mesh.primitive_uv_sphere_add(radius=\(size/2), location=\(locStr))"
+        case "cylinder": return "bpy.ops.mesh.primitive_cylinder_add(radius=\(size/2), location=\(locStr))"
+        case "torus": return "bpy.ops.mesh.primitive_torus_add(location=\(locStr))"
+        default: return "bpy.ops.mesh.primitive_cube_add(size=\(size), location=\(locStr))"
+        }
+    }
+    
+    /// Sahneye bir ışık nesnesi ekleyen Python komutunu döner.
+    public static func addLight(type: String, location: (Double, Double, Double), energy: Double) -> String {
+        let locStr = "(\(location.0), \(location.1), \(location.2))"
+        let lightType = type.uppercased() // SUN, POINT, SPOT, AREA
+        return """
+        bpy.ops.object.light_add(type='\(lightType)', location=\(locStr))
+        light = bpy.context.object
+        light.data.energy = \(energy)
+        """
+    }
 }
