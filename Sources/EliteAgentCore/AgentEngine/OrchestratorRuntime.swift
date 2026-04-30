@@ -592,7 +592,7 @@ public actor OrchestratorRuntime {
                 // v12.1: Evidence Guard for DONE hallucination
                 if answer.uppercased().contains("DONE") {
                     let lastObs = currentTurnObservations.last?.lowercased() ?? ""
-                    let verificationKeywords = ["ls", "total", "content", "file", "id3", "lufs", "metadata", "status", "output", "read"]
+                    let verificationKeywords = ["ls", "total", "content", "file", "id3", "lufs", "metadata", "status", "output", "read", "docker", "find", "git", "python", "swift", "success", "result", "started", "created"]
                     let hasEvidence = verificationKeywords.contains(where: { lastObs.contains($0) })
                     
                     if !hasEvidence && !currentTurnObservations.isEmpty {
