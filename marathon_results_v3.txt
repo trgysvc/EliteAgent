@@ -3,3 +3,52 @@
 Building for debugging...
 [2/13] Write swift-version-15D9132313371EBE.txt
 Build complete! (0.18s)
+Test Suite 'Selected tests' started at 2026-05-01 01:58:44.343.
+Test Suite 'EliteAgentPackageTests.xctest' started at 2026-05-01 01:58:44.344.
+Test Suite 'EliteMarathonTests' started at 2026-05-01 01:58:44.344.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow10_ComplexBuildDebugging]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow10_ComplexBuildDebugging]' passed (0.426 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow1_GitOps_CloneAndPatch]' started.
+[main 35afba1] Refactor: replace deprecated req.param()
+ 1 file changed, 5 insertions(+)
+ create mode 100644 marathon_results_v3.txt
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow1_GitOps_CloneAndPatch]' passed (0.080 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow2_WebResearch]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow2_WebResearch]' passed (0.006 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow3_MonitoringAlerting]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow3_MonitoringAlerting]' passed (0.004 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow4_BlenderAutomation]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow4_BlenderAutomation]' passed (0.003 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow5_ProjectBootstrappingAndTDD]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow5_ProjectBootstrappingAndTDD]' passed (0.206 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow6_SystemConfigPortManagement]' started.
+/Users/trgysvc/Developer/EliteAgent/Tests/EliteAgentTests/EliteMarathonTests.swift:147: error: -[EliteAgentTests.EliteMarathonTests testWorkflow6_SystemConfigPortManagement] : XCTAssertEqual failed: ("idle") is not equal to ("finished")
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow6_SystemConfigPortManagement]' failed (0.038 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow7_CrossReferenceDocs]' started.
+/Users/trgysvc/Developer/EliteAgent/Tests/EliteAgentTests/EliteMarathonTests.swift:165: error: -[EliteAgentTests.EliteMarathonTests testWorkflow7_CrossReferenceDocs] : XCTAssertEqual failed: ("idle") is not equal to ("finished")
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow7_CrossReferenceDocs]' failed (0.009 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow8_LegacyCodeMigration]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow8_LegacyCodeMigration]' passed (0.007 seconds).
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow9_DataExtractionPlist]' started.
+Test Case '-[EliteAgentTests.EliteMarathonTests testWorkflow9_DataExtractionPlist]' passed (0.029 seconds).
+Test Suite 'EliteMarathonTests' failed at 2026-05-01 01:58:45.152.
+	 Executed 10 tests, with 2 failures (0 unexpected) in 0.807 (0.808) seconds
+Test Suite 'EliteAgentPackageTests.xctest' failed at 2026-05-01 01:58:45.152.
+	 Executed 10 tests, with 2 failures (0 unexpected) in 0.807 (0.808) seconds
+Test Suite 'Selected tests' failed at 2026-05-01 01:58:45.152.
+	 Executed 10 tests, with 2 failures (0 unexpected) in 0.807 (0.809) seconds
+[AgentLogger] Primary Log Path: /Users/trgysvc/Library/Logs/EliteAgent/audit.log
+[AgentLogger] Primary Log Path: /Users/trgysvc/Library/Logs/EliteAgent/debug.log
+[SHELL] Executing: xcodebuild
+[SHELL] Executing: grep -r 'req.param(' lib/
+[SHELL] Executing: swift test
+[SHELL] Executing: docker --version
+[SHELL] Executing: lsof -i :8080
+[SHELL] Executing: docker run -d -p 8081:80 nginx
+[SHELL] Executing: find Sources/EliteAgentCore -maxdepth 2
+[SHELL] Executing: flake8 scripts/legacy/old.py
+[SHELL] Executing: python3 -c "import plistlib..."
+􀟈  Test run started.
+􀄵  Testing Library Version: 6.3 (980fec0f03c56f7)
+􀄵  Target Platform: arm64-apple-macosx
+􁁛  Test run with 0 tests in 0 suites passed after 0.001 seconds.

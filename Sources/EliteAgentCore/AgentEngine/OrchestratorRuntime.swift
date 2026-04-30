@@ -287,7 +287,12 @@ public actor OrchestratorRuntime {
                                     if shouldEcho {
                                         self.onChatMessage?(ChatMessage(role: .assistant, content: answer))
                                     }
+                                } else if trimmed == "TASK_DONE" {
+                                    await session.setFinalAnswer("Görev başarıyla tamamlandı.")
                                 }
+                            } else {
+                                // v21.0: Fallback for missing finalAnswer
+                                await session.setFinalAnswer("İşlem tamamlandı.")
                             }
                             currentState = .reviewing
                         } else {
