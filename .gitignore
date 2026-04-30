@@ -34,15 +34,21 @@ DerivedData/
 *.perspectivev3
 !default.perspectivev3
 
+# --- Sensitive Data & Config ---
+vault.plist
+vault.plist.bak
+secrets.plist
+
 # --- EliteAgent / UNO Specific ---
 .gemini/
 eliteagent_conversations.md
 token_baselines.json
 *.bak
 *.metallib
+*.xcarchive
+TestFlight/
 
 # --- MLX Models (Large Binary Files) ---
-# Modelleri repoya sokmuyoruz (LFS kullanılmıyorsa çok büyükler)
 *.gguf
 *.safetensors
 *.ckpt

@@ -8,7 +8,7 @@
 ## 2. ELM Wiki Operasyon Kuralları
 - **Hiyerarşi:** Her zaman `h.md` (Hot Memory) dosyasını oku; şu anki görev ve bağlam orada yatar.
 - **Güncellik:** Bir özellik eklendiğinde veya mimari bir değişiklik yapıldığında, ilgili `wiki/` dosyasını ve `index.md` haritasını anında güncelle.
-- **Sorgulama:** Eğer bir bilgi eksikse veya çelişki varsa, `raw/` klasöründeki kaynak dökümanlara geri dön.
+- **Sorgulama:** Teknik bir belirsizlik durumunda internette genel arama yapmak yerine öncelikle `concepts/` klasöründeki resmi teknik standart dökümanlarını referans al. Eğer bilgi hala eksikse `raw/` klasöründeki kaynaklara geri dön.
 
 ## 3. Kodlama Standartları
 - Swift 6 + SwiftUI + Apple Silicon (MLX) optimizasyonlarını önceliklendir.

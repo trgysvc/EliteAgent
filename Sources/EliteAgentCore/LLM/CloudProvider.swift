@@ -8,6 +8,8 @@ public actor CloudProvider: LLMProvider {
     public let maxContextTokens: Int = 1000000
     public private(set) var status: ProviderStatus = .ready
     
+    public nonisolated var isLoaded: Bool { true }
+    
     private let vaultManager: VaultManager
     private let endpointURL: URL
     public let modelName: String

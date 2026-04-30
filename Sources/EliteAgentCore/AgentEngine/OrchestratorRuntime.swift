@@ -6,8 +6,8 @@ public actor OrchestratorRuntime {
     
     private let planner: PlannerAgent
     private let memory: MemoryAgent
-    private let cloudProvider: CloudProvider?
-    private let localProvider: MLXProvider?
+    private let cloudProvider: (any LLMProvider)?
+    private let localProvider: (any LLMProvider)?
     private let toolRegistry: ToolRegistry
     private let bus: SignalBus
     private let vaultManager: VaultManager
@@ -66,8 +66,8 @@ public actor OrchestratorRuntime {
     public init(
         planner: PlannerAgent,
         memory: MemoryAgent,
-        cloudProvider: CloudProvider?,
-        localProvider: MLXProvider?,
+        cloudProvider: (any LLMProvider)?,
+        localProvider: (any LLMProvider)?,
         toolRegistry: ToolRegistry,
         bus: SignalBus,
         vaultManager: VaultManager
@@ -252,7 +252,7 @@ public actor OrchestratorRuntime {
                         let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                         if !shouldContinue {
                             if let answer = finalAnswer {
-                                let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+                                let trimmed = answer.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                                 if trimmed != "TASK_DONE" && !trimmed.isEmpty {
                                     // v24.0: Collision Guard. Enhanced semantic check.
                                     var shouldEcho = true
@@ -266,8 +266,8 @@ public actor OrchestratorRuntime {
                                         
                                         // Strategy B: Token Overlap
                                         let stopWords: Set<String> = ["için", "olan", "ve", "ile", "hava", "durumu", "tahmini", "sıcaklık"]
-                                        let answerTokens = Set(normalizedAnswer.components(separatedBy: .whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
-                                        let lastTokens = Set(last.components(separatedBy: .whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
+                                        let answerTokens = Set(normalizedAnswer.components(separatedBy: CharacterSet.whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
+                                        let lastTokens = Set(last.components(separatedBy: CharacterSet.whitespacesAndNewlines).filter { $0.count > 2 && !stopWords.contains($0) })
                                         let overlap = answerTokens.intersection(lastTokens)
                                         
                                         // Strategy C: Mandatory Widget Silence (User Request)

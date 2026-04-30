@@ -178,6 +178,10 @@
   },
   "active": "1e0c372a8c1a6fd2",
   "lastOpenFiles": [
+    "Tests/EliteAgentTests/ExtraToolTests.swift",
+    "Tests/EliteAgentTests/FileToolTests.swift",
+    "Tests/EliteAgentTests/ShellToolTests.swift",
+    "Tests/EliteAgentTests/ShellToolTests.swift.bak",
     "Sources/EliteAgentCore/Browser/BrowserAXInspector.swift",
     "Sources/EliteAgentCore/ToolEngine/MCPClientActor.swift",
     "Project_Wiki/DECISIONS.md",

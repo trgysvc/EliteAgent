@@ -33,3 +33,10 @@ macOS `MemoryPressure` sinyallerini dinleyerek inference hızını ve bağlam pe
 ### 🥉 3. Aksiyon: Bağımlılık Arındırma (MLX-Only) (TAMAMLANDI)
 `swift-transformers` kütüphanesi temizlendi; tüm tokenization ve model operasyonları %100 native MLX-Swift (`BPETokenizer`) ile gerçekleştiriliyor.
 
+## 4. Yeni Teknik Standartlar (Best Practices) Gaps
+
+EliteAgent v7.0 vizyonunu destekleyen resmi teknik dökümanlar (`concepts/`) ışığında aşağıdaki gap'ler tespit edilmiştir ve aksiyon planına eklenmelidir:
+
+- **Distributed Actors ve IPC İzolasyonu:** `concepts/distributed_actors.md` ve `concepts/xpc_native_ipc.md` standartlarına göre mevcut araçların (tools) tam bir XPC izolasyonunda (sandbox) çalışıp çalışmadığının denetlenmesi gerekiyor. MainActor deadlockları veya takılmalar, XPC yerine standart actor modelinin sınırlarının yanlış yönetiminden kaynaklanıyor olabilir.
+- **Swift API Uyumsuzlukları:** `concepts/swift_api_standards.md` uyarınca, projedeki API imzaları ve string tabanlı veri geçişlerinin (eski nesil dict kullanımı) `Binary PropertyList` ve strongly-typed (Type-Safe) UNO yapılarına geçişinin (Audit) tam bir şekilde tamamlanması gerekmektedir.
+

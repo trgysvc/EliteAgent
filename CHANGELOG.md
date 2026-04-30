@@ -1,22 +1,48 @@
-# Changelog
+# CHANGELOG
 
-Tüm önemli değişiklikler bu dosyada listelenmektedir.
+All notable changes to EliteAgent will be documented in this file.
 
-## [7.8.5] - 2026-04-04
+## [7.0.0] - 2026-05-01
+### "Native Sovereign" Release
+
+This major release marks the transition of EliteAgent into a production-ready, hardware-native autonomous system. The architecture has been completely overhauled to prioritize performance, privacy, and Apple Silicon optimization.
 
 ### Added
-- **Titan v2 (Qwen 3.5 MLX) Entegrasyonu**: Yerel çıkarım motoru en yeni mimari ile güncellendi.
-- **GGUF Bütünlük Kalkanı**: Bozuk veya uyumsuz model dosyaları için otomatik dosya başlığı doğrulaması eklendi.
-- **Birleşik Bellek (Unified Memory) Teşhisi**: macOS sistemlerinde kritik bellek basıncı durumunda OOM hatalarını önlemek için otomatik yükleme blokajı eklendi.
-- **Privacy Manifest (2024)**: Apple'ın yeni gizlilik gereksinimlerine tam uyum için `PrivacyInfo.xcprivacy` eklendi.
-- **Inference Analytics Dashboard**: Settings panelinden anlık Latency (milisaniye) ve TPS (Token Per Second) takibi sağlandı.
+- **UNO (Unified Native Orchestration)**: A binary-native communication highway using `Distributed Actors` and `SharedMemoryPool`.
+- **Proactive Memory Pressure Monitor**: Hardware-aware watchdog that manages UMA pressure (M1-M4 support).
+- **Native Safari Automation**: High-fidelity control via `AXUIElement` and `SafariJSBridge`.
+- **Blender Headless Automation**: Full `bpy` Python API orchestration for 3D workflows.
+- **Elite Marathon E2E Suite**: 10 comprehensive end-to-end workflow tests for orchestration validation.
+- **Xcode Autonomous Builder**: New `XcodeTool` for building and debugging Swift projects without user intervention.
 
-### Fixed
-- **WhatsApp Mesajlaşma Kararlılığı**: URL açılışı ve otomatik tuş vuruşu ("keystroke return") arasındaki zamanlama hatası giderildi (0.5s → 1.0s gecikme).
-- **Tool Parametre Hataları**: LLM'in eksik parametre göndermesi durumunda oluşan "Error 0" hatası, insan tarafından okunabilir "Eksik Parametre" mesajlarıyla değiştirildi.
-- **Zorunlu Yerel (Strict Local) Modu**: Cloud'a sessiz geçiş hataları giderildi, kullanıcı onayı mekanizması güçlendirildi.
-- **UI State Kilidi**: Bir araç hata verdiğinde girdi alanının kilitli kalması sorunu (`isInputLocked`) çözüldü.
+### Changed
+- **Binary-Only Protocol**: Removed all internal JSON usage in favor of PropertyLists and memory mapping.
+- **MLX-Native Tokenization**: Replaced `swift-transformers` with a custom `BPETokenizer` running on GPU/Neural Engine.
+- **Security Hardening**: Standardized workspace root at `~/Workspaces/EliteAgent` with optional biometric isolation.
+- **Registry Overhaul**: All tools now use Unique Binary IDs (UBIDs) for deterministic triggering.
 
-### Security
-- **Biyometrik Onay Koruması**: Kritik sistem araçları (E-posta, Mesaj) için TouchID onayı zorunluluğu pekiştirildi.
-- **Sandbox Sıkılaştırması**: Apple Events yetkileri sadece gerekli bundle'lar ile sınırlandırıldı.
+### Removed
+- **JSON-RPC Internals**: Eliminated string-based IPC overhead.
+- **Chrome-MCP Dependency**: Native Safari automation replaces the need for external browser servers.
+- **Legacy Path Resolvers**: Transitioned all storage to `Application Support` and standardized workspace paths.
+
+---
+
+## 🛠 Migration Guide: v6.x to v7.0
+
+### 1. Configuration Move
+EliteAgent v7.0 uses a centralized `vault.plist` for all secrets and MCP configurations.
+- **Old Path**: `~/.eliteagent/config.json`
+- **New Path**: `~/Library/Application Support/EliteAgent/vault.plist`
+- *Action*: Use the `scripts/setup.sh` to generate a new template and migrate your API keys.
+
+### 2. Workspace Standardization
+The agent now enforces a strict workspace boundary for security.
+- **Standard Path**: `~/Workspaces/EliteAgent`
+- *Action*: Move your active project folders into the new standardized workspace root.
+
+### 3. Tool Calling Format
+If you have custom subagents or prompts, update them to use **Numeric UBIDs** inside `<final>CALL(ID) WITH {params}</final>` blocks instead of string tool names.
+
+### 4. Dependency Cleanup
+Run `swift package update` and `swift package purge-cache`. The `swift-transformers` dependency is no longer required and should be removed from your local environment if present.

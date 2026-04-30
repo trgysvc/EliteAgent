@@ -8,6 +8,7 @@ public protocol LLMProvider: Actor {
     var maxContextTokens: Int { get }
     var status: ProviderStatus { get }
 
+    nonisolated var isLoaded: Bool { get }
     func healthCheck() async -> Bool
     func complete(_ request: CompletionRequest, useSafeMode: Bool) async throws -> CompletionResponse
 }

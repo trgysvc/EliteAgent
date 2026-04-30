@@ -7,7 +7,7 @@ public actor DynamicContextManager {
     private var messages: [Message] = []
     private let maxTokens: Int
     private let threshold: Double = 0.8
-    private weak var provider: CloudProvider?
+    private weak var provider: (any LLMProvider)?
     
     /// The index after which messages are considered 'recent' and protected from summarization.
     private var compactBoundary: Int = 10
@@ -15,7 +15,7 @@ public actor DynamicContextManager {
     /// v27.0: Track compaction events for trajectory recording.
     private var compactionCount: Int = 0
     
-    public init(maxTokens: Int, provider: CloudProvider?) {
+    public init(maxTokens: Int, provider: (any LLMProvider)?) {
         self.maxTokens = maxTokens
         self.provider = provider
     }
