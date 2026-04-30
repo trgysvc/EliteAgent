@@ -99,6 +99,6 @@ swift package resolve
 echo "\n${GREEN}🚀 EliteAgent v7.0 Setup Complete!${NC}"
 echo "--------------------------------------------------"
 echo "1. Open EliteAgent.xcodeproj in Xcode."
-2. Build and Run (Cmd+R).
-3. Grant Accessibility permissions when prompted.
+echo "2. Build and Run (Cmd+R)."
+echo "3. Grant Accessibility permissions when prompted."
 echo "--------------------------------------------------"
