@@ -203,3 +203,24 @@ Bu dosya, Elite Agent'ın mimari evrimini, alınan kararları ve karşılaşıla
 - Screenshot captured and validated.
 
 ![Tahoe UI Verification](docs/tahoe_ui_screenshot.png)
+
+---
+
+### [2026-04-30] — Phase 1: Proactive UMA Watchdog (v7.0 Native Sovereign)
+**What changed:** 
+- New `ProactiveMemoryPressureMonitor` actor listens to kernel memory pressure events
+- Three new OrchestratorRuntime static methods: `pauseAllSessions()`, `resumeAllSessions()`, `triggerCompaction()`
+- Memory pressure handling: critical → pause sessions + force consolidate; warning → compact; normal → resume
+- Monitor wired to OrchestratorRuntime init via Task
+- Unit tests for monitor instantiation, startMonitoring(), and all runtime methods
+
+**Files modified:** 
+- `Sources/EliteAgentCore/LLM/ProactiveMemoryPressureMonitor.swift` (new, 54 lines)
+- `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift` (+32 lines)
+- `Tests/EliteAgentTests/ProactiveMemoryPressureMonitorTests.swift` (new, 44 lines)
+
+**Decision made:** 
+Kernel memory pressure monitoring is now proactive rather than reactive timer-based. Used `DispatchSourceMemoryPressure` (kernel API) bridged to async/await within actor isolation to comply with UNO architecture rules. Static session control ensures all active sessions pause under critical memory pressure, preventing OOM crashes.
+
+**Next:** 
+Phase 2: Implement session-level memory tracking and context window guards (ContextWindowGuard integration with memory pressure events). Phase 3: Add DreamActor consolidation callback on warning pressure. Phase 4: MLX-Native Cleanup (resolve Tokenizer import errors).
