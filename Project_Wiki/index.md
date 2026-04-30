@@ -17,8 +17,27 @@ EliteAgent'ın temel amacı, Apple ekosisteminin sunduğu yerel donanım güçle
 - [MLX Swift Temel Kavramlar](concepts/MLX_Swift_Core.md)
 - [Hot Memory (Güncel Durum)](h.md)
 
-## Kaynaklar (Raw)
-- [Geliştirme Konuşmaları Arşivi](GeliştirmeKonuşmaları.md)
-- [Package.swift](raw/Package.swift)
-- [Proje Yapısı](raw/project_tree.txt)
-- [Giriş Noktası Kodu](raw/entry_point_code.txt)
+## Kaynaklar (Ham Veriler - Raw)
+
+### 📜 Geliştirme Geçmişi
+- [[GeliştirmeKonuşmaları]] - Tüm geliştirme sürecinin detaylı kayıtları.
+- [[devlog]] - Günlük teknik notlar ve ilerleme raporları.
+- [[CHANGELOG]] - Sürüm değişiklikleri ve önemli güncellemeler.
+- [[README]] - Projenin genel başlangıç dökümanı.
+
+### 📐 Gereksinimler ve Tasarım
+- [[EliteAgent_PRD_v5.2]] - Ürün gereksinim dökümanı.
+- [[all_features]] - Tüm sistem özelliklerinin listesi.
+- [[Audio Intelligence Platform]] - Ses zekası platformu vizyonu.
+
+### 🛠️ Araçlar ve Bilgi Bankası
+- [[EliteAgentTools]] - Ana araç seti dökümantasyonu.
+- [[MusicTools]] - Müzik ve ses işleme araçları.
+- [[KNOWLEDGE_BlenderAPI]] - Blender API entegrasyon rehberi.
+
+### ⚙️ Sistem Yapılandırması ve Testler
+- [[UNO_BATTLE_TEST]] - UNO protokolü stres ve yetenek testleri.
+- [[Package.swift]] - Swift paket yapılandırması.
+- [[project_tree]] - Proje dizin yapısı.
+- [[entry_point_code]] - Sistemin giriş noktası kod örnekleri.
+

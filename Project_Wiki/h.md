@@ -5,13 +5,13 @@ Sistemi reaktif yapıdan proaktif "Yerel Egemen" yapıya taşıma (Sprint: v7.0 
 
 ## 🎯 TOP 3 PRIORITIES
 1. **Proactive UMA Watchdog:** Global session pause ve emergency consolidation entegrasyonu tamamlandı. ✅
-2. **UNO Pointer Migration:** SharedMemoryPool ve zero-copy transport (Aşama 2). ⏳
-3. **Context & Failure Management:** Preemptive overflow check ve Failover Policy (Aşama 3). ⏳
-4. **MLX-Native Cleanup:** `swift-transformers` bağımlılığını sök, %100 native MLX tokenization (Aşama 4). ⏳
+2. **UNO Pointer Migration:** SharedMemoryPool ve zero-copy transport (64KB eşiği) tamamlandı. ✅
+3. **Context & Failure Management:** Preemptive overflow check ve Failover Policy (Aşama 3) tamamlandı. ✅
+4. **MLX-Native Cleanup:** `BPETokenizer` entegrasyonu tamamlandı, %100 native MLX tokenization'a geçildi. ✅
 
 ## Proje Durumu (Specific Context)
-- **Versiyon:** 7.8.5 (v7.0 Stability Sprint aktif)
-- **Aktif Görev:** Aşama 1 tamamlandı. Aşama 2 (UNO Pointer Migration) başlatılıyor.
+- **Versiyon:** 7.8.5 (v7.0 Stability Sprint - Phase 1-4 COMPLETED)
+- **Aktif Görev:** Aşama 1-4 tamamlandı. Aşama 5 (Blender Bridge Stabilization) hazırlanıyor.
 - **Model:** Titan v2 (Qwen 3.5 MLX) - Yerel Çıkarım.
 - **Araç Seti:** 35 aktif araç, tamamı UBID (Unique Binary ID) ile UNO omurgasına kayıtlı.
 - **Güvenlik Katmanı:** Kritik araçlarda (TouchID) biyometrik onay ve Apple Events sandbox kısıtlamaları devrede.
@@ -34,5 +34,7 @@ EliteAgent, her türlü middleware'den (LangChain vb.) arındırılmış, doğru
 - **Layout Recursion:** SwiftUI `NSHostingController` içinde sonsuz döngüleri (0x5) önlemek için `sizingOptions = []` kuralı uygulanmalı.
 
 ## Bekleyen İşlemler
-- `evolution.md`, `tooling_landscape.md`, `architecture_deep_dive.md` ve `system_stability.md` dosyalarının wiki endeksine eklenmesi.
-- `gap_analysis.md` üzerinden belirlenen iyileştirme kalemlerinin task listelerine dönüştürülmesi.
+- `Project_Wiki` dizinindeki orphan node'ların (raw/ dosyaları) entegrasyonu tamamlandı. ✅
+- Tüm teknik dökümanlar (`wiki/`) arasında bağlamsal linkleme (Contextual Linking) yapıldı. ✅
+- [[gap_analysis]] dökümanı v7.8.5 durumuna göre güncellendi.
+

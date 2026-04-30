@@ -11,8 +11,11 @@ public final class UNOSharedBuffer: @unchecked Sendable {
     public init(size: Int) throws {
         self.size = size
         
-        // Create an anonymous shared memory segment
-        let fd = shm_open(nil, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
+        // Create an anonymous shared memory segment using a temporary file workaround for Swift 6
+        let tempPath = (NSTemporaryDirectory() as NSString).appendingPathComponent("uno-\(UUID().uuidString)")
+        let fd = open(tempPath, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
+        unlink(tempPath) // Unlink immediately so it's truly anonymous and cleaned up on close
+        
         guard fd >= 0 else {
             throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno), userInfo: nil)
         }

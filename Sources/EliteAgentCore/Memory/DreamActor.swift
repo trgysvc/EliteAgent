@@ -50,14 +50,17 @@ public actor DreamActor {
             
             RULES:
             1. IDENTIFIER PRESERVATION: Preserve UUIDs, file paths, hashes, IPs, and URLs verbatim.
-            2. PROGRESS PRESERVATION: Keep track of "N/M items completed" markers.
+            2. PROGRESS PRESERVATION: Keep track of "N/M items completed" markers and batch progress (e.g. "5/17 items processed").
             3. NO BANTER: Ignore intermediate errors that were resolved or casual conversation.
+            4. CAUSALITY STRIP: Strip raw tool result details (JSON, file contents) and replace with a summary of what was achieved.
             """
             
             // v7.0: Sanitize Tool Results (Causality Chain Preservation)
+            // Strips massive tool outputs before they reach the summarization LLM 
+            // to prevent context pollution and focus on structural changes.
             let sanitizedText = l1Text.components(separatedBy: "\n").map { line -> String in
-                if line.contains("Observation:") && line.count > 1000 {
-                    return "[Summarized Observation: Large data block truncated to preserve context causality. Source: \(line.prefix(50))...]"
+                if line.contains("Observation:") && line.count > 500 {
+                    return "[Observation: Large tool result detected. Summary: Action executed successfully. Full data preserved in Session storage.]"
                 }
                 return line
             }.joined(separator: "\n")

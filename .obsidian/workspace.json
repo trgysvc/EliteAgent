@@ -178,6 +178,13 @@
   },
   "active": "1e0c372a8c1a6fd2",
   "lastOpenFiles": [
+    "Sources/EliteAgentCore/Browser/BrowserAXInspector.swift",
+    "Sources/EliteAgentCore/ToolEngine/MCPClientActor.swift",
+    "Project_Wiki/DECISIONS.md",
+    "Sources/EliteAgentCore/AgentEngine/FailoverPolicy.swift",
+    "Sources/EliteAgentCore/UNO/SharedMemoryPool.swift",
+    "CHANGELOG.md",
+    "Project_Wiki/raw/GeliştirmeKonuşmaları.md",
     "Tests/EliteAgentTests/ProactiveMemoryPressureMonitorTests.swift",
     "Project_Wiki/task.md",
     "Project_Wiki/implementation_plan.md",
@@ -186,7 +193,6 @@
     "Sources/EliteAgentCore/LLM/ProactiveMemoryPressureMonitor.swift",
     "Project_Wiki/wiki/system_stability.md",
     "Project_Wiki/wiki/architecture_deep_dive.md",
-    "Project_Wiki/raw/GeliştirmeKonuşmaları.md",
     "Project_Wiki/GeliştirmeKonuşmaları.md",
     "Project_Wiki/wiki/tooling_landscape.md",
     "Project_Wiki/wiki/evolution.md",
@@ -203,7 +209,6 @@
     "Project_Wiki/wiki/gap_analysis.md",
     "Project_Wiki/concepts/MLX_Swift_Core.md",
     "Project_Wiki/rules.md",
-    "Project_Wiki/index.md",
-    "Project_Wiki/h.md"
+    "Project_Wiki/index.md"
   ]
 }

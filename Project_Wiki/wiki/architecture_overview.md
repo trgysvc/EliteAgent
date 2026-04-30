@@ -31,7 +31,13 @@ Sistemin iletişim omurgası olan UNO, geleneksel JSON tabanlı iletişim yerine
 - **XPC Services:** Modüller arası iletişim Apple'ın XPC teknolojisiyle izole ve güvenli şekilde yapılır.
 - **Binary Only:** Performans kaybını önlemek için veriler sistem içinde binary formatta taşınır.
 
-## 5. Güvenlik ve Doğrulama
-
 - **SecuritySentinel:** Biyometrik doğrulama ve veri sızıntısı koruması sağlar.
 - **GuardAgent:** Yapay zeka çıktılarının sistem güvenliğini tehdit etmediğini gerçek zamanlı denetler.
+
+---
+
+### Teknik Uygulama ve Yapı
+- **Paket Yapılandırması:** Sistemin modüler yapısı ve bağımlılıkları [[Package.swift]] dosyasında tanımlanmıştır.
+- **Dosya Dizini:** Projenin hiyerarşik yapısını [[project_tree]] üzerinden inceleyebilirsiniz.
+- **Kod Giriş Noktası:** Uygulamanın nasıl ayağa kalktığını anlamak için [[entry_point_code]] örneklerine bakabilirsiniz.
+

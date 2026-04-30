@@ -6,7 +6,7 @@ func runCLI() async {
     let args = CommandLine.arguments
     let flags = ["--cloud-only", "--local-only", "--strict-local", "--benchmark"]
     
-    let isCloudOnly = args.contains("--cloud-only")
+    _ = args.contains("--cloud-only")
     let isLocalOnly = args.contains("--local-only")
     let strictLocal = args.contains("--strict-local")
     let isBenchmark = args.contains("--benchmark")

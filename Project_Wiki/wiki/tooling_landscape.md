@@ -22,8 +22,9 @@ Dış dünya ile güvenli veri alışverişi sağlayan katman.
 
 ## 4. Uzmanlaşmış Medya ve Sistem Kontrolü
 Donanım seviyesinde kontrol sağlayan düşük seviyeli araçlar.
-- **MusicDNA:** Ses analizi ve müzik işleme yeteneği.
+- **MusicDNA:** Ses analizi ve müzik işleme yeteneği. Daha fazla detay için [[MusicTools]] dökümanına göz atın.
 - **Ecosystem Tools:** Parlaklık, ses, uyku modu gibi donanım parametrelerini yöneten `set_volume`, `set_brightness` araçları.
+- **Blender Bridge:** 3D modelleme ve render otomasyonu. Teknik detaylar: [[KNOWLEDGE_BlenderAPI]].
 
 ## 5. İleri AI ve Hafıza
 Ajanın kendi iç süreçlerini yönettiği meta-araçlar.
@@ -31,4 +32,11 @@ Ajanın kendi iç süreçlerini yönettiği meta-araçlar.
 - **Subagent (Task Delegation):** Karmaşık görevleri alt ajanlara bölüştüren orkestrasyon aracı.
 
 ---
+
+### İlgili Kaynaklar ve Geçmiş
+- **Tam Araç Listesi:** [[EliteAgentTools]]
+- **Gelişim Kararları:** Araçların UBID sistemine geçişi ve mimari evrimi için [[GeliştirmeKonuşmaları]] kayıtlarını inceleyebilirsiniz.
+
+---
 **Felsefi Not:** Tüm araçlar, JSON gibi metin tabanlı protokoller yerine **UBID** ve **Typed Swift Parameters** kullanarak UNO omurgasında asenkron (async/await) olarak çalışır.
+

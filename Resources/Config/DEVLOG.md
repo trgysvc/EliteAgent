@@ -222,5 +222,24 @@ Bu dosya, Elite Agent'ın mimari evrimini, alınan kararları ve karşılaşıla
 **Decision made:** 
 Kernel memory pressure monitoring is now proactive rather than reactive timer-based. Used `DispatchSourceMemoryPressure` (kernel API) bridged to async/await within actor isolation to comply with UNO architecture rules. Static session control ensures all active sessions pause under critical memory pressure, preventing OOM crashes.
 
+---
+
+### [2026-04-30] — Project Wiki Integration & Orphan Node Cleanup
+**What changed:** 
+- Integrated all unlinked files in `raw/` directory into `index.md`.
+- Established contextual `[[filename]]` links across technical documents in `wiki/`.
+- Synchronized `h.md` and `gap_analysis.md` to reflect v7.8.5 stability completions.
+- Categorized knowledge resources for Obsidian compatibility.
+**Files modified:** 
+- `Project_Wiki/index.md`
+- `Project_Wiki/h.md`
+- `Project_Wiki/wiki/tooling_landscape.md`
+- `Project_Wiki/wiki/system_stability.md`
+- `Project_Wiki/wiki/architecture_overview.md`
+- `Project_Wiki/wiki/evolution.md`
+- `Project_Wiki/wiki/gap_analysis.md`
+**Decision made:** 
+Used Obsidian-style `[[filename]]` links to create a holistic "Mind Map" of the project documentation, ensuring all nodes are reachable from the central index. Shifted the source of truth for Wiki resources to the `raw/` directory to maintain consistency between technical summaries and raw data.
 **Next:** 
-Phase 2: Implement session-level memory tracking and context window guards (ContextWindowGuard integration with memory pressure events). Phase 3: Add DreamActor consolidation callback on warning pressure. Phase 4: MLX-Native Cleanup (resolve Tokenizer import errors).
+Continue with Phase 5: Blender Bridge Stabilization and further native tool optimizations.
+

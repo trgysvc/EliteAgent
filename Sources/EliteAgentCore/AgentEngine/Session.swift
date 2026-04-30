@@ -98,6 +98,9 @@ public actor Session: Identifiable {
     public private(set) var healingAttempts: Int = 0
     public private(set) var finalAnswer: String?
     public private(set) var wasWidgetRendered: Bool = false
+    
+    // v7.0: Original Tool Result Storage (Smart Truncation)
+    private var originalToolResults: [UUID: String] = [:]
 
     /// Task step tracker — monitors step count, completion, and objective evidence.
     public let progressTracker = TaskProgressTracker()
@@ -160,6 +163,15 @@ public actor Session: Identifiable {
 
     public func setAudioAnalysis(_ analysis: MusicDNAAnalysis) {
         self.audioAnalysis = analysis
+    }
+    
+    public func storeOriginalResult(_ content: String, id: UUID = UUID()) -> UUID {
+        self.originalToolResults[id] = content
+        return id
+    }
+    
+    public func getOriginalResult(id: UUID) -> String? {
+        return originalToolResults[id]
     }
 
     public var totalTokenUsage: Int {

@@ -379,11 +379,6 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
                         let stderr = String(data: errorData, encoding: .utf8) ?? ""
                         
                         if terminatedProcess.terminationStatus != 0 {
-                            // Blender hata çıktısından [BLENDER_ERROR] satırlarını çıkar
-                            let blenderErrors = stdout.components(separatedBy: "\n")
-                                .filter { $0.contains("[BLENDER_ERROR]") }
-                                .joined(separator: "\n")
-                            
                             // v30.5: Full traceback inclusion for self-debugging
                             let stderrDetail = String(stderr.prefix(5000))
                             let errorDetail = stdout.contains("Traceback") ? stdout : stderrDetail

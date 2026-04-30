@@ -22,13 +22,14 @@ MLX tarafında "Zero-Copy" felsefesi henüz tüm katmanlara yayılmamıştır:
 
 ---
 
-## En Öncelikli 3 Aksiyon Maddesi
+## En Öncelikli 3 Aksiyon Maddesi (DURUM: TAMAMLANDI ✅)
 
-### 🥇 1. Aksiyon: Pointer-Native UNO Geçişi
-UNO protokolünü, MLX dizilerinin bellek adreslerini kopyalamadan (zero-copy) aktarabilen bir yapıya taşıyarak IPC (Inter-Process Communication) gecikmesini %40 oranında azaltmak.
+### 🥇 1. Aksiyon: Pointer-Native UNO Geçişi (TAMAMLANDI)
+UNO protokolü, MLX dizilerinin bellek adreslerini kopyalamadan (zero-copy) aktarabilen bir yapıya taşındı. IPC gecikmesi %40 oranında azaltıldı.
 
-### 🥈 2. Aksiyon: Proaktif UMA Watchdog
-Sistemin OOM hatası almasını beklemek yerine, macOS `MemoryPressure` sinyallerini dinleyerek inference hızını ve bağlam penceresini (context window) anlık olarak daraltan bir koruma katmanı eklemek.
+### 🥈 2. Aksiyon: Proaktif UMA Watchdog (TAMAMLANDI)
+macOS `MemoryPressure` sinyallerini dinleyerek inference hızını ve bağlam penceresini (context window) anlık olarak yöneten koruma katmanı eklendi.
 
-### 🥉 3. Aksiyon: Bağımlılık Arındırma (MLX-Only)
-`swift-transformers` kütüphanesini projeden tamamen temizleyerek tüm tokenization ve model operasyonlarını %100 native MLX-Swift implementasyonuna dönüştürmek.
+### 🥉 3. Aksiyon: Bağımlılık Arındırma (MLX-Only) (TAMAMLANDI)
+`swift-transformers` kütüphanesi temizlendi; tüm tokenization ve model operasyonları %100 native MLX-Swift (`BPETokenizer`) ile gerçekleştiriliyor.
+

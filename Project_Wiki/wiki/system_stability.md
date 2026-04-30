@@ -19,3 +19,10 @@ Bellek basıncını ve bağlam penceresini (context window) yönetme stratejiler
 ## 3. Donanım Duyarlı Koruma (Thermal Guard)
 - macOS'un `ProcessInfo.thermalState` API'si ile entegre çalışır.
 - Sistem ısındığında (Serious/Critical), inference döngüsüne otonom `Task.sleep` gecikmeleri ekleyerek GPU yükünü ve ısıyı düşürür.
+
+---
+
+### Kararlılık Kanıtları ve Testler
+- **Stres Testleri:** Sistem kararlılığı ve UNO protokolünün limitleri [[UNO_BATTLE_TEST]] dökümanında test edilmiştir.
+- **Hata Günlükleri ve Analizler:** Geçmişteki stabilite sorunları ve çözümleri için [[devlog]] kayıtlarına bakabilirsiniz.
+

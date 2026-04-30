@@ -7,152 +7,103 @@
 
 ---
 
-## 📖 About the Project
-**EliteAgent** is an advanced native macOS application rather than a standard LLM (Large Language Model) text client. It is a **Hybrid Intelligence** tool capable of training its own subagents, executing terminal commands, navigating the web, and performing "Graceful Degradation" based on your system's hardware telemetry.
+## 🚀 Project Status: v7.0 Stability Sprint [ACTIVE]
 
-EliteAgent combines the analytical prowess of frontier cloud models (e.g., via OpenRouter) with the speed and privacy of local SLMs (Small Language Models) running natively on Apple M-Series GPUs and NPUs.
+EliteAgent is currently in **Phase 7 (Stability & Validation)** of the v7.0 roadmap. This sprint successfully transitioned the core from a text-heavy bridge to a high-performance, binary-native orchestration system.
 
-> **[v20.0.0 TITAN HUB]**: Zero-JSON Binary-Native Architecture, Native Local API Server (Ollama/OpenAI compatible), and Automated GitHub Actions CI.
+### Recent Achievements:
+- **UMA Watchdog & Proactive Monitor**: Real-time M-series memory pressure handling with zero-copy buffer recycling.
+- **Zero-Copy UNO Architecture**: Complete elimination of JSON for internal actor communication, using `SharedMemoryPool` for lightning-fast state transfers.
+- **MCP Native Integration**: Session-scoped Model Context Protocol support via `stdio` transport, enabling external tool expansion.
+- **Native BrowserAgent**: Retired `chrome-mcp` dependency in favor of a native `AXUIElement` + `SafariJSBridge` engine for high-fidelity web automation.
 
-## 🔥 Key Features
-
-### 1. Self-Healing & Architecture Hardening [v19.8.0 OFFICIAL SEAL]
-- **Stateless Inference Engine:** Resolved 10GB+ memory leaks by centralizing conversation state in `OrchestratorRuntime`, making the core LLM driver stateless.
-- **Actor-Isolated ToolRegistry:** Refactored to a Swift 6 `actor` to prevent race conditions during concurrent tool access.
-- **Eco-Inference Mode:** Thermal-aware dynamic throttling that injects nanosecond delays (5ms-200ms) in the token loop based on `thermalState` to prevent hardware degradation.
-- **Structural Isolation (Structural Security):** Separates system instructions from untrusted external data (Files, Web) to prevent prompt injection.
-- **Official Iron Seal Build:** 100% compliant with Apple Distributed Actor standards and Swift 6 ownership transfer (SE-0430).
-- **YOLO Guard v2 & Encrypted Audits:** Dynamic risk assessment with Keychain-backed AES.GCM forensic logging.
-- **XPC Architecture Hardening:** Deterministic C-module resolution (`yyjson`, `Cmlx`, `_NumericsShims`) with absolute path enforcement.
-- **Orchestrator Sync Barrier:** Synchronized tool registration using `Task` barriers to eliminate "Tool not found" startup race conditions.
-
-### 2. Autonomous Recursive Evolution [v18.0 RECURSIVE]
-- **PluginCraft Engine:** The system can now generate, compile (`swiftc`), ad-hoc sign (`codesign`), and dynamically load (`dlopen`) its own tools at runtime.
-- **Zero-Dependency Plugin Build:** Standalone `PluginInterface` allows instant tool compilation without linking complex external dependencies.
-- **Dynamic Serial Queue:** FIFO task management prevents state contamination and ensures sequential integrity.
-- **Pure UNO Architecture [v19.5]:** Zero-JSON binary-native orchestration. All structural control is handled via `[UNOB: ...]` binary tags, eliminating parsing hallucinations and infinite loops.
-- **Legacy Bridge Purge:** Complete removal of Ollama (Port 11434) and third-party bridge dependencies. 100% self-contained local inference.
-- **Biometric Guard:** Secured WhatsApp/iMessage communication with mandatory TouchID/Apple ID verification.
-
-### 3. Titan Hub: Local Inference Infrastructure [NEW v20.0]
-- **API Server:** Built-in Ollama and OpenAI compatible HTTP server running natively on port `11500`.
-- **Infrastructure Hub:** Exposes `/api/generate`, `/api/tags`, and `/v1/chat/completions` endpoints to allow external apps to use local models.
-- **Dynamic Model Catalog:** Supports any Hugging Face author/repository (e.g., `bigatuna/Qwen3.5-9b-Sushi-Coder-RL-MLX`).
-- **Real-Time Monitoring:** Real-time status indicators in both Settings and Menu Bar popover, synchronized via `AISessionState`.
-
-### 3. Purpose Lock & Context Isolation [v14.5 - CORE]
-- **Strict Context Isolation:** Each task in the queue starts with a "Tabula Rasa" (clean page), preventing previous errors from leaking into new prompts.
-- **Intent Persistence:** Mission-bound intelligence that prevents task-switching during failures.
-- **Disciplinary Classification:** Hardened intent mapping ensures high-priority tasks are isolated from general chat context.
-
-### 4. Apple-Native Standards & Data Protection [v14.0 - PRODUCTION]
-- **Standard Directory Compliance:** Fully adheres to Apple's macOS FileSystem standards (`~/Library/Logs`, `~/Library/Application Support`).
-- **Smart Data Preservation:** Factory reset logic explicitly excludes the `EliteAgentWorkspace`, ensuring user-generated work is never lost.
-- **Persistent Model Safety:** LLM models are stored in non-volatile `Application Support` directories to prevent automatic system cache sweeps.
-
-### 2. Titan Engine v3 (Intelligence & Diagnostics) - [v13.9 HARDENED]
-- **Qwen 3.5 9B Specialization (4-bit):** Native **4-bit Quantized** Qwen 3.5 9B via `InferenceActor`, providing high-speed local reasoning.
-- **Hallucination Protection Shield:** Integrated **1.4x Repetition Penalty** and token-loop detection for s-tier stability.
-- **GGUF Integrity Shield:** Mandatory verification (Magic bytes, Version v3+, and Tensors) to prevent memory corruption.
-- **Unified Memory Diagnostics:** Unrestricted memory management using heuristics and `ProcessInfo`, optimized for non-sandboxed performance.
-
-### 3. M-Series Mastery & ANE Offloading [v19.0 NEW]
-- **ANE-Offloading (CoreML Bridge):** Routine tasks (intent classification, embeddings) are offloaded to the **Apple Neural Engine (ANE)**, freeing the GPU for primary LLM inference.
-- **Eco-Inference Throttling:** Real-time monitoring of `ProcessInfo.thermalState` to intelligently manage duty cycles on fanless models like MacBook Air.
-- **Zero-Copy Architecture:** Unified memory optimization ensuring no data duplication between MLX (GPU) and CoreML (ANE) buffers.
-- **XcodeEngine:** Direct management of Swift/Xcode projects including mapping, building, and self-healing build errors.
-- **SourceKit-LSP Native Bridge:** Deep semantic code understanding, navigation, and diagnostics for accurate codebase modification.
-
-### 4. Audio Intelligence & Music DNA (Librosa Killer) - [v7.1]
-- **Chroma CENS (Energy Normalized Statistics):** Native implementation of the Librosa `chroma_cens` algorithm for superior cover-song and harmonic fingerprinting.
-- **Multi-Band PLP (Predominant Local Pulse):** Advanced rhythm tracking using frequency-band splitting (**Sub, Low, Mid, High**). 
-- **Hardware-Native DSP:** All spectral analysis (STFT, Mel, CQT, YIN, Chroma, PLP) is vectorized via the **Accelerate** (vDSP) framework.
-
-### 3. Production-Ready File Engine (DocEye v2)
-- **Memory-Safe Ingestion:** Supports 50MB+ documents using **Memory-Mapped I/O** (`mappedIfSafe`), ensuring stable performance on 8GB-16GB RAM hardware.
-- **Deterministic Cleanup:** Implementation of a secure lifecycle for model weights, using a 50ms grace period to release **mmap locks** before deletion or switching.
-
-### 4. Hardware Protection Shield (Hardware Reflex)
-- **System Watchdog:** The agent continuously communicates with your hardware. It tracks `ProcessInfo.thermalState` and `MemoryPressure` every second.
-- **PVP (Production Verification Protocol) [NEW]:** A comprehensive CLI verification suite (`swift run elite --verify-pvp`) that stress-tests memory pressure handling, fallback logic, and integrity shields.
-
-### 5. Research Intelligence Mode [v9.9]
-- **Silent Multi-Source Scraping:** Background research using headless `WKWebView` (No Safari tabs opened).
-- **Ultra-Resilient Parsing:** `ThinkParser` with 3-level JSON extraction (Direct/CodeBlock/Regex Fallback).
-- **Autonomous JSON Detection:** Intercepts structured LLM payloads to trigger premium `ResearchReportView` UI.
-- **Multi-Tool Chain Support [v9.9.3]:** Upgraded `ThinkParser` extracts and executes multiple `tool_code` blocks in a single turn, even without backticks.
-- **Summarization Fallback:** Auto-titling sessions now falls back to local Titan models if cloud API keys are missing.
-- **KAIROS Adaptive Heartbeat (v10.0):** Proactive energy management (15s-120s heartbeat) based on thermal and battery state.
-- **Dream Engine v2 (Autonomous Memory) [v10.0]**:
-    - **Background Consolidation**: L1 bağlamını `memory_v{N}.md` dosyalarına otonom olarak özetleyen `DreamActor`.
-    - **Net-Savings Validation**: Özet boyutu ham verinin %25'inden fazlaysa işlemi iptal eden verimlilik kalkanı.
-    - **Diff-Based Sync**: Bellek güncellemelerinde sadece değişen kısımları (`diff.log`) takip eden hafif mimari.
-- **Prompt Cache Manager (SHA256) [v10.0]**: 
-    - **KV-Cache Optimization**: Statik sistem komutlarını dinamik veriden ayırarak Apple Silicon KV-cache verimini %80 artıran otonom yönlendirici.
-    - **Adaptive Prefix Shrinking**: Hit oranı %60'ın altına düştüğünde prefix boyutunu küçülterek başarılı cache ihtimalini artıran otonom refleks.
-- **Token Guard Suite [v10.0 New Features]**:
-    - **TokenAccountant Middleware**: Input, Output ve Cache token'larını anlık raporlayan `actor` tabanlı takip sistemi.
-    - **OutputSchemaGuard (Brief Mode)**: Yanıt boyutunu girdiyle oranlayarak (%60) semantik olarak sınırlayan çıktı kalkanı.
-    - **Prompt Cache Monitor**: `os_signpost` ile yerel performans izleme ve verimlilik analitiği.
-    - **token_baselines.json**: CI/CD süreçleri için senaryo bazlı token verimlilik hedefleri ve regresyon takibi.
-- **Universal Shortcuts Bridge [NEW]:** Native integration with macOS Shortcuts (`shortcuts list`, `shortcuts run`) with 1-hour caching and stdin support.
-
-### 6. Universal Tool Ecosystem
-- **MessengerTool (Autonomous WhatsApp/iMessage):** Biometric-secured communication with localized error handling and Multi-Step synchronization.
-- **PatchTool & WriteFileTool:** Atomic string-matching (diff) for safe codebase modification.
-- **Brave Search & Web Fetch:** Deep-web scouring via Brave API with Markdown structure preservation.
-- **Chicago Vision (v10.0):** Native screen analysis via `ScreenCaptureKit` and `VNRecognizeTextRequest` (macOS 15+).
-- **AX Automation (v10.0):** Direct application interaction via `AXUIElement` with AppleScript fallback.
-- **Tulpar (Mythology Buddy) [v10.0]:** Zero-latency ASCII companion for real-time state visualization.
-- **Experience Vault (MemoryTool):** L2 vector database for long-term algorithmic memory.
-
-### 7. Token Efficiency & Guard Suite [v10.0 NEW]
-- **TokenAccountant Middleware:** Real-time billing and KV-cache hit tracking (Input/Output/Cached).
-- **OutputSchemaGuard (Brief Mode):** Enforces 60% compression with semantic sentence-level truncation.
-- **Dream Net-Savings Validation:** Automated skip of memory consolidation if efficiency criteria ($\le 25\%$) are not met.
-- **Adaptive Cache Scaling:** Proactive prefix shrinking when hit rates drop below 60% to recover performance.
-- **CI/CD Token Regression:** Build-time verification against `token_baselines.json` with 20% failure threshold.
-
-### 6. macOS Native Architecture (HIG Compliant)
-- **Privacy Manifest (2024):** Fully compliant `PrivacyInfo.xcprivacy` for File Timestamp, Disk Space, and Apple Events usage.
-- **Standard Path Management:** strictly follows HIG for `Application Support`, `Caches`, and `Logs`.
-- **Memory-Efficient Integrity:** Uses **Chunked SHA-256** (64MB blocks) to verify multi-gigabyte model weights.
+### Feature Comparison: EliteAgent vs. OpenClaw
+| Feature | OpenClaw | **EliteAgent (v7.0)** |
+| :--- | :---: | :---: |
+| **Transport** | JSON-RPC (String) | **UNO Binary (Zero-Copy)** |
+| **Inference** | Python/PyTorch | **Native MLX (Apple Silicon)** |
+| **UI Automation** | Selenium/Playwright | **Native AX + Safari Bridge** |
+| **Memory** | Vector DB only | **Proactive UMA Monitoring** |
+| **Extensibility** | Manual Scripts | **Native MCP + PluginCraft** |
 
 ---
 
-## ⚙️ Installation & Build
+## 🛠 Tool Inventory (Master Registry)
 
-EliteAgent is compiled strictly using Apple's most modern concurrency standards (`Swift 6`, `@MainActor`, `Sendable`).
+EliteAgent v7.0 features a hardened suite of tools, each identified by a **Unique Binary ID (UBID)** for high-precision model triggering.
+
+### 🌐 Browser & Research
+- **`browser_native` (UBID 47)**: Interactive Safari controller (Navigate, Read, Fill, Tab Mgmt, AX Inspection).
+- **`web_search` (UBID 45)**: Real-time search via Google/Brave API.
+- **`web_fetch` (UBID 46)**: Clean markdown extraction from any URL.
+- **`safari_automation` (UBID 40)**: Legacy AppleScript-based Safari control.
+
+### 💻 System & Automation
+- **`shell_exec` (UBID 32)**: Secure zsh/terminal execution.
+- **`apple_accessibility` (UBID 24)**: Direct `AXUIElement` interaction for native Mac apps.
+- **`run_shortcut` (UBID 49)**: Native macOS Shortcuts integration.
+- **`app_launcher` (UBID 88)**: Secure application lifecycle management.
+- **`system_telemetry` (UBID 36)**: M-series thermal and RAM pressure monitoring.
+
+### 📂 File & Code
+- **`read_file` (UBID 33)** / **`write_file` (UBID 34)**: High-speed IO with PDF/Docx support.
+- **`patch_file` (UBID 41)**: Atomic diff-based code modification.
+- **`git_action` (UBID 42)**: Native Git workflow management.
+- **`xcode_engine` (UBID 47*)**: Deep integration for building and debugging Swift projects.
+
+### 🧠 Memory & Logic
+- **`memory` (UBID 44)**: L2 vector storage for long-term cognitive data.
+- **`subagent_spawn` (UBID 19)**: Recursive sub-task orchestration.
+- **`calculator_op` (UBID 58)**: High-precision mathematical engine.
+
+### 🔌 MCP (Model Context Protocol)
+- **`serverName__toolName`**: Automated routing to local MCP servers (configured in `vault.plist`).
+
+---
+
+## 🏗 Architecture: UNO (Unified Native Orchestration)
+
+EliteAgent v7.0 enforces a **JSON-Free** internal highway.
+
+### Core Components:
+- **`SharedMemoryPool`**: Manages zero-copy transfer of large context blocks between `InferenceActor` and `Orchestrator` using memory mapping.
+- **`ProactiveMemoryPressureMonitor`**: A real-time watchdog that triggers `KV-Cache` shrinking or tool suspension when M-series UMA pressure exceeds 85%.
+- **`SignalBus`**: A biometrically secured binary signal highway for inter-agent communication.
+
+> **Rule of UNO**: JSON is strictly prohibited for internal state. JSON is only permitted at the **MCP boundary** (external protocol requirement) and is immediately converted to binary PropertyLists upon ingestion.
+
+---
+
+## ⚙️ Installation & Setup
 
 ### Requirements
 - **Operating System:** macOS 15.0 or later.
 - **Processor:** Apple Silicon (M1/M2/M3/M4, etc.).
 - **Memory:** 16GB RAM minimum recommended.
 - **Development Environment:** Xcode 16.0 or later.
-- **CI/CD:** Integrated GitHub Actions pipeline for automated `swift build` and `swift test` on macOS 15 runners.
 
----
+### Dependencies
+- **`mlx-swift`**: Primary local inference engine.
+- **`modelcontextprotocol/swift-sdk`**: Native MCP client support.
+- *REMOVED: `swift-transformers` (Replaced by native MLX implementations for zero-copy compatibility).*
 
-## 📂 Project Architecture
-
-```
-EliteAgent/
-├── App/                       # Xcode SwiftUI Interface
-├── Sources/
-│   ├── elite/                 # PVP CLI Tool & Verification Suite
-│   └── EliteAgentCore/        # The Core Brain
-│       ├── Plugins/           # PluginCraft & Dynamic Registries
-│       ├── XcodeEngine/       # XcodeTool & SourceKit-LSP Bridge
-│       ├── Agents/            # Orchestrator, Planner, Critic
-│       ├── ToolEngine/        # Messenger, Patch, Shell, Fetch
-│       ├── UI/                # MTKView, NeuralSight.metal
-│       ├── LLM/               # InferenceActor, HealthMonitor, Bridge
-│       └── Security/          # VaultManager, Structural Isolation
-├── Resources/                 # PluginInterface & App Assets
-└── Package.swift              # SPM Modulations (MLX, Sparkle, etc.)
+### MCP Configuration (`vault.plist`)
+To enable external MCP tools, add your servers to `~/Library/Application Support/EliteAgent/vault.plist`:
+```xml
+<key>mcpServers</key>
+<array>
+    <dict>
+        <key>name</key>
+        <string>google-maps</string>
+        <key>command</key>
+        <string>npx</string>
+        <key>args</key>
+        <array><string>-y</string><string>@modelcontextprotocol/server-google-maps</string></array>
+    </dict>
+</array>
 ```
 
 ---
 
 > *"Privacy by Design. Autonomy by Nature. Forensic by Intent. Native by Choice. Evolution by Recursive Logic. Hardware by Mastery. Pure by Architecture."*  
-> **[EliteAgent Core - v19.8.0 UNO Pure - OFFICIAL IRON SEALED - STATELESS & STABILIZED]**
+> **[EliteAgent Core - v20.0.0 UNO Pure - OFFICIAL IRON SEALED - v7.0 STABILITY SPRINT]**

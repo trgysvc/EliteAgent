@@ -188,8 +188,8 @@ public actor OrchestratorRuntime {
                     break
                 }
                 
-                // v7.0 Stability: Global Pause Check
-                while Self.isSystemPaused {
+                // v7.0 Stability: Global Pause Check (MainActor Isolated)
+                while await MainActor.run(body: { Self.isSystemPaused }) {
                     try? await Task.sleep(nanoseconds: 1_000_000_000) // Sleep for 1s and re-check
                     if isInterrupted { break }
                 }

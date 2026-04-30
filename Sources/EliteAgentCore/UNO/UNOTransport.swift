@@ -20,18 +20,21 @@ public final class UNOTransport: @unchecked Sendable {
         encoder.outputFormat = .binary
         let data = try encoder.encode(action)
         
-        // v7.0: Pointer-Native Migration (Zero-Copy for large payloads)
-        // If data > 1MB, use shared memory to avoid XPC copy overhead.
-        if data.count > 1024 * 1024 {
-            let sharedBuffer = try UNOSharedBuffer(size: data.count)
-            sharedBuffer.contents().copyMemory(from: (data as NSData).bytes, byteCount: data.count)
+        // v7.0: Pointer-Native Migration (Dual-Path Logic)
+        let threshold = 64 * 1024 // 64 KB
+        
+        if data.count > threshold {
+            let (id, safePointer, fileHandle) = try await SharedMemoryPool.shared.allocate(size: data.count)
+            safePointer.pointer.copyMemory(from: (data as NSData).bytes, byteCount: data.count)
             
             return try await withCheckedThrowingContinuation { continuation in
                 let proxy = conn.remoteObjectProxyWithErrorHandler { error in
+                    Task { await SharedMemoryPool.shared.release(id: id) }
                     continuation.resume(throwing: error)
                 } as? UNORemoteProxy
                 
-                proxy?.performSharedAction(shmem: sharedBuffer.fileHandle, size: data.count) { resultData, errorData in
+                proxy?.performSharedAction(shmem: fileHandle, size: data.count) { resultData, errorData in
+                    Task { await SharedMemoryPool.shared.release(id: id) }
                     self.handleXPCResponse(resultData: resultData, errorData: errorData, action: action, continuation: continuation)
                 }
             }

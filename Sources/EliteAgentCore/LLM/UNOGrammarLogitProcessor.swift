@@ -14,7 +14,7 @@ public final class UNOGrammarLogitProcessor: LogitProcessor, Sendable {
         case summary      // Free text after </final>
     }
     
-    private let tokenizer: MLXLMCommon.Tokenizer
+    private let tokenizer: UNOTokenizer
     private let state: OSAllocatedUnfairLock<State>
     private let allowedTokenIDs: Set<Int128>
     private let controlTokenIDs: Set<Int128>
@@ -24,7 +24,7 @@ public final class UNOGrammarLogitProcessor: LogitProcessor, Sendable {
         var buffer: String = ""
     }
     
-    public init(tokenizer: MLXLMCommon.Tokenizer, allowedTokenIDs: [Int128], controlTokenIDs: [Int128] = [151643, 151645, 10, 13]) {
+    public init(tokenizer: UNOTokenizer, allowedTokenIDs: [Int128], controlTokenIDs: [Int128] = [151643, 151645, 10, 13]) {
         self.tokenizer = tokenizer
         self.allowedTokenIDs = Set(allowedTokenIDs)
         self.controlTokenIDs = Set(controlTokenIDs)

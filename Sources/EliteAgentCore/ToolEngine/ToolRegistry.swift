@@ -101,15 +101,44 @@ public actor ToolRegistry {
             
             AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🛠 Executing Tool: \(tool.name) | Params: \(normalizedParams)")
             
+            // v7.0: MCP Tool Routing (Native Sovereign)
+            // Detects the 'serverName__toolName' pattern for standardized MCP tool execution.
+            if toolCall.tool.contains("__") {
+                let parts = toolCall.tool.components(separatedBy: "__")
+                if parts.count == 2 {
+                    let server = parts[0]
+                    let toolName = parts[1]
+                    AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "📡 Routing to MCP Server: \(server) | Tool: \(toolName)")
+                    
+                    return try await MCPClientActor.shared.executeTool(
+                        sessionId: session.id,
+                        serverName: server,
+                        tool: toolName,
+                        params: normalizedParams.mapValues { $0.value }
+                    )
+                }
+            }
+            
             let result = try await tool.execute(params: normalizedParams, session: session)
             
-            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "✅ Tool Result: \(tool.name) | Output Size: \(result.count) chars")
+            // v7.0: Smart Truncation & Session Persistence (Native Sovereign)
+            // Truncation only happens for the LLM context; full data is protected in Session.
+            let charCap = 32_000 
+            let originalID = await session.storeOriginalResult(result)
+            
+            var llmOutput = result
+            if result.count > charCap {
+                llmOutput = String(result.prefix(charCap)) + "\n\n[... Truncated for context safety. Full result is available in Session (Ref: \(originalID)). Use specific read tools if more detail is needed. ...]"
+                AgentLogger.logAudit(level: .warn, agent: "ToolRegistry", message: "⚠️ Tool result truncated: \(result.count) → \(llmOutput.count) chars.")
+            }
+            
+            AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "✅ Tool Result: \(tool.name) | Output Size: \(llmOutput.count) chars")
             
             updateStatus(named: tool.name) { status in
                 if status.crashCount < 3 { status.crashCount = 0 }
                 status.lastError = nil
             }
-            return result
+            return llmOutput
         } catch {
             AgentLogger.logAudit(level: .error, agent: "ToolRegistry", message: "❌ Tool Error: \(tool.name) | Error: \(error.localizedDescription)")
             

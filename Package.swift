@@ -18,7 +18,8 @@ let package = Package(
         .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.30.6")),
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.30.6")),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
-        .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main")
+        .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main")
     ],
     targets: [
         .executableTarget(
@@ -46,7 +47,8 @@ let package = Package(
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXVLM", package: "mlx-swift-lm"),
                 .product(name: "MLXEmbedders", package: "mlx-swift-lm"),
-                .product(name: "AudioIntelligence", package: "audiointelligence")
+                .product(name: "AudioIntelligence", package: "audiointelligence"),
+                .product(name: "MCP", package: "swift-sdk")
             ],
             path: "Sources/EliteAgentCore",
             resources: [

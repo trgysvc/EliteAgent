@@ -22,6 +22,7 @@ public actor InferenceActor {
     private var currentGenerationTask: Task<Void, Never>?
     private var modelContainer: ModelContainer?
     private var maxContextTokens: Int = 16384
+    private var nativeTokenizer: UNOTokenizer? // v7.0 Native Cleanup
     
     // v10.6: State Tracking
     public private(set) var loadedModelID: String?
@@ -59,28 +60,26 @@ public actor InferenceActor {
         
         MLX.Memory.cacheLimit = cacheLimit
         _ = LLMModelFactory.shared
-
+ 
         // v7.0: Proactive UMA Watchdog Integration
-        ProactiveMemoryPressureMonitor.shared.onPressureChange = { [weak self] event in
-            guard let self = self else { return }
+        NotificationCenter.default.addObserver(forName: .memoryPressureChanged, object: nil, queue: nil) { [weak self] notification in
+            guard let self = self, let level = notification.object as? UNOMemoryPressureLevel else { return }
             Task {
-                await self.handleMemoryPressure(event)
+                await self.handleMemoryPressure(level)
             }
         }
     }
 
     /// v7.0: Proactive response to system memory pressure.
-    private func handleMemoryPressure(_ event: DispatchSource.MemoryPressureEvent) async {
-        if event.contains(.critical) {
+    private func handleMemoryPressure(_ level: UNOMemoryPressureLevel) async {
+        if level == .critical {
             AgentLogger.logAudit(level: .error, agent: "titan", message: "CRITICAL Memory Pressure: Emergency purging and reducing context.")
             self.cancelOngoingGenerations()
             self.clearCache()
             self.nextRequestReducedContext = true
-        } else if event.contains(.warning) {
-            AgentLogger.logAudit(level: .warn, agent: "titan", message: "WARNING Memory Pressure: Reducing context for next request.")
-            self.nextRequestReducedContext = true
-            // Also reduce cache limit further to free up space
-            MLX.Memory.cacheLimit = 64 * 1024 * 1024 // 64 MB
+        } else if level == .warning {
+            AgentLogger.logAudit(level: .warn, agent: "titan", message: "Memory Warning: Clearing cache.")
+            self.clearCache()
         }
     }
     
@@ -216,6 +215,7 @@ public actor InferenceActor {
     public func unloadModel() async {
         cancelOngoingGenerations()
         self.modelContainer = nil
+        self.nativeTokenizer = nil
         self.loadedModelID = nil
         self.clearCache()
         
@@ -245,6 +245,7 @@ public actor InferenceActor {
         
         let config = ModelConfiguration(directory: url)
         self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: config)
+        self.nativeTokenizer = try BPETokenizer.load(from: url)
         self.loadedModelID = url.lastPathComponent
         
         await MainActor.run {
@@ -413,6 +414,12 @@ public actor InferenceActor {
         }
         
         
+        guard let tokenizer = self.nativeTokenizer else {
+             continuation.yield("Error: Tokenizer not loaded.")
+             continuation.finish()
+             return
+        }
+
         // v13.7: Initialize Grammar Processor with Tool Discovery (v16.2 Modernized)
         let tools = await ToolRegistry.shared.listTools()
         let toolUBIDs = tools.map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
@@ -421,7 +428,7 @@ public actor InferenceActor {
         let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\"
         var allowedTokens: [Int128] = []
         for char in allowedChars {
-            let ids = await container.tokenizer.encode(text: String(char))
+            let ids = tokenizer.encode(text: String(char))
             if let first = ids.first {
                 allowedTokens.append(Int128(first))
             }
@@ -431,7 +438,7 @@ public actor InferenceActor {
         
         // UNOGrammarLogitProcessor is @unchecked Sendable — safe to capture in @Sendable closure
         let grammarProcessor = UNOGrammarLogitProcessor(
-            tokenizer: container.tokenizer, 
+            tokenizer: tokenizer, 
             allowedTokenIDs: allAllowed
         )
         

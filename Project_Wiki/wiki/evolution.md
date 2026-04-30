@@ -23,3 +23,11 @@ Sistemin dış dünyaya açılan kapılarının (tools) sıkılaştırıldığı
 ## Kritik Dönemeçler
 - **WhatsApp Kararlılığı:** Zamanlama hatalarının (timing errors) giderilmesiyle otonom mesajlaşma stabil hale geldi.
 - **Zorunlu Yerel Mod:** Cloud'a "sessiz" geçişler engellenerek tam yerel kontrol sağlandı.
+
+---
+
+### Detaylı Kayıtlar ve Günlükler
+- **Sürüm Geçmişi:** Her sürümdeki spesifik teknik değişiklikler [[CHANGELOG]] dökümanında listelenmiştir.
+- **Teknik Evrim:** Geliştirme sürecindeki mikro kararlar ve günlük ilerleme [[devlog]] üzerinden takip edilebilir.
+- **Fikir Fırtınaları:** Sistemin tasarım aşamasındaki tüm diyaloglar ve strateji değişimleri [[GeliştirmeKonuşmaları]] arşivinde saklanmaktadır.
+

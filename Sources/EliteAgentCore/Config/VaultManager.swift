@@ -6,9 +6,19 @@ public struct BrowserConfig: Codable, Sendable {
 
 public struct VaultInferenceConfig: Codable, Sendable {
     public let pauseOnUserInteraction: Bool?
+}
+
+public struct MCPServerConfig: Codable, Sendable {
+    public let name: String
+    public let command: String
+    public let args: [String]
+    public let env: [String: String]?
     
-    public init(pauseOnUserInteraction: Bool?) {
-        self.pauseOnUserInteraction = pauseOnUserInteraction
+    public init(name: String, command: String, args: [String], env: [String: String]? = nil) {
+        self.name = name
+        self.command = command
+        self.args = args
+        self.env = env
     }
 }
 
@@ -17,12 +27,14 @@ public struct VaultConfig: Codable, Sendable {
     public let routingStrategy: RoutingStrategy
     public let inference: VaultInferenceConfig?
     public let browser: BrowserConfig?
+    public let mcpServers: [MCPServerConfig]?
     
-    public init(providers: [ProviderConfig], routingStrategy: RoutingStrategy, inference: VaultInferenceConfig?, browser: BrowserConfig?) {
+    public init(providers: [ProviderConfig], routingStrategy: RoutingStrategy, inference: VaultInferenceConfig?, browser: BrowserConfig?, mcpServers: [MCPServerConfig]? = nil) {
         self.providers = providers
         self.routingStrategy = routingStrategy
         self.inference = inference
         self.browser = browser
+        self.mcpServers = mcpServers
     }
 }
 
@@ -109,7 +121,8 @@ public actor VaultManager {
                 ],
                 routingStrategy: .localFirst,
                 inference: VaultInferenceConfig(pauseOnUserInteraction: true),
-                browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
+                browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"]),
+                mcpServers: []
             )
             let encoder = PropertyListEncoder()
             encoder.outputFormat = .xml
@@ -172,7 +185,8 @@ public actor VaultManager {
             ],
             routingStrategy: .localFirst,
             inference: VaultInferenceConfig(pauseOnUserInteraction: true),
-            browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"])
+            browser: BrowserConfig(allowedDomains: ["github.com", "google.com", "apple.com"]),
+            mcpServers: []
         )
     }
     
@@ -213,7 +227,8 @@ public actor VaultManager {
                 providers: updatedProviders,
                 routingStrategy: config.routingStrategy,
                 inference: config.inference,
-                browser: config.browser
+                browser: config.browser,
+                mcpServers: config.mcpServers
             )
             let encoder = PropertyListEncoder()
             encoder.outputFormat = .xml
@@ -245,7 +260,7 @@ public actor VaultManager {
             }
         }
         if correctedAny {
-            config = VaultConfig(providers: finalProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser)
+            config = VaultConfig(providers: finalProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser, mcpServers: config.mcpServers)
             let encoder = PropertyListEncoder()
             encoder.outputFormat = .xml
             let data = try encoder.encode(config)
@@ -279,7 +294,7 @@ public actor VaultManager {
                 let p = updatedProviders[mlxIndex]
                 updatedProviders[mlxIndex] = ProviderConfig(id: p.id, type: p.type, endpoint: p.endpoint, keychainKey: p.keychainKey, modelName: modelID, capabilities: p.capabilities, costPer1KTokens: p.costPer1KTokens, promptPrice: p.promptPrice, completionPrice: p.completionPrice, maxContextTokens: p.maxContextTokens, temperature: p.temperature, topP: p.topP, maxTokens: p.maxTokens)
                 
-                config = VaultConfig(providers: updatedProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser)
+                config = VaultConfig(providers: updatedProviders, routingStrategy: config.routingStrategy, inference: config.inference, browser: config.browser, mcpServers: config.mcpServers)
                 
                 let encoder = PropertyListEncoder()
                 encoder.outputFormat = .xml

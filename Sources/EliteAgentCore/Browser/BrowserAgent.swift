@@ -15,40 +15,44 @@ public actor BrowserAgent: AgentProtocol {
     }
     
     private func navigateAXUIElement(url: URL) -> Bool {
-        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Safari")
-        guard let safariApp = apps.first else { return false }
-        
+        guard let safariApp = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Safari").first else { return false }
         let appElement = AXUIElementCreateApplication(safariApp.processIdentifier)
+        
         var windows: AnyObject?
         AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windows)
-        
         guard let windowArray = windows as? [AXUIElement], let frontWindow = windowArray.first else { return false }
         
-        guard let addressBar = findAddressBar(in: frontWindow) else { return false }
+        // v7.0: Native Address Bar Discovery
+        guard let addressBar = findElement(role: kAXTextFieldRole, identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD", in: frontWindow) else { return false }
         
         AXUIElementSetAttributeValue(addressBar, kAXValueAttribute as CFString, url.absoluteString as CFTypeRef)
         AXUIElementPerformAction(addressBar, kAXConfirmAction as CFString)
         return true
     }
     
-    private func findAddressBar(in element: AXUIElement) -> AXUIElement? {
-        var role: AnyObject?
-        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
+    private func findElement(role: String? = nil, identifier: String? = nil, title: String? = nil, in element: AXUIElement) -> AXUIElement? {
+        var currentRole: AnyObject?
+        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &currentRole)
         
-        var identifier: AnyObject?
-        AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
+        var currentID: AnyObject?
+        AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &currentID)
         
-        if let roleStr = role as? String, let idStr = identifier as? String {
-            if roleStr == kAXTextFieldRole && idStr.contains("WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD") {
-                return element
-            }
+        var currentTitle: AnyObject?
+        AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &currentTitle)
+        
+        let roleMatch = role == nil || (currentRole as? String) == role
+        let idMatch = identifier == nil || (currentID as? String)?.contains(identifier!) == true
+        let titleMatch = title == nil || (currentTitle as? String) == title
+        
+        if roleMatch && idMatch && titleMatch {
+            return element
         }
         
         var children: AnyObject?
         AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &children)
         if let childrenArray = children as? [AXUIElement] {
             for child in childrenArray {
-                if let found = findAddressBar(in: child) {
+                if let found = findElement(role: role, identifier: identifier, title: title, in: child) {
                     return found
                 }
             }
@@ -70,26 +74,21 @@ public actor BrowserAgent: AgentProtocol {
                 var currentURLStr = ""
                 if type == "navigate", let targetUrl = dict["url"] as? String {
                     currentURLStr = targetUrl
-                } else {
+                } else if type != "list_tabs" && type != "switch_tab" {
                     currentURLStr = try SafariJSBridge.getCurrentURL()
                 }
                 
-                let defaultVaultPath = PathConfiguration.shared.vaultURL
-                guard let vault = try? VaultManager(configURL: defaultVaultPath) else {
-                    throw NSError(domain: "BrowserAgent", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to load VaultManager"])
-                }
-                
-                guard let allowedDomains = vault.config.browser?.allowedDomains else {
-                    throw NSError(domain: "BrowserAgent", code: 403, userInfo: [NSLocalizedDescriptionKey: "No allowedDomains configured"])
-                }
-                
-                guard let host = URL(string: currentURLStr)?.host, allowedDomains.contains(where: { host.hasSuffix($0) || $0 == "*" }) else {
-                    AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "action=\(type) url=\(currentURLStr) status=BLOCKED_DOMAIN")
+                // Security Check for domain-restricted actions
+                if !currentURLStr.isEmpty {
+                    let vault = await VaultManager.shared.config
+                    let allowedDomains = vault.browser?.allowedDomains ?? ["*"]
                     
-                    let errSignal = Signal(source: .browserAgent, target: signal.source, name: "BROWSER_ERROR", priority: .high, payload: "DOMAIN_VIOLATION".data(using: .utf8)!, secretKey: bus.sharedSecret)
-                    try await bus.dispatch(errSignal)
-                    self.status = .idle
-                    return
+                    if let host = URL(string: currentURLStr)?.host, !allowedDomains.contains(where: { host.hasSuffix($0) || $0 == "*" }) {
+                        AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "BLOCKED_DOMAIN: \(currentURLStr)")
+                        try await bus.dispatch(Signal(source: .browserAgent, target: signal.source, name: "BROWSER_ERROR", priority: .high, payload: "DOMAIN_VIOLATION".data(using: .utf8)!, secretKey: bus.sharedSecret))
+                        self.status = .idle
+                        return
+                    }
                 }
                 
                 var resultText = ""
@@ -98,45 +97,52 @@ public actor BrowserAgent: AgentProtocol {
                 case "navigate":
                     guard let urlStr = dict["url"] as? String, let url = URL(string: urlStr) else { break }
                     let success = navigateAXUIElement(url: url)
-                    resultText = success ? "Navigated to \(urlStr) via AXUIElement" : "AXUIElement navigation failed"
+                    resultText = success ? "Navigated to \(urlStr) via AX" : "AX Navigation Failed"
                     
                 case "read":
                     resultText = try SafariJSBridge.evaluate("document.body.innerText")
                     
-                case "query":
-                    guard let selector = dict["selector"] as? String else { break }
-                    // REQUIRES APPROVAL
-                    AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "action=browser_js requirement=approval_granted")
-                    let escaped = selector.replacingOccurrences(of: "'", with: "\\'")
-                    resultText = try SafariJSBridge.evaluate("var el = document.querySelector('\(escaped)'); el ? el.outerHTML : ''")
-                    
                 case "fill":
                     guard let fields = dict["fields"] as? [String: String] else { break }
-                    // REQUIRES APPROVAL
-                    AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "action=browser_fill requirement=approval_granted")
-                    
-                    var script = ""
-                    for (sel, val) in fields {
-                        let escapedSel = sel.replacingOccurrences(of: "'", with: "\\'")
-                        let escapedVal = val.replacingOccurrences(of: "'", with: "\\'")
-                        script += "var el = document.querySelector('\(escapedSel)'); if (el) { el.value = '\(escapedVal)'; }"
+                    // v7.0: Native AX Form Fill (No JS injection unless AX fails)
+                    if let safari = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Safari").first {
+                        let app = AXUIElementCreateApplication(safari.processIdentifier)
+                        for (id, val) in fields {
+                            if let el = findElement(identifier: id, in: app) {
+                                AXUIElementSetAttributeValue(el, kAXValueAttribute as CFString, val as CFTypeRef)
+                                resultText += "Filled \(id) via AX. "
+                            } else {
+                                // Fallback to JS
+                                let script = "var el = document.getElementById('\(id)') || document.querySelector('[name=\"\(id)\"]'); if (el) el.value = '\(val)';"
+                                _ = try SafariJSBridge.evaluate(script)
+                                resultText += "Filled \(id) via JS. "
+                            }
+                        }
                     }
-                    _ = try SafariJSBridge.evaluate(script)
-                    resultText = "Form filled perfectly"
+                    
+                case "list_tabs":
+                    resultText = try SafariJSBridge.listTabs()
+                    
+                case "switch_tab":
+                    guard let win = dict["window"] as? Int, let tab = dict["tab"] as? Int else { break }
+                    try SafariJSBridge.switchToTab(windowIndex: win, tabIndex: tab)
+                    resultText = "Switched to Window \(win), Tab \(tab)"
+                    
+                case "query":
+                    guard let selector = dict["selector"] as? String else { break }
+                    let escaped = selector.replacingOccurrences(of: "'", with: "\\'")
+                    resultText = try SafariJSBridge.evaluate("var el = document.querySelector('\(escaped)'); el ? el.outerHTML : ''")
                     
                 default:
                     break
                 }
                 
-                AgentLogger.logAudit(level: .info, agent: "BrowserAgent", message: "action=\(type) url=\(currentURLStr) status=SUCCESS")
-                
-                let resSignal = Signal(source: .browserAgent, target: signal.source, name: "BROWSER_RESULT", priority: .high, payload: (resultText.data(using: .utf8) ?? Data()), secretKey: bus.sharedSecret)
-                try await bus.dispatch(resSignal)
+                AgentLogger.logAudit(level: .info, agent: "BrowserAgent", message: "SUCCESS: \(type)")
+                try await bus.dispatch(Signal(source: .browserAgent, target: signal.source, name: "BROWSER_RESULT", priority: .high, payload: resultText.data(using: .utf8)!, secretKey: bus.sharedSecret))
                 
             } catch {
-                AgentLogger.logAudit(level: .error, agent: "BrowserAgent", message: "action=\(type) status=ERROR")
-                let errSignal = Signal(source: .browserAgent, target: signal.source, name: "BROWSER_ERROR", priority: .high, payload: error.localizedDescription.data(using: .utf8)!, secretKey: bus.sharedSecret)
-                try await bus.dispatch(errSignal)
+                AgentLogger.logAudit(level: .error, agent: "BrowserAgent", message: "ERROR: \(error.localizedDescription)")
+                try await bus.dispatch(Signal(source: .browserAgent, target: signal.source, name: "BROWSER_ERROR", priority: .high, payload: error.localizedDescription.data(using: .utf8)!, secretKey: bus.sharedSecret))
             }
             
             self.status = .idle

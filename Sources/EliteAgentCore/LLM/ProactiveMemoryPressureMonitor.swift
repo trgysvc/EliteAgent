@@ -1,15 +1,25 @@
 import Foundation
 import os
 
+public enum UNOMemoryPressureLevel: String, Sendable {
+    case normal
+    case warning
+    case critical
+}
+
+extension Notification.Name {
+    public static let memoryPressureChanged = Notification.Name("com.elite.agent.memoryPressureChanged")
+}
+
 public actor ProactiveMemoryPressureMonitor {
     public static let shared = ProactiveMemoryPressureMonitor()
 
     private var source: DispatchSourceMemoryPressure?
-    private(set) var lastEvent: DispatchSource.MemoryPressureEvent = []
+    private(set) var lastEvent: UNOMemoryPressureLevel = .normal
 
     private let logger = Logger(subsystem: "app.eliteagent", category: "memorypressure")
 
-    nonisolated private init() {}
+    private init() {}
 
     public func startMonitoring() async {
         // Create dispatch source on main queue to ensure serial event delivery
@@ -30,22 +40,22 @@ public actor ProactiveMemoryPressureMonitor {
     }
 
     private func handlePressure(_ event: DispatchSource.MemoryPressureEvent) async {
-        lastEvent = event
-
-        let level: String
+        let level: UNOMemoryPressureLevel
         if event.contains(.critical) {
-            level = "CRITICAL"
-            await OrchestratorRuntime.pauseAllSessions()
+            level = .critical
+            OrchestratorRuntime.pauseAllSessions()
             await DreamActor.shared.forceConsolidate()
         } else if event.contains(.warning) {
-            level = "WARNING"
-            await OrchestratorRuntime.triggerCompaction()
+            level = .warning
+            OrchestratorRuntime.triggerCompaction()
         } else {
-            level = "NORMAL"
-            await OrchestratorRuntime.resumeAllSessions()
+            level = .normal
+            OrchestratorRuntime.resumeAllSessions()
         }
-
-        logger.warning("[Watchdog] 🔥 Proactive UMA Alert: Kernel Memory Pressure is \(level).")
+        
+        lastEvent = level
+        NotificationCenter.default.post(name: .memoryPressureChanged, object: level)
+        logger.warning("[Watchdog] 🔥 Proactive UMA Alert: Kernel Memory Pressure is \(level.rawValue).")
     }
 
     deinit {

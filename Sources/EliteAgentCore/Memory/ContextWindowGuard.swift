@@ -42,50 +42,58 @@ public struct ContextWindowGuard: Sendable {
     /// - Parameters:
     ///   - messages: Current conversation history
     ///   - systemPromptTokens: Estimated tokens used by the system prompt
+    ///   - expectedResponseTokens: Predicted length of the next model response
     ///   - maxTokens: Maximum context window of the active model
     /// - Returns: A `GuardResult` indicating the appropriate action.
     public static func evaluate(
         messages: [Message],
         systemPromptTokens: Int = 1_500,
+        expectedResponseTokens: Int = 1_000,
         maxTokens: Int = 8_192
     ) -> GuardResult {
         let messageTokens = estimateTokens(messages: messages)
-        let totalUsed = messageTokens + systemPromptTokens
-        let usageRatio = Double(totalUsed) / Double(max(1, maxTokens))
+        
+        // v7.0: Preemptive Overflow Check (Native Sovereign Stability)
+        // Formula: (Current + System + Buffer) * 1.2 Margin > Budget
+        // This ensures we trigger compaction BEFORE the model hits the hard limit.
+        let projectedTotal = Int(Double(messageTokens + systemPromptTokens + expectedResponseTokens) * 1.2)
+        let currentTotal = messageTokens + systemPromptTokens
+        
+        let usageRatio = Double(projectedTotal) / Double(max(1, maxTokens))
         
         if maxTokens < hardMinTokens {
             return .block(
-                message: "[CONTEXT_GUARD] Model context window too small (\(maxTokens) tokens). Minimum required: \(hardMinTokens). Cannot proceed with meaningful inference.",
-                usedTokens: totalUsed,
+                message: "[CONTEXT_GUARD] Model context window too small (\(maxTokens) tokens). Minimum required: \(hardMinTokens).",
+                usedTokens: currentTotal,
                 maxTokens: maxTokens
             )
         }
         
         if usageRatio >= blockRatio {
             return .block(
-                message: "[CONTEXT_GUARD] CRITICAL: Context window is \(Int(usageRatio * 100))% full (\(totalUsed)/\(maxTokens) tokens). Cannot add more messages without losing critical information. Immediate compaction or session reset required.",
-                usedTokens: totalUsed,
+                message: "[CONTEXT_GUARD] PREEMPTIVE BLOCK: Context projected to reach \(Int(usageRatio * 100))% with next response. Immediate compaction required.",
+                usedTokens: currentTotal,
                 maxTokens: maxTokens
             )
         }
         
         if usageRatio >= compactRatio {
             return .compact(
-                message: "[CONTEXT_GUARD] Context window is \(Int(usageRatio * 100))% full (\(totalUsed)/\(maxTokens) tokens). Automatic compaction triggered to preserve task context.",
-                usedTokens: totalUsed,
+                message: "[CONTEXT_GUARD] PREEMPTIVE COMPACT: Projected usage \(Int(usageRatio * 100))% exceeds safety threshold (\(Int(compactRatio * 100))%). Triggering consolidation.",
+                usedTokens: currentTotal,
                 maxTokens: maxTokens
             )
         }
         
         if usageRatio >= warnRatio {
             return .warn(
-                message: "[CONTEXT_GUARD] Context window is \(Int(usageRatio * 100))% full (\(totalUsed)/\(maxTokens) tokens). Be concise in your responses to avoid context overflow.",
-                usedTokens: totalUsed,
+                message: "[CONTEXT_GUARD] PREEMPTIVE WARN: Context window nearing limits (\(Int(usageRatio * 100))% projected).",
+                usedTokens: currentTotal,
                 maxTokens: maxTokens
             )
         }
         
-        return .ok(usedTokens: totalUsed, maxTokens: maxTokens, usageRatio: usageRatio)
+        return .ok(usedTokens: currentTotal, maxTokens: maxTokens, usageRatio: usageRatio)
     }
     
     // MARK: - Token Estimation

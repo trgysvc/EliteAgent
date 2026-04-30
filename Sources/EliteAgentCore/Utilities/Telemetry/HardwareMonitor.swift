@@ -9,8 +9,8 @@ public actor HardwareMonitor {
     private init() {}
     
     /// v7.0: Returns the current memory pressure level as detected by the kernel.
-    public var memoryPressureLevel: DispatchSource.MemoryPressureEvent {
-        return ProactiveMemoryPressureMonitor.shared.lastEvent
+    public func getMemoryPressureLevel() async -> UNOMemoryPressureLevel {
+        return await ProactiveMemoryPressureMonitor.shared.lastEvent
     }
     
     /// Gerçek RAM kullanım verilerini sysctl bazlı güvenli yöntemle çeker.

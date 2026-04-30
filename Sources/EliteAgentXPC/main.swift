@@ -95,6 +95,35 @@ final class UNOXPCService: NSObject, NSXPCListenerDelegate, UNORemoteProxy, @unc
         }
     }
 
+    func performSharedAction(shmem: FileHandle, size: Int, reply: @escaping @Sendable (Data?, Data?) -> Void) {
+        Task {
+            do {
+                // v7.0 Stability: Map shared memory pointer directly
+                let fd = shmem.fileDescriptor
+                let pointer = mmap(nil, size, PROT_READ, MAP_SHARED, fd, 0)
+                guard pointer != MAP_FAILED else {
+                    reply(nil, "XPC_SHMEM_MAP_FAILED".data(using: .utf8))
+                    return
+                }
+                defer { munmap(pointer, size) }
+                
+                let data = Data(bytesNoCopy: pointer!, count: size, deallocator: .none)
+                let action = try PropertyListDecoder().decode(UNOActionWrapper.self, from: data)
+                
+                let response = try await executor.execute(action: action)
+                
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .binary
+                let responseData = try encoder.encode(response)
+                
+                reply(responseData, nil)
+            } catch {
+                AgentLogger.logAudit(level: .error, agent: "UNO-XPC", message: "Shared memory execution failed: \(error.localizedDescription)")
+                reply(nil, error.localizedDescription.data(using: .utf8))
+            }
+        }
+    }
+
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         newConnection.exportedInterface = NSXPCInterface(with: UNORemoteProxy.self)
         newConnection.exportedObject = self
