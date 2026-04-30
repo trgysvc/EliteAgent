@@ -1,0 +1,5 @@
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+Building for debugging...
+[2/13] Write swift-version-15D9132313371EBE.txt
+Build complete! (0.19s)
