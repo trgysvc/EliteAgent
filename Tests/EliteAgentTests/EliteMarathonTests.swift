@@ -43,7 +43,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t1", providerUsed: .mlx, content: "<think>Search for deprecated calls</think><final>CALL(32) WITH {\"command\": \"grep -r 'req.param(' lib/\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t1", providerUsed: .mlx, content: "<think>Apply patch</think><final>CALL(41) WITH {\"path\": \"lib/request.js\", \"old_content\": \"req.param(\", \"new_content\": \"req.params[\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t1", providerUsed: .mlx, content: "<think>Commit changes</think><final>CALL(42) WITH {\"action\": \"commit\", \"message\": \"Refactor: replace deprecated req.param()\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t1", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t1", providerUsed: .mlx, content: "<final>DONE: Refactored req.param() to req.params in lib/request.js and committed changes.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t1", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -63,7 +63,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t2", providerUsed: .mlx, content: "<think>Reading PDF 2</think><final>CALL(32) WITH {\"command\": \"curl -O paper2_url\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t2", providerUsed: .mlx, content: "<think>Reading PDF 3</think><final>CALL(32) WITH {\"command\": \"curl -O paper3_url\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t2", providerUsed: .mlx, content: "<think>Writing report</think><final>CALL(34) WITH {\"path\": \"llm_distillation_comparison.md\", \"content\": \"| Paper | Summary |\\n|---|---|...\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t2", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t2", providerUsed: .mlx, content: "<final>DONE: Researched LLM distillation papers and generated the comparison report.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t2", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -80,7 +80,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t3", providerUsed: .mlx, content: "[UNOB: TASK]", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t3", providerUsed: .mlx, content: "<think>Check memory</think><final>CALL(32) WITH {\"command\": \"vm_stat\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t3", providerUsed: .mlx, content: "<think>Memory OK. Log and wait.</think><final>CALL(34) WITH {\"path\": \"sys_monitor_log.md\", \"content\": \"Reading 1: 45%\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t3", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t3", providerUsed: .mlx, content: "<final>DONE: System memory monitor log created.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t3", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -97,7 +97,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t4", providerUsed: .mlx, content: "[UNOB: CREATIVE3D]", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t4", providerUsed: .mlx, content: "<think>Generate Blender script</think><final>CALL(60) WITH {\"action\": \"execute_script\", \"script\": \"import bpy...\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t4", providerUsed: .mlx, content: "<think>Render scene</think><final>CALL(60) WITH {\"action\": \"render\", \"path\": \"city_render.png\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t4", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t4", providerUsed: .mlx, content: "<final>DONE: Blender scene rendered successfully.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t4", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -118,7 +118,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t5", providerUsed: .mlx, content: "<think>Run tests</think><final>CALL(32) WITH {\"command\": \"swift test\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t5", providerUsed: .mlx, content: "<think>Tests failed. Fixing logic.</think><final>CALL(41) WITH {\"path\": \"Sources/main.swift\", \"old_content\": \"func parse() { }\", \"new_content\": \"func parse() { /* real logic */ }\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t5", providerUsed: .mlx, content: "<think>Verify fix</think><final>CALL(32) WITH {\"command\": \"swift test\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t5", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t5", providerUsed: .mlx, content: "<final>DONE: Package initialized, implemented, and verified with tests.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t5", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -136,7 +136,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t6", providerUsed: .mlx, content: "<think>Check Docker</think><final>CALL(32) WITH {\"command\": \"docker --version\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t6", providerUsed: .mlx, content: "<think>Check port 8080</think><final>CALL(32) WITH {\"command\": \"lsof -i :8080\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t6", providerUsed: .mlx, content: "<think>8080 in use. Using 8081.</think><final>CALL(32) WITH {\"command\": \"docker run -d -p 8081:80 nginx\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t6", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t6", providerUsed: .mlx, content: "<final>DONE: Nginx container started on port 8081.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t6", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -154,7 +154,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t7", providerUsed: .mlx, content: "<think>Read README</think><final>CALL(33) WITH {\"path\": \"README.md\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t7", providerUsed: .mlx, content: "<think>List core files</think><final>CALL(32) WITH {\"command\": \"find Sources/EliteAgentCore -maxdepth 2\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t7", providerUsed: .mlx, content: "<think>Analyze gaps</think><final>CALL(34) WITH {\"path\": \"architecture_gap_analysis.md\", \"content\": \"Gap analysis result...\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t7", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t7", providerUsed: .mlx, content: "<final>DONE: Architecture gap analysis report generated.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t7", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -172,7 +172,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t8", providerUsed: .mlx, content: "<think>Find Python files</think><final>CALL(32) WITH {\"command\": \"find scripts/legacy -name '*.py'\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t8", providerUsed: .mlx, content: "<think>Patch print statements</think><final>CALL(41) WITH {\"path\": \"scripts/legacy/old.py\", \"old_content\": \"print 'hello'\", \"new_content\": \"print('hello')\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t8", providerUsed: .mlx, content: "<think>Run flake8</think><final>CALL(32) WITH {\"command\": \"flake8 scripts/legacy/old.py\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t8", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t8", providerUsed: .mlx, content: "<final>DONE: Legacy Python scripts migrated to Python 3.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t8", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -189,7 +189,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t9", providerUsed: .mlx, content: "[UNOB: TASK]", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t9", providerUsed: .mlx, content: "<think>Download data</think><final>CALL(32) WITH {\"command\": \"curl -o data.csv url\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t9", providerUsed: .mlx, content: "<think>Convert to Plist</think><final>CALL(32) WITH {\"command\": \"python3 -c \\\"import plistlib...\\\"\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t9", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t9", providerUsed: .mlx, content: "<final>DONE: Weather data converted to binary plist.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t9", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
@@ -208,7 +208,7 @@ final class EliteMarathonTests: XCTestCase {
             CompletionResponse(taskID: "t10", providerUsed: .mlx, content: "<think>Build failed. Analyze Package.swift</think><final>CALL(33) WITH {\"path\": \"Package.swift\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t10", providerUsed: .mlx, content: "<think>Fix dependency cycle</think><final>CALL(41) WITH {\"path\": \"Package.swift\", \"old_content\": \"...\", \"new_content\": \"...\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t10", providerUsed: .mlx, content: "<think>Retry build</think><final>CALL(32) WITH {\"command\": \"xcodebuild\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
-            CompletionResponse(taskID: "t10", providerUsed: .mlx, content: "<final>DONE</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t10", providerUsed: .mlx, content: "<final>DONE: Cyclic dependency fixed in Package.swift.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
             CompletionResponse(taskID: "t10", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
         ])
         
