@@ -41,6 +41,28 @@ public actor OrchestratorRuntime {
     private var trajectoryRecorder: TrajectoryRecorder? // v27.0: Observability
     private var bootstrapContext: String = "" // v27.0: Workspace context
     
+    // v7.0 Stability: Global Session Control
+    @MainActor
+    private static var isSystemPaused: Bool = false
+
+    public static func pauseAllSessions() {
+        Task { @MainActor in
+            isSystemPaused = true
+            AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛑 SYSTEM PAUSED: Global session freeze engaged due to critical pressure.")
+        }
+    }
+
+    public static func resumeAllSessions() {
+        Task { @MainActor in
+            isSystemPaused = false
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🟢 SYSTEM RESUMED: Global session freeze lifted.")
+        }
+    }
+
+    public static func triggerCompaction() {
+        AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📦 [COMPACTION] Memory pressure warning: proactive consolidation triggered.")
+    }
+    
     public init(
         planner: PlannerAgent,
         memory: MemoryAgent,
@@ -71,6 +93,10 @@ public actor OrchestratorRuntime {
                     await self?.updateSessionModel(from: model)
                 }
             }
+        }
+
+        Task {
+            await ProactiveMemoryPressureMonitor.shared.startMonitoring()
         }
     }
     
@@ -160,6 +186,12 @@ public actor OrchestratorRuntime {
                     currentState = .completed
                     await session.setFinalAnswer("Process interrupted by user.")
                     break
+                }
+                
+                // v7.0 Stability: Global Pause Check
+                while Self.isSystemPaused {
+                    try? await Task.sleep(nanoseconds: 1_000_000_000) // Sleep for 1s and re-check
+                    if isInterrupted { break }
                 }
                 
                 let baseProvider = try resolveProvider(force: forceProviders, config: config)
