@@ -3,7 +3,6 @@ import os
 import MLX
 import MLXLLM
 import MLXLMCommon
-import Tokenizers
 
 /// v13.2: UNO Grammar Masking Logit Processor
 /// Enforces a strict output contract for "Action" blocks while allowing free-form "Thinking".
@@ -15,7 +14,7 @@ public final class UNOGrammarLogitProcessor: LogitProcessor, Sendable {
         case summary      // Free text after </final>
     }
     
-    private let tokenizer: Tokenizers.Tokenizer
+    private let tokenizer: MLXLMCommon.Tokenizer
     private let state: OSAllocatedUnfairLock<State>
     private let allowedTokenIDs: Set<Int128>
     private let controlTokenIDs: Set<Int128>
@@ -25,7 +24,7 @@ public final class UNOGrammarLogitProcessor: LogitProcessor, Sendable {
         var buffer: String = ""
     }
     
-    public init(tokenizer: Tokenizers.Tokenizer, allowedTokenIDs: [Int128], controlTokenIDs: [Int128] = [151643, 151645, 10, 13]) {
+    public init(tokenizer: MLXLMCommon.Tokenizer, allowedTokenIDs: [Int128], controlTokenIDs: [Int128] = [151643, 151645, 10, 13]) {
         self.tokenizer = tokenizer
         self.allowedTokenIDs = Set(allowedTokenIDs)
         self.controlTokenIDs = Set(controlTokenIDs)

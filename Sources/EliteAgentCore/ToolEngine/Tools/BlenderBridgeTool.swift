@@ -138,11 +138,14 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
             import bpy
             import math
             import os
+            import traceback
             
             # Auto-chaining: Load workspace.blend if it exists
             workspace_path = r'\(workspaceBlend)'
             output_dir = r'\(sandbox.outputsURL.path)'
-            render_path = os.path.join(output_dir, 'render.png')
+            
+            # Inject helper variables for the agent
+            WS_OUTPUTS = output_dir
             
             if os.path.exists(workspace_path) and not bpy.data.filepath:
                 try:
@@ -155,7 +158,8 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
                 \(script.replacingOccurrences(of: "\n", with: "\n    "))
                 print('[BLENDER_OK] Custom script executed.')
             except Exception as e:
-                print(f'[BLENDER_ERROR] Script failed: {e}')
+                print(f'[BLENDER_ERROR] Script failed.')
+                traceback.print_exc()
                 
             # Auto-save for next turn
             bpy.ops.wm.save_as_mainfile(filepath=workspace_path)
@@ -381,8 +385,8 @@ public struct BlenderBridgeTool: AgentTool, Sendable {
                                 .joined(separator: "\n")
                             
                             // v30.5: Full traceback inclusion for self-debugging
-                            let stderrDetail = String(stderr.prefix(2000))
-                            let errorDetail = blenderErrors.isEmpty ? stderrDetail : "\(blenderErrors)\n\nTraceback:\n\(stderrDetail)"
+                            let stderrDetail = String(stderr.prefix(5000))
+                            let errorDetail = stdout.contains("Traceback") ? stdout : stderrDetail
                             
                             continuation.resume(returning: "[BLENDER_FAIL] Process exited with status \(terminatedProcess.terminationStatus).\nDetails: \(errorDetail)")
                         } else {

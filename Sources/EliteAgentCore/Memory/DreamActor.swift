@@ -38,18 +38,34 @@ public actor DreamActor {
         logger.info("Starting Dream Consolidation (Content Size: \(l1Text.count) chars)")
         
         do {
-            // 4. Consolidate: Ask LLM to extract facts and core knowledge
+            // v7.0: Structured Consolidation Prompt (openclaw inspired)
             let consolidationPrompt = """
             Analyze the following conversation history and extract core facts, project decisions, 
-            and technical knowledge. Format as a concise, structured markdown report.
-            Keep specific paths, IDs, and final decisions. 
-            Ignore casual banter or intermediate errors that were resolved.
+            and technical knowledge. 
+            
+            REQUIRED OUTPUT SECTIONS:
+            ## Active Tasks
+            ## Key Decisions
+            ## Critical Facts
+            
+            RULES:
+            1. IDENTIFIER PRESERVATION: Preserve UUIDs, file paths, hashes, IPs, and URLs verbatim.
+            2. PROGRESS PRESERVATION: Keep track of "N/M items completed" markers.
+            3. NO BANTER: Ignore intermediate errors that were resolved or casual conversation.
             """
+            
+            // v7.0: Sanitize Tool Results (Causality Chain Preservation)
+            let sanitizedText = l1Text.components(separatedBy: "\n").map { line -> String in
+                if line.contains("Observation:") && line.count > 1000 {
+                    return "[Summarized Observation: Large data block truncated to preserve context causality. Source: \(line.prefix(50))...]"
+                }
+                return line
+            }.joined(separator: "\n")
             
             let request = CompletionRequest(
                 taskID: "dream-\(UUID().uuidString.prefix(8))",
                 systemPrompt: consolidationPrompt,
-                messages: [Message(role: "user", content: "Memory Context:\n\n\(l1Text)")],
+                messages: [Message(role: "user", content: "Memory Context:\n\n\(sanitizedText)")],
                 maxTokens: 1000,
                 sensitivityLevel: .public,
                 complexity: 2
@@ -78,6 +94,14 @@ public actor DreamActor {
         } catch {
             logger.error("Consolidation Failed: \(error.localizedDescription)")
         }
+    }
+    
+    /// v7.0: Emergency blocking consolidation triggered by MemoryPressure.
+    public func forceConsolidate() async {
+        logger.warning("🚨 EMERGENCY CONSOLIDATION TRIGGERED")
+        // In a real implementation, we would access the memory agent here.
+        // For now, we signal and wait for the next possible window or trigger a limited compaction.
+        NotificationCenter.default.post(name: NSNotification.Name("EmergencyCompaction"), object: nil)
     }
     
     private func saveVersionedMemory(content: String) throws {

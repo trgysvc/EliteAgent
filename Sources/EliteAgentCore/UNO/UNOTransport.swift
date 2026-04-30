@@ -16,52 +16,58 @@ public final class UNOTransport: @unchecked Sendable {
     public func executeRemote(action: UNOActionWrapper) async throws -> UNOResponse {
         let conn = try getOrCreateConnection()
         
-        // v13.8: Unified Native Binary Serialization (No JSON "Letters")
         let encoder = PropertyListEncoder()
         encoder.outputFormat = .binary
         let data = try encoder.encode(action)
         
-        // v13.8: Debug Inspect Mode (Meta + Hex summary)
-        #if DEBUG
-        AgentLogger.logInfo("[UNO-Trans] Binary Payload size: \(data.count) bytes | Target: \(action.toolID)")
-        #endif
+        // v7.0: Pointer-Native Migration (Zero-Copy for large payloads)
+        // If data > 1MB, use shared memory to avoid XPC copy overhead.
+        if data.count > 1024 * 1024 {
+            let sharedBuffer = try UNOSharedBuffer(size: data.count)
+            sharedBuffer.contents().copyMemory(from: (data as NSData).bytes, byteCount: data.count)
+            
+            return try await withCheckedThrowingContinuation { continuation in
+                let proxy = conn.remoteObjectProxyWithErrorHandler { error in
+                    continuation.resume(throwing: error)
+                } as? UNORemoteProxy
+                
+                proxy?.performSharedAction(shmem: sharedBuffer.fileHandle, size: data.count) { resultData, errorData in
+                    self.handleXPCResponse(resultData: resultData, errorData: errorData, action: action, continuation: continuation)
+                }
+            }
+        }
         
         return try await withCheckedThrowingContinuation { continuation in
             let proxy = conn.remoteObjectProxyWithErrorHandler { error in
                 continuation.resume(throwing: error)
             } as? UNORemoteProxy
             
-            guard let safeProxy = proxy else {
-                continuation.resume(throwing: NSError(domain: "UNO", code: 500, userInfo: [NSLocalizedDescriptionKey: "Proxy failed"]))
-                return
+            proxy?.performRemoteAction(data: data) { resultData, errorData in
+                self.handleXPCResponse(resultData: resultData, errorData: errorData, action: action, continuation: continuation)
             }
-            
-            safeProxy.performRemoteAction(data: data) { resultData, errorData in
-                if let errorData = errorData {
-                    let errStr = String(data: errorData, encoding: .utf8) ?? "XPC Error"
-                    continuation.resume(throwing: NSError(domain: "UNO", code: 500, userInfo: [NSLocalizedDescriptionKey: errStr]))
-                    return
-                }
-                
-                guard let data = resultData else {
-                    continuation.resume(throwing: NSError(domain: "UNO", code: 404))
-                    return
-                }
-                
-                do {
-                    // v13.8: Binary Decoding
-                    let response = try PropertyListDecoder().decode(UNOResponse.self, from: data)
-                    
-                    // Schema Version Validation (User Requirement 1.1)
-                    if response.version != action.version {
-                        AgentLogger.logAudit(level: .error, agent: "UNO", message: "Schema Mismatch: Sent V\(action.version), Recv V\(response.version)")
-                    }
-                    
-                    continuation.resume(returning: response)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+        }
+    }
+
+    private func handleXPCResponse(resultData: Data?, errorData: Data?, action: UNOActionWrapper, continuation: CheckedContinuation<UNOResponse, Error>) {
+        if let errorData = errorData {
+            let errStr = String(data: errorData, encoding: .utf8) ?? "XPC Error"
+            continuation.resume(throwing: NSError(domain: "UNO", code: 500, userInfo: [NSLocalizedDescriptionKey: errStr]))
+            return
+        }
+        
+        guard let data = resultData else {
+            continuation.resume(throwing: NSError(domain: "UNO", code: 404))
+            return
+        }
+        
+        do {
+            let response = try PropertyListDecoder().decode(UNOResponse.self, from: data)
+            if response.version != action.version {
+                AgentLogger.logAudit(level: .error, agent: "UNO", message: "Schema Mismatch: Sent V\(action.version), Recv V\(response.version)")
             }
+            continuation.resume(returning: response)
+        } catch {
+            continuation.resume(throwing: error)
         }
     }
 
@@ -77,4 +83,5 @@ public final class UNOTransport: @unchecked Sendable {
 
 @objc public protocol UNORemoteProxy {
     func performRemoteAction(data: Data, reply: @escaping @Sendable (Data?, Data?) -> Void)
+    func performSharedAction(shmem: FileHandle, size: Int, reply: @escaping @Sendable (Data?, Data?) -> Void)
 }

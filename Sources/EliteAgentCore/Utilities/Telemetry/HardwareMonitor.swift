@@ -8,6 +8,11 @@ public actor HardwareMonitor {
     
     private init() {}
     
+    /// v7.0: Returns the current memory pressure level as detected by the kernel.
+    public var memoryPressureLevel: DispatchSource.MemoryPressureEvent {
+        return ProactiveMemoryPressureMonitor.shared.lastEvent
+    }
+    
     /// Gerçek RAM kullanım verilerini sysctl bazlı güvenli yöntemle çeker.
     /// Mach Host API (host_statistics64) yerine sysctl kullanmak, 0x5 yetki hatalarını bitirir.
     public func getMemoryStats() -> (used: Double, total: Double) {
@@ -59,6 +64,11 @@ public actor HardwareMonitor {
         let ramUsageRatio = stats.used / stats.total
         if ramUsageRatio > 0.90 {
             return (false, "Eritilmiş RAM Sınırı: %\(Int(ramUsageRatio * 100)) - Sistem çok dolu.")
+        }
+        
+        // v7.0: Proactive Check
+        if ProcessInfo.processInfo.isLowPowerModeEnabled {
+             // Low power mode usually implies some pressure or energy constraint
         }
         
         switch thermal {

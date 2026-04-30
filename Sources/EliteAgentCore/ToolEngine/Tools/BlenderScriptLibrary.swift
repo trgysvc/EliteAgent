@@ -154,10 +154,11 @@ public struct BlenderScriptLibrary: Sendable {
         print(f'  Scene Name: {scene.name}')
         print(f'  Objects ({len(objects)}):')
         for obj in objects:
+            mods = [m.name + " (" + m.type + ")" for m in obj.modifiers]
+            mats = [m.name for m in obj.data.materials if m]
             print(f'    - {obj.name} (Type: {obj.type}, Location: {tuple(round(v, 2) for v in obj.location)})')
-        print(f'  Materials ({len(materials)}):')
-        for mat in materials:
-            print(f'    - {mat.name}')
+            if mods: print(f'      Modifiers: {", ".join(mods)}')
+            if mats: print(f'      Materials: {", ".join(mats)}')
         print(f'  Frame Range: {scene.frame_start} - {scene.frame_end}')
         print(f'  Render Engine: {scene.render.engine}')
         print(f'  Resolution: {scene.render.resolution_x}x{scene.render.resolution_y}')
@@ -323,9 +324,15 @@ public struct BlenderScriptLibrary: Sendable {
             print(f'Available Members ({len(members)}):')
             for m in members:
                 attr = getattr(target_obj, m)
+                sig = ""
+                try:
+                    sig = str(inspect.signature(attr))
+                except:
+                    pass
+                
                 doc = inspect.getdoc(attr) or "No docstring available."
                 first_line_doc = doc.split('\\n')[0]
-                print(f'  - {m}: {first_line_doc}')
+                print(f'  - {m}{sig}: {first_line_doc}')
                 
         except Exception as e:
             print(f'[BLENDER_ERROR] API Explorer failed for {target_path}: {e}')

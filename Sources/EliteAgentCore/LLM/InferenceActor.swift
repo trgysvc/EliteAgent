@@ -2,7 +2,6 @@ import Foundation
 @preconcurrency import MLX
 import MLXLLM
 import MLXLMCommon
-import Tokenizers
 import Metal
 import os
 
@@ -60,6 +59,29 @@ public actor InferenceActor {
         
         MLX.Memory.cacheLimit = cacheLimit
         _ = LLMModelFactory.shared
+
+        // v7.0: Proactive UMA Watchdog Integration
+        ProactiveMemoryPressureMonitor.shared.onPressureChange = { [weak self] event in
+            guard let self = self else { return }
+            Task {
+                await self.handleMemoryPressure(event)
+            }
+        }
+    }
+
+    /// v7.0: Proactive response to system memory pressure.
+    private func handleMemoryPressure(_ event: DispatchSource.MemoryPressureEvent) async {
+        if event.contains(.critical) {
+            AgentLogger.logAudit(level: .error, agent: "titan", message: "CRITICAL Memory Pressure: Emergency purging and reducing context.")
+            self.cancelOngoingGenerations()
+            self.clearCache()
+            self.nextRequestReducedContext = true
+        } else if event.contains(.warning) {
+            AgentLogger.logAudit(level: .warn, agent: "titan", message: "WARNING Memory Pressure: Reducing context for next request.")
+            self.nextRequestReducedContext = true
+            // Also reduce cache limit further to free up space
+            MLX.Memory.cacheLimit = 64 * 1024 * 1024 // 64 MB
+        }
     }
     
     // MARK: - Universal Inference API (v9.0)
@@ -409,7 +431,7 @@ public actor InferenceActor {
         
         // UNOGrammarLogitProcessor is @unchecked Sendable — safe to capture in @Sendable closure
         let grammarProcessor = UNOGrammarLogitProcessor(
-            tokenizer: await container.tokenizer, 
+            tokenizer: container.tokenizer, 
             allowedTokenIDs: allAllowed
         )
         

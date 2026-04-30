@@ -63,3 +63,13 @@ tmp/
 scratch/
 backups/
 *.xcarchive
+
+# Yerel veri ve hassas içerikler
+raw/
+concepts/
+antigravity_history_dump.txt
+
+# Geçici dosyalar ve işletim sistemi kayıtları
+.DS_Store
+*.tmp
+*.log
