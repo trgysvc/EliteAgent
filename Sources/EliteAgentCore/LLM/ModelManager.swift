@@ -285,15 +285,34 @@ public final class ModelManager: NSObject, ObservableObject {
         var changed = false
         let lowerID = id.lowercased()
         let normalizedID = lowerID.replacingOccurrences(of: "-", with: "")
-        let isVLMByID = normalizedID.contains("qwen2vl") || normalizedID.contains("qwen25vl") ||
-                        normalizedID.contains("qwen3vl") || normalizedID.contains("vl") ||
-                        normalizedID.contains("vision")
-
-        if isVLMByID {
+        
+        if normalizedID.contains("qwen3.5") || normalizedID.contains("vl") || normalizedID.contains("vision") {
             for (pattern, replacement) in vlmMappings {
                 if modifiedContent.contains(pattern) {
                     modifiedContent = modifiedContent.replacingOccurrences(of: pattern, with: replacement)
                     changed = true
+                }
+            }
+            
+            // v21.9: Inject Dummy Vision Config for text-only Qwen 3.5 models
+            if !modifiedContent.contains("\"vision_config\"") {
+                let dummyVision = """
+                ,
+                  "vision_config": {
+                    "model_type": "qwen2_vl",
+                    "embed_dim": 1,
+                    "hidden_size": 1,
+                    "num_heads": 1,
+                    "num_layers": 1,
+                    "spatial_merge_size": 1,
+                    "temporal_patch_size": 1,
+                    "patch_size": 1
+                  }
+                """
+                if let lastBraceIndex = modifiedContent.lastIndex(of: "}") {
+                    modifiedContent.insert(contentsOf: dummyVision, at: lastBraceIndex)
+                    changed = true
+                    AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Injected dummy vision_config for Qwen 3.5 compatibility.")
                 }
             }
         } else {
