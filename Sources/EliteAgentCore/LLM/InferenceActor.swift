@@ -588,7 +588,10 @@ public actor InferenceActor {
             if paddedTokens.count != tokens.count {
                 var maskArray = Array(repeating: 1, count: tokens.count)
                 maskArray.append(contentsOf: Array(repeating: 0, count: paddedTokens.count - tokens.count))
-                lmInput = LMInput(tokens: MLXArray(paddedTokens), mask: MLXArray(maskArray))
+                lmInput = LMInput(
+                    tokens: MLXArray(paddedTokens).reshaped(1, -1),
+                    mask: MLXArray(maskArray).reshaped(1, -1)
+                )
             }
             
             let iterator = try TokenIterator(

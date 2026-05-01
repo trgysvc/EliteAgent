@@ -87,3 +87,9 @@
 - `Sources/EliteAgentCore/LLM/InferenceActor.swift`
 **Decision made:** KV-Cache kuantizasyonu (8-bit) sadece bellek baskısı durumlarında aktif olacak şekilde dinamikleştirildi. Çıkarım motoru "Fixed-Shape" mühürleme ile CPU overhead'ini %40 düşürecek yapıya kavuşturuldu.
 **Next:** Phase 3: IOSurface tabanlı Zero-Copy XPC Transport araştırması ve prototipleme.
+
+### [2026-05-01] — Resolved Qwen 3.5 Reshape Crash
+**What changed:** Fixed token padding logic in `InferenceActor.swift` to preserve the batch dimension [1, N] after Pad-to-Power-of-2 sequence padding.
+**Files modified:** Sources/EliteAgentCore/LLM/InferenceActor.swift
+**Decision made:** Corrected the 1D token tensor generation which was causing `Qwen3NextGatedDeltaNet` to incorrectly interpret hidden dimensions as sequence length, leading to fatal reshape errors. Ensuring 3D inputs [B, S, D] is the primary stability target for Titan Engine.
+**Next:** Validate performance gains from Graph Sealing with the fixed padding logic.
