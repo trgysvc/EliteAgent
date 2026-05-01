@@ -6,8 +6,7 @@ public final class WorkspaceManager: Sendable {
     private let baseTempDir: URL
     
     private init() {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        self.baseTempDir = home.appendingPathComponent(".eliteagent/workspaces", isDirectory: true)
+        self.baseTempDir = PathConfiguration.shared.cachesURL.appendingPathComponent("Sessions", isDirectory: true)
         
         try? FileManager.default.createDirectory(at: baseTempDir, withIntermediateDirectories: true)
     }

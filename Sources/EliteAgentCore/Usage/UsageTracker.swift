@@ -22,8 +22,7 @@ public actor UsageTracker {
     private var lastResetDate: Date = Date()
     
     private init() {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let url = home.appendingPathComponent(".eliteagent/usage.plist")
+        let url = PathConfiguration.shared.applicationSupportURL.appendingPathComponent("usage.plist")
         self.fileURL = url
         
         // Ensure directory exists

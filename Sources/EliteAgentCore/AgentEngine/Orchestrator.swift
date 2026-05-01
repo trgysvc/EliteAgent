@@ -66,8 +66,6 @@ public class Orchestrator: ObservableObject {
         let bus = SignalBus(secretKey: busKey)
         self.bus = bus
         
-        PathConfiguration.shared.performMigration()
-        
         self.planner = PlannerAgent(bus: bus)
         self.memory = MemoryAgent(bus: bus)
         self.toolRegistry = ToolRegistry.shared

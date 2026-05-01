@@ -22,3 +22,15 @@
 **Files modified:** `EliteMarathonTests.swift`, `OrchestratorRuntime.swift`, `DynamicContextManager.swift`, `DreamActor.swift`, `scripts/setup.sh`
 **Decision made:** Standardized on `any LLMProvider` protocol for all core orchestration components, decoupling hardware-specific inference from task execution. Expanded Evidence Guard keywords to support broader tool verification (Docker, Git, Swift, etc.).
 **Next:** Public Beta release of v7.0 "Native Sovereign".
+
+### [2026-05-01] — Final Build Cleanup
+**What changed:** Removed hidden backup files (`.MCPClientActor.swift.bak`) from `Sources/EliteAgentCore` that were triggering "Unexpected input file" warnings in the Swift Package Manager build.
+**Files modified:** `Sources/EliteAgentCore/ToolEngine/.MCPClientActor.swift.bak` (deleted)
+**Decision made:** Performed a global scan for redundant `.bak` files to ensure a zero-warning build state for the v7.0 production release.
+**Status:** Build is now 100% clean and verified.
+
+### [2026-05-01] — Native Path Standardization & Cleanup
+**What changed:** Removed legacy migration logic and standardized all data paths to Apple's Application Support and Caches directories. Deleted references to the hidden `.eliteagent` home directory folder.
+**Files modified:** PathConfiguration.swift, Orchestrator.swift, WorkspaceManager.swift, UsageTracker.swift
+**Decision made:** Switched to a "Clean Start" approach for v7.0 to eliminate migration-related race conditions and data loss. Standardized on Application Support for persistence and Caches for session workspaces.
+**Next:** User will perform a manual reset of legacy folders and reload models.
