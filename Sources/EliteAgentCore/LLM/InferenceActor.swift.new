@@ -1,0 +1,53 @@
+    public func loadModel(configuration: ModelConfiguration) async throws {
+        // Ensure Qwen 3.5 bridge is registered
+        await registerQwen35IfNeeded()
+        
+        self.clearCache()
+
+        await MainActor.run {
+            ModelSetupManager.shared.loadState = .transferringToVRAM
+            ModelSetupManager.shared.isModelReady = false
+        }
+
+        // 1. Resolve model directory
+        let modelDirectory = configuration.modelDirectory(hub: defaultHubApi)
+        
+        // 2. Perform patching BEFORE loading
+        // v10.8: Structural Architecture Aliasing
+        await ModelManager.shared.patchConfigForArchitectureAliasing(id: modelDirectory.lastPathComponent)
+
+        // v24.2: KV Cache Context Window Enforcement
+        patchContextWindow(modelDirectory: modelDirectory)
+
+        // 3. Load model using factory
+        // v24.3: Auto-detect factory from config.json model_type (authoritative over caller hint).
+        let effectiveAsVLM = detectVLMFromConfig(at: modelDirectory) ?? false
+        
+        do {
+            if effectiveAsVLM {
+                self.modelContainer = try await VLMModelFactory.shared.loadContainer(configuration: configuration)
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "VLM Container Loaded Successfully.")
+            } else {
+                self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: configuration)
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "LLM Container Loaded Successfully.")
+            }
+        } catch {
+            AgentLogger.logAudit(level: .error, agent: "titan", message: "Model Loading Failed: \(error.localizedDescription)")
+            self.loadedModelID = nil
+            throw error // Ensure architecture mismatch is reported, NO FALLBACK
+        }
+        
+        self.nativeTokenizer = try BPETokenizer.load(from: modelDirectory)
+        self.loadedModelID = modelDirectory.lastPathComponent
+        
+        await MainActor.run {
+            ModelSetupManager.shared.loadState = .idle
+            ModelSetupManager.shared.isModelReady = true
+            AgentLogger.shared.log("Engine Primed: \(modelDirectory.lastPathComponent)", level: .info)
+        }
+    }
+    
+    public func loadModel(at url: URL, asVLM: Bool = false) async throws {
+        let configuration = ModelConfiguration(directory: url)
+        try await loadModel(configuration: configuration)
+    }

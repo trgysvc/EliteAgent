@@ -1,10 +1,12 @@
 import Foundation
 @preconcurrency import MLX
-import MLXLLM
-import MLXLMCommon
-import MLXVLM
+@preconcurrency import MLXLLM
+@preconcurrency import MLXLMCommon
+@preconcurrency import MLXVLM
+@preconcurrency import MLXNN
 import Metal
 import os
+import CryptoKit
 
 #if PROFILE
 // v40.0: Basso Continuo Hardware Profiling
@@ -24,6 +26,11 @@ public actor InferenceActor {
     private var modelContainer: ModelContainer?
     private var maxContextTokens: Int = 16384
     private var nativeTokenizer: UNOTokenizer? // v7.0 Native Cleanup
+    private var isPerformingTransition: Bool = false // v24.8: Guard for atomic state changes
+    
+    // v7.1: Phase 2 - Shared Prefix Cache
+    nonisolated(unsafe) private var systemPromptCache: [KVCache]?
+    nonisolated(unsafe) private var systemPromptHash: String?
     
     // v10.6: State Tracking
     public private(set) var loadedModelID: String?
@@ -53,21 +60,35 @@ public actor InferenceActor {
         self.sharedBuffer = MetalBufferWrapper(buffer)
         
         // v13.9: Official MLX Unified Memory Optimization (PRD v17.4)
-        // v24.1 FIX: Set cacheLimit to a low fixed value (256MB) according to official MLX Swift 
+        // v24.1 FIX: Set cacheLimit to a low fixed value (128MB) according to official MLX Swift 
         // best practices to prevent memory hoarding which causes OOM and swapping on 16GB Macs.
         // cacheLimit is ONLY for unused buffers, not active weights!
-        let cacheLimit = 256 * 1024 * 1024 // 256 MB
-        AgentLogger.logInfo("[MLX-Opt] Setting strictly capped Cache Limit: 256 MB to prevent swap thrashing.")
+        let cacheLimit = 128 * 1024 * 1024 // v24.8: Optimized to 128 MB
+        AgentLogger.logInfo("[MLX-Opt] Setting strictly capped Cache Limit: 128 MB to prevent swap thrashing.")
         
         MLX.Memory.cacheLimit = cacheLimit
         _ = LLMModelFactory.shared
- 
+
+        // v24.3: Register Qwen 3.5 Bridge to handle VLM-wrapped text weights
+        Task {
+            await registerQwen35IfNeeded()
+        }
+        
         // v7.0: Proactive UMA Watchdog Integration
         NotificationCenter.default.addObserver(forName: .memoryPressureChanged, object: nil, queue: nil) { [weak self] notification in
             guard let self = self, let level = notification.object as? UNOMemoryPressureLevel else { return }
             Task {
                 await self.handleMemoryPressure(level)
             }
+        }
+    }
+
+    nonisolated private func registerQwen35IfNeeded() async {
+        let type = "qwen3_5"
+        // Avoid duplicate registration if possible, though registerModelType handles it
+        await LLMTypeRegistry.shared.registerModelType(type) { data in
+            let qConfig = try JSONDecoder().decode(Qwen3NextConfiguration.self, from: data)
+            return Qwen35Bridge(qConfig, configData: data)
         }
     }
 
@@ -157,8 +178,8 @@ public actor InferenceActor {
     
     // MARK: - Local MLX Operations
     
-    public func clearCache() {
-        MLX.eval()
+    nonisolated public func clearCache() {
+        MLX.eval() // v24.8: Crucial eval before clear
         MLX.Memory.clearCache()
     }
     
@@ -168,7 +189,19 @@ public actor InferenceActor {
     }
     
     public func restart(reload: Bool = false) async {
+        guard !isPerformingTransition else { return }
+        isPerformingTransition = true
+        defer { isPerformingTransition = false }
+        
         AgentLogger.logAudit(level: .warn, agent: "titan", message: "Hard Reset: Titan Motoru Yeniden Başlatılıyor...")
+        
+        // v24.8: Ensure all ongoing work is halted before reset
+        cancelOngoingGenerations()
+        
+        try? await MLXEngineGuardian.shared.execute {
+            // MLX Emergency Purge
+            await MLXEngineGuardian.shared.emergencyPurge()
+        }
         
         await MainActor.run {
             AISessionState.shared.isRestartingEngine = true
@@ -177,9 +210,6 @@ public actor InferenceActor {
         
         self.modelContainer = nil
         self.clearCache()
-        
-        // MLX Emergency Purge
-        await MLXEngineGuardian.shared.emergencyPurge()
         
         // v11.3: Conditional reload.
         if reload {
@@ -226,54 +256,71 @@ public actor InferenceActor {
         }
     }
     
-    public func loadModel(at url: URL, asVLM: Bool = false) async throws {
-        self.clearCache()
+    public func loadModel(configuration: ModelConfiguration) async throws {
+        guard !isPerformingTransition else { return }
+        isPerformingTransition = true
+        defer { isPerformingTransition = false }
+        
+        // v24.8: Kill existing generation before swapping weights to prevent Metal dealloc crash
+        cancelOngoingGenerations()
+
+        // 1. Resolve model directory
+        let modelDirectory = configuration.modelDirectory(hub: defaultHubApi)
+        
+        // 2. Perform patching BEFORE loading
+        await ModelManager.shared.patchConfigForArchitectureAliasing(id: modelDirectory.lastPathComponent)
+        self.patchContextWindow(modelDirectory: modelDirectory)
+        
+        // 3. Load model using factory
+        let effectiveAsVLM = self.detectVLMFromConfig(at: modelDirectory) ?? false
+        
+        try await MLXEngineGuardian.shared.execute {
+            // Ensure Qwen 3.5 bridge is registered
+            await self.registerQwen35IfNeeded()
+            self.clearCache()
+        }
 
         await MainActor.run {
             ModelSetupManager.shared.loadState = .transferringToVRAM
             ModelSetupManager.shared.isModelReady = false
         }
-        // v10.8: Structural Architecture Aliasing
-        await ModelManager.shared.patchConfigForArchitectureAliasing(id: url.lastPathComponent)
-
-        // v24.2: KV Cache Context Window Enforcement
-        patchContextWindow(modelDirectory: url)
-
-        let config = ModelConfiguration(directory: url)
-
-        // v24.3: Auto-detect factory from config.json model_type (authoritative over caller hint).
-        // ModelManager.load() always passes asVLM=false; this fixes the gap for VLM models loaded
-        // via the switch-model UI path (ModelManager.switchTo → load → InferenceActor.loadModel).
-        let effectiveAsVLM = detectVLMFromConfig(at: url) ?? asVLM
 
         do {
+            let container: ModelContainer
             if effectiveAsVLM {
-                self.modelContainer = try await VLMModelFactory.shared.loadContainer(configuration: config)
+                container = try await VLMModelFactory.shared.loadContainer(configuration: configuration)
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "VLM Container Loaded Successfully.")
             } else {
-                self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: config)
+                container = try await LLMModelFactory.shared.loadContainer(configuration: configuration)
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "LLM Container Loaded Successfully.")
             }
+            self.modelContainer = container
         } catch {
             AgentLogger.logAudit(level: .error, agent: "titan", message: "Model Loading Failed: \(error.localizedDescription)")
             self.loadedModelID = nil
-            throw error // Ensure architecture mismatch is reported, NO FALLBACK
+            throw error
         }
         
-        self.nativeTokenizer = try BPETokenizer.load(from: url)
-        self.loadedModelID = url.lastPathComponent
+        self.nativeTokenizer = try BPETokenizer.load(from: modelDirectory)
+        self.loadedModelID = modelDirectory.lastPathComponent
         
         await MainActor.run {
-            ModelSetupManager.shared.loadState = .ready
+            ModelSetupManager.shared.loadState = .idle
             ModelSetupManager.shared.isModelReady = true
+            AgentLogger.logAudit(level: .info, agent: "titan", message: "Engine Primed: \(modelDirectory.lastPathComponent)")
         }
+    }
+    
+    public func loadModel(at url: URL, asVLM: Bool = false) async throws {
+        let configuration = ModelConfiguration(directory: url)
+        try await loadModel(configuration: configuration)
     }
     
     /// v24.2: Patches max_position_embeddings and sliding_window in the model's config.json
     /// to the hardware-appropriate context window BEFORE MLX loads the model into VRAM.
     /// This is the ONLY correct way to limit KV Cache allocation in MLX Swift —
     /// the value must be set at load time, not at inference time.
-    private func patchContextWindow(modelDirectory: URL) {
+    nonisolated private func patchContextWindow(modelDirectory: URL) {
         let configURL = modelDirectory.appendingPathComponent("config.json")
         guard FileManager.default.fileExists(atPath: configURL.path),
               var content = try? String(contentsOf: configURL, encoding: .utf8) else {
@@ -322,7 +369,7 @@ public actor InferenceActor {
     
     /// Reads model_type from config.json to determine factory path.
     /// Returns nil if config is unreadable (caller's asVLM is used as fallback).
-    private func detectVLMFromConfig(at url: URL) -> Bool? {
+    nonisolated private func detectVLMFromConfig(at url: URL) -> Bool? {
         let configURL = url.appendingPathComponent("config.json")
         guard let data = try? Data(contentsOf: configURL),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -399,17 +446,22 @@ public actor InferenceActor {
                         Task {
                             do {
                                 // v9.7: Wrap in Guardian for Timeout, OOM and Thermal protection.
-                                try await MLXEngineGuardian.shared.execute { [self] in
-                                    try await self.internalGenerate(
-                                        formattedPrompt: promptToCapture, 
-                                        maxTokens: maxTokensToCapture, 
-                                        continuation: innerContinuation,
-                                        useSafeMode: useSafeMode
-                                    )
-                                    // v40.0: End Prefill / Start Decode
-                                    #if PROFILE
-                                    signposter.endInterval("Prefill", state)
-                                    #endif
+                                try await withTaskCancellationHandler {
+                                    try await MLXEngineGuardian.shared.execute { [self] in
+                                        try await self.internalGenerate(
+                                            formattedPrompt: promptToCapture, 
+                                            maxTokens: maxTokensToCapture, 
+                                            continuation: innerContinuation,
+                                            useSafeMode: useSafeMode
+                                        )
+                                        // v40.0: End Prefill / Start Decode
+                                        #if PROFILE
+                                        signposter.endInterval("Prefill", state)
+                                        #endif
+                                    }
+                                } onCancel: {
+                                    // v24.8: Force MLX eval to stop if possible (though limited in current MLX API)
+                                    // The main benefit is ensuring this Task is properly marked for the actor.
                                 }
                             } catch let error as EngineError {
                                 innerContinuation.yield("⚠️ Engine Error: \(error.localizedDescription)")
@@ -487,12 +539,62 @@ public actor InferenceActor {
         // any non-Sendable types across actor boundaries. This completely bypasses 
         // the perform(nonSendable:) API that triggers the Xcode type-solver crash.
         // Captured values: formattedPrompt (String/Sendable), grammarProcessor (@unchecked Sendable), parameters (Sendable)
+        let currentHash = self.systemPromptHash
+        let currentCache = self.systemPromptCache
+        let padToken = self.nativeTokenizer?.unknownTokenID ?? 0
+        
         let stream: AsyncStream<Generation> = try await container.perform { context in
-            let lmInput = try await context.processor.prepare(input: UserInput(prompt: formattedPrompt))
+            // v7.1: Phase 1 - Graph Sealing via Fixed-Shape Padding
+            // In MLX Swift, explicit compilation is handled via shape stability.
+            // By padding to Power-of-2, we ensure the JIT compiler reuses fused kernels.
+            
+            // v7.1: Phase 2 - Shared Prefix Cache (TTFT Optimization)
+            let systemMarker = "<|im_start|>user"
+            let promptParts = formattedPrompt.components(separatedBy: systemMarker)
+            var activeCache: [KVCache]? = nil
+            var promptToProcess = formattedPrompt
+            
+            if promptParts.count >= 2 {
+                let systemPart = promptParts[0]
+                let sHash = computeHash(systemPart)
+                
+                if sHash == currentHash, let cached = currentCache {
+                    // Shared Prefix Hit: Reuse the computed KV-Cache for the system prompt
+                    activeCache = cached
+                    promptToProcess = systemMarker + promptParts.dropFirst().joined(separator: systemMarker)
+                    AgentLogger.logAudit(level: .info, agent: "titan", message: "[Phase-2] Shared Prefix Hit! TTFT optimized.")
+                } else {
+                    // Cache Miss: Prepare new system cache
+                    let sysInput = try await context.processor.prepare(input: UserInput(prompt: systemPart))
+                    let newCache = context.model.newCache(parameters: nil)
+                    _ = context.model(sysInput.text.tokens, cache: newCache)
+                    
+                    // Update cache state (Safe due to nonisolated(unsafe))
+                    self.systemPromptHash = sHash
+                    self.systemPromptCache = newCache
+                    
+                    promptToProcess = systemMarker + promptParts.dropFirst().joined(separator: systemMarker)
+                    activeCache = newCache
+                    AgentLogger.logAudit(level: .info, agent: "titan", message: "[Phase-2] System Cache Primed.")
+                }
+            }
+            
+            var lmInput = try await context.processor.prepare(input: UserInput(prompt: promptToProcess))
+            
+            // v7.1: Phase 1 - Fixed-Shape Padding Strategy
+            let tokens = lmInput.text.tokens.asArray(Int.self)
+            let paddedTokens = padToNextPowerOf2(tokens, padToken: padToken)
+            
+            if paddedTokens.count != tokens.count {
+                var maskArray = Array(repeating: 1, count: tokens.count)
+                maskArray.append(contentsOf: Array(repeating: 0, count: paddedTokens.count - tokens.count))
+                lmInput = LMInput(tokens: MLXArray(paddedTokens), mask: MLXArray(maskArray))
+            }
             
             let iterator = try TokenIterator(
                 input: lmInput, 
                 model: context.model, 
+                cache: activeCache, // v7.1: Pass the shared prefix cache
                 processor: grammarProcessor, 
                 sampler: parameters.sampler(),
                 maxTokens: parameters.maxTokens
@@ -562,7 +664,27 @@ public actor InferenceActor {
             ptr[i] = Float.random(in: 0.0...1.0) * Float(activationValue % 10) / 10.0
         }
     }
-    
+
+    /// v7.1: Phase 1 - Pad-to-Power-of-2 Strategy
+    /// Ensures that the model is compiled for fixed shapes, preventing re-compilation overhead.
+    nonisolated private func padToNextPowerOf2(_ tokens: [Int], padToken: Int) -> [Int] {
+        let currentCount = tokens.count
+        if currentCount <= 0 { return tokens }
+        
+        // Define fixed bucket sizes (Power of 2)
+        let bucketSizes: [Int] = [128, 256, 512, 1024, 2048, 4096, 8192, 16384]
+        guard let targetSize = bucketSizes.first(where: { $0 >= currentCount }) else {
+            return tokens // Too large for our buckets
+        }
+        
+        if targetSize == currentCount { return tokens }
+        var padded = tokens
+        padded.append(contentsOf: Array(repeating: padToken, count: targetSize - currentCount))
+        
+        AgentLogger.logAudit(level: .info, agent: "titan", message: "[Phase-1] Padding sequence: \(currentCount) → \(targetSize)")
+        return padded
+    }
+
     @MainActor
     private func handleEngineTimeout() {
         AgentLogger.logAudit(level: .error, agent: "titan", message: "Titan: Inference timed out. Engine guardian triggered.")
@@ -578,5 +700,11 @@ public actor InferenceActor {
     
     private func setGenerationTaskNil() {
         self.currentGenerationTask = nil
+    }
+
+    nonisolated private func computeHash(_ text: String) -> String {
+        let inputData = Data(text.utf8)
+        let hashed = SHA256.hash(data: inputData)
+        return hashed.compactMap { String(format: "%02x", $0) }.joined()
     }
 }

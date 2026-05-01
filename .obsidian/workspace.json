@@ -178,6 +178,9 @@
   },
   "active": "1e0c372a8c1a6fd2",
   "lastOpenFiles": [
+    "Project_Wiki/wiki/performance_roadmap.md",
+    "Project_Wiki/wiki/performance_optimization_report.md",
+    "Project_Wiki/index.md",
     "Tests/EliteAgentTests/ExtraToolTests.swift",
     "Tests/EliteAgentTests/FileToolTests.swift",
     "Tests/EliteAgentTests/ShellToolTests.swift",
@@ -194,7 +197,6 @@
     "Project_Wiki/implementation_plan.md",
     "Project_Wiki/wiki/blender_bridge_evolution.md",
     "Sources/EliteAgentCore/UNO/UNOSharedBuffer.swift",
-    "Sources/EliteAgentCore/LLM/ProactiveMemoryPressureMonitor.swift",
     "Project_Wiki/wiki/system_stability.md",
     "Project_Wiki/wiki/architecture_deep_dive.md",
     "Project_Wiki/GeliştirmeKonuşmaları.md",
@@ -211,8 +213,6 @@
     "Project_Wiki/raw/Audio Intelligence Platform.md",
     "Project_Wiki/raw/all_features.md",
     "Project_Wiki/wiki/gap_analysis.md",
-    "Project_Wiki/concepts/MLX_Swift_Core.md",
-    "Project_Wiki/rules.md",
-    "Project_Wiki/index.md"
+    "Project_Wiki/concepts/MLX_Swift_Core.md"
   ]
 }

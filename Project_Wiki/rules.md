@@ -13,3 +13,8 @@
 ## 3. Kodlama Standartları
 - Swift 6 + SwiftUI + Apple Silicon (MLX) optimizasyonlarını önceliklendir.
 - Kod bloklarını `wiki/` içinde dökümante ederken mantıksal akış şemalarıyla açıkla.
+
+## 4. Teknik Zorunluluklar (Technical Mandates)
+- **Metal Backend Enforcement:** LLM operasyonları tasarlanırken, MLX'in Metal backend'inin "Lazy Evaluation" ve "Kernel Fusion" prensipleri birer kısıt olarak kabul edilmelidir. Gereksiz hesaplamalardan kaçınılmalı ve `mx.compile` kullanımı teşvik edilmelidir.
+- **Memory Anchoring:** Model ağırlıkları ve KV Cache verileri, çıkarım (inference) kararlılığı için birleşik bellekte (Unified Memory) "çivilenmiş" (anchored) kabul edilmeli; bellek kısıtları LLM agent'ı tarafından bir 'Soft Constraint' değil, 'Hard Limit' olarak yönetilmelidir.
+- **Native Context Management:** KV Cache yönetimi, RoPE uygulamaları ve model spesifik tensor manipülasyonları, harici bir kütüphaneye ihtiyaç duymadan doğrudan `MLXFast` ve `MLXLMCommon` standartlarına göre tasarlanmalıdır.

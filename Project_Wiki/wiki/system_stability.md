@@ -16,9 +16,10 @@ Bellek basıncını ve bağlam penceresini (context window) yönetme stratejiler
 - **ContextCompactionEngine:** Bağlamı daraltırken "Must-Preserve" listesindeki kritik verileri (dosya yolları, UUID'ler, TODO'lar) koruyarak özetleme yapar.
 - **AdaptiveTaskChunker:** Çok büyük iş yüklerini (örneğin 100+ dosya analizi), donanım durumunu (`HardwareMonitor`) ve `ContextBudget`'i gözeterek küçük, yönetilebilir parçalara böler. Her parça, bağlamın sürekliliğini sağlamak için bir önceki parçanın özetini taşır.
 
-## 3. Donanım Duyarlı Koruma (Thermal Guard)
-- macOS'un `ProcessInfo.thermalState` API'si ile entegre çalışır.
-- Sistem ısındığında (Serious/Critical), inference döngüsüne otonom `Task.sleep` gecikmeleri ekleyerek GPU yükünü ve ısıyı düşürür.
+## 3. Donanım Duyarlı Koruma (Thermal & UMA Guard)
+- **UMA Watchdog Entegrasyonu:** `LocalModelHealthMonitor` üzerinden çalışan bu sistem, Apple Silicon'ın Birleşik Bellek yapısını (Unified Memory) gerçek zamanlı izler. 
+- **Proactive Memory Pressure:** İşletim sisteminin `MemoryPressure` sinyalleri (Normal, Warning, Critical) dinlenir. Bellek baskısı %85'i aştığında, KV-cache otomatik olarak daraltılır ve `DreamActor` üzerinden arka plan konsolidasyonu (emergency consolidation) başlatılır.
+- **Thermal Guard:** macOS'un `ProcessInfo.thermalState` API'si ile entegre çalışır. Sistem ısındığında (Serious/Critical), inference döngüsüne otonom `Task.sleep` gecikmeleri ekleyerek GPU yükünü ve ısıyı düşürür.
 
 ---
 

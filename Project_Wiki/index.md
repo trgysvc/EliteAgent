@@ -15,10 +15,13 @@ EliteAgent'ın temel amacı, Apple ekosisteminin sunduğu yerel donanım güçle
 - [Sistem Kararlılığı ve Self-Healing](wiki/system_stability.md)
 - [Proje Gelişim Tarihçesi (Evolution)](wiki/evolution.md)
 - [Gap Analizi ve Gelişim](wiki/gap_analysis.md)
+- [Stratejik Performans İyileştirme Önerileri (v7.0+)](wiki/performance_optimization_report.md)
 
 ### 📚 Temel Kavramlar ve Teknik Standartlar (Concepts)
 - [Distributed Actors ve UNO İzolasyon Mimarisi](concepts/distributed_actors.md)
 - [MLX Swift ve Unified Memory Yönetimi](concepts/mlx_swift_unified_memory.md)
+- [MLX Metal Mimarisi ve GPU Internals](concepts/mlx_metal_internals.md)
+- [LLM Çıkarım Standartları (KV Cache, RoPE)](concepts/llm_inference_mechanics.md)
 - [Swift API Design Standartları](concepts/swift_api_standards.md)
 - [XPC ve Native IPC Standartları](concepts/xpc_native_ipc.md)
 - [MLX Swift Temel Kavramlar](concepts/MLX_Swift_Core.md)

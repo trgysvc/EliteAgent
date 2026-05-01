@@ -270,56 +270,43 @@ public final class ModelManager: NSObject, ObservableObject {
         }
         
         var modifiedContent = content
-        
-        // 1. Architecture Aliasing
-        // Only apply VLM-specific class renames for confirmed VLM model IDs.
-        // IMPORTANT: Never map qwen2 → qwen2_vl; qwen2 is a valid text model_type and
-        // LLMModelFactory will reject qwen2_vl ("Unsupported model type: qwen2_vl").
-        // Factory selection (LLM vs VLM) is handled by InferenceActor.detectVLMFromConfig.
-        let vlmMappings = [
-            "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2_vl\"",
-            "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2_vl\"",
-            "\"Qwen3_5ForConditionalGeneration\"": "\"Qwen2VLForConditionalGeneration\""
-        ]
-
         var changed = false
-        let lowerID = id.lowercased()
-        let normalizedID = lowerID.replacingOccurrences(of: "-", with: "")
-        
-        if normalizedID.contains("qwen3.5") || normalizedID.contains("vl") || normalizedID.contains("vision") {
-            for (pattern, replacement) in vlmMappings {
-                if modifiedContent.contains(pattern) {
-                    modifiedContent = modifiedContent.replacingOccurrences(of: pattern, with: replacement)
-                    changed = true
-                }
-            }
-            
-            // v21.9: Inject Dummy Vision Config for text-only Qwen 3.5 models
-            if !modifiedContent.contains("\"vision_config\"") {
-                let dummyVision = """
-                ,
-                  "vision_config": {
-                    "model_type": "qwen2_vl",
-                    "embed_dim": 1,
-                    "hidden_size": 1,
-                    "num_heads": 1,
-                    "num_layers": 1,
-                    "spatial_merge_size": 1,
-                    "temporal_patch_size": 1,
-                    "patch_size": 1
-                  }
-                """
-                if let lastBraceIndex = modifiedContent.lastIndex(of: "}") {
-                    modifiedContent.insert(contentsOf: dummyVision, at: lastBraceIndex)
-                    changed = true
-                    AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Injected dummy vision_config for Qwen 3.5 compatibility.")
-                }
-            }
-        } else {
-            // Standard LLM patches: map non-standard qwen3_5 type to the supported qwen2 type
-            if modifiedContent.contains("\"model_type\": \"qwen3_5\"") {
-                modifiedContent = modifiedContent.replacingOccurrences(of: "\"model_type\": \"qwen3_5\"", with: "\"model_type\": \"qwen2\"")
+
+        // 1. Architecture Aliasing
+        // Detect Qwen3_5ForCausalLM via the architectures field and apply the full
+        // Qwen3Next-compatible config patch (JSON-level surgery, not string replacement).
+        // For all other models only apply conservative string-based VLM renames.
+        let isQwen35 = modifiedContent.contains("\"Qwen3_5ForCausalLM\"")
+        if isQwen35 {
+            // Qwen3.5 ships with model_type=qwen2_vl (wrong) and weights under
+            // "language_model.*" prefix. Map it to our custom "qwen3_5" type so that
+            // InferenceActor routes it through Qwen35Bridge → Qwen3NextModel.
+            if patchQwen35Config(at: configURL) {
                 changed = true
+                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "PATCH: Qwen3.5 config normalized to qwen3_5 for Qwen3NextModel bridge.")
+            }
+            // Re-read content after JSON patch so the KV-context patch below works correctly.
+            modifiedContent = (try? String(contentsOf: configURL, encoding: .utf8)) ?? modifiedContent
+        } else {
+            // VLM-specific class renames (only for true VLM model IDs).
+            // IMPORTANT: Never map qwen2 → qwen2_vl (breaks text models).
+            let lowerID = id.lowercased()
+            let normalizedID = lowerID.replacingOccurrences(of: "-", with: "")
+            let isVLMByID = normalizedID.contains("qwen2vl") || normalizedID.contains("qwen25vl") ||
+                            normalizedID.contains("qwen3vl") || normalizedID.contains("vl") ||
+                            normalizedID.contains("vision")
+            if isVLMByID {
+                let vlmMappings = [
+                    "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2_vl\"",
+                    "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2_vl\"",
+                    "\"Qwen3_5ForConditionalGeneration\"": "\"Qwen2VLForConditionalGeneration\""
+                ]
+                for (pattern, replacement) in vlmMappings {
+                    if modifiedContent.contains(pattern) {
+                        modifiedContent = modifiedContent.replacingOccurrences(of: pattern, with: replacement)
+                        changed = true
+                    }
+                }
             }
         }
         
@@ -486,6 +473,125 @@ public final class ModelManager: NSObject, ObservableObject {
     
     private func updateProgress(for modelID: String, progress: Double) {
         self.downloadProgress[modelID] = progress
+    }
+    
+    /// v24.3: Performs JSON-level surgery on Qwen 3.5 config to make it compatible with Qwen3Next bridge.
+    private func patchQwen35Config(at url: URL) -> Bool {
+        guard let data = try? Data(contentsOf: url),
+              var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        
+        var changed = false
+        
+        // 1. Force custom model type for our bridge
+        if (json["model_type"] as? String) != "qwen3_5" {
+            json["model_type"] = "qwen3_5"
+            changed = true
+        }
+        
+        // 2. Normalize Qwen3Next fields (ensure hybrid attention defaults)
+        if json["full_attention_interval"] == nil {
+            json["full_attention_interval"] = 4
+            changed = true
+        }
+        
+        // v24.4: Hoist RoPE parameters from rope_parameters block to root
+        if let ropeParams = json["rope_parameters"] as? [String: Any] {
+            if let theta = ropeParams["rope_theta"] as? Double, json["rope_theta"] == nil {
+                json["rope_theta"] = theta
+                changed = true
+            }
+            if let factor = ropeParams["partial_rotary_factor"] as? Double, json["partial_rotary_factor"] == nil {
+                json["partial_rotary_factor"] = factor
+                changed = true
+            }
+        }
+        
+        // 3. Disable MoE stub (Qwen3.5 9B is dense)
+        if json["num_experts"] == nil {
+            json["num_experts"] = 0
+            changed = true
+        }
+        
+        // v24.4: Add missing required fields for Qwen3NextConfiguration decoding
+        if json["num_experts_per_tok"] == nil {
+            json["num_experts_per_tok"] = 0
+            changed = true
+        }
+        if json["decoder_sparse_step"] == nil {
+            json["decoder_sparse_step"] = 1
+            changed = true
+        }
+        if json["shared_expert_intermediate_size"] == nil {
+            json["shared_expert_intermediate_size"] = json["intermediate_size"] ?? 0
+            changed = true
+        }
+        if json["moe_intermediate_size"] == nil {
+            json["moe_intermediate_size"] = 0
+            changed = true
+        }
+        
+        // v24.5: Patch quantization blocks for fused layers (in_proj_qkvz, in_proj_ba)
+        // mlx-swift-lm uses "quantization" key, while HF uses "quantization_config".
+        let quantKeys = ["quantization", "quantization_config"]
+        
+        // If "quantization" is missing but "quantization_config" exists, seed it
+        if json["quantization"] == nil, let quantConfig = json["quantization_config"] {
+            json["quantization"] = quantConfig
+            changed = true
+        }
+
+        for qKey in quantKeys {
+            if var quantDict = json[qKey] as? [String: Any] {
+                var quantChanged = false
+                // Iterate over a copy of keys to avoid modification during iteration
+                let keys = Array(quantDict.keys)
+                for key in keys {
+                    let config = quantDict[key]
+                    if key.hasSuffix(".linear_attn.in_proj_qkv") {
+                        let fusedKey = key + "z"
+                        if quantDict[fusedKey] == nil {
+                            quantDict[fusedKey] = config
+                            quantChanged = true
+                        }
+                    }
+                    if key.hasSuffix(".linear_attn.in_proj_b") {
+                        let fusedKey = key + "a"
+                        if quantDict[fusedKey] == nil {
+                            quantDict[fusedKey] = config
+                            quantChanged = true
+                        }
+                    }
+                }
+                if quantChanged {
+                    json[qKey] = quantDict
+                    changed = true
+                }
+            }
+        }
+
+        
+        // 4. Inject dummy vision config to satisfy MLXVLM validation if loaded via VLM path
+        // even if we route it to LLM path, having this prevents errors if any secondary check occurs.
+        if json["vision_config"] == nil {
+            json["vision_config"] = [
+                "depth": 1,
+                "embed_dim": 1,
+                "num_heads": 1,
+                "num_layers": 1
+            ]
+            changed = true
+        }
+        
+        if changed {
+            if let updated = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]) {
+                try? updated.write(to: url)
+                return true
+            }
+        }
+        
+        return false
     }
 }
 

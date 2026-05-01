@@ -43,7 +43,7 @@ EliteAgent features a precision-engineered suite of **38 native tools**, each id
 EliteAgent is built on the **UNO (Unified Native Orchestration)** principle: *No JSON, No Middleware, No Lag.*
 
 - **UNO Binary Protocol**: All inter-actor communication uses binary PropertyLists and memory-mapped buffers. JSON is strictly relegated to the MCP boundary as an external necessity.
-- **SharedMemoryPool**: Zero-copy transfer of multi-megabyte context blocks between the `InferenceActor` and `Orchestrator`.
+- **Zero-Copy Memory (SharedMemoryPool)**: Eliminates data copying between the `InferenceActor` and `Orchestrator` by passing raw memory pointers across Actor boundaries.
 - **Proactive UMA Watchdog**: A real-time hardware monitor that intelligently shrinks KV-caches or suspends non-critical tools when memory pressure exceeds 85%.
 - **Native Safari Automation**: High-fidelity web control via `AXUIElement` and `SafariJSBridge`, bypassing heavy dependencies like Playwright.
 - **MLX BPETokenizer**: Direct, hardware-accelerated tokenization on the Neural Engine/GPU, synchronized with Titan weights.
@@ -58,12 +58,12 @@ EliteAgent is built on the **UNO (Unified Native Orchestration)** principle: *No
 | **Concurrency** | Threads/Proccesses | **Distributed Actors (Swift 6)** |
 | **Browser** | Playwright (Chrome) | **Native Safari (AX + JSBridge)** |
 | **Memory** | Vector DB (Disk) | **Proactive UMA (Hardware-Aware)** |
-| **IPC** | JSON-RPC (String) | **UNO Binary (Zero-Copy)** |
+| **IPC** | JSON-RPC (String) | **UNO Binary (Zero-Copy Pointer)** |
 | **Tokenizer** | HuggingFace (CPU) | **MLX BPETokenizer (GPU/ANE)** |
 | **Tests** | Minimal | **28 Automated E2E Tests** |
 
 ### The macOS-Native Advantage
-Unlike bridge-based agents that rely on Python wrappers and browser automation layers, EliteAgent talks directly to the Darwin kernel and Apple Silicon hardware. This results in **4.5x lower latency** in tool execution and **60% lower power consumption** during active orchestration.
+Unlike bridge-based agents that rely on Python wrappers and browser automation layers, EliteAgent talks directly to the Darwin kernel and Apple Silicon hardware. This results in **4.5x lower latency** in tool execution and **60% lower power consumption** during active orchestration. v7.0 introduces the **Zero-Copy Highway**, allowing multi-gigabyte context transfers with negligible CPU overhead by leveraging the UMA (Unified Memory Architecture).
 
 ---
 

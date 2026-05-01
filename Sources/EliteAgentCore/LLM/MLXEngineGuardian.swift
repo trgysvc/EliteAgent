@@ -65,7 +65,7 @@ public actor MLXEngineGuardian {
             
             if vramUsage > 0.90 || thermalState == .serious || thermalState == .critical {
                 AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "[SMART CACHE] VRAM at \((vramUsage * 100).rounded())%. Purging cache.")
-                MLX.eval()
+                MLX.eval() // v24.8: Ensure graph is evaluated before clearing cache
                 MLX.Memory.clearCache()
             }
             
@@ -110,7 +110,7 @@ public actor MLXEngineGuardian {
         }
         
         AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "Emergency VRAM Purge Triggered.")
-        MLX.eval()
+        MLX.eval() // v24.8: Mandatory eval before purge
         MLX.Memory.clearCache()
     }
     
