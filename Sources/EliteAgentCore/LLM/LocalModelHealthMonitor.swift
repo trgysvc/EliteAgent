@@ -59,7 +59,15 @@ public actor LocalModelHealthMonitor {
         }
         
         let mbFree = Int(Int64(diag.availableBytes) / (1024 * 1024))
-        if mbFree < 1500 { // Reduced from 3.5GB to 1.5GB
+        
+        // v21.6: VLM Memory Overhead (Vision Tower ~500MB)
+        let vlmIndicators = ["Qwen3.5", "Qwen3-", "Qwen3VL", "Pixtral", "VL", "vision"]
+        let lowerID = modelID.lowercased()
+        let isVLM = vlmIndicators.contains { lowerID.contains($0.lowercased()) }
+        
+        let requiredMB = isVLM ? 2048 : 1500 // 1.5GB base + 500MB overhead for VLM
+        
+        if mbFree < requiredMB {
             return .lowMemory(availableMB: mbFree)
         }
         

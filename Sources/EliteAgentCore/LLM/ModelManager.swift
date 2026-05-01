@@ -220,7 +220,16 @@ public final class ModelManager: NSObject, ObservableObject {
         
         let mandatory = ["config.json", "tokenizer.json"]
         for file in mandatory {
-            if !FileManager.default.fileExists(atPath: modelURL.appendingPathComponent(file).path) { return false }
+            let fileURL = modelURL.appendingPathComponent(file)
+            if !FileManager.default.fileExists(atPath: fileURL.path) { return false }
+            
+            // v21.3: Content Validation (Prevent HF 401/404 error pages from passing as valid JSON)
+            if file == "config.json" {
+                guard let data = try? Data(contentsOf: fileURL),
+                      (try? JSONSerialization.jsonObject(with: data)) != nil else {
+                    return false
+                }
+            }
         }
         
         // Weight Detection (Support Shards)
@@ -269,7 +278,8 @@ public final class ModelManager: NSObject, ObservableObject {
         let mappings = [
             "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2\"",
             "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2\"",
-            "\"architectures\": [\n        \"Qwen3_5ForConditionalGeneration\"\n    ]": "\"architectures\": [\n        \"Qwen2ForCausalLM\"\n    ]"
+            "\"Qwen3_5ForConditionalGeneration\"": "\"Qwen2ForCausalLM\"",
+            "\"Qwen3_5ForCausalLM\"": "\"Qwen2ForCausalLM\""
         ]
         
         var changed = false
@@ -340,10 +350,16 @@ public final class ModelManager: NSObject, ObservableObject {
             if !FileManager.default.fileExists(atPath: destFile.path) {
                 AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching metadata: \(fileName)")
                 do {
-                    let (data, _) = try await URLSession.shared.data(from: fileURL)
-                    try data.write(to: destFile)
+                    let (data, response) = try await URLSession.shared.data(from: fileURL)
+                    if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                        try data.write(to: destFile)
+                        AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Metadata \(fileName) saved.")
+                    } else {
+                        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+                        AgentLogger.logAudit(level: .error, agent: "ModelManager", message: "Failed to fetch \(fileName): HTTP \(code)")
+                    }
                 } catch {
-                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Failed to fetch metadata: \(fileName)")
+                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Failed to fetch metadata: \(fileName) - \(error.localizedDescription)")
                 }
             }
         }
@@ -505,6 +521,12 @@ extension ModelManager: URLSessionDownloadDelegate {
     
     nonisolated public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         guard let taskID = downloadTask.taskDescription else { return }
+        
+        // v21.2: Check HTTP Response Status (Prevent Corrupted Configs)
+        if let response = downloadTask.response as? HTTPURLResponse, response.statusCode != 200 {
+            AgentLogger.logAudit(level: .error, agent: "ModelManager", message: "Download failed for \(taskID): HTTP \(response.statusCode)")
+            return
+        }
         
         // v21.2: Resolve base model ID from shard task ID
         let baseModelID = taskID.components(separatedBy: "_shard_").first ?? taskID

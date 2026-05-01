@@ -2,6 +2,7 @@ import Foundation
 @preconcurrency import MLX
 import MLXLLM
 import MLXLMCommon
+import MLXVLM
 import Metal
 import os
 
@@ -225,7 +226,7 @@ public actor InferenceActor {
         }
     }
     
-    public func loadModel(at url: URL) async throws {
+    public func loadModel(at url: URL, asVLM: Bool = false) async throws {
         self.clearCache()
         
         await MainActor.run {
@@ -236,15 +237,25 @@ public actor InferenceActor {
         await ModelManager.shared.patchConfigForArchitectureAliasing(id: url.lastPathComponent)
         
         // v24.2: KV Cache Context Window Enforcement
-        // The model's config.json defines max_position_embeddings which MLX uses to
-        // statically allocate the KV Cache at load time. For Qwen 2.5 7B, the default
-        // is 32768 (32K) tokens, which allocates ~6-8GB of extra RAM on top of the 8.5GB weights,
-        // causing swap on 16GB devices. We patch this to the autoTune-recommended value BEFORE
-        // the model is loaded so MLX allocates the correct (smaller) KV Cache.
         patchContextWindow(modelDirectory: url)
         
         let config = ModelConfiguration(directory: url)
-        self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: config)
+        
+        // v21.5: Dual-Path Loader Selection with Strict Error Handling (No Fallback)
+        do {
+            if asVLM {
+                self.modelContainer = try await VLMModelFactory.shared.loadContainer(configuration: config)
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "VLM Container Loaded Successfully.")
+            } else {
+                self.modelContainer = try await LLMModelFactory.shared.loadContainer(configuration: config)
+                AgentLogger.logAudit(level: .info, agent: "titan", message: "LLM Container Loaded Successfully.")
+            }
+        } catch {
+            AgentLogger.logAudit(level: .error, agent: "titan", message: "Model Loading Failed: \(error.localizedDescription)")
+            self.loadedModelID = nil
+            throw error // Ensure architecture mismatch is reported, NO FALLBACK
+        }
+        
         self.nativeTokenizer = try BPETokenizer.load(from: url)
         self.loadedModelID = url.lastPathComponent
         

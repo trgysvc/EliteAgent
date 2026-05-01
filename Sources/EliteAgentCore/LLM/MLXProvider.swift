@@ -42,7 +42,12 @@ public actor MLXProvider: LocalLLMProvider {
             // signal our intent here for the UI layer.
             self.status = .priming
             
-            try await InferenceActor.shared.loadModel(at: modelURL)
+            // v21.5: VLM Detection Logic (Case-Insensitive)
+            let vlmIndicators = ["qwen3.5", "qwen3-", "qwen3vl", "pixtral", "vl", "-vision"]
+            let lowerID = modelName.lowercased()
+            let asVLM = vlmIndicators.contains { lowerID.contains($0) }
+            
+            try await InferenceActor.shared.loadModel(at: modelURL, asVLM: asVLM)
             self.status = .ready
         } catch {
             self.status = .error

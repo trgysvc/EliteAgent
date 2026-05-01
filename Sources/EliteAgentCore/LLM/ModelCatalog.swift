@@ -96,17 +96,17 @@ public struct ModelRegistry {
         ),
         
         ModelCatalog(
-            id: "qwen-3.5-7b-4bit",
+            id: "qwen-3.5-9b-4bit",
             author: "mlx-community",
-            name: "Qwen 3.5 7B",
-            size: "4.5 GB",
+            name: "Qwen 3.5 9B",
+            size: "5.5 GB",
             quantization: "4-bit",
             minRAM: "12 GB",
             recommendedContext: "32K",
-            downloadURL: "https://huggingface.co/mlx-community/Qwen3.5-7B-Instruct-4bit/resolve/main/model.safetensors",
-            sha256: "3f9a...", 
-            estimatedSpeed: "~55 tok/s on M4",
-            provider: .localTitanEngine(modelID: "qwen-3.5-7b-4bit")
+            downloadURL: "https://huggingface.co/mlx-community/Qwen3.5-9B-OptiQ-4bit/resolve/main/model-00001-of-00002.safetensors",
+            sha256: "938d...", 
+            estimatedSpeed: "~50 tok/s on M4",
+            provider: .localTitanEngine(modelID: "qwen-3.5-9b-4bit")
         ),
         
         ModelCatalog(

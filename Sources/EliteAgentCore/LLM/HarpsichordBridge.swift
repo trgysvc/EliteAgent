@@ -1,4 +1,7 @@
 import Foundation
+import MLXLLM
+import MLXVLM
+import MLXLMCommon
 
 public enum RoutingError: Error, Sendable, CustomStringConvertible {
     case cloudBlockedByPrivacyGuard
@@ -136,11 +139,36 @@ public actor HarpsichordBridge {
                     }
                     continuation.finish()
                 } catch {
-                    continuation.yield(.error(error.localizedDescription))
-                    continuation.finish()
                 }
             }
         }
+    }
+
+    public func loadModel(_ modelId: String, at url: URL) async throws {
+        if isVLMModel(modelId) {
+            try await loadVLMModel(modelId, at: url)
+        } else {
+            try await loadLLMModel(modelId, at: url)
+        }
+    }
+    
+    private func isVLMModel(_ id: String) -> Bool {
+        let vlmIndicators = [
+            "Qwen3.5", "Qwen3-",     // Qwen 3.x serisi
+            "Qwen3VL", "Qwen2VL",    // Vision variants
+            "Pixtral", "LFM2VL",     // Diğer VLM'ler
+            "-VL", "vision"           // Genel indicators
+        ]
+        let lowercaseId = id.lowercased()
+        return vlmIndicators.contains { lowercaseId.contains($0.lowercased()) }
+    }
+    
+    private func loadLLMModel(_ id: String, at url: URL) async throws {
+        try await InferenceActor.shared.loadModel(at: url)
+    }
+    
+    private func loadVLMModel(_ id: String, at url: URL) async throws {
+        try await InferenceActor.shared.loadModel(at: url, asVLM: true)
     }
 }
 
