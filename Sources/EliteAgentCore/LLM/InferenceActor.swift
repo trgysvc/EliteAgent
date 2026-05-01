@@ -228,22 +228,26 @@ public actor InferenceActor {
     
     public func loadModel(at url: URL, asVLM: Bool = false) async throws {
         self.clearCache()
-        
+
         await MainActor.run {
             ModelSetupManager.shared.loadState = .transferringToVRAM
             ModelSetupManager.shared.isModelReady = false
         }
         // v10.8: Structural Architecture Aliasing
         await ModelManager.shared.patchConfigForArchitectureAliasing(id: url.lastPathComponent)
-        
+
         // v24.2: KV Cache Context Window Enforcement
         patchContextWindow(modelDirectory: url)
-        
+
         let config = ModelConfiguration(directory: url)
-        
-        // v21.5: Dual-Path Loader Selection with Strict Error Handling (No Fallback)
+
+        // v24.3: Auto-detect factory from config.json model_type (authoritative over caller hint).
+        // ModelManager.load() always passes asVLM=false; this fixes the gap for VLM models loaded
+        // via the switch-model UI path (ModelManager.switchTo → load → InferenceActor.loadModel).
+        let effectiveAsVLM = detectVLMFromConfig(at: url) ?? asVLM
+
         do {
-            if asVLM {
+            if effectiveAsVLM {
                 self.modelContainer = try await VLMModelFactory.shared.loadContainer(configuration: config)
                 AgentLogger.logAudit(level: .info, agent: "titan", message: "VLM Container Loaded Successfully.")
             } else {
@@ -316,10 +320,28 @@ public actor InferenceActor {
         }
     }
     
+    /// Reads model_type from config.json to determine factory path.
+    /// Returns nil if config is unreadable (caller's asVLM is used as fallback).
+    private func detectVLMFromConfig(at url: URL) -> Bool? {
+        let configURL = url.appendingPathComponent("config.json")
+        guard let data = try? Data(contentsOf: configURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelType = json["model_type"] as? String else {
+            return nil
+        }
+        let vlmModelTypes: Set<String> = [
+            "qwen2_vl", "qwen2_5_vl", "qwen3_vl",
+            "paligemma", "llava_qwen2", "fastvlm",
+            "pixtral", "mistral3", "gemma3",
+            "smolvlm", "idefics3", "lfm2_vl", "lfm2-vl"
+        ]
+        return vlmModelTypes.contains(modelType)
+    }
+
     public func generate(
-        messages: [Message], 
-        systemPrompt: String? = nil, 
-        maxTokens: Int = 500, 
+        messages: [Message],
+        systemPrompt: String? = nil,
+        maxTokens: Int = 500,
         useSafeMode: Bool = false,
         untrustedContext: [UntrustedData]? = nil
     ) -> AsyncStream<String> {

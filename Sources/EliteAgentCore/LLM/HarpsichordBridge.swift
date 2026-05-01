@@ -153,14 +153,16 @@ public actor HarpsichordBridge {
     }
     
     private func isVLMModel(_ id: String) -> Bool {
+        let lower = id.lowercased()
+        let normalized = lower.replacingOccurrences(of: "-", with: "")
+        // Match explicit VLM model families only; qwen3/qwen3.5 are text-only models.
         let vlmIndicators = [
-            "Qwen3.5", "Qwen3-",     // Qwen 3.x serisi
-            "Qwen3VL", "Qwen2VL",    // Vision variants
-            "Pixtral", "LFM2VL",     // Diğer VLM'ler
-            "-VL", "vision"           // Genel indicators
+            "qwen2vl", "qwen25vl", "qwen3vl",
+            "pixtral", "lfm2vl", "llava", "fastvlm",
+            "smolvlm", "paligemma", "idefics"
         ]
-        let lowercaseId = id.lowercased()
-        return vlmIndicators.contains { lowercaseId.contains($0.lowercased()) }
+        if vlmIndicators.contains(where: { normalized.contains($0) }) { return true }
+        return lower.contains("-vl-") || lower.hasSuffix("-vl") || lower.contains("-vision-")
     }
     
     private func loadLLMModel(_ id: String, at url: URL) async throws {

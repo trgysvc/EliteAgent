@@ -243,3 +243,20 @@ Used Obsidian-style `[[filename]]` links to create a holistic "Mind Map" of the 
 **Next:** 
 Continue with Phase 5: Blender Bridge Stabilization and further native tool optimizations.
 
+
+### [2026-05-01] — fix: Qwen 3.5 9B model yüklenemiyor (Unsupported model type: qwen2_vl)
+**What changed:**
+- `InferenceActor.loadModel(at:asVLM:)` artık config.json'dan `model_type` okuyarak VLM/LLM fabrikasını otomatik seçiyor (`detectVLMFromConfig`). `ModelManager.switchTo → load` yolu her zaman `asVLM: false` geçirdiğinden bu bypass ediliyordu.
+- `HarpsichordBridge.isVLMModel` ve `MLXProvider.loadModel` içindeki VLM indikatör listelerinden hatalı `"qwen3.5"` ve `"qwen3"` girişleri kaldırıldı (bunlar metin modelleri); artık `"qwen2vl"`, `"qwen3vl"`, `-vl-` gibi kesin VLM pattern'leri aranıyor.
+- `ModelManager.patchConfigForArchitectureAliasing`'den `"qwen2"` → `"qwen2_vl"` dönüşümü kaldırıldı; bu dönüşüm metin modellerini bozuyor ve LLMModelFactory hatası üretiyor.
+
+**Files modified:**
+- `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+- `Sources/EliteAgentCore/LLM/HarpsichordBridge.swift`
+- `Sources/EliteAgentCore/LLM/MLXProvider.swift`
+- `Sources/EliteAgentCore/LLM/ModelManager.swift`
+
+**Decision made:**
+Factory seçimi (LLM vs VLM) artık model ID pattern eşleşmesine değil, config.json'daki `model_type` alanına dayanıyor. Bu yaklaşım tüm model yükleme yollarında (UI switcher, MLXProvider, HarpsichordBridge) tutarlıdır.
+
+**Next:** VLM text-only inference testi (Qwen2-VL ile görüntüsüz chat akışı çalışıyor mu doğrulanmalı).

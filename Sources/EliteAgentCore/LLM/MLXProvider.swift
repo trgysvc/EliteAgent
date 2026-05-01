@@ -42,10 +42,16 @@ public actor MLXProvider: LocalLLMProvider {
             // signal our intent here for the UI layer.
             self.status = .priming
             
-            // v21.5: VLM Detection Logic (Case-Insensitive)
-            let vlmIndicators = ["qwen3.5", "qwen3-", "qwen3vl", "pixtral", "vl", "-vision"]
-            let lowerID = modelName.lowercased()
-            let asVLM = vlmIndicators.contains { lowerID.contains($0) }
+            // v21.5 / v24.3: VLM Detection — match explicit VLM families only.
+            // qwen3 and qwen3.5 are text-only; actual VLMs require a -vl- suffix or known VLM family name.
+            // InferenceActor.loadModel also auto-detects from config.json as a secondary guard.
+            let lowerName = modelName.lowercased()
+            let normalizedID = lowerName.replacingOccurrences(of: "-", with: "")
+            let vlmIndicators = ["qwen2vl", "qwen25vl", "qwen3vl", "pixtral", "lfm2vl", "llava", "fastvlm", "smolvlm", "paligemma", "idefics"]
+            let asVLM = vlmIndicators.contains { normalizedID.contains($0) }
+                     || lowerName.contains("-vl-") || lowerName.hasSuffix("-vl") || lowerName.contains("-vision-")
+            
+            AgentLogger.logAudit(level: .info, agent: "titan", message: "Model Loading Path Selected: \(asVLM ? "VLM (Multimodal Bridge)" : "LLM (Standard Text)") for \(modelName)")
             
             try await InferenceActor.shared.loadModel(at: modelURL, asVLM: asVLM)
             self.status = .ready

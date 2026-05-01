@@ -26,12 +26,9 @@ public final class ModelManager: NSObject, ObservableObject {
     public let modelsDirectory: URL
     private var session: URLSession!
     
-    private let mandatoryFiles = [
-        "config.json",
-        "tokenizer.json",
-        "tokenizer_config.json",
-        "special_tokens_map.json"
-    ]
+    // v21.8: Split metadata into critical and optional to handle repo variations
+    private let criticalMetadata = ["config.json", "tokenizer.json", "tokenizer_config.json"]
+    private let optionalMetadata = ["special_tokens_map.json", "preprocessor_config.json"]
     
     private override init() {
         self.modelsDirectory = PathConfiguration.shared.modelsURL
@@ -275,17 +272,34 @@ public final class ModelManager: NSObject, ObservableObject {
         var modifiedContent = content
         
         // 1. Architecture Aliasing
-        let mappings = [
-            "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2\"",
-            "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2\"",
-            "\"Qwen3_5ForConditionalGeneration\"": "\"Qwen2ForCausalLM\"",
-            "\"Qwen3_5ForCausalLM\"": "\"Qwen2ForCausalLM\""
+        // Only apply VLM-specific class renames for confirmed VLM model IDs.
+        // IMPORTANT: Never map qwen2 → qwen2_vl; qwen2 is a valid text model_type and
+        // LLMModelFactory will reject qwen2_vl ("Unsupported model type: qwen2_vl").
+        // Factory selection (LLM vs VLM) is handled by InferenceActor.detectVLMFromConfig.
+        let vlmMappings = [
+            "\"model_type\": \"qwen3_5\"": "\"model_type\": \"qwen2_vl\"",
+            "\"model_type\": \"qwen3_5_text\"": "\"model_type\": \"qwen2_vl\"",
+            "\"Qwen3_5ForConditionalGeneration\"": "\"Qwen2VLForConditionalGeneration\""
         ]
-        
+
         var changed = false
-        for (pattern, replacement) in mappings {
-            if modifiedContent.contains(pattern) {
-                modifiedContent = modifiedContent.replacingOccurrences(of: pattern, with: replacement)
+        let lowerID = id.lowercased()
+        let normalizedID = lowerID.replacingOccurrences(of: "-", with: "")
+        let isVLMByID = normalizedID.contains("qwen2vl") || normalizedID.contains("qwen25vl") ||
+                        normalizedID.contains("qwen3vl") || normalizedID.contains("vl") ||
+                        normalizedID.contains("vision")
+
+        if isVLMByID {
+            for (pattern, replacement) in vlmMappings {
+                if modifiedContent.contains(pattern) {
+                    modifiedContent = modifiedContent.replacingOccurrences(of: pattern, with: replacement)
+                    changed = true
+                }
+            }
+        } else {
+            // Standard LLM patches: map non-standard qwen3_5 type to the supported qwen2 type
+            if modifiedContent.contains("\"model_type\": \"qwen3_5\"") {
+                modifiedContent = modifiedContent.replacingOccurrences(of: "\"model_type\": \"qwen3_5\"", with: "\"model_type\": \"qwen2\"")
                 changed = true
             }
         }
@@ -341,14 +355,13 @@ public final class ModelManager: NSObject, ObservableObject {
         let destinationDir = modelsDirectory.appendingPathComponent(model.id)
         try? FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
         
-        let filesToDownload = mandatoryFiles // v21.0: Strictly metadata only. No shards here.
-        
-        for fileName in filesToDownload {
+        // 1. Download Critical Metadata
+        for fileName in criticalMetadata {
             let fileURL = baseRepoURL.appendingPathComponent(fileName)
             let destFile = destinationDir.appendingPathComponent(fileName)
             
             if !FileManager.default.fileExists(atPath: destFile.path) {
-                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching metadata: \(fileName)")
+                AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Fetching critical metadata: \(fileName)")
                 do {
                     let (data, response) = try await URLSession.shared.data(from: fileURL)
                     if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
@@ -356,10 +369,29 @@ public final class ModelManager: NSObject, ObservableObject {
                         AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Metadata \(fileName) saved.")
                     } else {
                         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-                        AgentLogger.logAudit(level: .error, agent: "ModelManager", message: "Failed to fetch \(fileName): HTTP \(code)")
+                        AgentLogger.logAudit(level: .error, agent: "ModelManager", message: "Failed to fetch critical \(fileName): HTTP \(code)")
+                        // For critical files, we might want to throw or handle strictly
                     }
                 } catch {
-                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Failed to fetch metadata: \(fileName) - \(error.localizedDescription)")
+                    AgentLogger.logAudit(level: .warn, agent: "ModelManager", message: "Error fetching critical metadata: \(fileName) - \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        // 2. Download Optional Metadata (Best effort)
+        for fileName in optionalMetadata {
+            let fileURL = baseRepoURL.appendingPathComponent(fileName)
+            let destFile = destinationDir.appendingPathComponent(fileName)
+            
+            if !FileManager.default.fileExists(atPath: destFile.path) {
+                do {
+                    let (data, response) = try await URLSession.shared.data(from: fileURL)
+                    if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                        try data.write(to: destFile)
+                        AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Optional metadata \(fileName) saved.")
+                    }
+                } catch {
+                    // Silently ignore optional metadata failures
                 }
             }
         }
