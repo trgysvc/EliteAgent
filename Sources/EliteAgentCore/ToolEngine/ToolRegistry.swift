@@ -101,23 +101,17 @@ public actor ToolRegistry {
             
             AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "🛠 Executing Tool: \(tool.name) | Params: \(normalizedParams)")
             
-            // v7.0: MCP Tool Routing (Native Sovereign)
-            // Detects the 'serverName__toolName' pattern for standardized MCP tool execution.
-            if toolCall.tool.contains("__") {
-                let parts = toolCall.tool.components(separatedBy: "__")
-                if parts.count == 2 {
-                    let server = parts[0]
-                    let toolName = parts[1]
-                    AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "📡 Routing to MCP Server: \(server) | Tool: \(toolName)")
-                    
-                    return try await MCPClientActor.shared.executeTool(
-                        sessionId: session.id,
-                        serverName: server,
-                        tool: toolName,
-                        params: normalizedParams.mapValues { $0.value }
-                    )
-                }
-            }
+            // v7.0: MCP Tool Routing (Native Sovereign) — DISABLED: MCPClientActor pending MCP SDK integration
+            // TODO Phase 3: Re-enable when ModelContextProtocol swift-sdk is properly configured
+            // if toolCall.tool.contains("__") {
+            //     let parts = toolCall.tool.components(separatedBy: "__")
+            //     if parts.count == 2 {
+            //         let server = parts[0]
+            //         let toolName = parts[1]
+            //         AgentLogger.logAudit(level: .info, agent: "ToolRegistry", message: "📡 Routing to MCP Server: \(server) | Tool: \(toolName)")
+            //         return try await MCPClientActor.shared.executeTool(...)
+            //     }
+            // }
             
             let result = try await tool.execute(params: normalizedParams, session: session)
             

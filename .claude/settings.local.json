@@ -3,7 +3,9 @@
     "allow": [
       "Bash(swift test *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'docs: Phase 1 DEVLOG entry - Proactive UMA Watchdog completion *)"
+      "Bash(git commit -m 'docs: Phase 1 DEVLOG entry - Proactive UMA Watchdog completion *)",
+      "Bash(swift build *)",
+      "Bash(git commit -m 'fix: disable MCP SDK integration pending proper module configuration *)"
     ]
   }
 }
