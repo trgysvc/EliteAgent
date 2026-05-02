@@ -18,8 +18,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.31.3")),
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "3.31.3")),
-        .package(url: "https://github.com/DePasqualeOrg/swift-tokenizers-mlx", from: "0.2.0"),
-        .package(url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
+        .package(name: "swift-tokenizers-mlx", url: "https://github.com/DePasqualeOrg/swift-tokenizers-mlx", from: "0.2.0"),
+        .package(name: "swift-hf-api-mlx", url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
         .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main")
