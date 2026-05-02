@@ -8,7 +8,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "EliteAgent", targets: ["EliteAgent"]),
-        .library(name: "EliteAgentCore", type: .dynamic, targets: ["EliteAgentCore"]),
+        .library(name: "EliteAgentCore", targets: ["EliteAgentCore"]),
         .library(name: "EliteAgentUI", targets: ["EliteAgentUI"]),
         .executable(name: "EliteAgentXPC", targets: ["EliteAgentXPC"]),
         .executable(name: "elite", targets: ["elite"]),
@@ -22,7 +22,8 @@ let package = Package(
         .package(name: "swift-hf-api-mlx", url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
         .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main"),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main")
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
+        .package(url: "https://github.com/ibireme/yyjson.git", from: "0.12.0")
     ],
     targets: [
         .executableTarget(
@@ -54,7 +55,8 @@ let package = Package(
                 .product(name: "MLXLMTokenizers", package: "swift-tokenizers-mlx"),
                 .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
-                .product(name: "MCP", package: "swift-sdk")
+                .product(name: "MCP", package: "swift-sdk"),
+                .product(name: "yyjson", package: "yyjson")
             ],
             path: "Sources/EliteAgentCore",
             resources: [

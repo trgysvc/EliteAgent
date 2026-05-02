@@ -105,3 +105,9 @@
 **Files modified:** InferenceActor.swift, MLXProvider.swift, HarpsichordBridge.swift, Package.swift, EliteService/main.swift, EliteServiceProtocol.swift, ModelError.swift
 **Decision made:** Strictly adhered to v3 official documentation, avoiding any simplification in favor of modular, compile-time safe patterns as required by the 'Native Sovereign' v7.1 specification.
 **Next:** Execute marathon validation suite (`Scripts/full_audit_runner.sh`) to verify agentic tool-calling reliability under the new v3 engine.
+
+### [2026-05-02] — Resolved Package.swift Deprecated Warnings
+**What changed:** Removed deprecated `name:` parameter from package dependencies for `swift-tokenizers-mlx` and `swift-hf-api-mlx` in `Package.swift`. Verified build stability.
+**Files modified:** `Package.swift`
+**Decision made:** Updated to modern Swift Package Manager syntax to eliminate compiler warnings and ensure compatibility with Swift 6 toolchain.
+**Next:** Proceed with marathon validation suite as planned.
