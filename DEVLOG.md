@@ -110,4 +110,9 @@
 **What changed:** Removed deprecated `name:` parameter from package dependencies for `swift-tokenizers-mlx` and `swift-hf-api-mlx` in `Package.swift`. Verified build stability.
 **Files modified:** `Package.swift`
 **Decision made:** Updated to modern Swift Package Manager syntax to eliminate compiler warnings and ensure compatibility with Swift 6 toolchain.
-**Next:** Proceed with marathon validation suite as planned.
+
+### [2026-05-02] — Comprehensive IDE Synchronization & Transitive Dependency Resolution
+**What changed:** Manually synchronized the `.xcodeproj` (pbxproj) file with the current `Package.swift` state. Injected missing `MLXLMTokenizers`, `MLXLMHFAPI`, `MLXHuggingFace`, `MCP`, and `yyjson` dependencies directly into the project metadata. Resolved the `Missing required module '_NumericsShims'` error by explicitly linking `Numerics` across all major targets (App, Core, UI, XPC, CLI). Upgraded toolchain requirement to Swift 6.1.
+**Files modified:** `Package.swift`, `EliteAgent.xcodeproj/project.pbxproj`, `Project_Wiki/wiki/v3_migration_guide.md`, `Project_Wiki/DECISIONS.md`
+**Decision made:** Rejected "hacky" `unsafeFlags` for module mapping in favor of standardized, manual surgery on the `.xcodeproj` file to ensure 100% IDE stability and compliance with official Apple/MLX documentation. Enforced an "Explicit Dependency" policy for transitive modules (like Numerics) to prevent internal shim resolution failures in the Swift 6 compiler.
+**Next:** Run the `Marathon` validation suite to verify end-to-end agentic workflow stability under the now fully stabilized IDE/CLI environment.

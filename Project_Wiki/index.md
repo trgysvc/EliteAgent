@@ -16,6 +16,7 @@ EliteAgent'ın temel amacı, Apple ekosisteminin sunduğu yerel donanım güçle
 - [Proje Gelişim Tarihçesi (Evolution)](wiki/evolution.md)
 - [Gap Analizi ve Gelişim](wiki/gap_analysis.md)
 - [Stratejik Performans İyileştirme Önerileri (v7.0+)](wiki/performance_optimization_report.md)
+- [v3-Native Migration Rehberi (v7.1+)](wiki/v3_migration_guide.md)
 
 ### 📚 Temel Kavramlar ve Teknik Standartlar (Concepts)
 - [Distributed Actors ve UNO İzolasyon Mimarisi](concepts/distributed_actors.md)

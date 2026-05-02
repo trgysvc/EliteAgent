@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 import PackageDescription
 
 let package = Package(
@@ -18,8 +18,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.31.3")),
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "3.31.3")),
-        .package(name: "swift-tokenizers-mlx", url: "https://github.com/DePasqualeOrg/swift-tokenizers-mlx", from: "0.2.0"),
-        .package(name: "swift-hf-api-mlx", url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
+        .package(url: "https://github.com/DePasqualeOrg/swift-tokenizers-mlx", from: "0.2.0"),
+        .package(url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
         .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
@@ -33,7 +33,8 @@ let package = Package(
                 "EliteAgentUI",
                 .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "Sparkle", package: "Sparkle"),
-                .product(name: "AudioIntelligence", package: "audiointelligence")
+                .product(name: "AudioIntelligence", package: "audiointelligence"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/EliteAgent"
         ),
@@ -47,6 +48,7 @@ let package = Package(
                 .product(name: "MLXFast", package: "mlx-swift"),
                 .product(name: "MLXLinalg", package: "mlx-swift"),
                 .product(name: "MLXFFT", package: "mlx-swift"),
+                .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
@@ -56,7 +58,8 @@ let package = Package(
                 .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
                 .product(name: "MCP", package: "swift-sdk"),
-                .product(name: "yyjson", package: "yyjson")
+                .product(name: "yyjson", package: "yyjson"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/EliteAgentCore",
             resources: [
@@ -69,7 +72,8 @@ let package = Package(
             name: "EliteAgentUI",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift")
+                .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/EliteAgentUI"
         ),
@@ -87,7 +91,8 @@ let package = Package(
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXVLM", package: "mlx-swift-lm"),
-                .product(name: "MLXEmbedders", package: "mlx-swift-lm")
+                .product(name: "MLXEmbedders", package: "mlx-swift-lm"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/EliteAgentXPC"
         ),
@@ -96,7 +101,8 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "MLXLLM", package: "mlx-swift-lm")
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/elite"
         ),
@@ -109,7 +115,8 @@ let package = Package(
             name: "uma-bench",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift")
+                .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/uma-bench"
         ),
@@ -118,7 +125,8 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "MLXLLM", package: "mlx-swift-lm")
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/EliteService"
         )

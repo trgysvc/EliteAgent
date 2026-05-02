@@ -41,3 +41,18 @@
 - **Decision:** Prioritize `AXUIElement` (Accessibility API) for browser interaction, using `SafariJSBridge` (JavaScript) only as a fallback.
 - **Rationale:** Native AX interaction is more robust against complex DOM structures (like SPAs) and bypasses many anti-automation detections.
 - **Impact:** Higher fidelity automation for sites like Gmail, GitHub, and Google Drive.
+
+## [2026-05-02] ADR-009: Swift 6.1 Toolchain Adoption
+- **Decision:** Mandatory upgrade to Swift 6.1 toolchain for all EliteAgent components.
+- **Rationale:** Required to support the new SPM **Traits** feature utilized by `swift-tokenizers-mlx` in the MLX-LM v3.31.3 ecosystem.
+- **Impact:** Ensures compatibility with v3-Native architectures while enabling finer control over package feature flags.
+
+## [2026-05-02] ADR-010: Granular Dependency Decoupling
+- **Decision:** Replace monolithic `mlx-swift-lm` imports with granular products: `MLXLMTokenizers`, `MLXLMHFAPI`, and `MLXHuggingFace`.
+- **Rationale:** Reduces binary size, minimizes transitive dependency bloat, and aligns with the official MLX-LM v3 modularity standards.
+- **Impact:** More stable build graph and faster incremental compilation in Xcode.
+
+## [2026-05-02] ADR-011: Standardized SPM-IDE Synchronization
+- **Decision:** Perform manual surgery on `.xcodeproj` (pbxproj) to synchronize with `Package.swift` rather than using hacky `unsafeFlags` or temporary workarounds.
+- **Rationale:** Apple's deprecation of `generate-xcodeproj` necessitates maintaining the project file manually for IDE support. Standardized linking (PBXBuildFile, XCRemoteSwiftPackageReference) ensures long-term IDE stability.
+- **Impact:** Eliminates "No such module" and "Damaged project" errors in Xcode without sacrificing modern SPM features.
