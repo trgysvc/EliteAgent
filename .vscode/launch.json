@@ -79,6 +79,26 @@
             "target": "uma-bench",
             "configuration": "release",
             "preLaunchTask": "swift: Build Release uma-bench"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Debug EliteService",
+            "target": "EliteService",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug EliteService"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:EliteAgent}",
+            "name": "Release EliteService",
+            "target": "EliteService",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release EliteService"
         }
     ]
 }

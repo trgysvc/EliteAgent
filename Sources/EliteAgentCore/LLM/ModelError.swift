@@ -17,3 +17,7 @@ public enum ModelError: Error, LocalizedError {
         }
     }
 }
+
+public enum InferenceError: Error, Sendable {
+    case localProviderUnavailable(String)
+}

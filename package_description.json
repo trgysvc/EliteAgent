@@ -1,0 +1,561 @@
+{
+  "dependencies" : [
+    {
+      "identity" : "mlx-swift",
+      "requirement" : {
+        "range" : [
+          {
+            "lower_bound" : "0.31.3",
+            "upper_bound" : "0.32.0"
+          }
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/ml-explore/mlx-swift"
+    },
+    {
+      "identity" : "mlx-swift-lm",
+      "requirement" : {
+        "range" : [
+          {
+            "lower_bound" : "3.31.3",
+            "upper_bound" : "3.32.0"
+          }
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/ml-explore/mlx-swift-lm"
+    },
+    {
+      "identity" : "swift-tokenizers-mlx",
+      "requirement" : {
+        "range" : [
+          {
+            "lower_bound" : "0.2.0",
+            "upper_bound" : "1.0.0"
+          }
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/DePasqualeOrg/swift-tokenizers-mlx"
+    },
+    {
+      "identity" : "swift-hf-api-mlx",
+      "requirement" : {
+        "range" : [
+          {
+            "lower_bound" : "0.2.0",
+            "upper_bound" : "1.0.0"
+          }
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/DePasqualeOrg/swift-hf-api-mlx"
+    },
+    {
+      "identity" : "sparkle",
+      "requirement" : {
+        "range" : [
+          {
+            "lower_bound" : "2.6.0",
+            "upper_bound" : "3.0.0"
+          }
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/sparkle-project/Sparkle"
+    },
+    {
+      "identity" : "audiointelligence",
+      "requirement" : {
+        "branch" : [
+          "main"
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/trgysvc/audiointelligence.git"
+    },
+    {
+      "identity" : "swift-sdk",
+      "requirement" : {
+        "branch" : [
+          "main"
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/modelcontextprotocol/swift-sdk.git"
+    }
+  ],
+  "manifest_display_name" : "EliteAgent",
+  "name" : "EliteAgent",
+  "path" : "/Users/trgysvc/Developer/EliteAgent",
+  "platforms" : [
+    {
+      "name" : "macos",
+      "version" : "15.0"
+    }
+  ],
+  "products" : [
+    {
+      "name" : "EliteAgent",
+      "targets" : [
+        "EliteAgent"
+      ],
+      "type" : {
+        "executable" : null
+      }
+    },
+    {
+      "name" : "EliteAgentCore",
+      "targets" : [
+        "EliteAgentCore"
+      ],
+      "type" : {
+        "library" : [
+          "dynamic"
+        ]
+      }
+    },
+    {
+      "name" : "EliteAgentUI",
+      "targets" : [
+        "EliteAgentUI"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    },
+    {
+      "name" : "EliteAgentXPC",
+      "targets" : [
+        "EliteAgentXPC"
+      ],
+      "type" : {
+        "executable" : null
+      }
+    },
+    {
+      "name" : "elite",
+      "targets" : [
+        "elite"
+      ],
+      "type" : {
+        "executable" : null
+      }
+    },
+    {
+      "name" : "EliteService",
+      "targets" : [
+        "EliteService"
+      ],
+      "type" : {
+        "executable" : null
+      }
+    },
+    {
+      "name" : "uma-bench",
+      "targets" : [
+        "uma-bench"
+      ],
+      "type" : {
+        "executable" : null
+      }
+    }
+  ],
+  "targets" : [
+    {
+      "c99name" : "uma_bench",
+      "module_type" : "SwiftTarget",
+      "name" : "uma-bench",
+      "path" : "Sources/uma-bench",
+      "product_dependencies" : [
+        "MLX"
+      ],
+      "product_memberships" : [
+        "uma-bench"
+      ],
+      "sources" : [
+        "main.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore"
+      ],
+      "type" : "executable"
+    },
+    {
+      "c99name" : "elite",
+      "module_type" : "SwiftTarget",
+      "name" : "elite",
+      "path" : "Sources/elite",
+      "product_dependencies" : [
+        "MLX",
+        "MLXLLM"
+      ],
+      "product_memberships" : [
+        "elite"
+      ],
+      "sources" : [
+        "main.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore"
+      ],
+      "type" : "executable"
+    },
+    {
+      "c99name" : "EliteService",
+      "module_type" : "SwiftTarget",
+      "name" : "EliteService",
+      "path" : "Sources/EliteService",
+      "product_dependencies" : [
+        "MLX",
+        "MLXLLM"
+      ],
+      "product_memberships" : [
+        "EliteService"
+      ],
+      "sources" : [
+        "main.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore"
+      ],
+      "type" : "executable"
+    },
+    {
+      "c99name" : "EliteAgentXPC",
+      "module_type" : "SwiftTarget",
+      "name" : "EliteAgentXPC",
+      "path" : "Sources/EliteAgentXPC",
+      "product_dependencies" : [
+        "MLX",
+        "MLXRandom",
+        "MLXNN",
+        "MLXOptimizers",
+        "MLXFast",
+        "MLXLinalg",
+        "MLXFFT",
+        "MLXLLM",
+        "MLXLMCommon",
+        "MLXVLM",
+        "MLXEmbedders"
+      ],
+      "product_memberships" : [
+        "EliteAgentXPC"
+      ],
+      "sources" : [
+        "main.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore"
+      ],
+      "type" : "executable"
+    },
+    {
+      "c99name" : "EliteAgentUI",
+      "module_type" : "SwiftTarget",
+      "name" : "EliteAgentUI",
+      "path" : "Sources/EliteAgentUI",
+      "product_dependencies" : [
+        "MLX"
+      ],
+      "product_memberships" : [
+        "EliteAgent",
+        "EliteAgentUI"
+      ],
+      "sources" : [
+        "Views/NeuralSightCards.swift",
+        "Views/TulparView.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore"
+      ],
+      "type" : "library"
+    },
+    {
+      "c99name" : "EliteAgentTests",
+      "module_type" : "SwiftTarget",
+      "name" : "EliteAgentTests",
+      "path" : "Tests/EliteAgentTests",
+      "sources" : [
+        "AudioAnalysisExecution.swift",
+        "EliteAgentTests.swift",
+        "EliteMarathonTests.swift",
+        "ExtraToolTests.swift",
+        "FileToolTests.swift",
+        "ProactiveMemoryPressureMonitorTests.swift",
+        "RealWorldTests.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore"
+      ],
+      "type" : "test"
+    },
+    {
+      "c99name" : "EliteAgentCore",
+      "module_type" : "SwiftTarget",
+      "name" : "EliteAgentCore",
+      "path" : "Sources/EliteAgentCore",
+      "product_dependencies" : [
+        "MLX",
+        "MLXRandom",
+        "MLXNN",
+        "MLXOptimizers",
+        "MLXFast",
+        "MLXLinalg",
+        "MLXFFT",
+        "MLXLLM",
+        "MLXLMCommon",
+        "MLXVLM",
+        "MLXEmbedders",
+        "MLXLMTokenizers",
+        "MLXLMHFAPI",
+        "AudioIntelligence",
+        "MCP"
+      ],
+      "product_memberships" : [
+        "EliteAgent",
+        "EliteAgentCore",
+        "EliteAgentUI",
+        "EliteAgentXPC",
+        "elite",
+        "EliteService",
+        "uma-bench"
+      ],
+      "resources" : [
+        {
+          "path" : "/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Resources/default.metallib",
+          "rule" : {
+            "process" : {
+
+            }
+          }
+        },
+        {
+          "path" : "/Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UI/NeuralSight.metal",
+          "rule" : {
+            "process" : {
+
+            }
+          }
+        }
+      ],
+      "sources" : [
+        "AgentEngine/AdaptiveTaskChunker.swift",
+        "AgentEngine/AgentProtocol.swift",
+        "AgentEngine/CriticAgent.swift",
+        "AgentEngine/CriticTemplate.swift",
+        "AgentEngine/EliteCoordinator.swift",
+        "AgentEngine/EliteObservation.swift",
+        "AgentEngine/EliteServiceProtocol.swift",
+        "AgentEngine/ExecutorAgent.swift",
+        "AgentEngine/FailoverPolicy.swift",
+        "AgentEngine/GuardAgent.swift",
+        "AgentEngine/InternalMonologueActor.swift",
+        "AgentEngine/LocalModelFailureDiagnostic.swift",
+        "AgentEngine/MemoryAgent.swift",
+        "AgentEngine/Orchestrator.swift",
+        "AgentEngine/OrchestratorRuntime.swift",
+        "AgentEngine/PlannerAgent.swift",
+        "AgentEngine/PlannerTemplate.swift",
+        "AgentEngine/ProjectObserver.swift",
+        "AgentEngine/SelfHealingEngine.swift",
+        "AgentEngine/Session.swift",
+        "AgentEngine/SubagentRegistry.swift",
+        "AgentEngine/TaskClassifier.swift",
+        "AgentEngine/ToolPrivacyGate.swift",
+        "AgentEngine/TulparActor.swift",
+        "AgentEngine/WorkspaceBootstrapLoader.swift",
+        "Browser/BrowserAXInspector.swift",
+        "Browser/BrowserAgent.swift",
+        "Browser/BrowserEngine.swift",
+        "Browser/CoordinateBridge.swift",
+        "Browser/SafariJSBridge.swift",
+        "Config/AppSettings.swift",
+        "Config/ConfigManager.swift",
+        "Config/KeychainHelper.swift",
+        "Config/VaultManager.swift",
+        "Exports.swift",
+        "Guard/SystemWatchdog.swift",
+        "LLM/ANEInferenceActor.swift",
+        "LLM/AutoRecoveryEngine.swift",
+        "LLM/ChatProcessState.swift",
+        "LLM/CloudProvider.swift",
+        "LLM/HarpsichordBridge.swift",
+        "LLM/InferenceActor.swift",
+        "LLM/InferenceValidator.swift",
+        "LLM/LLMConnectionTestService.swift",
+        "LLM/LLMHealthTypes.swift",
+        "LLM/LLMModel.swift",
+        "LLM/LLMProvider.swift",
+        "LLM/LLMTypes.swift",
+        "LLM/LocalInferenceServer.swift",
+        "LLM/LocalModelHealthMonitor.swift",
+        "LLM/LocalModelWatchdog.swift",
+        "LLM/MLXEngineGuardian.swift",
+        "LLM/MLXProvider.swift",
+        "LLM/ModelCatalog.swift",
+        "LLM/ModelError.swift",
+        "LLM/ModelLoader.swift",
+        "LLM/ModelManager.swift",
+        "LLM/ModelSetupManager.swift",
+        "LLM/ModelStateManager.swift",
+        "LLM/OpenRouterProvider.swift",
+        "LLM/OutputSchemaGuard.swift",
+        "LLM/PerformanceArbiter.swift",
+        "LLM/ProactiveMemoryPressureMonitor.swift",
+        "LLM/PromptCacheManager.swift",
+        "LLM/PromptCacheMonitor.swift",
+        "LLM/PromptRegistry.swift",
+        "LLM/SessionContext.swift",
+        "LLM/SystemPrompts.swift",
+        "LLM/TokenAccountant.swift",
+        "LLM/TokenBudgetActor.swift",
+        "LLM/TokenGuardConfig.swift",
+        "LLM/Tokenizer.swift",
+        "LLM/UNOExternalBridge.swift",
+        "LLM/UNOGrammarLogitProcessor.swift",
+        "MCP/MCPGateway.swift",
+        "Memory/ContextWindowGuard.swift",
+        "Memory/DreamActor.swift",
+        "Memory/DynamicContextManager.swift",
+        "Memory/EmbeddingService.swift",
+        "Memory/ExperienceVault.swift",
+        "Memory/GitStateEngine.swift",
+        "Memory/MetricsStore.swift",
+        "PluginSystem/PluginCraftEngine.swift",
+        "Security/AuditLoggerActor.swift",
+        "Security/SecuritySentinel.swift",
+        "Security/WorkspaceManager.swift",
+        "ToolEngine/AgentTool.swift",
+        "ToolEngine/ApplicationIntelligence.swift",
+        "ToolEngine/CategoryMapper.swift",
+        "ToolEngine/PluginManager.swift",
+        "ToolEngine/ToolEngine.swift",
+        "ToolEngine/ToolIDs.swift",
+        "ToolEngine/ToolLoopDetector.swift",
+        "ToolEngine/ToolRegistry.swift",
+        "ToolEngine/ToolSignature.swift",
+        "ToolEngine/Tools/AppDiscoveryTool.swift",
+        "ToolEngine/Tools/AppLauncherTool.swift",
+        "ToolEngine/Tools/BackgroundWebScraper.swift",
+        "ToolEngine/Tools/BlenderBridgeTool.swift",
+        "ToolEngine/Tools/BlenderSandbox.swift",
+        "ToolEngine/Tools/BlenderScriptLibrary.swift",
+        "ToolEngine/Tools/CommunicationTools.swift",
+        "ToolEngine/Tools/EcosystemTools.swift",
+        "ToolEngine/Tools/ExtraUtilityTools.swift",
+        "ToolEngine/Tools/FileTools.swift",
+        "ToolEngine/Tools/GitTool.swift",
+        "ToolEngine/Tools/ID3EditorTool.swift",
+        "ToolEngine/Tools/ImageAnalysisTool.swift",
+        "ToolEngine/Tools/MarkdownReportTool.swift",
+        "ToolEngine/Tools/MediaControllerTool.swift",
+        "ToolEngine/Tools/MemoryTool.swift",
+        "ToolEngine/Tools/MessengerTool.swift",
+        "ToolEngine/Tools/MusicDNATool.swift",
+        "ToolEngine/Tools/NativeBrowserTool.swift",
+        "ToolEngine/Tools/PatchTool.swift",
+        "ToolEngine/Tools/ProductivityTools.swift",
+        "ToolEngine/Tools/ReadFileTool.swift",
+        "ToolEngine/Tools/SafariAutomationTool.swift",
+        "ToolEngine/Tools/ShellTool.swift",
+        "ToolEngine/Tools/ShortcutDiscoveryTool.swift",
+        "ToolEngine/Tools/ShortcutExecutionTool.swift",
+        "ToolEngine/Tools/SubagentTool.swift",
+        "ToolEngine/Tools/SystemTelemetryTool.swift",
+        "ToolEngine/Tools/UtilityTools.swift",
+        "ToolEngine/Tools/WebFetchTool.swift",
+        "ToolEngine/Tools/WebSearchTool.swift",
+        "ToolEngine/Tools/WebTools.swift",
+        "ToolEngine/Tools/WriteFileTool.swift",
+        "ToolEngine/Tools/XcodeTool.swift",
+        "Tools/AccessibilityTool.swift",
+        "Tools/ChicagoVisionTool.swift",
+        "Types/AISessionState.swift",
+        "Types/ChatModels.swift",
+        "Types/ModelSource.swift",
+        "Types/SignalBus.swift",
+        "Types/Types.swift",
+        "UI/ModelPickerViewModel.swift",
+        "UI/VisualizerView.swift",
+        "UNO/SharedMemoryPool.swift",
+        "UNO/UNODistributedActorSystem.swift",
+        "UNO/UNOSharedBuffer.swift",
+        "UNO/UNOTransport.swift",
+        "Usage/UsageTracker.swift",
+        "Utilities/AgentLogger.swift",
+        "Utilities/AppleScriptRunner.swift",
+        "Utilities/AsyncUtils.swift",
+        "Utilities/AudioArchitect.swift",
+        "Utilities/AutoConfigManager.swift",
+        "Utilities/BlenderDetector.swift",
+        "Utilities/LogicGate.swift",
+        "Utilities/Notifications.swift",
+        "Utilities/PathConfiguration.swift",
+        "Utilities/PerformanceAudit.swift",
+        "Utilities/RegressionAudit.swift",
+        "Utilities/ShortcutCache.swift",
+        "Utilities/SourceKitLSPBridge.swift",
+        "Utilities/Telemetry/HardwareMonitor.swift",
+        "Utilities/Telemetry/UXTelemetryManager.swift",
+        "Utilities/ThinkParser.swift",
+        "Utilities/TrajectoryRecorder.swift",
+        "Utilities/UNODiagnostic.swift",
+        "Utilities/UpdaterService.swift",
+        "Utilities/VisionAnalyzer.swift",
+        "XPC/XPCManager.swift"
+      ],
+      "type" : "library"
+    },
+    {
+      "c99name" : "EliteAgent",
+      "module_type" : "SwiftTarget",
+      "name" : "EliteAgent",
+      "path" : "Sources/EliteAgent",
+      "product_dependencies" : [
+        "MLX",
+        "Sparkle",
+        "AudioIntelligence"
+      ],
+      "product_memberships" : [
+        "EliteAgent"
+      ],
+      "sources" : [
+        "App/AdvancedSettingsView.swift",
+        "App/AgentProcessTimeline.swift",
+        "App/ChatBubble.swift",
+        "App/ChatView+ProcessIntegration.swift",
+        "App/ChatWindowController.swift",
+        "App/ChatWindowView.swift",
+        "App/Components/MusicDNA/MusicDNACard.swift",
+        "App/Components/MusicDNA/MusicDNAWidgetView.swift",
+        "App/Components/MusicDNA/WaveformView.swift",
+        "App/Components/System/SystemDataView.swift",
+        "App/Components/Weather/WeatherWidgetView.swift",
+        "App/DebugDashboard.swift",
+        "App/EliteAgentApp.swift",
+        "App/FileUploadZone.swift",
+        "App/FirstChatHintsView.swift",
+        "App/LLMHealthDashboardView.swift",
+        "App/MenuBarController.swift",
+        "App/MenuBarView.swift",
+        "App/ModelSetupView.swift",
+        "App/OnboardingWizardView.swift",
+        "App/SelfHealingOverlay.swift",
+        "App/SettingsView.swift",
+        "App/ToolsSettingsView.swift",
+        "App/UsageDashboardView.swift",
+        "App/Views/Research/ResearchReportView.swift"
+      ],
+      "target_dependencies" : [
+        "EliteAgentCore",
+        "EliteAgentUI"
+      ],
+      "type" : "executable"
+    }
+  ],
+  "tools_version" : "6.0"
+}

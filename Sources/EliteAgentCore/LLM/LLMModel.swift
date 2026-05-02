@@ -28,7 +28,7 @@ public actor LLMModel {
         let startTime = Date()
         
         // Execute real-time reasoning via the InferenceActor (Neural Sight & SLM)
-        let stream = await InferenceActor.shared.generate(messages: messages, maxTokens: maxTokens)
+        let stream = try await InferenceActor.shared.generate(messages: messages, maxTokens: maxTokens)
         var fullResponse = ""
         
         for await token in stream {

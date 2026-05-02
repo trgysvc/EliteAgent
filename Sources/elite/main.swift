@@ -7,59 +7,51 @@ func runCLI() async {
     let flags = ["--cloud-only", "--local-only", "--strict-local", "--benchmark"]
     
     _ = args.contains("--cloud-only")
-    let isLocalOnly = args.contains("--local-only")
-    let strictLocal = args.contains("--strict-local")
+    _ = args.contains("--local-only")
+    _ = args.contains("--strict-local")
     let isBenchmark = args.contains("--benchmark")
     
-    print("[CLI] Initializing EliteAgent Orchestrator...")
-    let orchestrator = Orchestrator()
+    print("[CLI] Connecting to EliteService...")
     
-    // v30.0: Auto-prime the Brain (LLM) if not already primed
-    print("[CLI] Priming the Titan Engine (vRAM Check)...")
-    let modelDir = PathConfiguration.shared.modelsURL.appendingPathComponent("qwen-2.5-7b-4bit")
-    if FileManager.default.fileExists(atPath: modelDir.path) {
-        do {
-            try await InferenceActor.shared.loadModel(at: modelDir)
-            print("✅ [CLI] Brain Synchronized: Qwen-2.5-7b-4bit loaded.")
-        } catch {
-            print("⚠️ [CLI] Primary Brain failed to load. Falling back to safe mode.")
-        }
+    let connection = NSXPCConnection(machServiceName: "com.eliteagent.service", options: .privileged)
+    connection.remoteObjectInterface = NSXPCInterface(with: EliteServiceProtocol.self)
+    connection.resume()
+    
+    guard let service = connection.remoteObjectProxyWithErrorHandler({ error in
+        print("❌ [CLI] Connection Error: \(error.localizedDescription)")
+        print("⚠️ Ensure EliteService is running (launchctl list | grep elite).")
+    }) as? EliteServiceProtocol else {
+        print("❌ [CLI] Failed to establish XPC bridge.")
+        return
     }
     
     do {
-        if strictLocal {
-            print("[CLI] Strict Local Mode ACTIVE. Bypassing all fallbacks.")
-        }
-        
         let taskPrompt = args.filter { !flags.contains($0) }.dropFirst().joined(separator: " ")
         
         if taskPrompt.isEmpty && !isBenchmark {
-            print("EliteAgent CLI v30.0")
-            print("Usage: elite <task description> [--cloud-only|--local-only|--strict-local|--benchmark]")
+            service.getStatus { status, error in
+                if let status = status {
+                    print("\n📡 Service Status: \(status)")
+                }
+            }
+            // Allow time for reply
+            try await Task.sleep(nanoseconds: 500_000_000)
+            print("\nUsage: elite <task description> [--cloud-only|--local-only|--strict-local|--benchmark]")
             return
         }
         
-        print("Submiting task to Orchestrator: '\(taskPrompt)'")
+        print("🚀 Sending task to EliteService: '\(taskPrompt)'")
         
-        // Disable interactive shell behavior for CLI direct tasks
-        let finalPrompt = isBenchmark ? "Write a comprehensive 1000-word philosophical analysis of Apple Silicon architecture, focusing on the M4's Neural Engine and Metal utilization." : taskPrompt
-        
-        if isBenchmark {
-            print("\n🚀 [BENCHMARK] Sustainable Performance Audit ACTIVE.")
-            print("🚀 [BENCHMARK] Target: 1000+ Tokens | Hardware: Apple M4 GPU/ANE")
-            print(M4PerformanceAudit.checkCapacity())
-            print("────────────────────────────────────────────────────────────")
+        service.submitTask(prompt: taskPrompt) { response, error in
+            if let error = error {
+                print("❌ [Service Error]: \(error.localizedDescription)")
+            } else if let response = response {
+                print("✅ [Service]: \(response)")
+            }
         }
-
-        try await orchestrator.submitTask(
-            prompt: finalPrompt,
-            strictLocal: isLocalOnly || strictLocal,
-            promptOnFallback: !isLocalOnly && !strictLocal
-        )
         
-        // Standard turn-wait for direct tasks
-        // In a more complex CLI we'd observe the state manager here
-        print("\n✅ Task execution finished.")
+        // Wait for acknowledgement
+        try await Task.sleep(nanoseconds: 1_000_000_000)
         
     } catch {
         print("❌ CLI Error: \(error.localizedDescription)")

@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "id": "SYS_001",
+      "prompt": "Şu anki sistem bilgilerimi ve CPU sıcaklığını getir.",
+      "tools_expected": [58, 36]
+    },
+    {
+      "id": "WET_001",
+      "prompt": "İstanbul için hava durumunu ve nem oranını sorgula.",
+      "tools_expected": [81]
+    },
+    {
+      "id": "GIT_001",
+      "prompt": "Proje kökünde 'AUDIT_LOG.txt' dosyası oluştur ve git status sorgusu yap.",
+      "tools_expected": [34, 42]
+    },
+    {
+      "id": "XCD_001",
+      "prompt": "Projenin Xcode build durumunu kontrol et.",
+      "tools_expected": [47, 32]
+    },
+    {
+      "id": "CAL_001",
+      "prompt": "Bugünkü takvim etkinliklerimi listele.",
+      "tools_expected": [54]
+    },
+    {
+      "id": "SHL_001",
+      "prompt": "Sistemdeki 8080 portunu dinleyen süreç var mı bak.",
+      "tools_expected": [32]
+    }
+  ]
+}

@@ -146,7 +146,7 @@ public actor LocalInferenceServer {
                 let prompt = request.prompt ?? request.messages?.last?["content"] ?? ""
                 let maxTokens = request.max_tokens ?? 200
                 
-                let stream = await InferenceActor.shared.generate(
+                let stream = try await InferenceActor.shared.generate(
                     messages: [Message(role: "user", content: prompt)],
                     maxTokens: maxTokens
                 )

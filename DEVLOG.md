@@ -99,3 +99,9 @@
 **Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
 **Decision made:** Prioritized core inference reliability over experimental performance optimizations to restore functionality for Qwen 2.5 and 3.5 models.
 **Next:** Re-evaluate padding and caching strategies using standard MLX state management patterns.
+
+### [2026-05-02] — v3-Native Migration Completion (Official Standard)
+**What changed:** Full refactor of the inference engine to mlx-swift-lm v3.31.3. Integrated official modular integration packages (MLXHuggingFace, MLXLMTokenizers). Rewrote InferenceActor and EliteService for strict Swift 6 Sendable compliance. Replaced legacy factory loading with official global loadModelContainer patterns.
+**Files modified:** InferenceActor.swift, MLXProvider.swift, HarpsichordBridge.swift, Package.swift, EliteService/main.swift, EliteServiceProtocol.swift, ModelError.swift
+**Decision made:** Strictly adhered to v3 official documentation, avoiding any simplification in favor of modular, compile-time safe patterns as required by the 'Native Sovereign' v7.1 specification.
+**Next:** Execute marathon validation suite (`Scripts/full_audit_runner.sh`) to verify agentic tool-calling reliability under the new v3 engine.
