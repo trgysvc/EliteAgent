@@ -466,7 +466,6 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -516,12 +515,15 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				MTL_LANGUAGE_REVISION = metal3.1;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Debug;
@@ -533,7 +535,6 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -577,10 +578,13 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				MTL_LANGUAGE_REVISION = metal3.1;
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Release;
@@ -635,6 +639,10 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Debug;
@@ -689,6 +697,10 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Release;
@@ -696,7 +708,6 @@
 		AEB7A8A62F7451CE00A844B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_STYLE = Automatic;
@@ -717,11 +728,15 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited)   ";
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Debug;
@@ -729,7 +744,6 @@
 		AEB7A8A72F7451CE00A844B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_STYLE = Automatic;
@@ -750,11 +764,15 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited)   ";
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Release;
@@ -762,7 +780,6 @@
 		AEB7A8B62F7451CE00A844B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
@@ -780,12 +797,16 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited)   ";
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 				XPC_SERVICE_JOIN_EXISTING_SESSION = YES;
 			};
@@ -794,7 +815,6 @@
 		AEB7A8B72F7451CE00A844B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
@@ -812,12 +832,16 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited)   ";
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
 				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+				MTL_LANGUAGE_REVISION = metal3.1;
+				MTL_COMPILER_FLAGS = "-std=metal3.1";
+				OTHER_METALLC_FLAGS = "-std=metal3.1";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				SWIFT_VERSION = 6.3;
 			};
 			name = Release;
