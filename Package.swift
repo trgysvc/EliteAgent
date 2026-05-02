@@ -33,10 +33,26 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 "EliteAgentUI",
+                "CUNOSupport",
                 .product(name: "MLX", package: "mlx-swift"),
-
+                .product(name: "MLXRandom", package: "mlx-swift"),
+                .product(name: "MLXNN", package: "mlx-swift"),
+                .product(name: "MLXOptimizers", package: "mlx-swift"),
+                .product(name: "MLXFast", package: "mlx-swift"),
+                .product(name: "MLXLinalg", package: "mlx-swift"),
+                .product(name: "MLXFFT", package: "mlx-swift"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
+                .product(name: "MLXVLM", package: "mlx-swift-lm"),
+                .product(name: "MLXEmbedders", package: "mlx-swift-lm"),
+                .product(name: "MLXLMTokenizers", package: "swift-tokenizers-mlx"),
+                .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "MCP", package: "swift-sdk"),
+                .product(name: "yyjson", package: "yyjson"),
+                .product(name: "Numerics", package: "swift-numerics"),
+                .product(name: "RealModule", package: "swift-numerics")
             ],
             path: "Sources/EliteAgent"
         ),
@@ -66,7 +82,8 @@ let package = Package(
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
                 .product(name: "MCP", package: "swift-sdk"),
                 .product(name: "yyjson", package: "yyjson"),
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "Numerics", package: "swift-numerics"),
+                .product(name: "RealModule", package: "swift-numerics")
             ],
             path: "Sources/EliteAgentCore",
             resources: [
@@ -89,7 +106,25 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 "CUNOSupport",
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "MLXRandom", package: "mlx-swift"),
+                .product(name: "MLXNN", package: "mlx-swift"),
+                .product(name: "MLXOptimizers", package: "mlx-swift"),
+                .product(name: "MLXFast", package: "mlx-swift"),
+                .product(name: "MLXLinalg", package: "mlx-swift"),
+                .product(name: "MLXFFT", package: "mlx-swift"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
+                .product(name: "MLXVLM", package: "mlx-swift-lm"),
+                .product(name: "MLXEmbedders", package: "mlx-swift-lm"),
+                .product(name: "MLXLMTokenizers", package: "swift-tokenizers-mlx"),
+                .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
+                .product(name: "AudioIntelligence", package: "audiointelligence"),
+                .product(name: "MCP", package: "swift-sdk"),
+                .product(name: "yyjson", package: "yyjson"),
+                .product(name: "Numerics", package: "swift-numerics"),
+                .product(name: "RealModule", package: "swift-numerics")
             ],
             path: "Sources/EliteAgentXPC"
         ),
