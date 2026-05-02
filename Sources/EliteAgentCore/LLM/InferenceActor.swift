@@ -28,10 +28,6 @@ public actor InferenceActor {
     private var nativeTokenizer: UNOTokenizer? // v7.0 Native Cleanup
     private var isPerformingTransition: Bool = false // v24.8: Guard for atomic state changes
     
-    // v7.1: Phase 2 - Shared Prefix Cache
-    nonisolated(unsafe) private var systemPromptCache: [KVCache]?
-    nonisolated(unsafe) private var systemPromptHash: String?
-    
     // v10.6: State Tracking
     public private(set) var loadedModelID: String?
     public var isModelLoaded: Bool { modelContainer != nil }
@@ -510,12 +506,12 @@ public actor InferenceActor {
         let toolUBIDs = tools.map { $0.ubid } + PluginManager.shared.loadedPlugins.values.map { $0.signature.ubid }
         
         // v14.1: Retrieve Structural Binary Signature Tokens & Alphanumeric for Qwen 2.5
-        let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\"
+        let allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234789{}[].:,/_ -\"|>$&!*?()\\çğışöüÇĞİŞÖÜé+=%@#^~"
         var allowedTokens: [Int128] = []
         for char in allowedChars {
             let ids = tokenizer.encode(text: String(char))
-            if let first = ids.first {
-                allowedTokens.append(Int128(first))
+            for id in ids {
+                allowedTokens.append(Int128(id))
             }
         }
         
@@ -539,65 +535,13 @@ public actor InferenceActor {
         // any non-Sendable types across actor boundaries. This completely bypasses 
         // the perform(nonSendable:) API that triggers the Xcode type-solver crash.
         // Captured values: formattedPrompt (String/Sendable), grammarProcessor (@unchecked Sendable), parameters (Sendable)
-        let currentHash = self.systemPromptHash
-        let currentCache = self.systemPromptCache
-        let padToken = self.nativeTokenizer?.unknownTokenID ?? 0
-        
         let stream: AsyncStream<Generation> = try await container.perform { context in
-            // v7.1: Phase 1 - Graph Sealing via Fixed-Shape Padding
-            // In MLX Swift, explicit compilation is handled via shape stability.
-            // By padding to Power-of-2, we ensure the JIT compiler reuses fused kernels.
-            
-            // v7.1: Phase 2 - Shared Prefix Cache (TTFT Optimization)
-            let systemMarker = "<|im_start|>user"
-            let promptParts = formattedPrompt.components(separatedBy: systemMarker)
-            var activeCache: [KVCache]? = nil
-            var promptToProcess = formattedPrompt
-            
-            if promptParts.count >= 2 {
-                let systemPart = promptParts[0]
-                let sHash = computeHash(systemPart)
-                
-                if sHash == currentHash, let cached = currentCache {
-                    // Shared Prefix Hit: Reuse the computed KV-Cache for the system prompt
-                    activeCache = cached
-                    promptToProcess = systemMarker + promptParts.dropFirst().joined(separator: systemMarker)
-                    AgentLogger.logAudit(level: .info, agent: "titan", message: "[Phase-2] Shared Prefix Hit! TTFT optimized.")
-                } else {
-                    // Cache Miss: Prepare new system cache
-                    let sysInput = try await context.processor.prepare(input: UserInput(prompt: systemPart))
-                    let newCache = context.model.newCache(parameters: nil)
-                    _ = context.model(sysInput.text.tokens, cache: newCache)
-                    
-                    // Update cache state (Safe due to nonisolated(unsafe))
-                    self.systemPromptHash = sHash
-                    self.systemPromptCache = newCache
-                    
-                    promptToProcess = systemMarker + promptParts.dropFirst().joined(separator: systemMarker)
-                    activeCache = newCache
-                    AgentLogger.logAudit(level: .info, agent: "titan", message: "[Phase-2] System Cache Primed.")
-                }
-            }
-            
-            var lmInput = try await context.processor.prepare(input: UserInput(prompt: promptToProcess))
-            
-            // v7.1: Phase 1 - Fixed-Shape Padding Strategy
-            let tokens = lmInput.text.tokens.asArray(Int.self)
-            let paddedTokens = padToNextPowerOf2(tokens, padToken: padToken)
-            
-            if paddedTokens.count != tokens.count {
-                var maskArray = Array(repeating: 1, count: tokens.count)
-                maskArray.append(contentsOf: Array(repeating: 0, count: paddedTokens.count - tokens.count))
-                lmInput = LMInput(
-                    tokens: MLXArray(paddedTokens).reshaped(1, -1),
-                    mask: MLXArray(maskArray).reshaped(1, -1)
-                )
-            }
+            let lmInput = try await context.processor.prepare(input: UserInput(prompt: formattedPrompt))
             
             let iterator = try TokenIterator(
                 input: lmInput, 
                 model: context.model, 
-                cache: activeCache, // v7.1: Pass the shared prefix cache
+                cache: nil, 
                 processor: grammarProcessor, 
                 sampler: parameters.sampler(),
                 maxTokens: parameters.maxTokens
@@ -666,26 +610,6 @@ public actor InferenceActor {
         for i in 0..<maxActivations {
             ptr[i] = Float.random(in: 0.0...1.0) * Float(activationValue % 10) / 10.0
         }
-    }
-
-    /// v7.1: Phase 1 - Pad-to-Power-of-2 Strategy
-    /// Ensures that the model is compiled for fixed shapes, preventing re-compilation overhead.
-    nonisolated private func padToNextPowerOf2(_ tokens: [Int], padToken: Int) -> [Int] {
-        let currentCount = tokens.count
-        if currentCount <= 0 { return tokens }
-        
-        // Define fixed bucket sizes (Power of 2)
-        let bucketSizes: [Int] = [128, 256, 512, 1024, 2048, 4096, 8192, 16384]
-        guard let targetSize = bucketSizes.first(where: { $0 >= currentCount }) else {
-            return tokens // Too large for our buckets
-        }
-        
-        if targetSize == currentCount { return tokens }
-        var padded = tokens
-        padded.append(contentsOf: Array(repeating: padToken, count: targetSize - currentCount))
-        
-        AgentLogger.logAudit(level: .info, agent: "titan", message: "[Phase-1] Padding sequence: \(currentCount) → \(targetSize)")
-        return padded
     }
 
     @MainActor

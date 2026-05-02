@@ -93,3 +93,9 @@
 **Files modified:** Sources/EliteAgentCore/LLM/InferenceActor.swift
 **Decision made:** Corrected the 1D token tensor generation which was causing `Qwen3NextGatedDeltaNet` to incorrectly interpret hidden dimensions as sequence length, leading to fatal reshape errors. Ensuring 3D inputs [B, S, D] is the primary stability target for Titan Engine.
 **Next:** Validate performance gains from Graph Sealing with the fixed padding logic.
+
+### [2026-05-02] — Titan Inference Engine Stabilization
+**What changed:** Removed experimental "Graph Sealing" (Padding) and "Shared Prefix Cache" logic from `InferenceActor.swift` that was causing sequence corruption and hangs. Restored a standard, reliable prefill + generation loop.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Prioritized core inference reliability over experimental performance optimizations to restore functionality for Qwen 2.5 and 3.5 models.
+**Next:** Re-evaluate padding and caching strategies using standard MLX state management patterns.
