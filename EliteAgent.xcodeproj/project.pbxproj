@@ -1,1056 +1,1062 @@
 // !$*UTF8*$!
 {
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 77;
-	objects = {
+    archiveVersion = 1;
+    classes = {
+    };
+    objectVersion = 77;
+    objects = {
 
 /* Begin PBXBuildFile section */
-		AE1111112F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
-		AE1111132F902A9B005E6190 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
-		AE1111142F902A9B005E6190 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
-		AE1111152F902A9B005E6190 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
-		AE1111162F902A9B005E6190 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
-		AE1111172F902A9B005E6190 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
-		AE1111182F902A9B005E6190 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
-		AE1111192F902A9B005E6190 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
-		AE11111A2F902A9B005E6190 /* MLXLMTokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F12F79F6D900626F70 /* MLXLMTokenizers */; };
-		AE11111B2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F32F79F6D900626F70 /* MLXLMHFAPI */; };
-		AE11111C2F902A9B005E6190 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FA2F79F6D900626F70 /* MLXHuggingFace */; };
-		AE11111D2F902A9B005E6190 /* yyjson in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F52F79F6D900626F70 /* yyjson */; };
-		AE11111E2F902A9B005E6190 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
-		AE1111202F902A9B005E6190 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
-		AE1111212F902A9B005E6190 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
-		AE1111222F902A9B005E6190 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
-		AE1111232F902A9B005E6190 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
-		AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
-		AE2222222F902A9B005E6190 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
-		AE2222232F902A9B005E6190 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
-		AE2222242F902A9B005E6190 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
-		AE2222252F902A9B005E6190 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
-		AE2222262F902A9B005E6190 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
-		AE2222272F902A9B005E6190 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
-		AE2222282F902A9B005E6190 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
-		AE2222292F902A9B005E6190 /* MLXLMTokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F12F79F6D900626F70 /* MLXLMTokenizers */; };
-		AE22222A2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F32F79F6D900626F70 /* MLXLMHFAPI */; };
-		AE22222B2F902A9B005E6190 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FA2F79F6D900626F70 /* MLXHuggingFace */; };
-		AE22222C2F902A9B005E6190 /* yyjson in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F52F79F6D900626F70 /* yyjson */; };
-		AE22222D2F902A9B005E6190 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
-		AE22222F2F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
-		AE2222312F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
-		AE2222322F902A9B005E6190 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
-		AE2222332F902A9B005E6190 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
-		AE2222342F902A9B005E6190 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
-		AE2222352F902A9B005E6190 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
+        AE1111112F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
+        AE1111132F902A9B005E6190 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
+        AE1111142F902A9B005E6190 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
+        AE1111152F902A9B005E6190 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
+        AE1111162F902A9B005E6190 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
+        AE1111172F902A9B005E6190 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
+        AE1111182F902A9B005E6190 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
+        AE1111192F902A9B005E6190 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
+        AE11111A2F902A9B005E6190 /* MLXLMTokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F12F79F6D900626F70 /* MLXLMTokenizers */; };
+        AE11111B2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F32F79F6D900626F70 /* MLXLMHFAPI */; };
+        AE11111C2F902A9B005E6190 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FA2F79F6D900626F70 /* MLXHuggingFace */; };
+        AE11111D2F902A9B005E6190 /* yyjson in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F52F79F6D900626F70 /* yyjson */; };
+        AE11111E2F902A9B005E6190 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
+        AE1111202F902A9B005E6190 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
+        AE1111212F902A9B005E6190 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
+        AE1111222F902A9B005E6190 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
+        AE1111232F902A9B005E6190 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
+        AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
+        AE2222222F902A9B005E6190 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
+        AE2222232F902A9B005E6190 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
+        AE2222242F902A9B005E6190 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
+        AE2222252F902A9B005E6190 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
+        AE2222262F902A9B005E6190 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
+        AE2222272F902A9B005E6190 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
+        AE2222282F902A9B005E6190 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
+        AE2222292F902A9B005E6190 /* MLXLMTokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F12F79F6D900626F70 /* MLXLMTokenizers */; };
+        AE22222A2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F32F79F6D900626F70 /* MLXLMHFAPI */; };
+        AE22222B2F902A9B005E6190 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FA2F79F6D900626F70 /* MLXHuggingFace */; };
+        AE22222C2F902A9B005E6190 /* yyjson in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F52F79F6D900626F70 /* yyjson */; };
+        AE22222D2F902A9B005E6190 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
+        AE22222F2F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
+        AE2222312F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
+        AE2222322F902A9B005E6190 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
+        AE2222332F902A9B005E6190 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
+        AE2222342F902A9B005E6190 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
+        AE2222352F902A9B005E6190 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
 
-		AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
-		AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
-		AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
-		AEB132E02F79F4FC00626F70 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
-		AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
-		AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
-		AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
-		AEB132E92F79F6D900626F70 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
-		AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
-		AEB132ED2F79F6D900626F70 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
-		AEB132EF2F79F6D900626F70 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
-		AEB132F62F79F6D900626F70 /* MLXLMTokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F12F79F6D900626F70 /* MLXLMTokenizers */; };
-		AEB132F72F79F6D900626F70 /* MLXLMHFAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F32F79F6D900626F70 /* MLXLMHFAPI */; };
-		AEB132F92F79F6D900626F70 /* yyjson in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F52F79F6D900626F70 /* yyjson */; };
-		AEB132FB2F79F6D900626F70 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FA2F79F6D900626F70 /* MLXHuggingFace */; };
-		AEB132FE2F79F6D900626F70 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
-		AE1111122F902A9B005E6190 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
-		AE11111F2F902A9B005E6190 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDF2F885C0100FDE204 /* RealModule */; };
-		AE2222302F902A9B005E6190 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
-		AE22222E2F902A9B005E6190 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDF2F885C0100FDE204 /* RealModule */; };
-		AE883F5B2FA20C1000FFF7EC /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
-		AE7BBEE12F885C0100FDE204 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDF2F885C0100FDE204 /* RealModule */; };
-		AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
-		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+        AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
+        AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DB2F79F4FC00626F70 /* MLXFFT */; };
+        AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DD2F79F4FC00626F70 /* MLXFast */; };
+        AEB132E02F79F4FC00626F70 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132DF2F79F4FC00626F70 /* MLXLinalg */; };
+        AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E12F79F4FC00626F70 /* MLXNN */; };
+        AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E32F79F4FC00626F70 /* MLXOptimizers */; };
+        AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E52F79F4FC00626F70 /* MLXRandom */; };
+        AEB132E92F79F6D900626F70 /* MLXEmbedders in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132E82F79F6D900626F70 /* MLXEmbedders */; };
+        AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EA2F79F6D900626F70 /* MLXLLM */; };
+        AEB132ED2F79F6D900626F70 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EC2F79F6D900626F70 /* MLXLMCommon */; };
+        AEB132EF2F79F6D900626F70 /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132EE2F79F6D900626F70 /* MLXVLM */; };
+        AEB132F62F79F6D900626F70 /* MLXLMTokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F12F79F6D900626F70 /* MLXLMTokenizers */; };
+        AEB132F72F79F6D900626F70 /* MLXLMHFAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F32F79F6D900626F70 /* MLXLMHFAPI */; };
+        AEB132F92F79F6D900626F70 /* yyjson in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132F52F79F6D900626F70 /* yyjson */; };
+        AEB132FB2F79F6D900626F70 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FA2F79F6D900626F70 /* MLXHuggingFace */; };
+        AEB132FE2F79F6D900626F70 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
+        AE1111122F902A9B005E6190 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
+        AE11111F2F902A9B005E6190 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDF2F885C0100FDE204 /* RealModule */; };
+        AE2222302F902A9B005E6190 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
+        AE22222E2F902A9B005E6190 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDF2F885C0100FDE204 /* RealModule */; };
+        AE883F5B2FA20C1000FFF7EC /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDE2F885C0100FDE204 /* Numerics */; };
+        AE7BBEE12F885C0100FDE204 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = AE7BBEDF2F885C0100FDE204 /* RealModule */; };
+        AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
+        AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AEB7A8C62F7451CE00A844B2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AE747A102F70602B004732A5 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AEB7A8A02F7451CE00A844B2;
-			remoteInfo = EliteAgentCore;
-		};
+        AEB7A8C62F7451CE00A844B2 /* PBXContainerItemProxy */ = {
+            isa = PBXContainerItemProxy;
+            containerPortal = AE747A102F70602B004732A5 /* Project object */;
+            proxyType = 1;
+            remoteGlobalIDString = AEB7A8A02F7451CE00A844B2;
+            remoteInfo = EliteAgentCore;
+        };
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		AEB7A8C32F7451CE00A844B2 /* Embed XPC Services */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
-			dstSubfolderSpec = 16;
-			files = (
-				AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */,
-			);
-			name = "Embed XPC Services";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8C72F7451CE00A844B2 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+        AEB7A8C32F7451CE00A844B2 /* Embed XPC Services */ = {
+            isa = PBXCopyFilesBuildPhase;
+            buildActionMask = 2147483647;
+            dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+            dstSubfolderSpec = 16;
+            files = (
+                AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */,
+            );
+            name = "Embed XPC Services";
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        AEB7A8C72F7451CE00A844B2 /* Embed Frameworks */ = {
+            isa = PBXCopyFilesBuildPhase;
+            buildActionMask = 2147483647;
+            dstPath = "";
+            dstSubfolderSpec = 10;
+            files = (
+            );
+            name = "Embed Frameworks";
+            runOnlyForDeploymentPostprocessing = 0;
+        };
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		AE747A182F70602B004732A5 /* EliteAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EliteAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = archive.ar; path = libEliteAgentCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = EliteAgentXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+        AE747A182F70602B004732A5 /* EliteAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EliteAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+        AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = archive.ar; path = libEliteAgentCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+        AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = EliteAgentXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AE747A1A2F70602B004732A5 /* Sources/EliteAgent */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Sources/EliteAgent;
-			sourceTree = "<group>";
-		};
-		AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Sources/EliteAgentCore;
-			sourceTree = "<group>";
-		};
-		AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Sources/EliteAgentXPC;
-			sourceTree = "<group>";
-		};
+        AE747A1A2F70602B004732A5 /* Sources/EliteAgent */ = {
+            isa = PBXFileSystemSynchronizedRootGroup;
+            path = Sources/EliteAgent;
+            sourceTree = "<group>";
+        };
+        AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */ = {
+            isa = PBXFileSystemSynchronizedRootGroup;
+            path = Sources/EliteAgentCore;
+            sourceTree = "<group>";
+        };
+        AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */ = {
+            isa = PBXFileSystemSynchronizedRootGroup;
+            path = Sources/EliteAgentXPC;
+            sourceTree = "<group>";
+        };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		AE747A152F70602B004732A5 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AE4BFF7A2FA6AE2900F17846 /* RealModule in Frameworks */,
-				AE1111112F902A9B005E6190 /* AudioIntelligence in Frameworks */,
-				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
-				AE11111E2F902A9B005E6190 /* MCP in Frameworks */,
-				AE1111132F902A9B005E6190 /* MLX in Frameworks */,
-				AE1111192F902A9B005E6190 /* MLXEmbedders in Frameworks */,
-				AE1111222F902A9B005E6190 /* MLXFast in Frameworks */,
-				AE1111232F902A9B005E6190 /* MLXFFT in Frameworks */,
-				AE11111C2F902A9B005E6190 /* MLXHuggingFace in Frameworks */,
-				AE1111172F902A9B005E6190 /* MLXLinalg in Frameworks */,
-				AE1111142F902A9B005E6190 /* MLXLLM in Frameworks */,
-				AE1111182F902A9B005E6190 /* MLXLMCommon in Frameworks */,
-				AE11111B2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */,
-				AE11111A2F902A9B005E6190 /* MLXLMTokenizers in Frameworks */,
-				AE1111152F902A9B005E6190 /* MLXNN in Frameworks */,
-				AE1111212F902A9B005E6190 /* MLXOptimizers in Frameworks */,
-				AE1111202F902A9B005E6190 /* MLXRandom in Frameworks */,
-				AE1111162F902A9B005E6190 /* MLXVLM in Frameworks */,
-				AE1111122F902A9B005E6190 /* Numerics in Frameworks */,
-				AE11111F2F902A9B005E6190 /* RealModule in Frameworks */,
-				AE11111D2F902A9B005E6190 /* yyjson in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8A32F7451CE00A844B2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AE4BFF7C2FA6AE2900F17846 /* RealModule in Frameworks */,
-				AE4BFF7B2FA6AE2900F17846 /* Numerics in Frameworks */,
-				AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */,
-				AEB132FE2F79F6D900626F70 /* MCP in Frameworks */,
-				AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */,
-				AEB132E92F79F6D900626F70 /* MLXEmbedders in Frameworks */,
-				AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */,
-				AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */,
-				AEB132FB2F79F6D900626F70 /* MLXHuggingFace in Frameworks */,
-				AEB132E02F79F4FC00626F70 /* MLXLinalg in Frameworks */,
-				AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */,
-				AEB132ED2F79F6D900626F70 /* MLXLMCommon in Frameworks */,
-				AEB132F72F79F6D900626F70 /* MLXLMHFAPI in Frameworks */,
-				AEB132F62F79F6D900626F70 /* MLXLMTokenizers in Frameworks */,
-				AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */,
-				AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */,
-				AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */,
-				AEB132EF2F79F6D900626F70 /* MLXVLM in Frameworks */,
-				AE883F5B2FA20C1000FFF7EC /* Numerics in Frameworks */,
-				AE7BBEE12F885C0100FDE204 /* RealModule in Frameworks */,
-				AEB132F92F79F6D900626F70 /* yyjson in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8B32F7451CE00A844B2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AE4BFF7D2FA6AE2900F17846 /* Numerics in Frameworks */,
-				AE22222F2F902A9B005E6190 /* AudioIntelligence in Frameworks */,
-				AE2222312F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */,
-				AE22222D2F902A9B005E6190 /* MCP in Frameworks */,
-				AE2222222F902A9B005E6190 /* MLX in Frameworks */,
-				AE2222282F902A9B005E6190 /* MLXEmbedders in Frameworks */,
-				AE2222342F902A9B005E6190 /* MLXFast in Frameworks */,
-				AE2222352F902A9B005E6190 /* MLXFFT in Frameworks */,
-				AE4BFF7E2FA6AE2900F17846 /* RealModule in Frameworks */,
-				AE22222B2F902A9B005E6190 /* MLXHuggingFace in Frameworks */,
-				AE2222262F902A9B005E6190 /* MLXLinalg in Frameworks */,
-				AE2222232F902A9B005E6190 /* MLXLLM in Frameworks */,
-				AE2222272F902A9B005E6190 /* MLXLMCommon in Frameworks */,
-				AE22222A2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */,
-				AE2222292F902A9B005E6190 /* MLXLMTokenizers in Frameworks */,
-				AE2222242F902A9B005E6190 /* MLXNN in Frameworks */,
-				AE2222332F902A9B005E6190 /* MLXOptimizers in Frameworks */,
-				AE2222322F902A9B005E6190 /* MLXRandom in Frameworks */,
-				AE2222252F902A9B005E6190 /* MLXVLM in Frameworks */,
-				AE2222302F902A9B005E6190 /* Numerics in Frameworks */,
-				AE22222E2F902A9B005E6190 /* RealModule in Frameworks */,
-				AE22222C2F902A9B005E6190 /* yyjson in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+        AE747A152F70602B004732A5 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                AE4BFF7A2FA6AE2900F17846 /* RealModule in Frameworks */,
+                AE1111112F902A9B005E6190 /* AudioIntelligence in Frameworks */,
+                AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
+                AE11111E2F902A9B005E6190 /* MCP in Frameworks */,
+                AE1111132F902A9B005E6190 /* MLX in Frameworks */,
+                AE1111192F902A9B005E6190 /* MLXEmbedders in Frameworks */,
+                AE1111222F902A9B005E6190 /* MLXFast in Frameworks */,
+                AE1111232F902A9B005E6190 /* MLXFFT in Frameworks */,
+                AE11111C2F902A9B005E6190 /* MLXHuggingFace in Frameworks */,
+                AE1111172F902A9B005E6190 /* MLXLinalg in Frameworks */,
+                AE1111142F902A9B005E6190 /* MLXLLM in Frameworks */,
+                AE1111182F902A9B005E6190 /* MLXLMCommon in Frameworks */,
+                AE11111B2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */,
+                AE11111A2F902A9B005E6190 /* MLXLMTokenizers in Frameworks */,
+                AE1111152F902A9B005E6190 /* MLXNN in Frameworks */,
+                AE1111212F902A9B005E6190 /* MLXOptimizers in Frameworks */,
+                AE1111202F902A9B005E6190 /* MLXRandom in Frameworks */,
+                AE1111162F902A9B005E6190 /* MLXVLM in Frameworks */,
+                AE1111122F902A9B005E6190 /* Numerics in Frameworks */,
+                AE11111F2F902A9B005E6190 /* RealModule in Frameworks */,
+                AE11111D2F902A9B005E6190 /* yyjson in Frameworks */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        AEB7A8A32F7451CE00A844B2 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                AE4BFF7C2FA6AE2900F17846 /* RealModule in Frameworks */,
+                AE4BFF7B2FA6AE2900F17846 /* Numerics in Frameworks */,
+                AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */,
+                AEB132FE2F79F6D900626F70 /* MCP in Frameworks */,
+                AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */,
+                AEB132E92F79F6D900626F70 /* MLXEmbedders in Frameworks */,
+                AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */,
+                AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */,
+                AEB132FB2F79F6D900626F70 /* MLXHuggingFace in Frameworks */,
+                AEB132E02F79F4FC00626F70 /* MLXLinalg in Frameworks */,
+                AEB132EB2F79F6D900626F70 /* MLXLLM in Frameworks */,
+                AEB132ED2F79F6D900626F70 /* MLXLMCommon in Frameworks */,
+                AEB132F72F79F6D900626F70 /* MLXLMHFAPI in Frameworks */,
+                AEB132F62F79F6D900626F70 /* MLXLMTokenizers in Frameworks */,
+                AEB132E22F79F4FC00626F70 /* MLXNN in Frameworks */,
+                AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */,
+                AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */,
+                AEB132EF2F79F6D900626F70 /* MLXVLM in Frameworks */,
+                AE883F5B2FA20C1000FFF7EC /* Numerics in Frameworks */,
+                AE7BBEE12F885C0100FDE204 /* RealModule in Frameworks */,
+                AEB132F92F79F6D900626F70 /* yyjson in Frameworks */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        AEB7A8B32F7451CE00A844B2 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                AE4BFF7D2FA6AE2900F17846 /* Numerics in Frameworks */,
+                AE22222F2F902A9B005E6190 /* AudioIntelligence in Frameworks */,
+                AE2222312F885C0100FDE202 /* libEliteAgentCore.a in Frameworks */,
+                AE22222D2F902A9B005E6190 /* MCP in Frameworks */,
+                AE2222222F902A9B005E6190 /* MLX in Frameworks */,
+                AE2222282F902A9B005E6190 /* MLXEmbedders in Frameworks */,
+                AE2222342F902A9B005E6190 /* MLXFast in Frameworks */,
+                AE2222352F902A9B005E6190 /* MLXFFT in Frameworks */,
+                AE4BFF7E2FA6AE2900F17846 /* RealModule in Frameworks */,
+                AE22222B2F902A9B005E6190 /* MLXHuggingFace in Frameworks */,
+                AE2222262F902A9B005E6190 /* MLXLinalg in Frameworks */,
+                AE2222232F902A9B005E6190 /* MLXLLM in Frameworks */,
+                AE2222272F902A9B005E6190 /* MLXLMCommon in Frameworks */,
+                AE22222A2F902A9B005E6190 /* MLXLMHFAPI in Frameworks */,
+                AE2222292F902A9B005E6190 /* MLXLMTokenizers in Frameworks */,
+                AE2222242F902A9B005E6190 /* MLXNN in Frameworks */,
+                AE2222332F902A9B005E6190 /* MLXOptimizers in Frameworks */,
+                AE2222322F902A9B005E6190 /* MLXRandom in Frameworks */,
+                AE2222252F902A9B005E6190 /* MLXVLM in Frameworks */,
+                AE2222302F902A9B005E6190 /* Numerics in Frameworks */,
+                AE22222E2F902A9B005E6190 /* RealModule in Frameworks */,
+                AE22222C2F902A9B005E6190 /* yyjson in Frameworks */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AE747A0F2F70602B004732A5 = {
-			isa = PBXGroup;
-			children = (
-				AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
-				AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */,
-				AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */,
-				AE747A192F70602B004732A5 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		AE747A192F70602B004732A5 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				AE747A182F70602B004732A5 /* EliteAgent.app */,
-				AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */,
-				AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
+        AE747A0F2F70602B004732A5 = {
+            isa = PBXGroup;
+            children = (
+                AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
+                AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */,
+                AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */,
+                AE747A192F70602B004732A5 /* Products */,
+            );
+            sourceTree = "<group>";
+        };
+        AE747A192F70602B004732A5 /* Products */ = {
+            isa = PBXGroup;
+            children = (
+                AE747A182F70602B004732A5 /* EliteAgent.app */,
+                AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */,
+                AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */,
+            );
+            name = Products;
+            sourceTree = "<group>";
+        };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AE747A172F70602B004732A5 /* EliteAgent */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AE747A392F70602C004732A5 /* Build configuration list for PBXNativeTarget "EliteAgent" */;
-			buildPhases = (
-				AE747A142F70602B004732A5 /* Sources */,
-				AE747A152F70602B004732A5 /* Frameworks */,
-				AE747A162F70602B004732A5 /* Resources */,
-				AEB7A8C72F7451CE00A844B2 /* Embed Frameworks */,
-				AEB7A8C32F7451CE00A844B2 /* Embed XPC Services */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
-			);
-			name = EliteAgent;
-			packageProductDependencies = (
-				AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
-				AEB132D92F79F4FC00626F70 /* MLX */,
-				AEB132DB2F79F4FC00626F70 /* MLXFFT */,
-				AEB132DD2F79F4FC00626F70 /* MLXFast */,
-				AEB132DF2F79F4FC00626F70 /* MLXLinalg */,
-				AEB132E12F79F4FC00626F70 /* MLXNN */,
-				AEB132E32F79F4FC00626F70 /* MLXOptimizers */,
-				AEB132E52F79F4FC00626F70 /* MLXRandom */,
-				AEB132E82F79F6D900626F70 /* MLXEmbedders */,
-				AEB132EA2F79F6D900626F70 /* MLXLLM */,
-				AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
-				AEB132EE2F79F6D900626F70 /* MLXVLM */,
-				AEB132FA2F79F6D900626F70 /* MLXHuggingFace */,
-				AEB132F12F79F6D900626F70 /* MLXLMTokenizers */,
-				AEB132F32F79F6D900626F70 /* MLXLMHFAPI */,
-				AEB132F52F79F6D900626F70 /* yyjson */,
-				AEB132FD2F79F6D900626F70 /* MCP */,
-				AE7BBEDF2F885C0100FDE204 /* RealModule */,
-			);
-			productName = EliteAgent;
-			productReference = AE747A182F70602B004732A5 /* EliteAgent.app */;
-			productType = "com.apple.product-type.application";
-		};
-		AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AEB7A8A52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentCore" */;
-			buildPhases = (
-				AEB7A8A22F7451CE00A844B2 /* Sources */,
-				AEB7A8A32F7451CE00A844B2 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */,
-			);
-			name = EliteAgentCore;
-			packageProductDependencies = (
-				AEB132D92F79F4FC00626F70 /* MLX */,
-				AEB132DB2F79F4FC00626F70 /* MLXFFT */,
-				AEB132DD2F79F4FC00626F70 /* MLXFast */,
-				AEB132DF2F79F4FC00626F70 /* MLXLinalg */,
-				AEB132E12F79F4FC00626F70 /* MLXNN */,
-				AEB132E32F79F4FC00626F70 /* MLXOptimizers */,
-				AEB132E52F79F4FC00626F70 /* MLXRandom */,
-				AEB132E82F79F6D900626F70 /* MLXEmbedders */,
-				AEB132EA2F79F6D900626F70 /* MLXLLM */,
-				AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
-				AEB132EE2F79F6D900626F70 /* MLXVLM */,
-				AEB132FA2F79F6D900626F70 /* MLXHuggingFace */,
-				AEB132F12F79F6D900626F70 /* MLXLMTokenizers */,
-				AEB132F32F79F6D900626F70 /* MLXLMHFAPI */,
-				AEB132F52F79F6D900626F70 /* yyjson */,
-				AEB132FD2F79F6D900626F70 /* MCP */,
-				AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
-				AE7BBEDE2F885C0100FDE204 /* Numerics */,
-				AE7BBEDF2F885C0100FDE204 /* RealModule */,
-			);
-			productName = EliteAgentCore;
-			productReference = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */;
-			productType = "com.apple.product-type.library.static";
-		};
-		AEB7A8B02F7451CE00A844B2 /* EliteAgentXPC */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AEB7A8B52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentXPC" */;
-			buildPhases = (
-				AEB7A8B22F7451CE00A844B2 /* Sources */,
-				AEB7A8B32F7451CE00A844B2 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */,
-			);
-			name = EliteAgentXPC;
-			packageProductDependencies = (
-				AEB132DB2F79F4FC00626F70 /* MLXFFT */,
-				AEB132DD2F79F4FC00626F70 /* MLXFast */,
-				AEB132DF2F79F4FC00626F70 /* MLXLinalg */,
-				AEB132E12F79F4FC00626F70 /* MLXNN */,
-				AEB132E32F79F4FC00626F70 /* MLXOptimizers */,
-				AEB132E52F79F4FC00626F70 /* MLXRandom */,
-				AEB132E82F79F6D900626F70 /* MLXEmbedders */,
-				AEB132EA2F79F6D900626F70 /* MLXLLM */,
-				AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
-				AEB132EE2F79F6D900626F70 /* MLXVLM */,
-				AEB132D92F79F4FC00626F70 /* MLX */,
-				AEB132F12F79F6D900626F70 /* MLXLMTokenizers */,
-				AEB132F32F79F6D900626F70 /* MLXLMHFAPI */,
-				AEB132FA2F79F6D900626F70 /* MLXHuggingFace */,
-				AEB132F52F79F6D900626F70 /* yyjson */,
-				AEB132FD2F79F6D900626F70 /* MCP */,
-				AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
-				AE7BBEDE2F885C0100FDE204 /* Numerics */,
-				AE7BBEDF2F885C0100FDE204 /* RealModule */,
-			);
-			productName = EliteAgentXPC;
-			productReference = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */;
-			productType = "com.apple.product-type.xpc-service";
-		};
+        AE747A172F70602B004732A5 /* EliteAgent */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = AE747A392F70602C004732A5 /* Build configuration list for PBXNativeTarget "EliteAgent" */;
+            buildPhases = (
+                AE747A142F70602B004732A5 /* Sources */,
+                AE747A152F70602B004732A5 /* Frameworks */,
+                AE747A162F70602B004732A5 /* Resources */,
+                AEB7A8C72F7451CE00A844B2 /* Embed Frameworks */,
+                AEB7A8C32F7451CE00A844B2 /* Embed XPC Services */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+                AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */,
+            );
+            fileSystemSynchronizedGroups = (
+                AE747A1A2F70602B004732A5 /* Sources/EliteAgent */,
+            );
+            name = EliteAgent;
+            packageProductDependencies = (
+                AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
+                AEB132D92F79F4FC00626F70 /* MLX */,
+                AEB132DB2F79F4FC00626F70 /* MLXFFT */,
+                AEB132DD2F79F4FC00626F70 /* MLXFast */,
+                AEB132DF2F79F4FC00626F70 /* MLXLinalg */,
+                AEB132E12F79F4FC00626F70 /* MLXNN */,
+                AEB132E32F79F4FC00626F70 /* MLXOptimizers */,
+                AEB132E52F79F4FC00626F70 /* MLXRandom */,
+                AEB132E82F79F6D900626F70 /* MLXEmbedders */,
+                AEB132EA2F79F6D900626F70 /* MLXLLM */,
+                AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
+                AEB132EE2F79F6D900626F70 /* MLXVLM */,
+                AEB132FA2F79F6D900626F70 /* MLXHuggingFace */,
+                AEB132F12F79F6D900626F70 /* MLXLMTokenizers */,
+                AEB132F32F79F6D900626F70 /* MLXLMHFAPI */,
+                AEB132F52F79F6D900626F70 /* yyjson */,
+                AEB132FD2F79F6D900626F70 /* MCP */,
+                AE7BBEDF2F885C0100FDE204 /* RealModule */,
+            );
+            productName = EliteAgent;
+            productReference = AE747A182F70602B004732A5 /* EliteAgent.app */;
+            productType = "com.apple.product-type.application";
+        };
+        AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = AEB7A8A52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentCore" */;
+            buildPhases = (
+                AEB7A8A22F7451CE00A844B2 /* Sources */,
+                AEB7A8A32F7451CE00A844B2 /* Frameworks */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+            );
+            fileSystemSynchronizedGroups = (
+                AEB7A8C02F7451CE00A844B2 /* Sources/EliteAgentCore */,
+            );
+            name = EliteAgentCore;
+            packageProductDependencies = (
+                AEB132D92F79F4FC00626F70 /* MLX */,
+                AEB132DB2F79F4FC00626F70 /* MLXFFT */,
+                AEB132DD2F79F4FC00626F70 /* MLXFast */,
+                AEB132DF2F79F4FC00626F70 /* MLXLinalg */,
+                AEB132E12F79F4FC00626F70 /* MLXNN */,
+                AEB132E32F79F4FC00626F70 /* MLXOptimizers */,
+                AEB132E52F79F4FC00626F70 /* MLXRandom */,
+                AEB132E82F79F6D900626F70 /* MLXEmbedders */,
+                AEB132EA2F79F6D900626F70 /* MLXLLM */,
+                AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
+                AEB132EE2F79F6D900626F70 /* MLXVLM */,
+                AEB132FA2F79F6D900626F70 /* MLXHuggingFace */,
+                AEB132F12F79F6D900626F70 /* MLXLMTokenizers */,
+                AEB132F32F79F6D900626F70 /* MLXLMHFAPI */,
+                AEB132F52F79F6D900626F70 /* yyjson */,
+                AEB132FD2F79F6D900626F70 /* MCP */,
+                AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
+                AE7BBEDE2F885C0100FDE204 /* Numerics */,
+                AE7BBEDF2F885C0100FDE204 /* RealModule */,
+            );
+            productName = EliteAgentCore;
+            productReference = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */;
+            productType = "com.apple.product-type.library.static";
+        };
+        AEB7A8B02F7451CE00A844B2 /* EliteAgentXPC */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = AEB7A8B52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentXPC" */;
+            buildPhases = (
+                AEB7A8B22F7451CE00A844B2 /* Sources */,
+                AEB7A8B32F7451CE00A844B2 /* Frameworks */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+                AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */,
+            );
+            fileSystemSynchronizedGroups = (
+                AEB7A8C12F7451CE00A844B2 /* Sources/EliteAgentXPC */,
+            );
+            name = EliteAgentXPC;
+            packageProductDependencies = (
+                AEB132DB2F79F4FC00626F70 /* MLXFFT */,
+                AEB132DD2F79F4FC00626F70 /* MLXFast */,
+                AEB132DF2F79F4FC00626F70 /* MLXLinalg */,
+                AEB132E12F79F4FC00626F70 /* MLXNN */,
+                AEB132E32F79F4FC00626F70 /* MLXOptimizers */,
+                AEB132E52F79F4FC00626F70 /* MLXRandom */,
+                AEB132E82F79F6D900626F70 /* MLXEmbedders */,
+                AEB132EA2F79F6D900626F70 /* MLXLLM */,
+                AEB132EC2F79F6D900626F70 /* MLXLMCommon */,
+                AEB132EE2F79F6D900626F70 /* MLXVLM */,
+                AEB132D92F79F4FC00626F70 /* MLX */,
+                AEB132F12F79F6D900626F70 /* MLXLMTokenizers */,
+                AEB132F32F79F6D900626F70 /* MLXLMHFAPI */,
+                AEB132FA2F79F6D900626F70 /* MLXHuggingFace */,
+                AEB132F52F79F6D900626F70 /* yyjson */,
+                AEB132FD2F79F6D900626F70 /* MCP */,
+                AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
+                AE7BBEDE2F885C0100FDE204 /* Numerics */,
+                AE7BBEDF2F885C0100FDE204 /* RealModule */,
+            );
+            productName = EliteAgentXPC;
+            productReference = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */;
+            productType = "com.apple.product-type.xpc-service";
+        };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		AE747A102F70602B004732A5 /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1600;
-				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-					AE747A172F70602B004732A5 = {
-						CreatedOnToolsVersion = 16.0;
-					};
-					AEB7A8A02F7451CE00A844B2 = {
-						CreatedOnToolsVersion = 16.0;
-					};
-					AEB7A8B02F7451CE00A844B2 = {
-						CreatedOnToolsVersion = 16.0;
-					};
-				};
-			};
-			buildConfigurationList = AE747A132F70602B004732A5 /* Build configuration list for PBXProject "EliteAgent" */;
-			developmentRegion = en;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-				Base,
-			);
-			mainGroup = AE747A0F2F70602B004732A5;
-			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */,
-				AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
-				AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */,
-				AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */,
-				AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */,
-				AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */,
-				AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */,
-				AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */,
-			);
-			preferredProjectObjectVersion = 77;
-			productRefGroup = AE747A192F70602B004732A5 /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				AE747A172F70602B004732A5 /* EliteAgent */,
-				AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */,
-				AEB7A8B02F7451CE00A844B2 /* EliteAgentXPC */,
-			);
-		};
+        AE747A102F70602B004732A5 /* Project object */ = {
+            isa = PBXProject;
+            attributes = {
+                BuildIndependentTargetsInParallel = 1;
+                LastSwiftUpdateCheck = 1600;
+                LastUpgradeCheck = 1600;
+                TargetAttributes = {
+                    AE747A172F70602B004732A5 = {
+                        CreatedOnToolsVersion = 16.0;
+                    };
+                    AEB7A8A02F7451CE00A844B2 = {
+                        CreatedOnToolsVersion = 16.0;
+                    };
+                    AEB7A8B02F7451CE00A844B2 = {
+                        CreatedOnToolsVersion = 16.0;
+                    };
+                };
+            };
+            buildConfigurationList = AE747A132F70602B004732A5 /* Build configuration list for PBXProject "EliteAgent" */;
+            developmentRegion = en;
+            hasScannedForEncodings = 0;
+            knownRegions = (
+                en,
+                Base,
+            );
+            mainGroup = AE747A0F2F70602B004732A5;
+            minimizedProjectReferenceProxies = 1;
+            packageReferences = (
+                AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */,
+                AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+                AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */,
+                AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */,
+                AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */,
+                AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */,
+                AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */,
+                AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */,
+            );
+            preferredProjectObjectVersion = 77;
+            productRefGroup = AE747A192F70602B004732A5 /* Products */;
+            projectDirPath = "";
+            projectRoot = "";
+            targets = (
+                AE747A172F70602B004732A5 /* EliteAgent */,
+                AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */,
+                AEB7A8B02F7451CE00A844B2 /* EliteAgentXPC */,
+            );
+        };
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		AE747A162F70602B004732A5 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+        AE747A162F70602B004732A5 /* Resources */ = {
+            isa = PBXResourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		AE747A142F70602B004732A5 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8A22F7451CE00A844B2 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AEB7A8B22F7451CE00A844B2 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+        AE747A142F70602B004732A5 /* Sources */ = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        AEB7A8A22F7451CE00A844B2 /* Sources */ = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        AEB7A8B22F7451CE00A844B2 /* Sources */ = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */;
-			targetProxy = AEB7A8C62F7451CE00A844B2 /* PBXContainerItemProxy */;
-		};
+        AEB7A8C52F7451CE00A844B2 /* PBXTargetDependency */ = {
+            isa = PBXTargetDependency;
+            target = AEB7A8A02F7451CE00A844B2 /* EliteAgentCore */;
+            targetProxy = AEB7A8C62F7451CE00A844B2 /* PBXContainerItemProxy */;
+        };
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		AE747A372F70602C004732A5 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
-				STRIP_INSTALLED_PRODUCT = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Debug;
-		};
-		AE747A382F70602C004732A5 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				SDKROOT = macosx;
-				STRIP_INSTALLED_PRODUCT = NO;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Release;
-		};
-		AE747A3A2F70602C004732A5 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = (
-					"\"Apple Silicon\"",
-					"$(ARCHS_STANDARD)",
-				);
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				AUTOMATION_APPLE_EVENTS = YES;
-				CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				EXCLUDED_ARCHS = x86_64;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Resources/App/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Elite Agent";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0;
-				OTHER_SWIFT_FLAGS = "$(inherited)   ";
-				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Debug;
-		};
-		AE747A3B2F70602C004732A5 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = (
-					"\"Apple Silicon\"",
-					"$(ARCHS_STANDARD)",
-				);
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				AUTOMATION_APPLE_EVENTS = YES;
-				CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				EXCLUDED_ARCHS = x86_64;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Resources/App/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Elite Agent";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0;
-				OTHER_SWIFT_FLAGS = "$(inherited)   ";
-				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Release;
-		};
-		AEB7A8A62F7451CE00A844B2 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_HARDENED_RUNTIME = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(inherited)",
-					"FMT_USE_CONSTEVAL=0",
-					"FMT_ENFORCE_COMPILE_STRING=0",
-					"FMT_USE_CONSTEXPR=0",
-				);
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACH_O_TYPE = staticlib;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
-				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Debug;
-		};
-		AEB7A8A72F7451CE00A844B2 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_HARDENED_RUNTIME = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(inherited)",
-					"FMT_USE_CONSTEVAL=0",
-					"FMT_ENFORCE_COMPILE_STRING=0",
-					"FMT_USE_CONSTEXPR=0",
-				);
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACH_O_TYPE = staticlib;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
-				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Release;
-		};
-		AEB7A8B62F7451CE00A844B2 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = NO;
-				EXCLUDED_ARCHS = x86_64;
-				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = Resources/XPC/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
-				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-				XPC_SERVICE_JOIN_EXISTING_SESSION = YES;
-			};
-			name = Debug;
-		};
-		AEB7A8B72F7451CE00A844B2 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = RDCY864LPJ;
-				ENABLE_APP_SANDBOX = NO;
-				EXCLUDED_ARCHS = x86_64;
-				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = Resources/XPC/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
-				PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
-				SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
-				MTL_LANGUAGE_REVISION = metal3.1;
-				MTL_COMPILER_FLAGS = "-std=metal3.1";
-				OTHER_METALLC_FLAGS = "-std=metal3.1";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				SWIFT_VERSION = 6.3;
-			};
-			name = Release;
-		};
+        AE747A372F70602C004732A5 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                ALWAYS_SEARCH_USER_PATHS = NO;
+                ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+                CLANG_ANALYZER_NONNULL = YES;
+                CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+                CLANG_ENABLE_MODULES = YES;
+                CLANG_ENABLE_OBJC_ARC = YES;
+                CLANG_ENABLE_OBJC_WEAK = YES;
+                CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+                CLANG_WARN_BOOL_CONVERSION = YES;
+                CLANG_WARN_COMMA = YES;
+                CLANG_WARN_CONSTANT_CONVERSION = YES;
+                CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+                CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+                CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+                CLANG_WARN_EMPTY_BODY = YES;
+                CLANG_WARN_ENUM_CONVERSION = YES;
+                CLANG_WARN_INFINITE_RECURSION = YES;
+                CLANG_WARN_INT_CONVERSION = YES;
+                CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+                CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+                CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+                CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+                CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+                CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+                CLANG_WARN_STRICT_PROTOTYPES = YES;
+                CLANG_WARN_SUSPICIOUS_MOVE = YES;
+                CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+                CLANG_WARN_UNREACHABLE_CODE = YES;
+                CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+                COPY_PHASE_STRIP = NO;
+                DEBUG_INFORMATION_FORMAT = dwarf;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                ENABLE_STRICT_OBJC_MSGSEND = YES;
+                ENABLE_TESTABILITY = YES;
+                ENABLE_USER_SCRIPT_SANDBOXING = NO;
+                GCC_C_LANGUAGE_STANDARD = gnu17;
+                GCC_DYNAMIC_NO_PIC = NO;
+                GCC_NO_COMMON_BLOCKS = YES;
+                GCC_OPTIMIZATION_LEVEL = 0;
+                GCC_PREPROCESSOR_DEFINITIONS = (
+                    "DEBUG=1",
+                    "$(inherited)",
+                );
+                GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+                GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+                GCC_WARN_UNDECLARED_SELECTOR = YES;
+                GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+                GCC_WARN_UNUSED_FUNCTION = YES;
+                GCC_WARN_UNUSED_VARIABLE = YES;
+                LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+                MTL_FAST_MATH = YES;
+                ONLY_ACTIVE_ARCH = YES;
+                SDKROOT = macosx;
+                STRIP_INSTALLED_PRODUCT = NO;
+                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Debug;
+        };
+        AE747A382F70602C004732A5 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                ALWAYS_SEARCH_USER_PATHS = NO;
+                ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+                CLANG_ANALYZER_NONNULL = YES;
+                CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+                CLANG_ENABLE_MODULES = YES;
+                CLANG_ENABLE_OBJC_ARC = YES;
+                CLANG_ENABLE_OBJC_WEAK = YES;
+                CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+                CLANG_WARN_BOOL_CONVERSION = YES;
+                CLANG_WARN_COMMA = YES;
+                CLANG_WARN_CONSTANT_CONVERSION = YES;
+                CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+                CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+                CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+                CLANG_WARN_EMPTY_BODY = YES;
+                CLANG_WARN_ENUM_CONVERSION = YES;
+                CLANG_WARN_INFINITE_RECURSION = YES;
+                CLANG_WARN_INT_CONVERSION = YES;
+                CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+                CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+                CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+                CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+                CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+                CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+                CLANG_WARN_STRICT_PROTOTYPES = YES;
+                CLANG_WARN_SUSPICIOUS_MOVE = YES;
+                CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+                CLANG_WARN_UNREACHABLE_CODE = YES;
+                CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+                COPY_PHASE_STRIP = NO;
+                DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                ENABLE_NS_ASSERTIONS = NO;
+                ENABLE_STRICT_OBJC_MSGSEND = YES;
+                ENABLE_USER_SCRIPT_SANDBOXING = NO;
+                GCC_C_LANGUAGE_STANDARD = gnu17;
+                GCC_NO_COMMON_BLOCKS = YES;
+                GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+                GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+                GCC_WARN_UNDECLARED_SELECTOR = YES;
+                GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+                GCC_WARN_UNUSED_FUNCTION = YES;
+                GCC_WARN_UNUSED_VARIABLE = YES;
+                LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                MTL_ENABLE_DEBUG_INFO = NO;
+                MTL_FAST_MATH = YES;
+                SDKROOT = macosx;
+                STRIP_INSTALLED_PRODUCT = NO;
+                SWIFT_COMPILATION_MODE = wholemodule;
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Release;
+        };
+        AE747A3A2F70602C004732A5 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                ARCHS = (
+                    "\"Apple Silicon\"",
+                    "$(ARCHS_STANDARD)",
+                );
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+                ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+                AUTOMATION_APPLE_EVENTS = YES;
+                CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
+                CODE_SIGN_STYLE = Automatic;
+                COMBINE_HIDPI_IMAGES = YES;
+                CURRENT_PROJECT_VERSION = 3;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                ENABLE_APP_SANDBOX = NO;
+                ENABLE_HARDENED_RUNTIME = YES;
+                ENABLE_PREVIEWS = YES;
+                ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+                ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
+                ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+                ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+                ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+                ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
+                EXCLUDED_ARCHS = x86_64;
+                GENERATE_INFOPLIST_FILE = NO;
+                INFOPLIST_FILE = Resources/App/Info.plist;
+                INFOPLIST_KEY_CFBundleDisplayName = "Elite Agent";
+                INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+                LD_RUNPATH_SEARCH_PATHS = (
+                    "$(inherited)",
+                    "@executable_path/../Frameworks",
+                );
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                MARKETING_VERSION = 1.0;
+                OTHER_SWIFT_FLAGS = "$(inherited)   ";
+                PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent;
+                OTHER_LDFLAGS = "$(inherited)";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                REGISTER_APP_GROUPS = YES;
+                RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+                RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+                RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+                RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+                RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+                RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
+                STRING_CATALOG_GENERATE_SYMBOLS = YES;
+                SWIFT_APPROACHABLE_CONCURRENCY = YES;
+                SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+                SWIFT_EMIT_LOC_STRINGS = YES;
+                SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Debug;
+        };
+        AE747A3B2F70602C004732A5 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                ARCHS = (
+                    "\"Apple Silicon\"",
+                    "$(ARCHS_STANDARD)",
+                );
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+                ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+                AUTOMATION_APPLE_EVENTS = YES;
+                CODE_SIGN_ENTITLEMENTS = Resources/App/EliteAgent.entitlements;
+                CODE_SIGN_STYLE = Automatic;
+                COMBINE_HIDPI_IMAGES = YES;
+                CURRENT_PROJECT_VERSION = 3;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                ENABLE_APP_SANDBOX = NO;
+                ENABLE_HARDENED_RUNTIME = YES;
+                ENABLE_PREVIEWS = YES;
+                ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+                ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
+                ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+                ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+                ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+                ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
+                EXCLUDED_ARCHS = x86_64;
+                GENERATE_INFOPLIST_FILE = NO;
+                INFOPLIST_FILE = Resources/App/Info.plist;
+                INFOPLIST_KEY_CFBundleDisplayName = "Elite Agent";
+                INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+                LD_RUNPATH_SEARCH_PATHS = (
+                    "$(inherited)",
+                    "@executable_path/../Frameworks",
+                );
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                MARKETING_VERSION = 1.0;
+                OTHER_SWIFT_FLAGS = "$(inherited)   ";
+                PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent;
+                OTHER_LDFLAGS = "$(inherited)";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                REGISTER_APP_GROUPS = YES;
+                RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+                RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+                RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+                RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+                RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+                RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
+                STRING_CATALOG_GENERATE_SYMBOLS = YES;
+                SWIFT_APPROACHABLE_CONCURRENCY = YES;
+                SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+                SWIFT_EMIT_LOC_STRINGS = YES;
+                SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR)";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Release;
+        };
+        AEB7A8A62F7451CE00A844B2 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGNING_ALLOWED = NO;
+                CODE_SIGNING_REQUIRED = NO;
+                CODE_SIGN_STYLE = Automatic;
+                COMBINE_HIDPI_IMAGES = YES;
+                DEFINES_MODULE = YES;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                DYLIB_COMPATIBILITY_VERSION = 1;
+                DYLIB_CURRENT_VERSION = 1;
+                DYLIB_INSTALL_NAME_BASE = "@rpath";
+                ENABLE_HARDENED_RUNTIME = NO;
+                FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+                GCC_PREPROCESSOR_DEFINITIONS = (
+                    "$(inherited)",
+                    "FMT_USE_CONSTEVAL=0",
+                    "FMT_ENFORCE_COMPILE_STRING=0",
+                    "FMT_USE_CONSTEXPR=0",
+                );
+                LIBRARY_SEARCH_PATHS = "$(inherited)";
+                MACH_O_TYPE = staticlib;
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
+                PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
+                OTHER_LDFLAGS = "$(inherited)";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SKIP_INSTALL = YES;
+                SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Debug;
+        };
+        AEB7A8A72F7451CE00A844B2 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGNING_ALLOWED = NO;
+                CODE_SIGNING_REQUIRED = NO;
+                CODE_SIGN_STYLE = Automatic;
+                COMBINE_HIDPI_IMAGES = YES;
+                DEFINES_MODULE = YES;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                DYLIB_COMPATIBILITY_VERSION = 1;
+                DYLIB_CURRENT_VERSION = 1;
+                DYLIB_INSTALL_NAME_BASE = "@rpath";
+                ENABLE_HARDENED_RUNTIME = NO;
+                FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+                GCC_PREPROCESSOR_DEFINITIONS = (
+                    "$(inherited)",
+                    "FMT_USE_CONSTEVAL=0",
+                    "FMT_ENFORCE_COMPILE_STRING=0",
+                    "FMT_USE_CONSTEXPR=0",
+                );
+                LIBRARY_SEARCH_PATHS = "$(inherited)";
+                MACH_O_TYPE = staticlib;
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
+                PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgentCore;
+                OTHER_LDFLAGS = "$(inherited)";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SKIP_INSTALL = YES;
+                SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Release;
+        };
+        AEB7A8B62F7451CE00A844B2 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGNING_ALLOWED = YES;
+                CODE_SIGNING_REQUIRED = YES;
+                CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
+                CODE_SIGN_STYLE = Automatic;
+                COMBINE_HIDPI_IMAGES = YES;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                ENABLE_APP_SANDBOX = NO;
+                EXCLUDED_ARCHS = x86_64;
+                FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+                INFOPLIST_FILE = Resources/XPC/Info.plist;
+                LD_RUNPATH_SEARCH_PATHS = (
+                    "$(inherited)",
+                    "@executable_path/../Frameworks",
+                    "@loader_path/../Frameworks",
+                );
+                LIBRARY_SEARCH_PATHS = "$(inherited)";
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
+                PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
+                OTHER_LDFLAGS = "$(inherited)";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SKIP_INSTALL = YES;
+                SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+                SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+                XPC_SERVICE_JOIN_EXISTING_SESSION = YES;
+            };
+            name = Debug;
+        };
+        AEB7A8B72F7451CE00A844B2 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGNING_ALLOWED = YES;
+                CODE_SIGNING_REQUIRED = YES;
+                CODE_SIGN_ENTITLEMENTS = Resources/XPC/EliteAgentXPC.entitlements;
+                CODE_SIGN_STYLE = Automatic;
+                COMBINE_HIDPI_IMAGES = YES;
+                DEVELOPMENT_TEAM = RDCY864LPJ;
+                ENABLE_APP_SANDBOX = NO;
+                EXCLUDED_ARCHS = x86_64;
+                FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+                INFOPLIST_FILE = Resources/XPC/Info.plist;
+                LD_RUNPATH_SEARCH_PATHS = (
+                    "$(inherited)",
+                    "@executable_path/../Frameworks",
+                    "@loader_path/../Frameworks",
+                );
+                LIBRARY_SEARCH_PATHS = "$(inherited)";
+                MACOSX_DEPLOYMENT_TARGET = 15.0;
+                OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap";
+                PRODUCT_BUNDLE_IDENTIFIER = com.trgysvc.EliteAgent.XPC;
+                OTHER_LDFLAGS = "$(inherited)";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SKIP_INSTALL = YES;
+                SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+                SWIFT_INCLUDE_PATHS = "$(inherited) $(CONFIGURATION_BUILD_DIR) /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src";
+                MTL_LANGUAGE_REVISION = metal3.1;
+                MTL_COMPILER_FLAGS = "-std=metal3.1";
+                OTHER_METALLC_FLAGS = "-std=metal3.1";
+                CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+                SWIFT_VERSION = 6.3;
+            };
+            name = Release;
+        };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AE747A132F70602B004732A5 /* Build configuration list for PBXProject "EliteAgent" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AE747A372F70602C004732A5 /* Debug */,
-				AE747A382F70602C004732A5 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AE747A392F70602C004732A5 /* Build configuration list for PBXNativeTarget "EliteAgent" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AE747A3A2F70602C004732A5 /* Debug */,
-				AE747A3B2F70602C004732A5 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AEB7A8A52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentCore" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AEB7A8A62F7451CE00A844B2 /* Debug */,
-				AEB7A8A72F7451CE00A844B2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AEB7A8B52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentXPC" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AEB7A8B62F7451CE00A844B2 /* Debug */,
-				AEB7A8B72F7451CE00A844B2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
+        AE747A132F70602B004732A5 /* Build configuration list for PBXProject "EliteAgent" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                AE747A372F70602C004732A5 /* Debug */,
+                AE747A382F70602C004732A5 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+        AE747A392F70602C004732A5 /* Build configuration list for PBXNativeTarget "EliteAgent" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                AE747A3A2F70602C004732A5 /* Debug */,
+                AE747A3B2F70602C004732A5 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+        AEB7A8A52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentCore" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                AEB7A8A62F7451CE00A844B2 /* Debug */,
+                AEB7A8A72F7451CE00A844B2 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+        AEB7A8B52F7451CE00A844B2 /* Build configuration list for PBXNativeTarget "EliteAgentXPC" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                AEB7A8B62F7451CE00A844B2 /* Debug */,
+                AEB7A8B72F7451CE00A844B2 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-numerics.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.0;
-			};
-		};
-		AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/trgysvc/audiointelligence.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
-			requirement = {
-				kind = upToNextMinorVersion;
-				minimumVersion = 0.31.3;
-			};
-		};
-		AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
-			requirement = {
-				kind = upToNextMinorVersion;
-				minimumVersion = 3.31.3;
-			};
-		};
-		AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/DePasqualeOrg/swift-tokenizers-mlx";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.0;
-			};
-		};
-		AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/DePasqualeOrg/swift-hf-api-mlx";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.0;
-			};
-		};
-		AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ibireme/yyjson.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.12.0;
-			};
-		};
-		AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/modelcontextprotocol/swift-sdk.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
+        AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/apple/swift-numerics.git";
+            requirement = {
+                kind = upToNextMajorVersion;
+                minimumVersion = 1.1.0;
+            };
+        };
+        AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/trgysvc/audiointelligence.git";
+            requirement = {
+                branch = main;
+                kind = branch;
+            };
+        };
+        AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
+            requirement = {
+                kind = upToNextMinorVersion;
+                minimumVersion = 0.31.3;
+            };
+        };
+        AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
+            requirement = {
+                kind = upToNextMinorVersion;
+                minimumVersion = 3.31.3;
+            };
+        };
+        AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/DePasqualeOrg/swift-tokenizers-mlx";
+            requirement = {
+                kind = upToNextMajorVersion;
+                minimumVersion = 0.2.0;
+            };
+        };
+        AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/DePasqualeOrg/swift-hf-api-mlx";
+            requirement = {
+                kind = upToNextMajorVersion;
+                minimumVersion = 0.2.0;
+            };
+        };
+        AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/ibireme/yyjson.git";
+            requirement = {
+                kind = upToNextMajorVersion;
+                minimumVersion = 0.12.0;
+            };
+        };
+        AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/modelcontextprotocol/swift-sdk.git";
+            requirement = {
+                branch = main;
+                kind = branch;
+            };
+        };
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AE7BBEDE2F885C0100FDE204 /* Numerics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
-			productName = Numerics;
-		};
-		AE7BBEDF2F885C0100FDE204 /* RealModule */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
-			productName = RealModule;
-		};
-		AEAB00012F8FD1520080DB7D /* AudioIntelligence */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */;
-			productName = AudioIntelligence;
-		};
-		AEB132D92F79F4FC00626F70 /* MLX */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLX;
-		};
-		AEB132DB2F79F4FC00626F70 /* MLXFFT */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXFFT;
-		};
-		AEB132DD2F79F4FC00626F70 /* MLXFast */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXFast;
-		};
-		AEB132DF2F79F4FC00626F70 /* MLXLinalg */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXLinalg;
-		};
-		AEB132E12F79F4FC00626F70 /* MLXNN */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXNN;
-		};
-		AEB132E32F79F4FC00626F70 /* MLXOptimizers */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXOptimizers;
-		};
-		AEB132E52F79F4FC00626F70 /* MLXRandom */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXRandom;
-		};
-		AEB132E82F79F6D900626F70 /* MLXEmbedders */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
-			productName = MLXEmbedders;
-		};
-		AEB132EA2F79F6D900626F70 /* MLXLLM */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
-			productName = MLXLLM;
-		};
-		AEB132EC2F79F6D900626F70 /* MLXLMCommon */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
-			productName = MLXLMCommon;
-		};
-		AEB132EE2F79F6D900626F70 /* MLXVLM */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
-			productName = MLXVLM;
-		};
-		AEB132F12F79F6D900626F70 /* MLXLMTokenizers */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */;
-			productName = MLXLMTokenizers;
-		};
-		AEB132F32F79F6D900626F70 /* MLXLMHFAPI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */;
-			productName = MLXLMHFAPI;
-		};
-		AEB132F52F79F6D900626F70 /* yyjson */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */;
-			productName = yyjson;
-		};
-		AEB132FA2F79F6D900626F70 /* MLXHuggingFace */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
-			productName = MLXHuggingFace;
-		};
-		AEB132FD2F79F6D900626F70 /* MCP */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */;
-			productName = MCP;
-		};
+        AE7BBEDE2F885C0100FDE204 /* Numerics */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+            productName = Numerics;
+        };
+        AE7BBEDF2F885C0100FDE204 /* RealModule */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+            productName = RealModule;
+        };
+        AEAB00012F8FD1520080DB7D /* AudioIntelligence */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */;
+            productName = AudioIntelligence;
+        };
+        AEB132D92F79F4FC00626F70 /* MLX */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLX;
+        };
+        AEB132DB2F79F4FC00626F70 /* MLXFFT */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLXFFT;
+        };
+        AEB132DD2F79F4FC00626F70 /* MLXFast */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLXFast;
+        };
+        AEB132DF2F79F4FC00626F70 /* MLXLinalg */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLXLinalg;
+        };
+        AEB132E12F79F4FC00626F70 /* MLXNN */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLXNN;
+        };
+        AEB132E32F79F4FC00626F70 /* MLXOptimizers */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLXOptimizers;
+        };
+        AEB132E52F79F4FC00626F70 /* MLXRandom */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+            productName = MLXRandom;
+        };
+        AEB132E82F79F6D900626F70 /* MLXEmbedders */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+            productName = MLXEmbedders;
+        };
+        AEB132EA2F79F6D900626F70 /* MLXLLM */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+            productName = MLXLLM;
+        };
+        AEB132EC2F79F6D900626F70 /* MLXLMCommon */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+            productName = MLXLMCommon;
+        };
+        AEB132EE2F79F6D900626F70 /* MLXVLM */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+            productName = MLXVLM;
+        };
+        AEB132F12F79F6D900626F70 /* MLXLMTokenizers */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */;
+            productName = MLXLMTokenizers;
+        };
+        AEB132F32F79F6D900626F70 /* MLXLMHFAPI */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */;
+            productName = MLXLMHFAPI;
+        };
+        AEB132F52F79F6D900626F70 /* yyjson */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */;
+            productName = yyjson;
+        };
+        AEB132FA2F79F6D900626F70 /* MLXHuggingFace */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+            productName = MLXHuggingFace;
+        };
+        AEB132FD2F79F6D900626F70 /* MCP */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */;
+            productName = MCP;
+        };
 /* End XCSwiftPackageProductDependency section */
-	};
-	rootObject = AE747A102F70602B004732A5 /* Project object */;
+    };
+    rootObject = AE747A102F70602B004732A5 /* Project object */;
 }
