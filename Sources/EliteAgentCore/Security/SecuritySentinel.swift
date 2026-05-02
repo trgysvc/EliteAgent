@@ -19,11 +19,10 @@ public final class SecuritySentinel: Sendable {
         // Biyometrik (TouchID/FaceID) kullanılabilir mi kontrol et
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             do {
-                print("[SECURITY] Biyometrik doğrulama bekleniyor: \(reason) (Touch ID/Apple Watch)...")
-                AgentLogger.logAudit(level: .info, agent: "SecuritySentinel", message: "Biometric authentication requested: \(reason)")
+                AgentLogger.logAudit(level: .info, agent: "Security", message: "Biyometrik doğrulama bekleniyor: \(reason) (Touch ID/Apple Watch)...")
                 return try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
             } catch {
-                print("[SecuritySentinel] Biyometrik doğrulama hatası: \(error.localizedDescription)")
+                AgentLogger.logError("Biyometrik doğrulama hatası: \(error.localizedDescription)", agent: "Security")
                 // Hata durumunda parolaya düş (Fallback)
                 return await fallbackToPassword(context: context, reason: reason)
             }
@@ -38,7 +37,7 @@ public final class SecuritySentinel: Sendable {
         do {
             return try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)
         } catch {
-            print("[SecuritySentinel] Parola doğrulaması başarısız: \(error.localizedDescription)")
+            AgentLogger.logError("Parola doğrulaması başarısız: \(error.localizedDescription)", agent: "Security")
             return false
         }
     }

@@ -88,7 +88,7 @@ public class Orchestrator: ObservableObject {
             do {
                 self.cloudProvider = try CloudProvider(providerID: .openrouter, vaultManager: vault)
             } catch {
-                print("Failed to init cloud provider: \(error)")
+                AgentLogger.logError("Failed to init cloud provider: \(error.localizedDescription)", agent: "Orchestrator")
             }
             
             let local = MLXProvider(providerID: .mlx)
@@ -104,7 +104,7 @@ public class Orchestrator: ObservableObject {
                             AgentLogger.logInfo("[ORCHESTRATOR] Local model not configured. Skipping initialization.")
                         }
                     } catch {
-                        print("[ORCHESTRATOR] Titan Priming Failed: \(error)")
+                        AgentLogger.logError("Titan Priming Failed: \(error.localizedDescription)", agent: "Orchestrator")
                     }
                 }
             }
@@ -249,7 +249,7 @@ public class Orchestrator: ObservableObject {
             let loaded = try await HistoryManager.shared.load()
             self.pastSessions = loaded.sorted(by: { $0.createdAt > $1.createdAt })
         } catch {
-            print("[ORCHESTRATOR] Failed to load history: \(error)")
+            AgentLogger.logError("Failed to load history: \(error.localizedDescription)", agent: "Orchestrator")
         }
     }
     
@@ -283,7 +283,7 @@ public class Orchestrator: ObservableObject {
             self.selectedSessionID = nil
             self.currentTask = ""
         } catch {
-            print("[ORCHESTRATOR] Failed to clear history: \(error)")
+            AgentLogger.logError("[ORCHESTRATOR] Failed to clear history: \(error.localizedDescription)", agent: "Orchestrator")
         }
     }
 
@@ -341,7 +341,7 @@ public class Orchestrator: ObservableObject {
         do {
             try await executeActualTask(task: task)
         } catch {
-            AgentLogger.logError("[ORCHESTRATOR] Task Execution Failed: \(error)")
+            AgentLogger.logError("[ORCHESTRATOR] Task Execution Failed: \(error.localizedDescription)", agent: "Orchestrator")
         }
         
         self.isProcessingTask = false
@@ -445,7 +445,7 @@ public class Orchestrator: ObservableObject {
                 
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🚀 [STRUCTURAL CONTEXT ADDED] Source: \(fileName)")
             } catch {
-                print("[ORCHESTRATOR] DocEye failed: \(error)")
+                AgentLogger.logError("DocEye failed: \(error.localizedDescription)", agent: "Orchestrator")
             }
         } else {
             // v10.1: Elite Auditing - Log initial raw prompt if no DocEye context added
@@ -615,7 +615,7 @@ public class Orchestrator: ObservableObject {
             } else {
                 sessionState.isInputLocked = false
                 self.status = .error
-                self.steps.append(TaskStep(name: "Inference Error", status: "failed", latency: "0s", thought: "\(error)"))
+                self.steps.append(TaskStep(name: "Inference Error", status: "failed", latency: "0s", thought: "\(error.localizedDescription)"))
             }
             throw error
         } catch {
@@ -676,7 +676,7 @@ public class Orchestrator: ObservableObject {
             }
             try await HistoryManager.shared.save(self.pastSessions)
         } catch {
-            print("[ORCHESTRATOR] Cloud summarization failed: \(error). Falling back to Titan.")
+            AgentLogger.logWarn("Cloud summarization failed: \(error.localizedDescription). Falling back to Titan.", agent: "Orchestrator")
             // Fallback to local model
             if let local = self.localProvider {
                 do {
@@ -700,7 +700,7 @@ public class Orchestrator: ObservableObject {
                     }
                     try await HistoryManager.shared.save(self.pastSessions)
                 } catch {
-                    print("[ORCHESTRATOR] Local summarization also failed: \(error)")
+                    AgentLogger.logError("Local summarization also failed: \(error.localizedDescription)", agent: "Orchestrator")
                 }
             }
         }

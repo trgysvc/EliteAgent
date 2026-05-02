@@ -1,6 +1,7 @@
 import Foundation
 import Distributed
 import EliteAgentCore
+import Numerics
 
 /// v13.7: UNO Distributed Tool Executor Actor (Stabilized)
 /// This is the native implementation that runs inside the XPC sandbox.
@@ -59,8 +60,8 @@ public distributed actor UNOSandboxExecutor {
 final class UNOXPCService: NSObject, NSXPCListenerDelegate, UNORemoteProxy, @unchecked Sendable {
     let executor: UNOSandboxExecutor
     
-    override init() {
-        self.executor = UNOSandboxExecutor(actorSystem: UNODistributedActorSystem.shared)
+    init(executor: UNOSandboxExecutor) {
+        self.executor = executor
         super.init()
         
         // v13.1: Initialize and Scan Plugins
@@ -124,6 +125,46 @@ final class UNOXPCService: NSObject, NSXPCListenerDelegate, UNORemoteProxy, @unc
         }
     }
 
+    func performMachAction(shmem: FileHandle, size: Int, signalPort: NSMachPort, reply: @escaping @Sendable (Data?, Data?) -> Void) {
+        let port = signalPort.machPort
+        Task {
+            do {
+                let fd = shmem.fileDescriptor
+                let pointer = mmap(nil, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)
+                guard pointer != MAP_FAILED else {
+                    reply(nil, "XPC_SHMEM_MAP_FAILED".data(using: .utf8))
+                    return
+                }
+                defer { munmap(pointer, size) }
+                
+                let data = Data(bytesNoCopy: pointer!, count: size, deallocator: .none)
+                let action = try PropertyListDecoder().decode(UNOActionWrapper.self, from: data)
+                
+                let response = try await executor.execute(action: action)
+                
+                // Write response back to shared memory if there's space, or just reply via XPC
+                // For Mach flow, we signal the port to indicate 'Processing Done'
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .binary
+                let responseData = try encoder.encode(response)
+                
+                if responseData.count <= size {
+                    responseData.withUnsafeBytes { ptr in
+                        pointer?.copyMemory(from: ptr.baseAddress!, byteCount: responseData.count)
+                    }
+                    // v7.1: Fire Mach Signal
+                    MachSignaler.signal(port: port)
+                    reply(nil, nil) // Success, data is in shmem
+                } else {
+                    reply(responseData, nil) // Fallback to standard XPC if response is larger
+                }
+            } catch {
+                AgentLogger.logAudit(level: .error, agent: "UNO-XPC", message: "Mach memory execution failed: \(error.localizedDescription)")
+                reply(nil, error.localizedDescription.data(using: .utf8))
+            }
+        }
+    }
+
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         newConnection.exportedInterface = NSXPCInterface(with: UNORemoteProxy.self)
         newConnection.exportedObject = self
@@ -132,7 +173,8 @@ final class UNOXPCService: NSObject, NSXPCListenerDelegate, UNORemoteProxy, @unc
     }
 }
 
-let delegate = UNOXPCService()
+let executor = UNOSandboxExecutor(actorSystem: UNODistributedActorSystem.shared)
+let delegate = UNOXPCService(executor: executor)
 let listener = NSXPCListener.service()
 listener.delegate = delegate
 listener.resume()

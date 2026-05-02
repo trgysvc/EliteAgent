@@ -19,7 +19,7 @@ public actor ExperienceVault {
         let dbPath = eliteDir.appendingPathComponent("experience_vault.sqlite").path
         
         if sqlite3_open(dbPath, &db) != SQLITE_OK {
-            print("[ExperienceVault] Failed to open DB")
+            AgentLogger.logError("Failed to open Experience DB", agent: "ExperienceVault")
             return
         }
         
@@ -63,7 +63,7 @@ public actor ExperienceVault {
         var errMsg: UnsafeMutablePointer<Int8>?
         if sqlite3_exec(db, sql, nil, nil, &errMsg) != SQLITE_OK {
             let error = String(cString: errMsg!)
-            print("[ExperienceVault] SQL Error: \(error)")
+            AgentLogger.logError("SQL Error: \(error)", agent: "ExperienceVault")
             sqlite3_free(errMsg)
         }
     }
@@ -83,7 +83,7 @@ public actor ExperienceVault {
             }
             
             if sqlite3_step(statement) != SQLITE_DONE {
-                print("[ExperienceVault] Failed to insert experience")
+                AgentLogger.logError("Failed to insert experience", agent: "ExperienceVault")
             }
         }
         sqlite3_finalize(statement)

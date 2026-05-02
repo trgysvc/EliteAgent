@@ -234,7 +234,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
                 if let data = try? Data(contentsOf: configURL), data.count < 100 {
                     let timestamp = Int(Date().timeIntervalSince1970)
                     let corruptedPath = path.deletingLastPathComponent().appendingPathComponent("\(path.lastPathComponent)_corrupted_\(timestamp)")
-                    print("[ModelSetup] CRITICAL: Corrupted config detected. Moving to \(corruptedPath.lastPathComponent) for safety.")
+                    AgentLogger.logAudit(level: .error, agent: "ModelSetup", message: "CRITICAL: Corrupted config detected. Moving to \(corruptedPath.lastPathComponent) for safety.")
                     try? FileManager.default.moveItem(at: path, to: corruptedPath)
                 }
             }
@@ -259,7 +259,9 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
                 
                 for fileName in files {
                     await MainActor.run { self.currentDownloadTask = fileName }
-                    let url = URL(string: baseUrl + fileName)!
+                    guard let url = URL(string: baseUrl + fileName) else {
+                        throw NSError(domain: "ModelSetup", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid URL for \(fileName)"])
+                    }
                     let localURL = try await self.downloadFile(from: url)
                     
                     let attributes = try FileManager.default.attributesOfItem(atPath: localURL.path)
@@ -275,7 +277,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
                         try FileManager.default.removeItem(at: destination)
                     }
                     try FileManager.default.moveItem(at: localURL, to: destination)
-                    print("[SETUP] Downloaded and Verified: \(fileName) (\(size) bytes)")
+                    AgentLogger.logInfo("Downloaded and Verified: \(fileName) (\(size) bytes)", agent: "ModelSetup")
                 }
                 
                 await MainActor.run { self.loadState = .verifying }
@@ -299,7 +301,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
                     }
                 }
             } catch {
-                print("[ModelSetup] Download failed: \(error)")
+                AgentLogger.logError("Download failed: \(error.localizedDescription)", agent: "ModelSetup")
                 await MainActor.run { 
                     self.loadState = .failed
                     self.state = .failed
@@ -370,7 +372,7 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
             
             let digest = hasher.finalize()
             let hashString = digest.compactMap { String(format: "%02x", $0) }.joined()
-            print("[ModelSetup] Verified Weights: \(hashString)")
+            AgentLogger.logInfo("Verified Weights: \(hashString)", agent: "ModelSetup")
             return true
         }.value
     }
@@ -380,7 +382,10 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
     }
     
     public func getModelDirectory(for id: String) -> URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            // Fallback to home directory if App Support is missing (extremely rare on macOS)
+            return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/EliteAgent/Models/\(id)")
+        }
         return appSupport.appendingPathComponent("EliteAgent/Models/\(id)")
     }
     
@@ -485,6 +490,6 @@ extension ModelSetupManager: URLSessionDownloadDelegate {
         let tensorCount = header[8..<16].withUnsafeBytes { $0.load(as: UInt64.self) }
         guard tensorCount > 0 else { throw GGUFValidationError.noTensors }
         
-        print("[SETUP] GGUF Verification Passed: \(url.lastPathComponent) (Version \(version), Tensors \(tensorCount))")
+        AgentLogger.logInfo("GGUF Verification Passed: \(url.lastPathComponent) (Version \(version), Tensors \(tensorCount))", agent: "ModelSetup")
     }
 }

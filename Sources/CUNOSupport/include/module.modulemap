@@ -1,0 +1,4 @@
+module CUNOSupport {
+    header "UNORingBuffer.h"
+    export *
+}

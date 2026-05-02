@@ -417,37 +417,81 @@ public enum SignalError: Error, Sendable {
     case invalidDirection(source: AgentID, target: AgentID)
 }
 
-public struct AnyCodable: Codable {
-    public let value: Any
-    
-    public init(_ value: Any) {
-        self.value = value
-    }
-    
+/// Type-safe, truly Sendable alternative to the previous `Any`-based wrapper.
+/// Eliminates `@unchecked Sendable` by storing a closed set of primitive types.
+public enum CodableValue: Codable, Sendable {
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+    case string(String)
+    case array([CodableValue])
+    case dict([String: CodableValue])
+    case null
+
     public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        if let x = try? container.decode(Bool.self) { value = x }
-        else if let x = try? container.decode(Int.self) { value = x }
-        else if let x = try? container.decode(Double.self) { value = x }
-        else if let x = try? container.decode(String.self) { value = x }
-        else if let x = try? container.decode([AnyCodable].self) { value = x.map { $0.value } }
-        else if let x = try? container.decode([String: AnyCodable].self) { value = x.mapValues { $0.value } }
-        else { throw DecodingError.typeMismatch(AnyCodable.self, .init(codingPath: decoder.codingPath, debugDescription: "Wrong type")) }
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() { self = .null; return }
+        if let x = try? c.decode(Bool.self)   { self = .bool(x);   return }
+        if let x = try? c.decode(Int.self)    { self = .int(x);    return }
+        if let x = try? c.decode(Double.self) { self = .double(x); return }
+        if let x = try? c.decode(String.self) { self = .string(x); return }
+        if let x = try? c.decode([CodableValue].self)         { self = .array(x); return }
+        if let x = try? c.decode([String: CodableValue].self) { self = .dict(x);  return }
+        throw DecodingError.typeMismatch(CodableValue.self,
+            .init(codingPath: decoder.codingPath, debugDescription: "Unsupported type"))
     }
-    
+
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        if let x = value as? Bool { try container.encode(x) }
-        else if let x = value as? Int { try container.encode(x) }
-        else if let x = value as? Double { try container.encode(x) }
-        else if let x = value as? String { try container.encode(x) }
-        else if let x = value as? [Any] { try container.encode(x.map { AnyCodable($0) }) }
-        else if let x = value as? [String: Any] { try container.encode(x.mapValues { AnyCodable($0) }) }
-        else { throw EncodingError.invalidValue(value, .init(codingPath: encoder.codingPath, debugDescription: "Unknown type")) }
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .bool(let v):   try c.encode(v)
+        case .int(let v):    try c.encode(v)
+        case .double(let v): try c.encode(v)
+        case .string(let v): try c.encode(v)
+        case .array(let v):  try c.encode(v)
+        case .dict(let v):   try c.encode(v)
+        case .null:          try c.encodeNil()
+        }
+    }
+
+    public var anyValue: Any {
+        switch self {
+        case .bool(let v):   return v
+        case .int(let v):    return v
+        case .double(let v): return v
+        case .string(let v): return v
+        case .array(let v):  return v.map { $0.anyValue }
+        case .dict(let v):   return v.mapValues { $0.anyValue }
+        case .null:          return NSNull()
+        }
     }
 }
 
-extension AnyCodable: @unchecked Sendable {}
+/// Backward-compatible wrapper: stores a `CodableValue` internally; exposes `value: Any`.
+/// Now truly `Sendable` — no `@unchecked` needed.
+public struct AnyCodable: Codable, Sendable {
+    private let storage: CodableValue
+
+    public var value: Any { storage.anyValue }
+
+    public init(_ value: Any) {
+        if let b = value as? Bool              { storage = .bool(b) }
+        else if let i = value as? Int         { storage = .int(i) }
+        else if let d = value as? Double      { storage = .double(d) }
+        else if let s = value as? String      { storage = .string(s) }
+        else if let a = value as? [Any]       { storage = .array(a.map { AnyCodable($0).storage }) }
+        else if let d = value as? [String: Any] { storage = .dict(d.mapValues { AnyCodable($0).storage }) }
+        else                                   { storage = .null }
+    }
+
+    public init(from decoder: Decoder) throws {
+        self.storage = try CodableValue(from: decoder)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try storage.encode(to: encoder)
+    }
+}
 
 @preconcurrency import Metal
 public struct MetalBufferWrapper: @unchecked Sendable {

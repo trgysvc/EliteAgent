@@ -10,6 +10,6 @@ public final class UpdaterService: @unchecked Sendable {
     /// Called by App target's concrete UpdaterService via notification or direct call.
     /// No-op in Core — prevents Core from depending on Sparkle.
     public func checkForUpdates() {
-        print("[UPDATER]: checkForUpdates() — Core stub. Implement in App target.")
+        AgentLogger.logInfo("checkForUpdates() — Core stub. Use UpdaterController in App target.", agent: "Updater")
     }
 }

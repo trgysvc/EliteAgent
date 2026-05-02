@@ -1,10 +1,11 @@
+import os
 import Foundation
 import Distributed
 
 /// v13.7: UNO Unified Distributed Actor System for XPC
 /// Implements a lightweight transport for Swift Distributed Actors over macOS XPC.
 @available(macOS 13.0, *)
-public final class UNODistributedActorSystem: DistributedActorSystem, @unchecked Sendable {
+public final class UNODistributedActorSystem: DistributedActorSystem, Sendable {
     public typealias ActorID = String
     public typealias InvocationEncoder = UNOInvocationEncoder
     public typealias InvocationDecoder = UNOInvocationDecoder
@@ -12,8 +13,7 @@ public final class UNODistributedActorSystem: DistributedActorSystem, @unchecked
     
     public static let shared = UNODistributedActorSystem()
     
-    private let lock = NSLock()
-    private var actors: [ActorID: any DistributedActor] = [:]
+    private let _actors = OSAllocatedUnfairLock(initialState: [ActorID: any DistributedActor]())
     
     private init() {}
     
@@ -26,19 +26,20 @@ public final class UNODistributedActorSystem: DistributedActorSystem, @unchecked
     }
     
     public func resolve<Act>(id: ActorID, as actorType: Act.Type) throws -> Act? where Act : DistributedActor {
-        lock.lock(); defer { lock.unlock() }
-        return actors[id] as? Act
+        return _actors.withLock { $0[id] as? Act }
     }
     
     public func actorReady<Act>(_ actor: Act) where Act : DistributedActor {
-        lock.lock(); defer { lock.unlock() }
-        actors[actor.id as! ActorID] = actor
+        guard let id = actor.id as? ActorID else {
+            AgentLogger.logError("[UNO-Dist] actorReady: ID type mismatch for \(Act.self)")
+            return
+        }
+        _actors.withLock { $0[id] = actor }
         AgentLogger.logInfo("[UNO-Dist] Actor Ready: \(actor.id)")
     }
     
     public func resignID(_ id: ActorID) {
-        lock.lock(); defer { lock.unlock() }
-        actors.removeValue(forKey: id)
+        _actors.withLock { _ = $0.removeValue(forKey: id) }
         AgentLogger.logInfo("[UNO-Dist] Actor Resigned: \(id)")
     }
     
@@ -91,9 +92,10 @@ public final class UNODistributedActorSystem: DistributedActorSystem, @unchecked
         invocationDecoder: inout Decoder,
         handler: Handler
     ) async throws where Act : DistributedActor, Act.ID == ActorID, Decoder : DistributedTargetInvocationDecoder, Handler : DistributedTargetInvocationResultHandler {
-        // v13.7: Implementation of local execution logic would go here.
-        // For now, ensuring protocol conformance for build stability.
-        AgentLogger.logInfo("[UNO-Dist] Executing distributed target \(target) on \(actor.id)")
+        // UNO architecture routes execution via UNOTransport/XPC, not via distributed actor invocation.
+        // Local dispatch is not needed — inbound calls are handled by UNOXPCService directly.
+        AgentLogger.logInfo("[UNO-Dist] executeDistributedTarget called for \(target) — UNO routes via XPC, not local dispatch.")
+        try await handler.onThrow(error: UNODistributedError.localDispatchNotSupported(target: target.identifier))
     }
 }
 
@@ -106,7 +108,8 @@ public struct UNOInvocationEncoder: DistributedTargetInvocationEncoder, Sendable
     public mutating func recordGenericSubstitution<T>(_ type: T.Type) throws {}
 
     public mutating func recordArgument<Value>(_ argument: RemoteCallArgument<Value>) throws where Value : SerializationRequirement {
-        // Implementation
+        let key = argument.effectiveLabel
+        arguments[key] = AnyCodable(argument.value)
     }
     
     public mutating func recordReturnType<R>(_ type: R.Type) throws where R : SerializationRequirement {}
@@ -140,4 +143,8 @@ public struct UNOResultHandler: DistributedTargetInvocationResultHandler, Sendab
     public func onReturn<Res>(value: Res) async throws where Res : SerializationRequirement {}
     public func onReturnVoid() async throws {}
     public func onThrow<Err>(error: Err) async throws where Err : Error {}
+}
+
+public enum UNODistributedError: Error, Sendable {
+    case localDispatchNotSupported(target: String)
 }

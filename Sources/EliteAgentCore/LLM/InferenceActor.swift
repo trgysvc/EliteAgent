@@ -42,22 +42,25 @@ public actor InferenceActor {
 
     // MARK: - Initialization
     
+    // Stored so loadModel/generate can wrap MLX calls in withDefaultDevice(.cpu) when needed.
+    nonisolated public let isCPUOnly: Bool
+
     private init() {
-        let isCPUOnly = ProcessInfo.processInfo.arguments.contains("--cpu-only")
-        
-        if isCPUOnly {
-            MLX.Device.withDefaultDevice(.cpu) {
-                AgentLogger.logInfo("[MLX-Opt] Forced CPU-only mode for CLI stability.")
-            }
+        let cpuOnly = ProcessInfo.processInfo.arguments.contains("--cpu-only")
+        self.isCPUOnly = cpuOnly
+
+        if cpuOnly {
+            // CPU-only: skip Metal buffer, skip cache limit (no GPU cache)
             self.sharedBuffer = MetalBufferWrapper(nil)
+            AgentLogger.logInfo("[MLX-Opt] Forced CPU-only mode for CLI stability.")
         } else {
             let device = MTLCreateSystemDefaultDevice()
             let size = maxActivations * MemoryLayout<Float>.size
             let buffer = device?.makeBuffer(length: size, options: .storageModeShared)
             self.sharedBuffer = MetalBufferWrapper(buffer)
-            
-            // Official v3 Cache Limit (128MB for 16GB Macs)
-            MLX.Memory.cacheLimit = 128 * 1024 * 1024 
+
+            // Cap Metal cache to 128 MB so the OS can reclaim memory under pressure
+            MLX.Memory.cacheLimit = 128 * 1024 * 1024
         }
     }
     
@@ -85,7 +88,7 @@ public actor InferenceActor {
     }
     
     /// Generates tokens as an AsyncStream using official v3 stream patterns.
-    public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 2048) async throws -> AsyncStream<String> {
+    public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 2048) async throws -> AsyncStream<InferenceChunk> {
         let startTime = Date()
         guard let container = modelContainer else {
             throw NSError(domain: "EliteAgent", code: 404, userInfo: [NSLocalizedDescriptionKey: "Engine not primed."])
@@ -94,7 +97,7 @@ public actor InferenceActor {
         let mlxMessages = messages.map { ["role": $0.role, "content": $0.content] }
         let parameters = GenerateParameters(maxTokens: maxTokens, temperature: 0.7)
         
-        return AsyncStream(String.self) { continuation in
+        return AsyncStream(InferenceChunk.self) { continuation in
             let task = Task { [parameters] in
                 do {
                     // Official v3: Prepare and generate inside the same context to avoid data races
@@ -106,13 +109,15 @@ public actor InferenceActor {
                         
                         switch chunk {
                         case .chunk(let text):
-                            continuation.yield(text)
+                            continuation.yield(.token(text))
                             updateSharedBuffer(with: text.count)
                         case .info(let metrics):
                             self.lastTPS = metrics.tokensPerSecond
                             AgentLogger.logInfo("📊 [v3-Engine] TPS: \(metrics.tokensPerSecond.formatted())")
+                            continuation.yield(.metrics(promptTokens: metrics.promptTokenCount, completionTokens: metrics.generationTokenCount, tps: metrics.tokensPerSecond))
                         case .toolCall(let call):
                             AgentLogger.logInfo("🛠 Tool Call: \(String(describing: call))")
+                            continuation.yield(.tool(String(describing: call)))
                         @unknown default:
                             break
                         }
@@ -131,7 +136,7 @@ public actor InferenceActor {
     
     // MARK: - Universal Interface (Orchestrator Support)
     
-    public func infer(prompt: String, config: InferenceConfig) async throws -> AsyncStream<String> {
+    public func infer(prompt: String, config: InferenceConfig) async throws -> AsyncStream<InferenceChunk> {
         let activeProvider = await ModelStateManager.shared.activeProvider
         let messages = [Message(role: "user", content: prompt)]
         
@@ -156,7 +161,7 @@ public actor InferenceActor {
             )
             let response = try await cloud.complete(request, useSafeMode: false)
             return AsyncStream { continuation in
-                continuation.yield(response.content)
+                continuation.yield(.token(response.content))
                 continuation.finish()
             }
             
@@ -174,7 +179,6 @@ public actor InferenceActor {
     }
     
     public func clearCache() {
-        MLX.eval() 
         MLX.Memory.clearCache()
         AgentLogger.logInfo("🧹 [v3-Engine] VRAM Cache Purged.")
     }
@@ -221,9 +225,7 @@ public actor InferenceActor {
     
     private func updateSharedBuffer(with activationValue: Int) {
         guard let buffer = sharedBuffer.buffer else { return }
-        let ptr = buffer.contents().bindMemory(to: Float.self, capacity: maxActivations)
-        for i in 0..<maxActivations {
-            ptr[i] = Float.random(in: 0.0...1.0) * Float(activationValue % 10) / 10.0
-        }
+        let ptr = buffer.contents().bindMemory(to: Float.self, capacity: 1)
+        ptr[0] = Float(activationValue)
     }
 }

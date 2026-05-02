@@ -113,7 +113,7 @@ public actor VaultManager {
         
         // Ensure file exists or create default
         if !FileManager.default.fileExists(atPath: configURL.path) {
-            print("[VaultManager] Config missing at \(configURL.path). Creating default...")
+            AgentLogger.logInfo("Config missing at \(configURL.path). Creating default...", agent: "VaultManager")
             let defaultConfig = VaultConfig(
                 providers: [
                     ProviderConfig(id: "mlx", type: .local, endpoint: nil, keychainKey: nil, modelName: "", capabilities: ["reasoning", "tools", "code"], costPer1KTokens: 0, promptPrice: 0, completionPrice: 0, maxContextTokens: 32768, temperature: 0.7, topP: 1.0, maxTokens: 4096),
@@ -138,8 +138,8 @@ public actor VaultManager {
             do {
                 decodedConfig = try decoder.decode(VaultConfig.self, from: data)
             } catch {
-                print("[VaultManager] ⚠️ SCHEMA MISMATCH DETECTED: \(error.localizedDescription)")
-                print("[VaultManager] Attempting surgical healing (preserving model selection)...")
+                AgentLogger.logAudit(level: .warn, agent: "VaultManager", message: "⚠️ SCHEMA MISMATCH DETECTED: \(error.localizedDescription)")
+                AgentLogger.logInfo("Attempting surgical healing (preserving model selection)...", agent: "VaultManager")
                 
                 // v19.7.3: Surgical Extraction
                 var preservedModelName = ""
@@ -156,7 +156,7 @@ public actor VaultManager {
                 let healedData = try encoder.encode(decodedConfig)
                 try healedData.write(to: configURL)
                 
-                print("[VaultManager] ✅ SURGICAL HEALING COMPLETE: Legacy artifacts purged, model selection '\(preservedModelName)' preserved.")
+                AgentLogger.logAudit(level: .info, agent: "VaultManager", message: "✅ SURGICAL HEALING COMPLETE: Legacy artifacts purged, model selection '\(preservedModelName)' preserved.")
             }
             
             // Sync required providers to ensure migration completeness
@@ -169,7 +169,7 @@ public actor VaultManager {
             self.config = decodedConfig
             
             if wasRestored {
-                print("[VaultManager] Successfully restored missing required providers or auto-primed models.")
+                AgentLogger.logInfo("Successfully restored missing required providers or auto-primed models.", agent: "VaultManager")
             }
         } catch {
             // Last resort: If healing itself fails, we throw to alert Orchestrator
@@ -217,7 +217,7 @@ public actor VaultManager {
                 if let defaultProv = defaults[id] {
                     updatedProviders.append(defaultProv)
                     missingAny = true
-                    print("[VaultManager] Detected missing required provider '\(id)'. Restoring defaults...")
+                    AgentLogger.logAudit(level: .warn, agent: "VaultManager", message: "Detected missing required provider '\(id)'. Restoring defaults...")
                 }
             }
         }
@@ -247,7 +247,7 @@ public actor VaultManager {
                 (p.modelName?.contains(pattern) ?? false) && p.modelName != "google/gemini-2.0-flash-lite-001" 
             }
             if p.id == "openrouter", isInvalid {
-                print("[VaultManager] v7.5.0: Correcting invalid model '\(p.modelName ?? "")' → google/gemini-2.0-flash-lite-001")
+                AgentLogger.logAudit(level: .info, agent: "VaultManager", message: "v7.5.0: Correcting invalid model '\(p.modelName ?? "")' → google/gemini-2.0-flash-lite-001")
                 finalProviders[i] = ProviderConfig(
                     id: p.id, type: p.type, endpoint: p.endpoint, keychainKey: p.keychainKey,
                     modelName: "google/gemini-2.0-flash-lite-001",
@@ -289,7 +289,7 @@ public actor VaultManager {
             // Check if model is complete enough to bind
             let safetensorsPath = url.appendingPathComponent("model.safetensors").path
             if FileManager.default.fileExists(atPath: safetensorsPath) || FileManager.default.fileExists(atPath: url.appendingPathComponent("weights.npz").path) {
-                print("[VaultManager] 🤖 AUTO-PRIMING: Discovered local model '\(modelID)'. Binding to config...")
+                AgentLogger.logAudit(level: .info, agent: "VaultManager", message: "🤖 AUTO-PRIMING: Discovered local model '\(modelID)'. Binding to config...")
                 
                 let p = updatedProviders[mlxIndex]
                 updatedProviders[mlxIndex] = ProviderConfig(id: p.id, type: p.type, endpoint: p.endpoint, keychainKey: p.keychainKey, modelName: modelID, capabilities: p.capabilities, costPer1KTokens: p.costPer1KTokens, promptPrice: p.promptPrice, completionPrice: p.completionPrice, maxContextTokens: p.maxContextTokens, temperature: p.temperature, topP: p.topP, maxTokens: p.maxTokens)
@@ -365,7 +365,7 @@ public actor VaultManager {
         let updatedData = try PropertyListSerialization.data(fromPropertyList: existingPlist as Any, format: format, options: .init())
         try updatedData.write(to: configURL, options: .init())
         
-        print("[VaultManager] Updated model/pricing/params for \(providerID): \(modelName)")
+        AgentLogger.logInfo("Updated model/pricing/params for \(providerID): \(modelName)", agent: "VaultManager")
     }
     
     // Helper to add a whole new provider

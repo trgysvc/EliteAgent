@@ -139,6 +139,12 @@ public struct CompletionResponse: Codable, Sendable {
     }
 }
 
+public enum InferenceChunk: Sendable {
+    case token(String)
+    case metrics(promptTokens: Int, completionTokens: Int, tps: Double)
+    case tool(String)
+}
+
 extension Notification.Name {
     public static let llmProviderSwitched = Notification.Name("app.eliteagent.llmProviderSwitched")
     public static let llmMemoryPressureAvoided = Notification.Name("app.eliteagent.llmMemoryPressureAvoided")

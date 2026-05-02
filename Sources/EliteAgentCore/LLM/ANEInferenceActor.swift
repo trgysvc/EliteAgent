@@ -59,12 +59,29 @@ public actor ANEInferenceActor {
     
     // MARK: - Dynamic CoreML Model Loading
     
+    /// Loads a custom CoreML model with strict ANE affinity.
+    /// v7.1: Explicitly prevents GPU fallback to avoid resource contention with MLX.
     public func loadCustomModel(name: String, at url: URL) async throws {
+        // 1. Model Validation
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            AgentLogger.logError("[ANE-Mastery] Model file not found: \(url.path)")
+            throw NSError(domain: "ANEInference", code: 404, userInfo: [NSLocalizedDescriptionKey: "Model file not found"])
+        }
+        
         let config = MLModelConfiguration()
+        
+        // v7.1: CRITICAL - Force ANE/CPU only. 
+        // Allowing .all would let CoreML silently use the GPU, 
+        // causing catastrophic contention with the MLX/Titan engine's VRAM/Compute.
         config.computeUnits = .cpuAndNeuralEngine
         
-        let model = try MLModel(contentsOf: url, configuration: config)
-        self.loadedCoreMLModels[name] = model
-        AgentLogger.logInfo("[ANE-Mastery] Custom model \(name) loaded onto Neural Engine.")
+        do {
+            let model = try await MLModel.load(contentsOf: url, configuration: config)
+            self.loadedCoreMLModels[name] = model
+            AgentLogger.logAudit(level: .info, agent: "ANE-Mastery", message: "Custom model \(name) loaded onto Neural Engine (No GPU Fallback).")
+        } catch {
+            AgentLogger.logAudit(level: .error, agent: "ANE-Mastery", message: "Failed to load ANE model \(name): \(error.localizedDescription)")
+            throw error
+        }
     }
 }

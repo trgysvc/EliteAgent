@@ -1,6 +1,5 @@
 import Foundation
 import Network
-import Network
 
 /// A lightweight, native macOS HTTP server that exposes the InferenceActor via an Ollama-compatible API.
 /// Defaults to port 11500.
@@ -139,8 +138,8 @@ public actor LocalInferenceServer {
         
         Task {
             do {
-                // v11.0: Pure Binary Property List Inference (No JSON)
-                let decoder = PropertyListDecoder()
+                // HTTP boundary: external clients (Ollama-compatible) send JSON
+                let decoder = JSONDecoder()
                 let request = try decoder.decode(InferenceRequest.self, from: bodyData)
                 
                 let prompt = request.prompt ?? request.messages?.last?["content"] ?? ""
@@ -152,28 +151,31 @@ public actor LocalInferenceServer {
                 )
                 
                 sendStreamHeader(on: connection)
-                
-                let encoder = PropertyListEncoder()
-                encoder.outputFormat = .binary
-                
+
+                let encoder = JSONEncoder()
+
                 for await chunk in stream {
-                    let response = InferenceResponse(response: chunk, done: false)
+                    guard case .token(let text) = chunk else { continue }
+
+                    let response = InferenceResponse(response: text, done: false)
                     let responseData = try encoder.encode(response)
-                    
+
                     // HTTP Chunked encoding: <length in hex>\r\n<data>\r\n
                     let hexLength = String(responseData.count, radix: 16)
-                    connection.send(content: "\(hexLength)\r\n".data(using: .utf8)! + responseData + "\r\n".data(using: .utf8)!, completion: .contentProcessed({ _ in }))
+                    let chunkData = Data("\(hexLength)\r\n".utf8) + responseData + Data("\r\n".utf8)
+                    connection.send(content: chunkData, completion: .contentProcessed({ _ in }))
                 }
-                
+
                 let finalResponse = InferenceResponse(response: nil, done: true)
                 let finalData = try encoder.encode(finalResponse)
                 let finalHex = String(finalData.count, radix: 16)
-                connection.send(content: "\(finalHex)\r\n".data(using: .utf8)! + finalData + "\r\n0\r\n\r\n".data(using: .utf8)!, completion: .contentProcessed({ _ in 
+                let terminator = Data("\(finalHex)\r\n".utf8) + finalData + Data("\r\n0\r\n\r\n".utf8)
+                connection.send(content: terminator, completion: .contentProcessed({ _ in
                     connection.cancel()
                 }))
-                
+
             } catch {
-                AgentLogger.logError("Inference Request Failed (Binary): \(error.localizedDescription)", agent: "LocalServer")
+                AgentLogger.logError("Inference Request Failed: \(error.localizedDescription)", agent: "LocalServer")
                 sendResponse(on: connection, statusCode: 500, body: "Internal Error: \(error.localizedDescription)")
             }
         }
@@ -182,12 +184,10 @@ public actor LocalInferenceServer {
     private func handleTagsRequest(on connection: NWConnection) {
         let models = ModelRegistry.availableModels.map { ["name": $0.name, "id": $0.id] }
         let body: [String: [[String: String]]] = ["models": models]
-        
+
         do {
-            let encoder = PropertyListEncoder()
-            encoder.outputFormat = .binary
-            let data = try encoder.encode(body)
-            sendBinaryResponse(on: connection, data: data)
+            let data = try JSONEncoder().encode(body)
+            sendJSONResponse(on: connection, data: data)
         } catch {
             sendResponse(on: connection, statusCode: 500, body: "Internal Error")
         }
@@ -201,16 +201,16 @@ public actor LocalInferenceServer {
         }))
     }
     
-    private func sendBinaryResponse(on connection: NWConnection, data: Data) {
-        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/x-apple-binary-plist\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n"
-        connection.send(content: header.data(using: .utf8)! + data, completion: .contentProcessed({ _ in 
+    private func sendJSONResponse(on connection: NWConnection, data: Data) {
+        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n"
+        connection.send(content: Data(header.utf8) + data, completion: .contentProcessed({ _ in
             connection.cancel()
         }))
     }
-    
+
     private func sendStreamHeader(on connection: NWConnection) {
-        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/x-apple-binary-plist\r\nTransfer-Encoding: chunked\r\n\r\n"
-        connection.send(content: header.data(using: .utf8), completion: .contentProcessed({ _ in }))
+        let header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\n\r\n"
+        connection.send(content: Data(header.utf8), completion: .contentProcessed({ _ in }))
     }
 }
 

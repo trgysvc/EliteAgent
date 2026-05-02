@@ -24,7 +24,7 @@ public struct ShellTool: AgentTool, Sendable {
             throw AgentToolError.executionError(errorMsg)
         }
         
-        print("[SHELL] Executing: \(command)")
+        AgentLogger.logInfo("Executing: \(command)", agent: "Shell")
         
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")

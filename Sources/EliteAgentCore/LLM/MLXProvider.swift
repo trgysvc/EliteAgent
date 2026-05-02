@@ -58,14 +58,20 @@ public actor MLXProvider: LocalLLMProvider {
         
         var fullContent = ""
         var firstTokenTime: Date?
-        var tokenCount = 0
+        var finalMetrics: (prompt: Int, completion: Int, tps: Double)?
         
         for await chunk in stream {
-            if firstTokenTime == nil {
-                firstTokenTime = Date()
+            switch chunk {
+            case .token(let text):
+                if firstTokenTime == nil {
+                    firstTokenTime = Date()
+                }
+                fullContent += text
+            case .metrics(let prompt, let completion, let tps):
+                finalMetrics = (prompt, completion, tps)
+            case .tool(let call):
+                AgentLogger.logInfo("🛠 [MLX-Provider] Tool indicated: \(call)")
             }
-            fullContent += chunk
-            tokenCount += 1
         }
         
         if fullContent.isEmpty {
@@ -74,9 +80,9 @@ public actor MLXProvider: LocalLLMProvider {
         
         let latency = Int(Date().timeIntervalSince(startTime) * 1000)
         let count = TokenCount(
-            prompt: messages.map { $0.content.count }.reduce(0, +) / 4,
-            completion: fullContent.count / 4,
-            total: (messages.map { $0.content.count }.reduce(0, +) + fullContent.count) / 4
+            prompt: finalMetrics?.prompt ?? (messages.map { $0.content.count }.reduce(0, +) / 4),
+            completion: finalMetrics?.completion ?? (fullContent.count / 4),
+            total: (finalMetrics?.prompt ?? 0) + (finalMetrics?.completion ?? 0)
         )
         
         return CompletionResponse(

@@ -26,7 +26,7 @@ public struct MessengerTool: AgentTool {
         }
         
         if await AppSettings.shared.isBiometricEnabledForActions {
-            print("[SECURITY] Biyometrik doğrulama bekleniyor...")
+            AgentLogger.logAudit(level: .info, agent: "security", message: "Biyometrik doğrulama bekleniyor...")
             let authReason = "\(platform.capitalized) üzerinden mesaj gönderimi için onayınız gerekiyor."
             guard await SecuritySentinel.shared.authenticateUser(reason: authReason) else {
                 return "[SECURITY_BLOCK] Biyometrik doğrulama başarısız. Mesaj gönderilemedi."
@@ -62,7 +62,7 @@ public struct MessengerTool: AgentTool {
                     return "[ERROR] '\(recipient)' kişisinin Contacts'ta kayıtlı telefon numarası yok."
                 }
                 let resolvedPhone = result.trimmingCharacters(in: .whitespacesAndNewlines)
-                print("[MESSENGER] '\(recipient)' → \(resolvedPhone) (Contacts'tan çözüldü)")
+                AgentLogger.logInfo("'\(recipient)' → \(resolvedPhone) (Contacts'tan çözüldü)", agent: "Messenger")
                 
                 if platform.lowercased() == "whatsapp" {
                     return try await sendWhatsApp(phone: resolvedPhone, message: message)
@@ -103,7 +103,7 @@ public struct MessengerTool: AgentTool {
             return "[ERROR] Geçersiz WhatsApp URL oluşturulamadı."
         }
         NSWorkspace.shared.open(url)
-        print("[WHATSAPP] URL açıldı: \(urlString)")
+        AgentLogger.logInfo("WhatsApp URL açıldı: \(urlString)", agent: "Messenger")
 
         // Step 2: Wait 3 seconds for WhatsApp to be ready
         do {
@@ -166,7 +166,7 @@ public struct MessengerTool: AgentTool {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let result = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
-        print("[WHATSAPP] osascript sonucu: '\(result)'")
+        AgentLogger.logInfo("WhatsApp osascript sonucu: '\(result)'", agent: "Messenger")
 
         if result == "SENT" {
             return "WhatsApp mesajı +\(digits) numarasına gönderildi."

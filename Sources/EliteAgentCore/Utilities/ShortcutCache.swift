@@ -21,7 +21,7 @@ public class ShortcutCache {
             self.lastFetchDate = Date()
             return list
         } catch {
-            print("[SHORTCUTS] Cache fetch failed: \(error)")
+            AgentLogger.logError("Cache fetch failed: \(error.localizedDescription)", agent: "Shortcuts")
             return cachedList // Return stale cache if fetch fails
         }
     }

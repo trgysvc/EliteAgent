@@ -29,6 +29,6 @@
 	<key>SUFeedURL</key>
 	<string>https://eliteagent.app/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>dummy_eddsa_public_key_for_silencing_warnings_v13</string>
+	<string>h2T2JnoAYSK3DoFbzSM4mD2aDVkWk5EuV6a4ytG7d3s=</string>
 </dict>
 </plist>

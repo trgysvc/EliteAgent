@@ -51,7 +51,9 @@ public final class ProjectObserver: @unchecked Sendable {
         )
         
         guard let stream = stream else { return }
-        FSEventStreamSetDispatchQueue(stream, DispatchQueue.main) // Using main for UI signals, can be background
+        // FSEventStreamSetDispatchQueue is an Apple system API boundary that requires a DispatchQueue.
+        // The callback bridges into Swift Concurrency via Task { @MainActor in ... } inside the handler.
+        FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
         FSEventStreamStart(stream)
     }
     
@@ -61,5 +63,9 @@ public final class ProjectObserver: @unchecked Sendable {
         FSEventStreamInvalidate(stream)
         FSEventStreamRelease(stream)
         self.stream = nil
+    }
+    
+    deinit {
+        stop()
     }
 }

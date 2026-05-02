@@ -60,7 +60,7 @@ public final class LogicGate: Sendable {
             if !isDomainAllowed {
                 return SafetyRisk(isDangerous: true, reason: "Network Command Restricted: Only research-whitelisted domains are allowed (e.g., google.com, serper.dev).")
             }
-            print("[LOGICGATE] Authorized Research Command detected.")
+            AgentLogger.logAudit(level: .info, agent: "LogicGate", message: "Authorized Research Command detected.")
         }
         
         // 4. Whitelist Heuristic & Failsafe

@@ -19,7 +19,7 @@ public actor AudioArchitect {
                 try? await Task.sleep(nanoseconds: 50_000_000) // 50ms per step
             }
         } catch {
-            print("[AUDIO] Dampen failed: \(error)")
+            AgentLogger.logError("Dampen failed: \(error.localizedDescription)", agent: "AudioArchitect")
         }
     }
     
@@ -32,7 +32,7 @@ public actor AudioArchitect {
                 try? await Task.sleep(nanoseconds: 50_000_000) // 50ms per step
             }
         } catch {
-            print("[AUDIO] Restore failed: \(error)")
+            AgentLogger.logError("Restore failed: \(error.localizedDescription)", agent: "AudioArchitect")
         }
     }
 }

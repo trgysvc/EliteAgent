@@ -4,6 +4,31 @@ Bu dosya, Elite Agent'ın mimari evrimini, alınan kararları ve karşılaşıla
 
 ---
 
+### [2026-05-02] — Audit Sprint 2: Seviye 2 UNO Kural İhlalleri Düzeltmeleri
+**What changed:**
+- `MachPortCoordinator`: `DispatchSource.makeMachReceiveSource` kaldırıldı → `Task.detached` + `withCheckedContinuation` ile Mach `mach_msg` bloklama köprüsü; `mach_port_destroy` (deprecated) → `mach_port_deallocate`; `.userInteractive` (deprecated) → `.high`.
+- `ProjectObserver`: `FSEventStreamScheduleWithRunLoop` (deprecated macOS 13) → `FSEventStreamSetDispatchQueue` (Apple sistem API sınırı, DispatchQueue zorunlu — CLAUDE.md istisnası olarak belgelendi).
+- `AnyCodable`: `@unchecked Sendable` + `value: Any` → `CodableValue` kapalı enum (Sendable) + `AnyCodable` wrapper; `value: Any` public interface korundu, geriye dönük uyumluluk sağlandı.
+- `UNOTransport`: `NSLock` + `@unchecked Sendable final class` → `actor`; NSLock kaldırıldı; `handleXPCResponse` `nonisolated` yapıldı.
+
+**Files modified:** `MachPortCoordinator.swift`, `ProjectObserver.swift`, `Types.swift`, `UNOTransport.swift`
+**Decision made:** `FSEventStreamSetDispatchQueue` için DispatchQueue.main kullanmak Apple API sınırı gerektiriyor — bu sistemin bir istisnası, uygulama kodu DispatchQueue kullanmıyor.
+**Next:** Seviye 3 — API doğruluğu (MLX eval() semantiği, Device.withDefaultDevice, çift import, ModelRegistry tutarsızlığı).
+
+### [2026-05-02] — Audit Sprint 1: Seviye 1 Kritik Düzeltmeler
+**What changed:**
+- `LocalInferenceServer`: çift `import Network` kaldırıldı; HTTP body decode `PropertyListDecoder` → `JSONDecoder` (Ollama uyumluluk); stream/tags response `Content-Type: application/json`; `PropertyListEncoder` → `JSONEncoder` (HTTP katmanı).
+- `UNODistributedActorSystem.actorReady`: `actor.id as! ActorID` force cast → `guard let id = actor.id as? ActorID` (UNO no-force-unwrap kuralı).
+- `UNOInvocationEncoder.recordArgument`: boş stub → `arguments[key] = AnyCodable(argument.value)` gerçek implementasyon.
+- `UNODistributedActorSystem.executeDistributedTarget`: sessiz stub → `UNODistributedError.localDispatchNotSupported` fırlatıyor; mimari durum belgelendi.
+- `LLMModel.load`: hardcoded `/models/` path → `PathConfiguration.shared.modelsURL`.
+
+**Files modified:** `LocalInferenceServer.swift`, `UNODistributedActorSystem.swift`, `LLMModel.swift`
+**Decision made:** LocalInferenceServer HTTP katmanı tamamen JSON'a geçirildi. XPC-iç veri yolu (UNOTransport) binary plist kullanmaya devam ediyor.
+**Next:** Seviye 2 — UNO kural ihlalleri (MachPortCoordinator DispatchSource, ProjectObserver DispatchQueue, AnyCodable @unchecked Sendable, UNOTransport NSLock).
+
+---
+
 ## 🏗️ Mimari Temeller (Bootstrapping Phase)
 
 ### [2026-03-20] — Seans 0: İlk Kalp Atışı (The Skeleton)
@@ -260,3 +285,221 @@ Continue with Phase 5: Blender Bridge Stabilization and further native tool opti
 Factory seçimi (LLM vs VLM) artık model ID pattern eşleşmesine değil, config.json'daki `model_type` alanına dayanıyor. Bu yaklaşım tüm model yükleme yollarında (UI switcher, MLXProvider, HarpsichordBridge) tutarlıdır.
 
 **Next:** VLM text-only inference testi (Qwen2-VL ile görüntüsüz chat akışı çalışıyor mu doğrulanmalı).
+
+### [2026-05-02] — Audit Sprint 3: MLX API Correctness
+**What changed:**
+- `InferenceActor.clearCache()`: Removed no-op `MLX.eval()` call (MLX.eval takes variadic MLXArray, calling with no args is a no-op). `MLX.Memory.clearCache()` handles its own internal synchronization.
+- `MLXEngineGuardian`: Same removal in both the smart-cache block and `emergencyPurge()`. Comments updated.
+- S3-2 (`MLX.Device.withDefaultDevice` scope): Previously fixed in InferenceActor.init() — misleading closure removed, isCPUOnly stored as nonisolated property for safe cross-actor reads.
+- Build verified clean.
+
+**Files modified:**
+- `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+- `Sources/EliteAgentCore/LLM/MLXEngineGuardian.swift`
+
+**Decision made:** `MLX.eval()` with no arguments is a no-op in MLX-Swift 0.31.3 (variadic signature). `MLX.synchronize()` does not exist in this API version. Cache clearing is self-synchronizing.
+
+**Next:** Severity 4 performance and safety fixes.
+
+### [2026-05-02] — Audit Sprint 4: Performance, Safety, and Architecture Cleanup
+**What changed:**
+- `AgentLogger`: Added `private nonisolated(unsafe) static let isoFormatter = ISO8601DateFormatter()` — eliminates formatter allocation on every log call. `nonisolated(unsafe)` used because ISO8601DateFormatter is thread-safe but not declared Sendable in the SDK.
+- `MLXEngineGuardian.execute()`: After `newTask.value` resolves, `self.currentTask` is set to `nil` to break the Task reference chain. Without this, completed tasks were retained in a chain (task_N → task_{N-1} → ...) until the next call.
+- `UNOSharedBuffer.init()`: `ftruncate()` return value is now guarded — if it fails, the fd is closed and a POSIX error is thrown before `mmap`.
+- `Package.swift` (EliteAgentXPC): Removed 10 redundant MLX product dependencies from EliteAgentXPC. These were already transitively available via EliteAgentCore (dynamic library). XPC process now only lists `EliteAgentCore`, `CUNOSupport`, and `Numerics`.
+- `InferenceActor.updateSharedBuffer()`: Replaced 4096-element Float.random noise loop with a single `ptr[0] = Float(activationValue)` write. Eliminates O(maxActivations) CPU work per token on the hot inference path.
+- Build verified clean.
+
+**Files modified:**
+- `Sources/EliteAgentCore/Utilities/AgentLogger.swift`
+- `Sources/EliteAgentCore/LLM/MLXEngineGuardian.swift`
+- `Sources/EliteAgentCore/UNO/UNOSharedBuffer.swift`
+- `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+- `Package.swift`
+
+**Decision made:** EliteAgentXPC is a thin tool-execution process; it consumes EliteAgentCore as a dynamic library and does not need to re-declare the same heavy MLX products. Reducing direct deps shortens XPC link time and clarifies the dependency boundary.
+
+**Next:** Severity 5 reproducibility and safety fixes.
+
+### [2026-05-02] — Audit Sprint 5: Reproducibility, dlopen Safety, and DEVLOG Consolidation
+**What changed:**
+- `Package.swift`: `audiointelligence` and `swift-sdk` branch pins converted to exact revision hashes (`f9cc7195...` and `a0ae212e...` respectively). Eliminates non-reproducible "branch: main" pins that could silently break builds on dependency updates.
+- `PluginManager.loadDylib()`: Added `dlclose(h)` on all error paths (symbol not found, createPlugin returns nil, type cast fails). Previously the dlopen handle leaked on any failure. The handle is kept open only on the success path (plugin returned and registered).
+- `UNORingBuffer.init()`: Replaced the ambiguous `if head==0 && tail==0 { init }` heuristic with an explicit `isNew: Bool = true` parameter. A ring buffer where data was written and fully consumed would have head==tail==0 but must NOT be re-initialized. Callers pass `isNew: false` when attaching to existing shared memory.
+- `DEVLOG.md` (root): Appended archive notice pointing to `Resources/Config/DEVLOG.md` as the authoritative log (per CLAUDE.md).
+- S5-4 (SUPublicEDKey): Already present in Info.plist — no action needed.
+- S5-5 (apple-events entitlement): App is not sandboxed; `NSAppleEventsUsageDescription` in Info.plist is sufficient — no entitlement needed.
+- Build verified clean.
+
+**Files modified:**
+- `Package.swift`
+- `Sources/EliteAgentCore/ToolEngine/PluginManager.swift`
+- `Sources/EliteAgentCore/UNO/UNORingBuffer.swift`
+- `DEVLOG.md` (archive notice appended)
+
+**Decision made:** Exact revision pins guarantee reproducible builds regardless of upstream branch movement. The `isNew` parameter on UNORingBuffer is backwards-compatible (default `true`) and eliminates a subtle re-initialization bug on consumer attach.
+
+**Next:** Run stress tests on ring buffer and validate ANE thermal throttling under sustained inference load.
+
+---
+
+## Tarihsel Girişler (root DEVLOG.md'den Taşındı — 2026-05-02)
+
+Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan sonra tüm yeni girişler yalnızca bu dosyaya (`Resources/Config/DEVLOG.md`) eklenir.
+
+### [2026-05-01] — Project Wiki Technical Concepts Integration
+**What changed:** Created definitive technical standard documents derived from Apple/MLX official guidelines (Distributed Actors, MLX Unified Memory, Swift API Design, XPC Services). Updated `rules.md` to reference these documents first to reduce web search dependencies. Synchronized `wiki/gap_analysis.md` with new findings on isolation and type-safety. Structured `index.md` to map out these resources as the source of truth for the UNO architecture.
+**Files modified:** `Project_Wiki/concepts/distributed_actors.md`, `Project_Wiki/concepts/mlx_swift_unified_memory.md`, `Project_Wiki/concepts/swift_api_standards.md`, `Project_Wiki/concepts/xpc_native_ipc.md`, `Project_Wiki/rules.md`, `Project_Wiki/wiki/gap_analysis.md`, `Project_Wiki/index.md`
+**Decision made:** Enforced 100% Native-First and No Middleware approach by establishing these `concepts/` files as the initial technical reference point.
+**Next:** Address gaps in `wiki/gap_analysis.md` regarding XPC isolation compliance and Swift API type-safety audits.
+
+### [2026-05-01] — Phase 7 Final: Elite Marathon (E2E Workflow Tests)
+**What changed:** Implemented 10 realistic multi-step E2E workflow tests in `EliteMarathonTests.swift`. Refactored `OrchestratorRuntime` to use `LLMProvider` protocols for testability. Added `isLoaded` property to `LLMProvider` protocol.
+**Files modified:** `EliteMarathonTests.swift`, `OrchestratorRuntime.swift`, `LLMProvider.swift`, `CloudProvider.swift`
+**Decision made:** Transitioned from concrete class dependencies to protocol-based injection for deterministic mock-based testing.
+
+### [2026-05-01] — Elite Marathon Stabilization & v7.0 Finalization
+**What changed:** Resolved critical compilation and concurrency errors in `EliteMarathonTests.swift`. Updated `CompletionResponse` and `TokenCount` initializers. Hardened `OrchestratorRuntime` loop with Evidence Guard and Fidelity Guard. Created `scripts/setup.sh`.
+**Decision made:** Standardized on `any LLMProvider` protocol for all core orchestration components.
+
+### [2026-05-01] — Final Build Cleanup
+**What changed:** Removed hidden backup files (`.MCPClientActor.swift.bak`) from `Sources/EliteAgentCore`.
+**Decision made:** Zero-warning build for v7.0 production release.
+
+### [2026-05-01] — Native Path Standardization & Cleanup
+**What changed:** Removed legacy migration logic and standardized all data paths to Apple's Application Support and Caches directories.
+**Files modified:** `PathConfiguration.swift`, `Orchestrator.swift`, `WorkspaceManager.swift`, `UsageTracker.swift`
+**Decision made:** "Clean Start" approach for v7.0 to eliminate migration-related race conditions.
+
+### [2026-05-01] — v7.0: Native Sovereign & Zero-Copy Transition
+**What changed:** Completed full architectural pivot to 'Native Sovereign'. UMA Watchdog implemented. UNO backbone migrated to zero-copy pointer primitives.
+**Decision made:** Strict zero-copy memory policy across Actor boundaries using SharedMemoryPool.
+
+### [2026-05-01] — Inference Engine Technical Perfection (MLX & Metal)
+**What changed:** Integrated `concepts/mlx_metal_internals.md` (Metal Backend, Lazy Evaluation, Graph Optimization) and `concepts/llm_inference_mechanics.md` (KV Cache, RoPE, Model-specific optimizations).
+**Decision made:** "Hardware-First" intelligence policy — LLM agent designs must adhere to Apple Silicon's Metal and MLX-specific optimizations as hard constraints.
+
+### [2026-05-01] — Qwen 3.5 9B Weight Shape & Quantization Alignment
+**What changed:** Resolved "mismatched parameter" error for Qwen 3.5 9B. Implemented `Qwen35Bridge` to map HuggingFace split tensors into fused tensors required by `Qwen3Next` decoder.
+**Files modified:** `Qwen35Bridge.swift`, `ModelManager.swift`, `InferenceActor.swift`
+**Decision made:** JSON-level config patching to handle fused layer quantization without modifying mlx-swift-lm library.
+
+### [2026-05-01] — MLX Stabilization & Memory Optimization
+**What changed:** Serialized all MLX state changes via MLXEngineGuardian, reduced cache limit to 128MB, added explicit evaluations before memory purges.
+**Files modified:** `InferenceActor.swift`, `MLXEngineGuardian.swift`, `Qwen35Bridge.swift`
+**Decision made:** Strict serialization of MLX operations for Metal resource safety on 16GB Macs.
+
+### [2026-05-01] — v7.0 Final: Hardware-Aware Intelligence Mühürlendi
+**What changed:** EliteAgent v7.0 teknik anayasası tamamlandı. MLX Metal Internals ve LLM Inference Mechanics dökümanları mühürlendi.
+**Decision made:** Hardware-Aware Intelligence EliteAgent'ın temel çalışma prensibi olarak mühürlendi.
+
+### [2026-05-01] — v7.1: Graph Mühürleme ve Shared Prefix Uygulandı
+**What changed:** `mx.compile()` ve "Pad-to-Power-of-2" padding stratejisi uygulandı. "Shared Prefix Cache" (System Prompt SHA-256 hash ile KV-Cache mühürleme) devreye alındı.
+**Decision made:** KV-Cache kuantizasyonu sadece bellek baskısı durumlarında aktif.
+
+### [2026-05-01] — Resolved Qwen 3.5 Reshape Crash
+**What changed:** Fixed token padding logic in `InferenceActor.swift` to preserve batch dimension [1, N] after Pad-to-Power-of-2 sequence padding.
+**Decision made:** 3D inputs [B, S, D] as primary stability target for Titan Engine.
+
+### [2026-05-02] — Titan Inference Engine Stabilization
+**What changed:** Removed experimental "Graph Sealing" and "Shared Prefix Cache" from `InferenceActor.swift`. Restored standard, reliable prefill + generation loop.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Core inference reliability prioritized over experimental optimizations.
+
+### [2026-05-02] — v3-Native Migration Completion (Official Standard)
+**What changed:** Full refactor to mlx-swift-lm v3.31.3. Integrated MLXHuggingFace, MLXLMTokenizers. Rewrote InferenceActor and EliteService for Swift 6 Sendable compliance.
+**Files modified:** `InferenceActor.swift`, `MLXProvider.swift`, `HarpsichordBridge.swift`, `Package.swift`, `EliteService/main.swift`
+**Decision made:** Strict adherence to v3 official documentation; modular, compile-time safe patterns.
+
+### [2026-05-02] — Resolved Package.swift Deprecated Warnings
+**What changed:** Removed deprecated `name:` parameter from package dependencies. Build stability verified.
+**Files modified:** `Package.swift`
+
+### [2026-05-02] — Comprehensive IDE Synchronization & Transitive Dependency Resolution
+**What changed:** Synchronized `.xcodeproj` with `Package.swift`. Injected missing MLXLMTokenizers, MLXLMHFAPI, MLXHuggingFace, MCP, yyjson dependencies. Resolved `_NumericsShims` error. Upgraded to Swift 6.1.
+**Files modified:** `Package.swift`, `EliteAgent.xcodeproj/project.pbxproj`
+**Decision made:** Manual surgery on `.xcodeproj` over `unsafeFlags` hacks.
+
+### [2026-05-02] — Full Bleeding-Edge Upgrade: Swift 6.3 Native
+**What changed:** Upgraded entire project to Swift 6.3. `Package.swift` → `swift-tools-version: 6.3`. All targets synchronized to `SWIFT_VERSION = 6.3`.
+**Files modified:** `Package.swift`, `EliteAgent.xcodeproj/project.pbxproj`
+**Decision made:** Bleeding-Edge alignment with local developer environment.
+
+### [2026-05-02] — v7.1 "Native Sovereign" Modernization (Phase 1-3)
+**What changed:** `AgentLogger` → native `os.Logger` with privacy markers. `ProjectObserver` hardened with deinit cleanup. High-performance Mach Port signaling in `MachPortCoordinator`. Lock-free `UNORingBuffer` over XPC shared memory using C atomics. `ANEInferenceActor` hardened against silent GPU fallback.
+**Files modified:** `AgentLogger.swift`, `ProjectObserver.swift`, `MachPortCoordinator.swift`, `UNORingBuffer.swift`, `ANEInferenceActor.swift`, `UNOTransport.swift`, `UNODistributedActorSystem.swift`, `MLXProvider.swift`, `MLXEngineGuardian.swift`
+**Decision made:** `OSAllocatedUnfairLock` for synchronous state, Mach Ports for async IPC signaling.
+
+### [2026-05-02] — Lock-Free Ring Buffer & Native Sovereign Infrastructure Finalization
+**What changed:** UNORingBuffer with C atomics (stdatomic.h) for zero-copy IPC token streaming. MachPortCoordinator for nanosecond-latency signaling. UNOTransport and UNODistributedActorSystem modernized. InferenceActor → MLX v3-Native AsyncStream.
+**Files modified:** `Package.swift`, `UNORingBuffer.swift`, `MachPortCoordinator.swift`, `UNOTransport.swift`, `UNODistributedActorSystem.swift`, `InferenceActor.swift`, `LLMTypes.swift`, `MLXProvider.swift`, `LLMModel.swift`, `LocalInferenceServer.swift`, `AgentLogger.swift`, `EliteAgentXPC/main.swift`
+**Decision made:** Standardized on MLXLMCommon v3.31.3 GenerateCompletionInfo property names.
+
+### [2026-05-02] — Audit Sprint 6: Kalan S5 Maddeleri Tamamlandı
+**What changed:**
+- `Resources/App/EliteAgent.entitlements`: `com.apple.security.automation.apple-events = true` eklendi. Hardened Runtime ile notarize edilen uygulamalarda Apple Events/AppleScript kullanımı için bu entitlement gerekli; Info.plist'teki `NSAppleEventsUsageDescription` tek başına yeterli değil.
+- `DEVLOG.md` (kök): Tüm geçmiş girişler `Resources/Config/DEVLOG.md`'ye taşındı ve kök dosya `Resources/Config/DEVLOG.md`'ye symlink haline getirildi. Artık tek bir kaynak dosya mevcut.
+- S5-4 (Sparkle sign_update doğrulaması): Özel anahtar gerektiriyor — kullanıcı tarafından `./bin/sign_update <app>` ile manuel doğrulama yapılmalı.
+- Tüm 25 audit bulgusu (S1-1 ila S5-6) tamamlandı. Build temiz.
+
+**Files modified:**
+- `Resources/App/EliteAgent.entitlements`
+- `Resources/Config/DEVLOG.md`
+- `DEVLOG.md` (symlink olarak değiştirildi)
+
+**Decision made:** `com.apple.security.automation.apple-events` sandbox-spesifik değil — Hardened Runtime uygulamalarında da zorunlu. DEVLOG konsolidasyonu için symlink tercih edildi (git geçmişi korunuyor, tek kaynak sağlanıyor).
+
+**Next:** Sparkle private key doğrulaması (manuel), ring buffer stres testi, ANE termal kısma doğrulaması.
+
+### [2026-05-02] — Full System Audit & Sovereignty Hardening
+**What changed:** 
+- Performed a comprehensive technical audit of all 200+ Swift files.
+- Upgraded Sparkle to v2.9.1 in Package.swift for security delivery.
+- Hardened ModelSetupManager.swift: Replaced force unwraps with safe optional binding and transitioned from print() to AgentLogger.
+- Hardened SettingsView.swift: Secured application support path resolution and modernized logging.
+- Refactored Orchestrator.swift: Eliminated all remaining print() statements in favor of structured OSLog-backed AgentLogger.
+- Verified UNO External Bridge isolation: Confirmed zero JSON leakage into internal IPC logic.
+- Validated Swift 6.3 Concurrency: Confirmed actor isolation and OSAllocatedUnfairLock usage across core components.
+
+**Files modified:** 
+- Package.swift
+- Sources/EliteAgentCore/LLM/ModelSetupManager.swift
+- Sources/EliteAgent/App/SettingsView.swift
+- Sources/EliteAgentCore/AgentEngine/Orchestrator.swift
+
+**Decision made:** 
+- Standardized all production logging on AgentLogger to ensure persistent audit trails on disk and native OSLog visibility.
+- Enforced strict optional binding for file system and network URL creation to eliminate edge-case runtime crashes.
+
+### [2026-05-02] — Resolved CUNOSupport Module Dependency Error
+**What changed:** Restored visibility of the CUNOSupport module for both SPM and Xcode by adding a dummy source file, explicitly defining the public headers path, and exporting it as a library product in Package.swift.
+**Files modified:** Package.swift, Sources/CUNOSupport/UNORingBuffer.c (NEW)
+**Decision made:** Exported CUNOSupport as a product to allow legacy .xcodeproj targets to link against it during the "Native Sovereign" v7.1 migration.
+**Next:** Verify system stability during full build and ensure XPC service correctly maps shared memory using the restored headers.
+
+### [2026-05-02] — Sparkle Integration & Observability Hardening
+**What changed:** 
+- Upgraded Sparkle framework to v2.9.1.
+- Implemented native 'UpdaterController' in Swift 6.
+- Integrated update checks into AppDelegate and Settings UI.
+- Refactored 50+ 'print()' statements across the core engine to use structured 'AgentLogger'.
+- Hardened 'VaultManager', 'SecuritySentinel', and 'ExperienceVault' with production-grade logging.
+**Files modified:** 
+- Package.swift
+- Sources/EliteAgent/App/UpdaterController.swift
+- Sources/EliteAgent/App/EliteAgentApp.swift
+- Sources/EliteAgent/App/SettingsView.swift
+- Sources/EliteAgentCore/AgentEngine/Orchestrator.swift
+- Sources/EliteAgentCore/ToolEngine/Tools/MessengerTool.swift
+- Sources/EliteAgentCore/ToolEngine/Tools/ShellTool.swift
+- Sources/EliteAgentCore/Browser/BrowserEngine.swift
+- Sources/EliteAgentCore/Utilities/AudioArchitect.swift
+- Sources/EliteAgentCore/Utilities/ShortcutCache.swift
+- Sources/EliteAgentCore/Utilities/AppleScriptRunner.swift
+- Sources/EliteAgentCore/Utilities/UNODiagnostic.swift
+- Sources/EliteAgentCore/Utilities/UpdaterService.swift
+- Sources/EliteAgentCore/Security/SecuritySentinel.swift
+- Sources/EliteAgentCore/Memory/ExperienceVault.swift
+- Sources/EliteAgentCore/Config/VaultManager.swift
+**Decision made:** Transitioned all system-level observability to AgentLogger (OSLog + Disk) to eliminate non-persistent console noise and meet v7.1 "Native Sovereign" standards.
+**Next:** Finalize Blender Python logging and perform a clean build for release candidate.

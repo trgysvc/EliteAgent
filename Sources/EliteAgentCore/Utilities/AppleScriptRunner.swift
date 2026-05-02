@@ -50,7 +50,7 @@ public actor AppleScriptRunner {
                 diagnostic += "\n[DIAGNOSTIC] Sistemsel engel veya protokol hatası. Lütfen Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon kısmını kontrol edin."
             }
             
-            print("[ORCHESTRATOR] \(diagnostic)")
+            AgentLogger.logError(diagnostic, agent: "AppleScript")
             throw AppleScriptError.executionFailed(diagnostic)
         }
         

@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 public enum LogLevel: String, Sendable {
     case info = "INFO"
@@ -7,8 +8,16 @@ public enum LogLevel: String, Sendable {
     case security = "SECURITY"
 }
 
+/// v7.1: Native Sovereign Logging (OSLog Integration)
+private extension Logger {
+    static let subsystem = "com.trgysvc.EliteAgent"
+    static let engine = Logger(subsystem: subsystem, category: "engine")
+    static let inference = Logger(subsystem: subsystem, category: "inference")
+    static let security = Logger(subsystem: subsystem, category: "security")
+    static let uno = Logger(subsystem: subsystem, category: "uno")
+}
+
 /// v10.5.6: High-Performance Sequential Log Worker
-/// Prevents lock contention and file-system bridge freezes by serializing I/O.
 actor LogWorker {
     static let shared = LogWorker()
     private var fileHandles: [String: FileHandle] = [:]
@@ -58,12 +67,29 @@ actor LogWorker {
 }
 
 public struct AgentLogger: Sendable {
+    private nonisolated(unsafe) static let isoFormatter = ISO8601DateFormatter()
+
     public static func logAudit(level: LogLevel, agent: String, message: String) {
-        let isoFormatter = ISO8601DateFormatter()
         let timestamp = isoFormatter.string(from: Date())
         let line = "[\(timestamp)] [\(level.rawValue)] [\(agent)] \(message)"
         
-        // v41.0: Push to (.utility) background worker to protect P-Core bandwidth
+        // v7.1: Native OSLog routing
+        let logger: Logger
+        switch agent.lowercased() {
+        case let x where x.contains("inference") || x.contains("titan"): logger = .inference
+        case let x where x.contains("uno") || x.contains("xpc"): logger = .uno
+        case let x where x.contains("security"): logger = .security
+        default: logger = .engine
+        }
+        
+        switch level {
+        case .info: logger.info("[\(agent, privacy: .public)] \(message, privacy: .private(mask: .hash))")
+        case .warn: logger.warning("[\(agent, privacy: .public)] \(message, privacy: .private(mask: .hash))")
+        case .error: logger.error("[\(agent, privacy: .public)] \(message, privacy: .private(mask: .hash))")
+        case .security: logger.critical("[\(agent, privacy: .public)] \(message, privacy: .private(mask: .hash))")
+        }
+        
+        // v41.0: Push to (.utility) background worker for persistent disk logs
         Task(priority: .utility) {
             await LogWorker.shared.write(fileName: "audit.log", content: line)
             await LogWorker.shared.write(fileName: "debug.log", content: line)
@@ -83,9 +109,11 @@ public struct AgentLogger: Sendable {
     }
 
     public static func logSecurity(level: LogLevel, agent: String, message: String) {
-        let isoFormatter = ISO8601DateFormatter()
         let timestamp = isoFormatter.string(from: Date())
         let line = "[\(timestamp)] [\(level.rawValue)] [\(agent)] \(message)"
+        
+        // v7.1: Native OSLog routing
+        Logger.security.critical("[\(agent, privacy: .public)] \(message, privacy: .private(mask: .hash))")
         
         // v41.0: Push to (.utility) background worker
         Task(priority: .utility) {
@@ -94,3 +122,4 @@ public struct AgentLogger: Sendable {
         }
     }
 }
+

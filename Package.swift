@@ -1,4 +1,4 @@
-// swift-tools-version: 6.1
+// swift-tools-version: 6.3
 import PackageDescription
 
 let package = Package(
@@ -9,6 +9,7 @@ let package = Package(
     products: [
         .executable(name: "EliteAgent", targets: ["EliteAgent"]),
         .library(name: "EliteAgentCore", targets: ["EliteAgentCore"]),
+        .library(name: "CUNOSupport", targets: ["CUNOSupport"]),
         .library(name: "EliteAgentUI", targets: ["EliteAgentUI"]),
         .executable(name: "EliteAgentXPC", targets: ["EliteAgentXPC"]),
         .executable(name: "elite", targets: ["elite"]),
@@ -20,10 +21,11 @@ let package = Package(
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "3.31.3")),
         .package(url: "https://github.com/DePasqualeOrg/swift-tokenizers-mlx", from: "0.2.0"),
         .package(url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
-        .package(url: "https://github.com/trgysvc/audiointelligence.git", branch: "main"),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", branch: "main"),
-        .package(url: "https://github.com/ibireme/yyjson.git", from: "0.12.0")
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.1"),
+        .package(url: "https://github.com/trgysvc/audiointelligence.git", revision: "f9cc7195b04ce1077236bc77b905f797fafda0ce"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", revision: "a0ae212ebf6eab5f754c3129608bc5557637e605"),
+        .package(url: "https://github.com/ibireme/yyjson.git", from: "0.12.0"),
+        .package(url: "https://github.com/apple/swift-numerics.git", from: "1.1.0")
     ],
     targets: [
         .executableTarget(
@@ -39,8 +41,14 @@ let package = Package(
             path: "Sources/EliteAgent"
         ),
         .target(
+            name: "CUNOSupport",
+            path: "Sources/CUNOSupport",
+            publicHeadersPath: "include"
+        ),
+        .target(
             name: "EliteAgentCore",
             dependencies: [
+                "CUNOSupport",
                 .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "MLXRandom", package: "mlx-swift"),
                 .product(name: "MLXNN", package: "mlx-swift"),
@@ -48,7 +56,6 @@ let package = Package(
                 .product(name: "MLXFast", package: "mlx-swift"),
                 .product(name: "MLXLinalg", package: "mlx-swift"),
                 .product(name: "MLXFFT", package: "mlx-swift"),
-                .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
@@ -81,17 +88,7 @@ let package = Package(
             name: "EliteAgentXPC",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "MLXRandom", package: "mlx-swift"),
-                .product(name: "MLXNN", package: "mlx-swift"),
-                .product(name: "MLXOptimizers", package: "mlx-swift"),
-                .product(name: "MLXFast", package: "mlx-swift"),
-                .product(name: "MLXLinalg", package: "mlx-swift"),
-                .product(name: "MLXFFT", package: "mlx-swift"),
-                .product(name: "MLXLLM", package: "mlx-swift-lm"),
-                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
-                .product(name: "MLXVLM", package: "mlx-swift-lm"),
-                .product(name: "MLXEmbedders", package: "mlx-swift-lm"),
+                "CUNOSupport",
                 .product(name: "Numerics", package: "swift-numerics")
             ],
             path: "Sources/EliteAgentXPC"
@@ -108,7 +105,7 @@ let package = Package(
         ),
         .testTarget(
             name: "EliteAgentTests",
-            dependencies: ["EliteAgentCore"],
+            dependencies: ["EliteAgentCore", "CUNOSupport"],
             path: "Tests/EliteAgentTests"
         ),
         .executableTarget(

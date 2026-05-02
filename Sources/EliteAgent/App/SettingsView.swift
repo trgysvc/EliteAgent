@@ -73,6 +73,12 @@ struct GeneralSettingsView: View {
             Section("Uygulama Bilgileri") {
                 LabeledContent("Versiyon", value: "1.2.0 (Build 42)")
                 LabeledContent("Geliştirici", value: "Turgay Savacı")
+                
+                Button("Güncellemeleri Denetle...") {
+                    UpdaterController.shared.checkForUpdates()
+                }
+                .buttonStyle(.link)
+                .font(.footnote)
             }
             
             Section("Odaklanma") {
@@ -343,7 +349,7 @@ struct AISettingsView: View {
                     }
                 }
             } catch {
-                print("[AISettings] No existing OpenRouter key found or failed to read: \(error)")
+                AgentLogger.logError("No existing OpenRouter key found or failed to read: \(error.localizedDescription)", agent: "AISettings")
             }
         }
     }
@@ -362,7 +368,7 @@ struct AISettingsView: View {
                     isSavingKey = false
                 }
             } catch {
-                print("[AISettings] Failed to save OpenRouter key: \(error)")
+                AgentLogger.logError("Failed to save OpenRouter key: \(error.localizedDescription)", agent: "AISettings")
                 await MainActor.run {
                     isSavingKey = false
                 }
@@ -376,7 +382,7 @@ struct AISettingsView: View {
     }
     
     private func openVaultConfig() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
         let vaultURL = appSupport.appendingPathComponent("EliteAgent/vault.plist")
         NSWorkspace.shared.open(vaultURL)
     }

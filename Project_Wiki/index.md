@@ -10,6 +10,7 @@ EliteAgent'ın temel amacı, Apple ekosisteminin sunduğu yerel donanım güçle
 - [Hot Memory (Güncel Durum)](h.md)
 
 ### 🏗 Mimari ve İnceleme Raporları
+- [**Kapsamlı Teknik Audit Raporu (2026-05-02)**](wiki/audit_report_2026-05-02.md) ← YENİ
 - [Mimari Genel Bakış](wiki/architecture_overview.md)
 - [Mimari Derin Dalış (Triple-Threat)](wiki/architecture_deep_dive.md)
 - [Sistem Kararlılığı ve Self-Healing](wiki/system_stability.md)

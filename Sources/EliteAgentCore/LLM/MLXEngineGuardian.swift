@@ -8,8 +8,8 @@ import Numerics
 // Linker shim: ensure at least one Numerics symbol is referenced so object files are not stripped as empty.
 @inline(__always)
 private func __ensureNumericsLinked() {
-    // Use a trivial value from Numerics to create a reference without runtime cost.
-    let _ = Double.pi as Double
+    // Use a complex value from Numerics to create a reference without runtime cost.
+    let _ = Complex<Double>(0, 0)
 }
 #endif
 
@@ -65,7 +65,6 @@ public actor MLXEngineGuardian {
             
             if vramUsage > 0.90 || thermalState == .serious || thermalState == .critical {
                 AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "[SMART CACHE] VRAM at \((vramUsage * 100).rounded())%. Purging cache.")
-                MLX.eval() // v24.8: Ensure graph is evaluated before clearing cache
                 MLX.Memory.clearCache()
             }
             
@@ -92,11 +91,13 @@ public actor MLXEngineGuardian {
         }
         
         self.currentTask = Task { try await newTask.value }
-        
+
         do {
             let value = try await newTask.value
+            self.currentTask = nil
             return value
         } catch {
+            self.currentTask = nil
             throw error
         }
     }
@@ -110,7 +111,6 @@ public actor MLXEngineGuardian {
         }
         
         AgentLogger.logAudit(level: .warn, agent: "GUARDIAN", message: "Emergency VRAM Purge Triggered.")
-        MLX.eval() // v24.8: Mandatory eval before purge
         MLX.Memory.clearCache()
     }
     

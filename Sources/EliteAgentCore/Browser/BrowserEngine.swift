@@ -21,7 +21,7 @@ public final class BrowserEngine: NSObject, WKNavigationDelegate {
     public func navigate(to url: URL) async throws {
         // Cancel any pending navigation to avoid continuation misuse
         if let pending = navigationContinuation {
-            print("[BrowserEngine] Cancelling previous navigation to start new one.")
+            AgentLogger.logInfo("Cancelling previous navigation to start new one.", agent: "BrowserEngine")
             pending.resume(throwing: URLError(.cancelled))
             navigationContinuation = nil
         }

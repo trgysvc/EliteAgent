@@ -1,13 +1,18 @@
+import os
 import Foundation
 import Distributed
 
 /// v13.0: EliteAgent Plugin Manager
 /// Responsible for scanning and loading dynamic bundles from ~/Library/Application Support/EliteAgent/Plugins
-public final class PluginManager: @unchecked Sendable {
+public final class PluginManager: Sendable {
     public static let shared = PluginManager()
     
     private let pluginsFolder: URL
-    public private(set) var loadedPlugins: [String: any UNOToolPlugin] = [:]
+    private let _loadedPlugins = OSAllocatedUnfairLock(initialState: [String: any UNOToolPlugin]())
+    
+    public var loadedPlugins: [String: any UNOToolPlugin] {
+        _loadedPlugins.withLock { $0 }
+    }
     
     private init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -42,7 +47,7 @@ public final class PluginManager: @unchecked Sendable {
     
     private func registerPlugin(_ plugin: any UNOToolPlugin, signatures: inout [UNOToolSignature]) {
         let signature = plugin.signature
-        loadedPlugins[signature.id] = plugin
+        _loadedPlugins.withLock { $0[signature.id] = plugin }
         signatures.append(signature)
         AgentLogger.logInfo("[PluginManager] Loaded: \(signature.name) (\(signature.id))")
     }
@@ -63,35 +68,38 @@ public final class PluginManager: @unchecked Sendable {
     }
     
     private func loadDylib(at url: URL) -> (any UNOToolPlugin)? {
-        // v14.5: Dynamic Library Loading (dlopen)
         let handle = dlopen(url.path, RTLD_NOW)
         guard let h = handle else {
             let error = String(cString: dlerror())
             AgentLogger.logError("[PluginManager] dlopen failed: \(error)")
             return nil
         }
-        
-        // v14.6: C-Entry Point lookup for Swift initialization
-        // We look for a mangled symbol or a stable C-entry point.
-        // For EliteAgent, we expect a 'createPlugin' function.
+
         typealias CreatePluginFunc = @convention(c) () -> UnsafeMutableRawPointer?
-        if let symbol = dlsym(h, "createPlugin") {
-            let f = unsafeBitCast(symbol, to: CreatePluginFunc.self)
-            if let ptr = f() {
-                // Re-cast the pointer back to our protocol
-                // This is a high-level bridge between the raw dylib and Swift.
-                let plugin = Unmanaged<AnyObject>.fromOpaque(ptr).takeRetainedValue() as? any UNOToolPlugin
-                return plugin
-            }
-        } else {
+        guard let symbol = dlsym(h, "createPlugin") else {
+            dlclose(h)
             AgentLogger.logError("[PluginManager] No 'createPlugin' symbol found in \(url.lastPathComponent)")
+            return nil
         }
-        
-        return nil
+
+        let f = unsafeBitCast(symbol, to: CreatePluginFunc.self)
+        guard let ptr = f() else {
+            dlclose(h)
+            AgentLogger.logError("[PluginManager] createPlugin returned nil in \(url.lastPathComponent)")
+            return nil
+        }
+
+        let plugin = Unmanaged<AnyObject>.fromOpaque(ptr).takeRetainedValue() as? any UNOToolPlugin
+        if plugin == nil {
+            dlclose(h)
+            AgentLogger.logError("[PluginManager] Type mismatch: plugin does not conform to UNOToolPlugin in \(url.lastPathComponent)")
+        }
+        return plugin
     }
     
     public func executePlugin(id: String, action: UNOActionWrapper) async throws -> UNOResponse {
-        guard let plugin = loadedPlugins[id] else {
+        let plugin = _loadedPlugins.withLock { $0[id] }
+        guard let plugin = plugin else {
             throw NSError(domain: "PluginManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Plugin \(id) not found"])
         }
         return try await plugin.execute(action: action)

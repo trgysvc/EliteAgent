@@ -30,13 +30,16 @@ public struct UNODiagnostic {
     }
     
     public static func printReport(_ report: Report) {
-        print("\n🔍 [UNO DIAGNOSTIC REPORT]")
-        print("------------------------------------------")
-        print("🕒 Zaman: \(report.timestamp)")
-        print("🛠 Kayıtlı Araç Sayısı: \(report.toolCount) (Hedef: 35)")
-        print("🔌 Yüklü Eklenti Sayısı: \(report.pluginCount)")
-        print("🧠 Model Hazır mı: \(report.modelLoaded ? "EVET" : "HAYIR")")
-        print("📡 XPC Erişilebilirliği: \(report.xpcReachable ? "OK" : "HATA")")
-        print("------------------------------------------\n")
+        let reportString = """
+        🔍 [UNO DIAGNOSTIC REPORT]
+        ------------------------------------------
+        🕒 Zaman: \(report.timestamp)
+        🛠 Kayıtlı Araç Sayısı: \(report.toolCount) (Hedef: 35)
+        🔌 Yüklü Eklenti Sayısı: \(report.pluginCount)
+        🧠 Model Hazır mı: \(report.modelLoaded ? "EVET" : "HAYIR")
+        📡 XPC Erişilebilirliği: \(report.xpcReachable ? "OK" : "HATA")
+        ------------------------------------------
+        """
+        AgentLogger.logInfo(reportString, agent: "Diagnostic")
     }
 }

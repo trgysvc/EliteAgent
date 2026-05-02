@@ -18,9 +18,8 @@ public struct LLMOutput: Sendable {
 /// MLX arrays and model weights are managed here.
 public actor LLMModel {
     public static func load(_ name: String) async throws -> LLMModel {
-        // Loads MLX weights from file system and initializes the specific architecture
-        // via the dedicated InferenceActor (Titan Core)
-        try await InferenceActor.shared.loadModel(at: URL(fileURLWithPath: "/models/\(name)"))
+        let modelURL = PathConfiguration.shared.modelsURL.appendingPathComponent(name)
+        try await InferenceActor.shared.loadModel(at: modelURL)
         return LLMModel()
     }
     
@@ -31,8 +30,10 @@ public actor LLMModel {
         let stream = try await InferenceActor.shared.generate(messages: messages, maxTokens: maxTokens)
         var fullResponse = ""
         
-        for await token in stream {
-            fullResponse += token
+        for await chunk in stream {
+            if case .token(let text) = chunk {
+                fullResponse += text
+            }
         }
         
         let endTime = Date()
