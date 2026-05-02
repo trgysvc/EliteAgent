@@ -24,8 +24,7 @@ let package = Package(
 
         .package(url: "https://github.com/trgysvc/audiointelligence.git", revision: "f9cc7195b04ce1077236bc77b905f797fafda0ce"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", revision: "a0ae212ebf6eab5f754c3129608bc5557637e605"),
-        .package(url: "https://github.com/ibireme/yyjson.git", from: "0.12.0"),
-        .package(url: "https://github.com/apple/swift-numerics.git", from: "1.1.0")
+        .package(url: "https://github.com/ibireme/yyjson.git", from: "0.12.0")
     ],
     targets: [
         .executableTarget(
@@ -50,9 +49,7 @@ let package = Package(
                 .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
                 .product(name: "MCP", package: "swift-sdk"),
-                .product(name: "yyjson", package: "yyjson"),
-                .product(name: "Numerics", package: "swift-numerics"),
-                .product(name: "RealModule", package: "swift-numerics")
+                .product(name: "yyjson", package: "yyjson")
             ],
             path: "Sources/EliteAgent"
         ),
@@ -81,9 +78,7 @@ let package = Package(
                 .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
                 .product(name: "MCP", package: "swift-sdk"),
-                .product(name: "yyjson", package: "yyjson"),
-                .product(name: "Numerics", package: "swift-numerics"),
-                .product(name: "RealModule", package: "swift-numerics")
+                .product(name: "yyjson", package: "yyjson")
             ],
             path: "Sources/EliteAgentCore",
             resources: [
@@ -96,8 +91,7 @@ let package = Package(
             name: "EliteAgentUI",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "MLX", package: "mlx-swift")
             ],
             path: "Sources/EliteAgentUI"
         ),
@@ -122,9 +116,7 @@ let package = Package(
                 .product(name: "MLXLMHFAPI", package: "swift-hf-api-mlx"),
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
                 .product(name: "MCP", package: "swift-sdk"),
-                .product(name: "yyjson", package: "yyjson"),
-                .product(name: "Numerics", package: "swift-numerics"),
-                .product(name: "RealModule", package: "swift-numerics")
+                .product(name: "yyjson", package: "yyjson")
             ],
             path: "Sources/EliteAgentXPC"
         ),
@@ -133,8 +125,7 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "MLXLLM", package: "mlx-swift-lm"),
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "MLXLLM", package: "mlx-swift-lm")
             ],
             path: "Sources/elite"
         ),
@@ -147,8 +138,7 @@ let package = Package(
             name: "uma-bench",
             dependencies: [
                 "EliteAgentCore",
-                .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "MLX", package: "mlx-swift")
             ],
             path: "Sources/uma-bench"
         ),
@@ -157,8 +147,7 @@ let package = Package(
             dependencies: [
                 "EliteAgentCore",
                 .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "MLXLLM", package: "mlx-swift-lm"),
-                .product(name: "Numerics", package: "swift-numerics")
+                .product(name: "MLXLLM", package: "mlx-swift-lm")
             ],
             path: "Sources/EliteService"
         )

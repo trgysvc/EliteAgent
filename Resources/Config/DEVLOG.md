@@ -1,7 +1,7 @@
 # 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)### [2026-05-02] — Infrastructure & Dependency Stabilization
-**What changed:** Synchronized Package.swift and project.pbxproj to enforce 1:1 dependency parity across EliteAgent, EliteAgentCore, and EliteAgentXPC targets. Purged massive structural corruption (duplicate PBXBuildFile entries) within the Xcode project file. Removed unused Numerics import from EliteAgentXPC to fix sandbox linkage failures.
-**Files modified:** Package.swift, project.pbxproj, Sources/EliteAgentXPC/main.swift, DEVLOG.md
-**Decision made:** Enforced a "Package-First" dependency policy where all targets share a canonical 20-module set to prevent transitive module resolution errors (e.g., _NumericsShims).
+**What changed:** Synchronized Package.swift and project.pbxproj to enforce 1:1 dependency parity. Purged massive structural corruption (duplicate PBXBuildFile entries). Removed unused Numerics/RealModule imports and dependencies entirely across all targets and source code (MLXEngineGuardian) to fix persistent '_NumericsShims' resolution failures in EliteAgentXPC.
+**Files modified:** Package.swift, project.pbxproj, Sources/EliteAgentXPC/main.swift, Sources/EliteAgentCore/LLM/MLXEngineGuardian.swift, DEVLOG.md
+**Decision made:** Completely decoupled the project from swift-numerics to resolve sandboxed module resolution errors. MLX-LM v3 architecture remains stable with granular modules.
 **Next:** Transition to Python-side Blender Bridge and VaultManager API key integration.
 
 Bu dosya, Elite Agent'ın mimari evrimini, alınan kararları ve karşılaşılan darboğazları kaydeden otonom bir dökümandır. Her çalışma seansı sonunda sistem tarafından güncellenir.
