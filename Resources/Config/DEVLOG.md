@@ -541,3 +541,14 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Files modified:** `Types/Types.swift`, `UI/ModelPickerViewModel.swift`, `Config/VaultManager.swift`, `Browser/BrowserAgent.swift`, `App/ChatWindowView.swift`
 **Decision made:** `DynamicCodingKeys.init?(stringValue:)` teknik olarak hiçbir zaman nil dönmez (string literal ile her zaman başarılı), ancak UNO kuralı "üretim kodunda `!` yok" — non-optional `init(key:)` ekleyerek hem kural uyumu hem sıfır runtime riski sağlandı. `VaultManager.shared` Optional yapılarak crash riski tamamen ortadan kalktı.
 **Next:** Tüm UNO kural ihlalleri giderildi; build clean.
+
+### [2026-05-03] — Full Removal of Sparkle (App Store Hardening)
+**What changed:**
+- Completely purged Sparkle framework from the project to meet Mac App Store (MAS) compliance.
+- Removed Sparkle dependency and product from `Package.swift`.
+- Deleted `UpdaterController.swift` and `UpdaterService.swift`.
+- Cleaned up `EliteAgentApp.swift` and `SettingsView.swift` (removed update initialization and UI).
+- Purged `SUFeedURL` and `SUPublicEDKey` from `Info.plist`.
+- Deleted stale `EliteAgent.xcarchive` artifacts containing the framework.
+
+**Decision made:** Delegated all update management to the Mac App Store. Any manual update checking logic was removed to avoid rejection during Apple's review process.

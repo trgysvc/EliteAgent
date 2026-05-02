@@ -73,12 +73,6 @@ struct GeneralSettingsView: View {
             Section("Uygulama Bilgileri") {
                 LabeledContent("Versiyon", value: "1.2.0 (Build 42)")
                 LabeledContent("Geliştirici", value: "Turgay Savacı")
-                
-                Button("Güncellemeleri Denetle...") {
-                    UpdaterController.shared.checkForUpdates()
-                }
-                .buttonStyle(.link)
-                .font(.footnote)
             }
             
             Section("Odaklanma") {

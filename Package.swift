@@ -21,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "3.31.3")),
         .package(url: "https://github.com/DePasqualeOrg/swift-tokenizers-mlx", from: "0.2.0"),
         .package(url: "https://github.com/DePasqualeOrg/swift-hf-api-mlx", from: "0.2.0"),
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.1"),
+
         .package(url: "https://github.com/trgysvc/audiointelligence.git", revision: "f9cc7195b04ce1077236bc77b905f797fafda0ce"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", revision: "a0ae212ebf6eab5f754c3129608bc5557637e605"),
         .package(url: "https://github.com/ibireme/yyjson.git", from: "0.12.0"),
@@ -34,7 +34,7 @@ let package = Package(
                 "EliteAgentCore",
                 "EliteAgentUI",
                 .product(name: "MLX", package: "mlx-swift"),
-                .product(name: "Sparkle", package: "Sparkle"),
+
                 .product(name: "AudioIntelligence", package: "audiointelligence"),
                 .product(name: "Numerics", package: "swift-numerics")
             ],

@@ -26,9 +26,5 @@
 	<string>EliteAgent needs your location to provide accurate local weather reports and proximity-based automation.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>SUFeedURL</key>
-	<string>https://eliteagent.app/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>h2T2JnoAYSK3DoFbzSM4mD2aDVkWk5EuV6a4ytG7d3s=</string>
 </dict>
 </plist>

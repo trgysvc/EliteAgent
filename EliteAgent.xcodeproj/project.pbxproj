@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AE1DE7A32F902A9B005E6190 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
 		AE1DE7A42F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
 		AE1DE7A52F902A9B005E6190 /* AudioIntelligence in Frameworks */ = {isa = PBXBuildFile; productRef = AEAB00012F8FD1520080DB7D /* AudioIntelligence */; };
 		AE69BFD22F8FD1520080DB7D /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132D92F79F4FC00626F70 /* MLX */; };
@@ -43,7 +42,6 @@
 		AEB132FE2F79F6D900626F70 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = AEB132FD2F79F6D900626F70 /* MCP */; };
 		AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */; };
 		AEB7A8C42F7451CE00A844B2 /* EliteAgentXPC.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = AEB7A8B12F7451CE00A844B2 /* EliteAgentXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		AEEB40622F785F210082B0CE /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AEEB40612F785F210082B0CE /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,7 +108,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				AE1DE7A42F902A9B005E6190 /* AudioIntelligence in Frameworks */,
-				AE1DE7A32F902A9B005E6190 /* Sparkle in Frameworks */,
 				AE883F5C2FA20C1000FFF7EC /* Numerics in Frameworks */,
 				AEB7A8AA2F7451CE00A844B2 /* libEliteAgentCore.a in Frameworks */,
 			);
@@ -135,7 +132,6 @@
 				AEB132FE2F79F6D900626F70 /* MCP in Frameworks */,
 				AEB132DA2F79F4FC00626F70 /* MLX in Frameworks */,
 				AEB132E62F79F4FC00626F70 /* MLXRandom in Frameworks */,
-				AEEB40622F785F210082B0CE /* Sparkle in Frameworks */,
 				AEB132E42F79F4FC00626F70 /* MLXOptimizers in Frameworks */,
 				AEB132DE2F79F4FC00626F70 /* MLXFast in Frameworks */,
 				AEB132DC2F79F4FC00626F70 /* MLXFFT in Frameworks */,
@@ -208,7 +204,6 @@
 			);
 			name = EliteAgent;
 			packageProductDependencies = (
-				AEEB40612F785F210082B0CE /* Sparkle */,
 				AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
 				AE7BBEDE2F885C0100FDE204 /* Numerics */,
 			);
@@ -232,7 +227,6 @@
 			);
 			name = EliteAgentCore;
 			packageProductDependencies = (
-				AEEB40612F785F210082B0CE /* Sparkle */,
 				AEB132D92F79F4FC00626F70 /* MLX */,
 				AEB132DB2F79F4FC00626F70 /* MLXFFT */,
 				AEB132DD2F79F4FC00626F70 /* MLXFast */,
@@ -321,7 +315,6 @@
 			mainGroup = AE747A0F2F70602B004732A5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */,
 				AEB132D82F79F4FC00626F70 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				AEB132E72F79F6D900626F70 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				AEB132F02F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-tokenizers-mlx" */,
@@ -855,14 +848,6 @@
 				kind = branch;
 			};
 		};
-		AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.6.4;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -955,11 +940,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */;
 			productName = MCP;
-		};
-		AEEB40612F785F210082B0CE /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AEEB40602F785F210082B0CE /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

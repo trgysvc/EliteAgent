@@ -18,7 +18,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let orchestrator = Orchestrator()
     var chatController: ChatWindowController?
     var modelPickerVM: ModelPickerViewModel?
-    let updaterController = UpdaterController.shared
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         AgentLogger.logAudit(level: .info, agent: "system", message: "🚀 EliteAgent v10.5.5 Starting Up...")
