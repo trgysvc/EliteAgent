@@ -29,7 +29,10 @@ public actor CloudProvider: LLMProvider {
         if !urlStr.hasSuffix("/chat/completions") && !urlStr.contains("/messages") {
             urlStr = urlStr.hasSuffix("/") ? urlStr + "chat/completions" : urlStr + "/chat/completions"
         }
-        self.endpointURL = URL(string: urlStr)!
+        guard let url = URL(string: urlStr) else {
+            throw ProviderError.networkError("Geçersiz Cloud Endpoint: \(urlStr)")
+        }
+        self.endpointURL = url
         
         let m = conf.modelName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         self.modelName = m.isEmpty ? "google/gemini-2.5-flash" : m

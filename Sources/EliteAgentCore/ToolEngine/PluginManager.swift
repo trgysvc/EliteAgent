@@ -15,8 +15,12 @@ public final class PluginManager: Sendable {
     }
     
     private init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        self.pluginsFolder = appSupport.appendingPathComponent("EliteAgent/Plugins", isDirectory: true)
+        if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            self.pluginsFolder = appSupport.appendingPathComponent("EliteAgent/Plugins", isDirectory: true)
+        } else {
+            // Fallback to a temporary directory within the sandbox if AppSupport is somehow missing
+            self.pluginsFolder = FileManager.default.temporaryDirectory.appendingPathComponent("EliteAgentPlugins")
+        }
         
         // Ensure directory exists
         try? FileManager.default.createDirectory(at: pluginsFolder, withIntermediateDirectories: true)

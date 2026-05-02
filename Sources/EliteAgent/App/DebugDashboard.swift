@@ -156,7 +156,7 @@ struct DebugDashboard: View {
                             )
                             
                             try? await vault.addProvider(orConf)
-                            print("[DebugDashboard] Added missing OpenRouter provider to Vault")
+                            AgentLogger.logInfo("Added missing OpenRouter provider to Vault", agent: "DebugDashboard")
                         }
                     }
                     

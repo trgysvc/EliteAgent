@@ -33,7 +33,7 @@ public actor SignalBus {
 
     public func publish(_ signal: Signal) throws {
         guard signal.verifySignature(using: secretKey) else {
-            print("[ERROR] SignalBus: Invalid signal signature from \(signal.source)")
+            AgentLogger.logError("SignalBus: Invalid signal signature from \(signal.source)", agent: "SignalBus")
             throw SignalError.invalidDirection(source: signal.source, target: signal.target) // Using existing case as fallback
         }
         

@@ -13,7 +13,9 @@ public actor ExperienceVault {
     private var db: OpaquePointer?
     
     private init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return
+        }
         let eliteDir = appSupport.appendingPathComponent("EliteAgent")
         try? FileManager.default.createDirectory(at: eliteDir, withIntermediateDirectories: true)
         let dbPath = eliteDir.appendingPathComponent("experience_vault.sqlite").path
@@ -62,7 +64,7 @@ public actor ExperienceVault {
     private func execute(_ sql: String) {
         var errMsg: UnsafeMutablePointer<Int8>?
         if sqlite3_exec(db, sql, nil, nil, &errMsg) != SQLITE_OK {
-            let error = String(cString: errMsg!)
+            let error = errMsg != nil ? String(cString: errMsg!) : "Unknown SQL Error"
             AgentLogger.logError("SQL Error: \(error)", agent: "ExperienceVault")
             sqlite3_free(errMsg)
         }

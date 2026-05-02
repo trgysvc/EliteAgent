@@ -36,14 +36,15 @@ public actor TokenAccountant {
         
         // v10.0: Unified Token Trace (os_log with signposts coming in Monitor)
         if TokenGuardConfig.shared.isTraceEnabled {
-            print("""
+            let trace = """
             [TOKEN TRACE #\(stats.requestCount)]
               Input:  \(input)
               Cached: \(cached) (Saved)
               Output: \(output)
               Net:    \(input + output - cached)
             ------------------------------------
-            """)
+            """
+            AgentLogger.logInfo(trace, agent: "TokenAccountant")
         }
         
         logger.info("Token Transaction recorded. Net Savings: \(savings)")

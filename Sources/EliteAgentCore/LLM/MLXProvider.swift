@@ -28,7 +28,9 @@ public actor MLXProvider: LocalLLMProvider {
     public func loadModel(_ modelName: String) async throws {
         self.status = .loading
         do {
-            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+                throw ModelError.unknown("Uygulama Destek dizini bulunamadı.")
+            }
             let modelURL = appSupport.appendingPathComponent("EliteAgent/Models/\(modelName)")
             
             self.status = .priming

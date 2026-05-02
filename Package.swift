@@ -8,7 +8,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "EliteAgent", targets: ["EliteAgent"]),
-        .library(name: "EliteAgentCore", targets: ["EliteAgentCore"]),
+        .library(name: "EliteAgentCore", type: .static, targets: ["EliteAgentCore"]),
         .library(name: "CUNOSupport", targets: ["CUNOSupport"]),
         .library(name: "EliteAgentUI", targets: ["EliteAgentUI"]),
         .executable(name: "EliteAgentXPC", targets: ["EliteAgentXPC"]),

@@ -30,7 +30,7 @@ public actor ConfigManager {
             self.cachedConfig = config
             return config
         } catch {
-            print("[CONFIG] Error decoding config.plist, returning default. Error: \(error)")
+            AgentLogger.logError("Error decoding config.plist, returning default. Error: \(error.localizedDescription)", agent: "Config")
             // Backup the corrupted file
             let backupURL = configURL.appendingPathExtension("bak")
             try? fileManager.moveItem(at: configURL, to: backupURL)
@@ -56,7 +56,7 @@ public actor ConfigManager {
             let data = try encoder.encode(config)
             try data.write(to: configURL)
         } catch {
-            print("[CONFIG] Failed to save config: \(error)")
+            AgentLogger.logError("Failed to save config: \(error.localizedDescription)", agent: "Config")
         }
     }
 }

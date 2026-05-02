@@ -84,7 +84,9 @@ public actor InferenceActor {
             ModelSetupManager.shared.loadState = .idle
         }
         
-        AgentLogger.logInfo("✅ [v3-Engine] Titan Core Primed: \(loadedModelID!)")
+        if let modelID = loadedModelID {
+            AgentLogger.logInfo("✅ [v3-Engine] Titan Core Primed: \(modelID)")
+        }
     }
     
     /// Generates tokens as an AsyncStream using official v3 stream patterns.

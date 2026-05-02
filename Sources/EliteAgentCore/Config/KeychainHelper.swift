@@ -86,7 +86,7 @@ public struct KeychainHelper: Sendable {
                 let legacyStatus = SecItemCopyMatching(legacyQuery as CFDictionary, &legacyRef)
                 
                 if legacyStatus == errSecSuccess, let legacyData = legacyRef as? Data {
-                    print("[KEYCHAIN] Found key in legacy namespace '\(legacyServiceIdentifier)'. Migrating...")
+                    AgentLogger.logAudit(level: .info, agent: "Keychain", message: "Found key in legacy namespace '\(legacyServiceIdentifier)'. Migrating...")
                     // Optionally migrate here, but for now just return
                     return legacyData
                 }

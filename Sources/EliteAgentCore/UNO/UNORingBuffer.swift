@@ -1,5 +1,28 @@
 import Foundation
+
+// C bridge: CUNOSupport target provides the C atomic ring-buffer header and helpers.
+// `canImport` guard + lightweight Swift fallbacks allow editors/SourceKit to open this
+// file even when the C module isn't visible to the current tooling session.
+#if canImport(CUNOSupport)
 import CUNOSupport
+#else
+// Fallback stubs for IDE/editor contexts where the C module isn't available.
+// These definitions are intentionally no-op and only exist to avoid "No such module"
+// diagnostics. The real C implementations are used when building the package.
+public struct UNORingBufferHeader {}
+
+@inlinable public func uno_ring_buffer_init(_ header: UnsafeMutablePointer<UNORingBufferHeader>?, _ capacity: UInt32) {
+    // no-op fallback
+}
+
+@inlinable public func uno_ring_buffer_get_head(_ header: UnsafeMutablePointer<UNORingBufferHeader>?) -> UInt32 { 0 }
+
+@inlinable public func uno_ring_buffer_set_head(_ header: UnsafeMutablePointer<UNORingBufferHeader>?, _ val: UInt32) {}
+
+@inlinable public func uno_ring_buffer_get_tail(_ header: UnsafeMutablePointer<UNORingBufferHeader>?) -> UInt32 { 0 }
+
+@inlinable public func uno_ring_buffer_set_tail(_ header: UnsafeMutablePointer<UNORingBufferHeader>?, _ val: UInt32) {}
+#endif
 
 /// v7.1: Lock-Free Ring Buffer Controller (UNO-RB)
 /// streams inference tokens from the MLX Engine (Producer) to the XPC Client (Consumer)

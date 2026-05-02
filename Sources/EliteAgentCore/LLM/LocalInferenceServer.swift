@@ -129,7 +129,8 @@ public actor LocalInferenceServer {
     }
     
     private func handleInferenceRequest(data: Data, on connection: NWConnection) {
-        guard let headerEndRange = data.range(of: "\r\n\r\n".data(using: .utf8)!) else {
+        guard let separatorData = "\r\n\r\n".data(using: .utf8),
+              let headerEndRange = data.range(of: separatorData) else {
             sendResponse(on: connection, statusCode: 400, body: "Bad Request")
             return
         }

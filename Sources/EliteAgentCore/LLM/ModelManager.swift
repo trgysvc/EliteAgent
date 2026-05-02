@@ -357,7 +357,10 @@ public final class ModelManager: NSObject, ObservableObject {
     }
     
     private func downloadModelMetadata(_ model: ModelCatalog) async throws {
-        let baseRepoURL = URL(string: model.downloadURL)!.deletingLastPathComponent()
+        guard let url = URL(string: model.downloadURL) else {
+            throw ModelError.unknown("Geçersiz download URL: \(model.downloadURL)")
+        }
+        let baseRepoURL = url.deletingLastPathComponent()
         let destinationDir = modelsDirectory.appendingPathComponent(model.id)
         try? FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
         
@@ -717,7 +720,7 @@ extension ModelManager: URLSessionDownloadDelegate {
                 }
             }
         } catch {
-            print("[ModelManager] CRITICAL: Failed to save model file: \(error)")
+            AgentLogger.logError("CRITICAL: Failed to save model file: \(error.localizedDescription)", agent: "ModelManager")
         }
     }
     

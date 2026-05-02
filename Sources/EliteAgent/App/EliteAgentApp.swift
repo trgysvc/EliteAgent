@@ -75,7 +75,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func setupMenuBar() {
-        print("[EliteAgent] setupMenuBar called")
+        AgentLogger.logInfo("setupMenuBar called", agent: "App")
         statusItem = NSStatusBar.system.statusItem(
             withLength: NSStatusItem.variableLength
         )

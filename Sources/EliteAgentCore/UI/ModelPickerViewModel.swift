@@ -82,7 +82,7 @@ public class ModelPickerViewModel: ObservableObject {
             self.isLoading = true
         }
         
-        print("🔍 [DEBUG] Loading models (Atomic RED FIX)...")
+        AgentLogger.logInfo("Loading models (Atomic RED FIX)...", agent: "ModelPicker")
         
         // 1. Collect all local data (Background)
         let registry = ModelRegistry.availableModels
@@ -119,7 +119,7 @@ public class ModelPickerViewModel: ObservableObject {
             self.hasTitanEngine = !installed.isEmpty
             self.hasOpenRouter = !openRouter.isEmpty
             
-            print("✅ [DEBUG] Atomic update: installed=\(installed.count), totalUsable=\(self.models.count)")
+            AgentLogger.logInfo("Atomic update: installed=\(installed.count), totalUsable=\(self.models.count)", agent: "ModelPicker")
             
             // Selection Sync: Only sync if the model is actually in our NEW filtered list
             if let activeID = ModelSetupManager.shared.activeModelID.isEmpty ? nil : ModelSetupManager.shared.activeModelID, 

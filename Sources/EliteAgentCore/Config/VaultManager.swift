@@ -278,7 +278,7 @@ public actor VaultManager {
         let currentModel = updatedProviders[mlxIndex].modelName ?? ""
         if !currentModel.isEmpty { return false } // Already primed
         
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return false }
         let modelsDir = appSupport.appendingPathComponent("EliteAgent/Models")
         
         guard let contents = try? FileManager.default.contentsOfDirectory(at: modelsDir, includingPropertiesForKeys: nil) else { return false }
