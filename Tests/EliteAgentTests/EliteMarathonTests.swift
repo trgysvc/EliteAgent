@@ -218,6 +218,40 @@ final class EliteMarathonTests: XCTestCase {
         let status = await session.status
         XCTAssertEqual(status, .finished)
     }
+
+    // MARK: - Prompt #11: Ecosystem Integration (Calendar & Contacts)
+    func testWorkflow11_EcosystemIntegration() async throws {
+        let mockProvider = MockLLMProvider(responses: [
+            CompletionResponse(taskID: "t11", providerUsed: .mlx, content: "[UNOB: TASK]", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t11", providerUsed: .mlx, content: "<think>Find contact</think><final>CALL(39) WITH {\"query\": \"John Doe\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t11", providerUsed: .mlx, content: "<think>Schedule meeting</think><final>CALL(54) WITH {\"action\": \"add_event\", \"summary\": \"Meeting with John\", \"start\": \"tomorrow 2pm\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t11", providerUsed: .mlx, content: "<final>DONE: Meeting scheduled with John Doe.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t11", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
+        ])
+        
+        let runtime = OrchestratorRuntime(planner: PlannerAgent(bus: bus), memory: MemoryAgent(bus: bus), cloudProvider: mockProvider, localProvider: nil, toolRegistry: mockToolRegistry, bus: bus, vaultManager: mockVault)
+        let session = Session(workspaceURL: tempWorkspace, config: .default, complexity: 3)
+        try await runtime.executeTask(prompt: "Find John Doe in contacts and schedule a meeting with him tomorrow at 2pm.", session: session, complexity: 3, config: .default)
+        let status = await session.status
+        XCTAssertEqual(status, .finished)
+    }
+
+    // MARK: - Prompt #12: System Health & Telemetry
+    func testWorkflow12_SystemHealthCheck() async throws {
+        let mockProvider = MockLLMProvider(responses: [
+            CompletionResponse(taskID: "t12", providerUsed: .mlx, content: "[UNOB: TASK]", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t12", providerUsed: .mlx, content: "<think>Check telemetry</think><final>CALL(36) WITH {}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t12", providerUsed: .mlx, content: "<think>Check disk space</think><final>CALL(32) WITH {\"command\": \"df -h /\"}</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t12", providerUsed: .mlx, content: "<final>DONE: System health check complete. Disk space and telemetry are within nominal limits.</final>", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0),
+            CompletionResponse(taskID: "t12", providerUsed: .mlx, content: "UNOB:PASS", tokensUsed: TokenCount(prompt: 0, completion: 0, total: 0), latencyMs: 0, costUSD: 0)
+        ])
+        
+        let runtime = OrchestratorRuntime(planner: PlannerAgent(bus: bus), memory: MemoryAgent(bus: bus), cloudProvider: mockProvider, localProvider: nil, toolRegistry: mockToolRegistry, bus: bus, vaultManager: mockVault)
+        let session = Session(workspaceURL: tempWorkspace, config: .default, complexity: 3)
+        try await runtime.executeTask(prompt: "Perform a system health check including telemetry and disk space.", session: session, complexity: 3, config: .default)
+        let status = await session.status
+        XCTAssertEqual(status, .finished)
+    }
 }
 
 // MARK: - Test Mocks
