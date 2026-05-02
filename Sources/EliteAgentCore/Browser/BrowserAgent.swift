@@ -80,8 +80,8 @@ public actor BrowserAgent: AgentProtocol {
                 
                 // Security Check for domain-restricted actions
                 if !currentURLStr.isEmpty {
-                    let vault = await VaultManager.shared.config
-                    let allowedDomains = vault.browser?.allowedDomains ?? ["*"]
+                    let vaultConfig = await VaultManager.shared?.config
+                    let allowedDomains = vaultConfig?.browser?.allowedDomains ?? ["*"]
                     
                     if let host = URL(string: currentURLStr)?.host, !allowedDomains.contains(where: { host.hasSuffix($0) || $0 == "*" }) {
                         AgentLogger.logAudit(level: .security, agent: "BrowserAgent", message: "BLOCKED_DOMAIN: \(currentURLStr)")

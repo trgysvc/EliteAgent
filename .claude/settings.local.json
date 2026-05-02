@@ -1,5 +1,4 @@
 {
-  "model": "opusplan",
   "permissions": {
     "allow": [
       "Bash(swift test *)",
@@ -8,7 +7,11 @@
       "Bash(swift build *)",
       "Bash(git commit -m 'fix: disable MCP SDK integration pending proper module configuration *)",
       "Bash(python3 -m json.tool)",
-      "Bash(ln -s Resources/Config/DEVLOG.md DEVLOG.md)"
+      "Bash(ln -s Resources/Config/DEVLOG.md DEVLOG.md)",
+      "Bash(grep -v \"// \\\\|fatalError\\\\|#warning\\\\|precondition\\\\|assert\\\\|\\\\\"!\\\\|!\\\\\"\\\\|!\\(\\\\|!=\\\\|!$\\\\|!\\\\\\\\.\")",
+      "Bash(grep -n \"DynamicCodingKeys\\(stringValue:.*!\\)$\" /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/Types.swift)",
+      "Bash(grep *)"
     ]
-  }
+  },
+  "model": "opusplan"
 }

@@ -157,10 +157,8 @@ public class ModelPickerViewModel: ObservableObject {
         self.selected = model
         ModelSetupManager.shared.activeModelID = model.id
         
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: NSNotification.Name("ModelSelected"), object: model)
-            AISessionState.shared.selectedModel = model.id
-        }
+        NotificationCenter.default.post(name: NSNotification.Name("ModelSelected"), object: model)
+        AISessionState.shared.selectedModel = model.id
         
         let defaultVaultPath = PathConfiguration.shared.vaultURL
         guard let vault = try? VaultManager(configURL: defaultVaultPath) else { return }

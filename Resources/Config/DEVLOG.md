@@ -530,3 +530,14 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Decision made:** Enforced a "Zero-Unsafe" policy for the v7.1 release candidate. All system observability is now routed through `AgentLogger`, providing a unified and persistent audit trail while maintaining high performance via native OSLog integration.
 
 **Next:** Deploy v7.1 Release Candidate and initiate final integration testing.
+
+---
+
+### [2026-05-03] — UNO Kural İhlalleri: Son 3 Kritik Düzeltme
+**What changed:**
+- `Types.swift` (`EliteAgentOutput` + `ToolCall`): `DynamicCodingKeys(stringValue: "...")!` (15+ force unwrap) → her iki private `DynamicCodingKeys` struct'ına `init(key: String)` non-optional convenience initializer eklendi; tüm çağrılar `DynamicCodingKeys(key: "...")` olarak güncellendi.
+- `ModelPickerViewModel.swift`: `selectModel` içindeki `DispatchQueue.main.async { ... }` kaldırıldı — sınıf `@MainActor` izolasyonunda zaten main thread'de olduğu için doğrudan çağrıya dönüştürüldü.
+- `VaultManager.swift`: `@MainActor public static var shared: VaultManager!` → `VaultManager?`; çağrı siteleri güncellendi: `BrowserAgent.swift` (`await VaultManager.shared?.config`), `ChatWindowView.swift` (`VaultManager.shared?.hasCloudProvider() ?? false`).
+**Files modified:** `Types/Types.swift`, `UI/ModelPickerViewModel.swift`, `Config/VaultManager.swift`, `Browser/BrowserAgent.swift`, `App/ChatWindowView.swift`
+**Decision made:** `DynamicCodingKeys.init?(stringValue:)` teknik olarak hiçbir zaman nil dönmez (string literal ile her zaman başarılı), ancak UNO kuralı "üretim kodunda `!` yok" — non-optional `init(key:)` ekleyerek hem kural uyumu hem sıfır runtime riski sağlandı. `VaultManager.shared` Optional yapılarak crash riski tamamen ortadan kalktı.
+**Next:** Tüm UNO kural ihlalleri giderildi; build clean.

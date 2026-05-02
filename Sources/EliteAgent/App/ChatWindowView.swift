@@ -153,7 +153,7 @@ public struct ChatWindowView: View {
                     inputArea
                 }
                 
-                if ModelManager.shared.installedModelIDs.isEmpty && !VaultManager.shared.hasCloudProvider() {
+                if ModelManager.shared.installedModelIDs.isEmpty && !(VaultManager.shared?.hasCloudProvider() ?? false) {
                     emptyStateOverlay
                 }
             }

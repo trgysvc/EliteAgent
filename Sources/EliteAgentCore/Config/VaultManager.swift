@@ -96,7 +96,7 @@ public enum VaultError: Error, CustomStringConvertible, Sendable {
 }
 
 public actor VaultManager {
-    @MainActor public static var shared: VaultManager!
+    @MainActor public static var shared: VaultManager?
     
     public nonisolated let config: VaultConfig
     private let configURL: URL

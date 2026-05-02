@@ -124,22 +124,23 @@ public struct EliteAgentOutput: Codable, Sendable {
         init?(stringValue: String) { self.stringValue = stringValue }
         var intValue: Int? { return nil }
         init?(intValue: Int) { return nil }
+        init(key: String) { self.stringValue = key }
     }
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
-        
+
         // Decode fields with alias support
-        self.thought = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "thought")!)
-        
+        self.thought = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "thought"))
+
         // v10.5.8: Match 'content', 'result', 'message', 'text', 'final_answer', or 'observation'
-        if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "content")!) { self.content = c }
-        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "result")!) { self.content = c }
-        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "message")!) { self.content = c }
-        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "text")!) { self.content = c }
-        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "final_answer")!) { self.content = c }
-        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "observation")!) { self.content = c }
-        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "weather")!) { self.content = c }
+        if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "content")) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "result")) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "message")) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "text")) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "final_answer")) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "observation")) { self.content = c }
+        else if let c = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "weather")) { self.content = c }
         else {
             // v10.5.9: Ultra-catch-all. If no standard key is found, look for any String field.
             for key in container.allKeys {
@@ -149,13 +150,13 @@ public struct EliteAgentOutput: Codable, Sendable {
                 }
             }
         }
-        
-        self.action = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "action")!)
-        self.params = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "params")!)
-        self.steps = try? container.decodeIfPresent([ToolCall].self, forKey: DynamicCodingKeys(stringValue: "steps")!)
-        
+
+        self.action = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "action"))
+        self.params = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(key: "params"))
+        self.steps = try? container.decodeIfPresent([ToolCall].self, forKey: DynamicCodingKeys(key: "steps"))
+
         // Infer type if missing
-        if let typeStr = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "type")!),
+        if let typeStr = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "type")),
            let explicitType = EliteOutputType(rawValue: typeStr) {
             self.type = explicitType
         } else {
@@ -187,24 +188,25 @@ public struct ToolCall: Codable, Sendable {
         init?(stringValue: String) { self.stringValue = stringValue }
         var intValue: Int? { return nil }
         init?(intValue: Int) { return nil }
+        init(key: String) { self.stringValue = key }
     }
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DynamicCodingKeys.self)
-        
+
         // Match permutations of tool name
-        if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "tool")!) { self.tool = t }
-        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "toolID")!) { self.tool = t }
-        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "action")!) { self.tool = t }
-        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(stringValue: "name")!) { self.tool = t }
+        if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "tool")) { self.tool = t }
+        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "toolID")) { self.tool = t }
+        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "action")) { self.tool = t }
+        else if let t = try? container.decodeIfPresent(String.self, forKey: DynamicCodingKeys(key: "name")) { self.tool = t }
         else {
             self.tool = "unknown_tool"
         }
-        
+
         // Match permutations of parameters
-        if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "params")!) { self.params = p }
-        else if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "parameters")!) { self.params = p }
-        else if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(stringValue: "arguments")!) { self.params = p }
+        if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(key: "params")) { self.params = p }
+        else if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(key: "parameters")) { self.params = p }
+        else if let p = try? container.decodeIfPresent([String: AnyCodable].self, forKey: DynamicCodingKeys(key: "arguments")) { self.params = p }
         else {
             self.params = [:]
         }
