@@ -1,0 +1,1263 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project EliteAgent.xcodeproj -scheme EliteAgentCore -configuration Debug build -sdk macosx
+
+Build settings from command line:
+    SDKROOT = macosx26.4
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  swift-nio: https://github.com/apple/swift-nio.git @ 2.99.0
+  mlx-swift-lm: https://github.com/ml-explore/mlx-swift-lm @ 3.31.3
+  Xet: https://github.com/DePasqualeOrg/swift-xet @ 0.1.1
+  swift-log: https://github.com/apple/swift-log.git @ 1.12.0
+  EventSource: https://github.com/mattt/eventsource.git @ 1.4.1
+  swift-system: https://github.com/apple/swift-system.git @ 1.6.4
+  yyjson: https://github.com/ibireme/yyjson.git @ 0.12.0
+  swift-syntax: https://github.com/swiftlang/swift-syntax.git @ 600.0.1
+  swift-hf-api-mlx: https://github.com/DePasqualeOrg/swift-hf-api-mlx @ 0.2.0
+  swift-collections: https://github.com/apple/swift-collections.git @ 1.4.1
+  swift-asn1: https://github.com/apple/swift-asn1.git @ 1.7.0
+  SSE: https://github.com/DePasqualeOrg/swift-sse @ 0.1.0
+  swift-tokenizers-mlx: https://github.com/DePasqualeOrg/swift-tokenizers-mlx @ 0.2.0
+  swift-hf-api: https://github.com/DePasqualeOrg/swift-hf-api @ 0.2.3
+  swift-jinja: https://github.com/DePasqualeOrg/swift-jinja.git @ 0.2.0
+  swift-tokenizers: https://github.com/DePasqualeOrg/swift-tokenizers.git @ 0.4.3
+  mlx-swift: https://github.com/ml-explore/mlx-swift.git @ 0.31.3
+  swift-filelock: https://github.com/DePasqualeOrg/swift-filelock @ 0.1.1
+  mcp-swift-sdk: https://github.com/modelcontextprotocol/swift-sdk.git @ main (a0ae212)
+  AudioIntelligence: https://github.com/trgysvc/audiointelligence.git @ main (f9cc719)
+  swift-atomics: https://github.com/apple/swift-atomics.git @ 1.3.0
+  swift-crypto: https://github.com/apple/swift-crypto @ 4.5.0
+  swift-numerics: https://github.com/apple/swift-numerics.git @ 1.1.1
+  swift-argument-parser: https://github.com/apple/swift-argument-parser.git @ 1.7.1
+
+2026-05-03 19:54:24.159 xcodebuild[14550:74757] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00008132-001E30A10E99801C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00008132-001E30A10E99801C, name:My Mac }
+{ platform:macOS, name:Any Mac }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (107 targets)
+    Target 'EliteAgentCore' in project 'EliteAgent'
+        ➜ Explicit dependency on target 'AudioIntelligence' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'MCP' in project 'mcp-swift-sdk'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXEmbedders' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFFT' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXHuggingFace' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMHFAPI' in project 'swift-hf-api-mlx'
+        ➜ Explicit dependency on target 'MLXLMTokenizers' in project 'swift-tokenizers-mlx'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXVLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'yyjson' in project 'yyjson'
+    Target 'MLXVLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXVLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXVLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXLMTokenizers' in project 'swift-tokenizers-mlx'
+        ➜ Explicit dependency on target 'MLXLMTokenizers' in project 'swift-tokenizers-mlx'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'Tokenizers' in project 'swift-tokenizers'
+    Target 'MLXLMTokenizers' in project 'swift-tokenizers-mlx'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'Tokenizers' in project 'swift-tokenizers'
+    Target 'Tokenizers' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'Tokenizers' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'TokenizersCore' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'TokenizersSwiftBackend' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'Jinja' in project 'swift-jinja'
+        ➜ Explicit dependency on target 'yyjson' in project 'yyjson'
+    Target 'Tokenizers' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'TokenizersCore' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'TokenizersSwiftBackend' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'Jinja' in project 'swift-jinja'
+        ➜ Explicit dependency on target 'yyjson' in project 'yyjson'
+    Target 'TokenizersSwiftBackend' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'TokenizersCore' in project 'swift-tokenizers'
+        ➜ Explicit dependency on target 'Jinja' in project 'swift-jinja'
+        ➜ Explicit dependency on target 'yyjson' in project 'yyjson'
+    Target 'yyjson' in project 'yyjson'
+        ➜ Explicit dependency on target 'yyjson' in project 'yyjson'
+    Target 'yyjson' in project 'yyjson' (no dependencies)
+    Target 'Jinja' in project 'swift-jinja'
+        ➜ Explicit dependency on target 'Jinja' in project 'swift-jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Jinja' in project 'swift-jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'TokenizersCore' in project 'swift-tokenizers' (no dependencies)
+    Target 'MLXLMHFAPI' in project 'swift-hf-api-mlx'
+        ➜ Explicit dependency on target 'MLXLMHFAPI' in project 'swift-hf-api-mlx'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'HFAPI' in project 'swift-hf-api'
+    Target 'MLXLMHFAPI' in project 'swift-hf-api-mlx'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'HFAPI' in project 'swift-hf-api'
+    Target 'HFAPI' in project 'swift-hf-api'
+        ➜ Explicit dependency on target 'HFAPI' in project 'swift-hf-api'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'Xet' in project 'Xet'
+        ➜ Explicit dependency on target 'FileLock' in project 'swift-filelock'
+        ➜ Explicit dependency on target 'SSE' in project 'SSE'
+    Target 'HFAPI' in project 'swift-hf-api'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'Xet' in project 'Xet'
+        ➜ Explicit dependency on target 'FileLock' in project 'swift-filelock'
+        ➜ Explicit dependency on target 'SSE' in project 'SSE'
+    Target 'SSE' in project 'SSE'
+        ➜ Explicit dependency on target 'SSE' in project 'SSE'
+    Target 'SSE' in project 'SSE' (no dependencies)
+    Target 'FileLock' in project 'swift-filelock'
+        ➜ Explicit dependency on target 'FileLock' in project 'swift-filelock'
+    Target 'FileLock' in project 'swift-filelock' (no dependencies)
+    Target 'Xet' in project 'Xet'
+        ➜ Explicit dependency on target 'Xet' in project 'Xet'
+    Target 'Xet' in project 'Xet' (no dependencies)
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'swift-crypto_Crypto' in project 'swift-crypto'
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'swift-crypto_Crypto' in project 'swift-crypto'
+    Target 'swift-crypto_Crypto' in project 'swift-crypto' (no dependencies)
+    Target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXHuggingFace' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXHuggingFace' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXHuggingFaceMacros' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXHuggingFace' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXHuggingFaceMacros' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXHuggingFaceMacros' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftCompilerPlugin' in project 'swift-syntax'
+    Target 'SwiftCompilerPlugin' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftCompilerPlugin' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftOperators' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacroExpansion' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftCompilerPluginMessageHandling' in project 'swift-syntax'
+    Target 'SwiftCompilerPlugin' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftOperators' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacroExpansion' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftCompilerPluginMessageHandling' in project 'swift-syntax'
+    Target 'SwiftCompilerPluginMessageHandling' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftOperators' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacroExpansion' in project 'swift-syntax'
+    Target 'SwiftSyntaxMacroExpansion' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftOperators' in project 'swift-syntax'
+    Target 'SwiftOperators' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+    Target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+    Target 'SwiftSyntaxMacros' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+    Target 'SwiftSyntaxBuilder' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParserDiagnostics' in project 'swift-syntax'
+    Target 'SwiftParserDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftParser' in project 'swift-syntax'
+    Target 'SwiftBasicFormat' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+    Target 'SwiftParser' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+    Target 'SwiftDiagnostics' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax' in project 'swift-syntax'
+    Target 'SwiftSyntax' in project 'swift-syntax'
+        ➜ Explicit dependency on target '_SwiftSyntaxCShims' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax509' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax510' in project 'swift-syntax'
+        ➜ Explicit dependency on target 'SwiftSyntax600' in project 'swift-syntax'
+    Target 'SwiftSyntax600' in project 'swift-syntax' (no dependencies)
+    Target 'SwiftSyntax510' in project 'swift-syntax' (no dependencies)
+    Target 'SwiftSyntax509' in project 'swift-syntax' (no dependencies)
+    Target '_SwiftSyntaxCShims' in project 'swift-syntax' (no dependencies)
+    Target 'MLXFFT' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFFT' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXFFT' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXEmbedders' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXEmbedders' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXEmbedders' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+    Target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'Numerics' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'RealModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'ComplexModule' in project 'swift-numerics'
+    Target 'Numerics' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'RealModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'ComplexModule' in project 'swift-numerics'
+    Target 'ComplexModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'RealModule' in project 'swift-numerics'
+    Target 'RealModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+    Target '_NumericsShims' in project 'swift-numerics' (no dependencies)
+    Target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'mlx-swift_Cmlx' in project 'mlx-swift'
+    Target 'mlx-swift_Cmlx' in project 'mlx-swift' (no dependencies)
+    Target 'MCP' in project 'mcp-swift-sdk'
+        ➜ Explicit dependency on target 'MCP' in project 'mcp-swift-sdk'
+        ➜ Explicit dependency on target 'SystemPackage' in project 'swift-system'
+        ➜ Explicit dependency on target 'Logging' in project 'swift-log'
+        ➜ Explicit dependency on target 'EventSource' in project 'EventSource'
+    Target 'MCP' in project 'mcp-swift-sdk'
+        ➜ Explicit dependency on target 'SystemPackage' in project 'swift-system'
+        ➜ Explicit dependency on target 'Logging' in project 'swift-log'
+        ➜ Explicit dependency on target 'EventSource' in project 'EventSource'
+    Target 'EventSource' in project 'EventSource'
+        ➜ Explicit dependency on target 'EventSource' in project 'EventSource'
+        ➜ Explicit dependency on target 'NIOCore' in project 'swift-nio'
+    Target 'EventSource' in project 'EventSource'
+        ➜ Explicit dependency on target 'NIOCore' in project 'swift-nio'
+    Target 'NIOCore' in project 'swift-nio'
+        ➜ Explicit dependency on target 'NIOCore' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOAtomics' in project 'swift-nio'
+        ➜ Explicit dependency on target 'NIOConcurrencyHelpers' in project 'swift-nio'
+        ➜ Explicit dependency on target '_NIOBase64' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOOpenBSD' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIODarwin' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOLinux' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOWindows' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOWASI' in project 'swift-nio'
+        ➜ Explicit dependency on target '_NIODataStructures' in project 'swift-nio'
+        ➜ Explicit dependency on target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'Atomics' in project 'swift-atomics'
+    Target 'NIOCore' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOAtomics' in project 'swift-nio'
+        ➜ Explicit dependency on target 'NIOConcurrencyHelpers' in project 'swift-nio'
+        ➜ Explicit dependency on target '_NIOBase64' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOOpenBSD' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIODarwin' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOLinux' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOWindows' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOWASI' in project 'swift-nio'
+        ➜ Explicit dependency on target '_NIODataStructures' in project 'swift-nio'
+        ➜ Explicit dependency on target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'Atomics' in project 'swift-atomics'
+    Target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+        ➜ Explicit dependency on target 'ContainersPreview' in project 'swift-collections'
+    Target 'DequeModule' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+        ➜ Explicit dependency on target 'ContainersPreview' in project 'swift-collections'
+    Target 'ContainersPreview' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'InternalCollectionsUtilities' in project 'swift-collections' (no dependencies)
+    Target '_NIODataStructures' in project 'swift-nio' (no dependencies)
+    Target 'CNIOWASI' in project 'swift-nio' (no dependencies)
+    Target 'CNIOWindows' in project 'swift-nio' (no dependencies)
+    Target 'CNIOLinux' in project 'swift-nio' (no dependencies)
+    Target 'CNIODarwin' in project 'swift-nio' (no dependencies)
+    Target 'CNIOOpenBSD' in project 'swift-nio' (no dependencies)
+    Target '_NIOBase64' in project 'swift-nio' (no dependencies)
+    Target 'NIOConcurrencyHelpers' in project 'swift-nio'
+        ➜ Explicit dependency on target 'CNIOAtomics' in project 'swift-nio'
+    Target 'CNIOAtomics' in project 'swift-nio' (no dependencies)
+    Target 'Logging' in project 'swift-log'
+        ➜ Explicit dependency on target 'Logging' in project 'swift-log'
+    Target 'Logging' in project 'swift-log' (no dependencies)
+    Target 'SystemPackage' in project 'swift-system'
+        ➜ Explicit dependency on target 'SystemPackage' in project 'swift-system'
+        ➜ Explicit dependency on target 'CSystem' in project 'swift-system'
+    Target 'SystemPackage' in project 'swift-system'
+        ➜ Explicit dependency on target 'CSystem' in project 'swift-system'
+    Target 'CSystem' in project 'swift-system' (no dependencies)
+    Target 'AudioIntelligence' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligence' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligence_AudioIntelligence' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligenceMetal' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligenceCore' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'Atomics' in project 'swift-atomics'
+    Target 'AudioIntelligence' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligence_AudioIntelligence' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligenceMetal' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligenceCore' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'Atomics' in project 'swift-atomics'
+    Target 'Atomics' in project 'swift-atomics'
+        ➜ Explicit dependency on target 'Atomics' in project 'swift-atomics'
+        ➜ Explicit dependency on target '_AtomicsShims' in project 'swift-atomics'
+    Target 'Atomics' in project 'swift-atomics'
+        ➜ Explicit dependency on target '_AtomicsShims' in project 'swift-atomics'
+    Target '_AtomicsShims' in project 'swift-atomics' (no dependencies)
+    Target 'AudioIntelligenceCore' in project 'AudioIntelligence'
+        ➜ Explicit dependency on target 'AudioIntelligenceMetal' in project 'AudioIntelligence'
+    Target 'AudioIntelligenceMetal' in project 'AudioIntelligence' (no dependencies)
+    Target 'AudioIntelligence_AudioIntelligence' in project 'AudioIntelligence' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -x objective-c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -x c++ -c /dev/null
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool -V
+
+Build description signature: aecc453cc8e190950f54c4cf0856a5d3
+Build description path: /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/XCBuildData/aecc453cc8e190950f54c4cf0856a5d3.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk /Users/trgysvc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.4-25E251-688ef53f1462e2c8f657fdc38a81448f30f9ca8789b706f8bd3fc906a70d770f.sdkstatcache
+    cd /Users/trgysvc/Developer/EliteAgent/EliteAgent.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -o /Users/trgysvc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.4-25E251-688ef53f1462e2c8f657fdc38a81448f30f9ca8789b706f8bd3fc906a70d770f.sdkstatcache
+
+ProcessInfoPlistFile /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Info.plist /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/mlx-swift.build/Debug/mlx-swift_Cmlx.build/empty-mlx-swift_Cmlx.plist (in target 'mlx-swift_Cmlx' from project 'mlx-swift')
+    cd /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift
+    builtin-infoPlistUtility /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/mlx-swift.build/Debug/mlx-swift_Cmlx.build/empty-mlx-swift_Cmlx.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Info.plist
+
+ProcessInfoPlistFile /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/swift-crypto_Crypto.bundle/Contents/Info.plist /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/swift-crypto.build/Debug/swift-crypto_Crypto.build/empty-swift-crypto_Crypto.plist (in target 'swift-crypto_Crypto' from project 'swift-crypto')
+    cd /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-crypto
+    builtin-infoPlistUtility /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/swift-crypto.build/Debug/swift-crypto_Crypto.build/empty-swift-crypto_Crypto.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/swift-crypto_Crypto.bundle/Contents/Info.plist
+
+ProcessInfoPlistFile /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/AudioIntelligence_AudioIntelligence.bundle/Contents/Info.plist /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/AudioIntelligence.build/Debug/AudioIntelligence_AudioIntelligence.build/empty-AudioIntelligence_AudioIntelligence.plist (in target 'AudioIntelligence_AudioIntelligence' from project 'AudioIntelligence')
+    cd /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/audiointelligence
+    builtin-infoPlistUtility /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/AudioIntelligence.build/Debug/AudioIntelligence_AudioIntelligence.build/empty-AudioIntelligence_AudioIntelligence.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/AudioIntelligence_AudioIntelligence.bundle/Contents/Info.plist
+
+SwiftDriver EliteAgentCore normal arm64 com.apple.xcode.tools.swift.compiler (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name EliteAgentCore -Onone @/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOWASI.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOLinux.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIODarwin.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOOpenBSD.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOAtomics.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-macos15.0 -g -module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -Xfrontend -load-plugin-executable -Xfrontend /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/MLXHuggingFaceMacros\#MLXHuggingFaceMacros -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.4-25E251-688ef53f1462e2c8f657fdc38a81448f30f9ca8789b706f8bd3fc906a70d770f.sdkstatcache -output-file-map /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore_const_extract_protocols.json -Xcc -iquote -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-generated-files.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-own-target-headers.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgent-721b4d269f90b0c1aa899c38a8b2021d-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-project-headers.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-system/Sources/CSystem/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-atomics/Sources/_AtomicsShims/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOWASI/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOWindows/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOLinux/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIODarwin/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOOpenBSD/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOAtomics/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources-normal/arm64 -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources/arm64 -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources -Xcc -DDEBUG\=1 -Xcc -DFMT_USE_CONSTEVAL\=0 -Xcc -DFMT_ENFORCE_COMPILE_STRING\=0 -Xcc -DFMT_USE_CONSTEXPR\=0 -emit-objc-header -emit-objc-header-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore-Swift.h -working-directory /Users/trgysvc/Developer/EliteAgent -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ TokenGuardConfig.swift,\ Tokenizer.swift,\ UNOExternalBridge.swift,\ UNOGrammarLogitProcessor.swift,\ MCPGateway.swift,\ ContextWindowGuard.swift,\ DreamActor.swift,\ DynamicContextManager.swift,\ EmbeddingService.swift,\ ExperienceVault.swift,\ GitStateEngine.swift,\ MetricsStore.swift,\ PluginCraftEngine.swift,\ AuditLoggerActor.swift,\ SecuritySentinel.swift,\ WorkspaceManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/TokenGuardConfig.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/Tokenizer.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/UNOExternalBridge.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/UNOGrammarLogitProcessor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/MCP/MCPGateway.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/ContextWindowGuard.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/DreamActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/DynamicContextManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/EmbeddingService.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/ExperienceVault.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/GitStateEngine.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/MetricsStore.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/PluginSystem/PluginCraftEngine.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Security/AuditLoggerActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Security/SecuritySentinel.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Security/WorkspaceManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/TokenGuardConfig.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/Tokenizer.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/UNOExternalBridge.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/UNOGrammarLogitProcessor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/MCP/MCPGateway.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/ContextWindowGuard.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/DreamActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/DynamicContextManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/EmbeddingService.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/ExperienceVault.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/GitStateEngine.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Memory/MetricsStore.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/PluginSystem/PluginCraftEngine.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Security/AuditLoggerActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Security/SecuritySentinel.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Security/WorkspaceManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ ProjectObserver.swift,\ SelfHealingEngine.swift,\ Session.swift,\ SubagentRegistry.swift,\ TaskClassifier.swift,\ ToolPrivacyGate.swift,\ TulparActor.swift,\ WorkspaceBootstrapLoader.swift,\ BrowserAgent.swift,\ BrowserAXInspector.swift,\ BrowserEngine.swift,\ CoordinateBridge.swift,\ SafariJSBridge.swift,\ AppSettings.swift,\ ConfigManager.swift,\ KeychainHelper.swift,\ VaultManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/ProjectObserver.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/SelfHealingEngine.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/Session.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/SubagentRegistry.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/TaskClassifier.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/ToolPrivacyGate.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/TulparActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/WorkspaceBootstrapLoader.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/BrowserAgent.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/BrowserAXInspector.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/BrowserEngine.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/CoordinateBridge.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/SafariJSBridge.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/AppSettings.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/ConfigManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/KeychainHelper.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/VaultManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/ProjectObserver.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/SelfHealingEngine.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/Session.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/SubagentRegistry.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/TaskClassifier.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/ToolPrivacyGate.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/TulparActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/WorkspaceBootstrapLoader.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/BrowserAgent.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/BrowserAXInspector.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/BrowserEngine.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/CoordinateBridge.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Browser/SafariJSBridge.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/AppSettings.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/ConfigManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/KeychainHelper.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Config/VaultManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ MessengerTool.swift,\ MusicDNATool.swift,\ NativeBrowserTool.swift,\ PatchTool.swift,\ ProductivityTools.swift,\ ReadFileTool.swift,\ SafariAutomationTool.swift,\ ShellTool.swift,\ ShortcutDiscoveryTool.swift,\ ShortcutExecutionTool.swift,\ SubagentTool.swift,\ SystemTelemetryTool.swift,\ UtilityTools.swift,\ WebFetchTool.swift,\ WebSearchTool.swift,\ WebTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MessengerTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MusicDNATool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/NativeBrowserTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/PatchTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ProductivityTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ReadFileTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/SafariAutomationTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ShellTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ShortcutDiscoveryTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ShortcutExecutionTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/SubagentTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/SystemTelemetryTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/UtilityTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WebFetchTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WebSearchTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WebTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MessengerTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MusicDNATool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/NativeBrowserTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/PatchTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ProductivityTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ReadFileTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/SafariAutomationTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ShellTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ShortcutDiscoveryTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ShortcutExecutionTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/SubagentTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/SystemTelemetryTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/UtilityTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WebFetchTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WebSearchTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WebTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ MLXProvider.swift,\ ModelCatalog.swift,\ ModelError.swift,\ ModelManager.swift,\ ModelSetupManager.swift,\ ModelStateManager.swift,\ OpenRouterProvider.swift,\ OutputSchemaGuard.swift,\ PerformanceArbiter.swift,\ ProactiveMemoryPressureMonitor.swift,\ PromptCacheManager.swift,\ PromptCacheMonitor.swift,\ PromptRegistry.swift,\ SessionContext.swift,\ SystemPrompts.swift,\ TokenAccountant.swift,\ TokenBudgetActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/MLXProvider.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelCatalog.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelError.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelSetupManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelStateManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/OpenRouterProvider.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/OutputSchemaGuard.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PerformanceArbiter.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ProactiveMemoryPressureMonitor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PromptCacheManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PromptCacheMonitor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PromptRegistry.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/SessionContext.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/SystemPrompts.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/TokenAccountant.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/TokenBudgetActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/MLXProvider.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelCatalog.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelError.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelSetupManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ModelStateManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/OpenRouterProvider.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/OutputSchemaGuard.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PerformanceArbiter.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ProactiveMemoryPressureMonitor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PromptCacheManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PromptCacheMonitor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/PromptRegistry.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/SessionContext.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/SystemPrompts.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/TokenAccountant.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/TokenBudgetActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ WriteFileTool.swift,\ XcodeTool.swift,\ AgentTool.swift,\ ApplicationIntelligence.swift,\ CategoryMapper.swift,\ PluginManager.swift,\ ToolEngine.swift,\ ToolIDs.swift,\ ToolLoopDetector.swift,\ ToolRegistry.swift,\ ToolSignature.swift,\ AccessibilityTool.swift,\ ChicagoVisionTool.swift,\ AISessionState.swift,\ ChatModels.swift,\ ModelSource.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WriteFileTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/XcodeTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/AgentTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ApplicationIntelligence.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/CategoryMapper.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/PluginManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolEngine.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolIDs.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolLoopDetector.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolRegistry.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolSignature.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Tools/AccessibilityTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Tools/ChicagoVisionTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/AISessionState.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/ChatModels.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/ModelSource.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/WriteFileTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/XcodeTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/AgentTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ApplicationIntelligence.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/CategoryMapper.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/PluginManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolEngine.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolIDs.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolLoopDetector.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolRegistry.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/ToolSignature.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Tools/AccessibilityTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Tools/ChicagoVisionTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/AISessionState.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/ChatModels.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/ModelSource.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ AppDiscoveryTool.swift,\ AppLauncherTool.swift,\ BackgroundWebScraper.swift,\ BlenderBridgeTool.swift,\ BlenderSandbox.swift,\ BlenderScriptLibrary.swift,\ CommunicationTools.swift,\ EcosystemTools.swift,\ ExtraUtilityTools.swift,\ FileTools.swift,\ GitTool.swift,\ ID3EditorTool.swift,\ ImageAnalysisTool.swift,\ MarkdownReportTool.swift,\ MediaControllerTool.swift,\ MemoryTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/AppDiscoveryTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/AppLauncherTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BackgroundWebScraper.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BlenderBridgeTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BlenderSandbox.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BlenderScriptLibrary.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/CommunicationTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/EcosystemTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ExtraUtilityTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/FileTools.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/GitTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ID3EditorTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ImageAnalysisTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MarkdownReportTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MediaControllerTool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MemoryTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/AppDiscoveryTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/AppLauncherTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BackgroundWebScraper.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BlenderBridgeTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BlenderSandbox.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/BlenderScriptLibrary.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/CommunicationTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/EcosystemTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ExtraUtilityTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/FileTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/GitTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ID3EditorTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/ImageAnalysisTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MarkdownReportTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MediaControllerTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/ToolEngine/Tools/MemoryTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ SignalBus.swift,\ Types.swift,\ ModelPickerViewModel.swift,\ VisualizerView.swift,\ MachPortCoordinator.swift,\ SharedMemoryPool.swift,\ UNODistributedActorSystem.swift,\ UNORingBuffer.swift,\ UNOSharedBuffer.swift,\ UNOTransport.swift,\ UsageTracker.swift,\ HardwareMonitor.swift,\ UXTelemetryManager.swift,\ AgentLogger.swift,\ AppleScriptRunner.swift,\ AsyncUtils.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/SignalBus.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/Types.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UI/ModelPickerViewModel.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UI/VisualizerView.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/MachPortCoordinator.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/SharedMemoryPool.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNORingBuffer.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNOSharedBuffer.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNOTransport.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Usage/UsageTracker.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/Telemetry/HardwareMonitor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/Telemetry/UXTelemetryManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AgentLogger.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AppleScriptRunner.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AsyncUtils.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/SignalBus.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/Types.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UI/ModelPickerViewModel.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UI/VisualizerView.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/MachPortCoordinator.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/SharedMemoryPool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNODistributedActorSystem.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNORingBuffer.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNOSharedBuffer.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/UNO/UNOTransport.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Usage/UsageTracker.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/Telemetry/HardwareMonitor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/Telemetry/UXTelemetryManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AgentLogger.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AppleScriptRunner.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AsyncUtils.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ AdaptiveTaskChunker.swift,\ AgentProtocol.swift,\ CriticAgent.swift,\ CriticTemplate.swift,\ EliteCoordinator.swift,\ EliteObservation.swift,\ EliteServiceProtocol.swift,\ ExecutorAgent.swift,\ FailoverPolicy.swift,\ GuardAgent.swift,\ InternalMonologueActor.swift,\ LocalModelFailureDiagnostic.swift,\ MemoryAgent.swift,\ Orchestrator.swift,\ OrchestratorRuntime.swift,\ PlannerAgent.swift,\ PlannerTemplate.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/AdaptiveTaskChunker.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/AgentProtocol.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/CriticAgent.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/CriticTemplate.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/EliteCoordinator.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/EliteObservation.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/EliteServiceProtocol.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/ExecutorAgent.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/FailoverPolicy.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/GuardAgent.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/InternalMonologueActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/LocalModelFailureDiagnostic.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/MemoryAgent.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/Orchestrator.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/PlannerAgent.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/AdaptiveTaskChunker.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/AgentProtocol.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/CriticAgent.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/CriticTemplate.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/EliteCoordinator.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/EliteObservation.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/EliteServiceProtocol.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/ExecutorAgent.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/FailoverPolicy.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/GuardAgent.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/InternalMonologueActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/LocalModelFailureDiagnostic.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/MemoryAgent.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/Orchestrator.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/PlannerAgent.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ EliteAgentCore (in target 'EliteAgentCore' from project 'EliteAgent')
+
+EmitSwiftModule normal arm64 (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ SystemWatchdog.swift,\ ANEInferenceActor.swift,\ AutoRecoveryEngine.swift,\ ChatProcessState.swift,\ CloudProvider.swift,\ HarpsichordBridge.swift,\ InferenceActor.swift,\ InferenceValidator.swift,\ LLMConnectionTestService.swift,\ LLMHealthTypes.swift,\ LLMModel.swift,\ LLMProvider.swift,\ LLMTypes.swift,\ LocalInferenceServer.swift,\ LocalModelHealthMonitor.swift,\ LocalModelWatchdog.swift,\ MLXEngineGuardian.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Guard/SystemWatchdog.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ANEInferenceActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/AutoRecoveryEngine.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ChatProcessState.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/CloudProvider.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/HarpsichordBridge.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceValidator.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMConnectionTestService.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMHealthTypes.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMModel.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMProvider.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMTypes.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LocalInferenceServer.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LocalModelHealthMonitor.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LocalModelWatchdog.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/MLXEngineGuardian.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Guard/SystemWatchdog.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ANEInferenceActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/AutoRecoveryEngine.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/ChatProcessState.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/CloudProvider.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/HarpsichordBridge.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/InferenceValidator.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMConnectionTestService.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMHealthTypes.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMModel.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMProvider.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LLMTypes.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LocalInferenceServer.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LocalModelHealthMonitor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/LocalModelWatchdog.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/LLM/MLXEngineGuardian.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 Compiling\ AudioArchitect.swift,\ AutoConfigManager.swift,\ BlenderDetector.swift,\ LogicGate.swift,\ Notifications.swift,\ PathConfiguration.swift,\ PerformanceAudit.swift,\ RegressionAudit.swift,\ ShortcutCache.swift,\ SourceKitLSPBridge.swift,\ ThinkParser.swift,\ TrajectoryRecorder.swift,\ UNODiagnostic.swift,\ VisionAnalyzer.swift,\ XPCManager.swift,\ Exports.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AudioArchitect.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AutoConfigManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/BlenderDetector.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/LogicGate.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/Notifications.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/PathConfiguration.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/PerformanceAudit.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/RegressionAudit.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/ShortcutCache.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/SourceKitLSPBridge.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/ThinkParser.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/TrajectoryRecorder.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/UNODiagnostic.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/VisionAnalyzer.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/XPC/XPCManager.swift /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Exports.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AudioArchitect.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/AutoConfigManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/BlenderDetector.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/LogicGate.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/Notifications.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/PathConfiguration.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/PerformanceAudit.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/RegressionAudit.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/ShortcutCache.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/SourceKitLSPBridge.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/ThinkParser.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/TrajectoryRecorder.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/UNODiagnostic.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Utilities/VisionAnalyzer.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/XPC/XPCManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftCompile normal arm64 /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Exports.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling MessengerTool.swift, MusicDNATool.swift, NativeBrowserTool.swift, PatchTool.swift, ProductivityTools.swift, ReadFileTool.swift, SafariAutomationTool.swift, ShellTool.swift, ShortcutDiscoveryTool.swift, ShortcutExecutionTool.swift, SubagentTool.swift, SystemTelemetryTool.swift, UtilityTools.swift, WebFetchTool.swift, WebSearchTool.swift, WebTools.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling TokenGuardConfig.swift, Tokenizer.swift, UNOExternalBridge.swift, UNOGrammarLogitProcessor.swift, MCPGateway.swift, ContextWindowGuard.swift, DreamActor.swift, DynamicContextManager.swift, EmbeddingService.swift, ExperienceVault.swift, GitStateEngine.swift, MetricsStore.swift, PluginCraftEngine.swift, AuditLoggerActor.swift, SecuritySentinel.swift, WorkspaceManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ProjectObserver.swift, SelfHealingEngine.swift, Session.swift, SubagentRegistry.swift, TaskClassifier.swift, ToolPrivacyGate.swift, TulparActor.swift, WorkspaceBootstrapLoader.swift, BrowserAgent.swift, BrowserAXInspector.swift, BrowserEngine.swift, CoordinateBridge.swift, SafariJSBridge.swift, AppSettings.swift, ConfigManager.swift, KeychainHelper.swift, VaultManager.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for EliteAgentCore (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriver\ Compilation\ Requirements EliteAgentCore normal arm64 com.apple.xcode.tools.swift.compiler (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name EliteAgentCore -Onone @/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOWASI.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOLinux.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIODarwin.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOOpenBSD.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOAtomics.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-macos15.0 -g -module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -Xfrontend -load-plugin-executable -Xfrontend /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/MLXHuggingFaceMacros\#MLXHuggingFaceMacros -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.4-25E251-688ef53f1462e2c8f657fdc38a81448f30f9ca8789b706f8bd3fc906a70d770f.sdkstatcache -output-file-map /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore_const_extract_protocols.json -Xcc -iquote -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-generated-files.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-own-target-headers.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgent-721b4d269f90b0c1aa899c38a8b2021d-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-project-headers.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-system/Sources/CSystem/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-atomics/Sources/_AtomicsShims/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOWASI/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOWindows/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOLinux/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIODarwin/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOOpenBSD/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOAtomics/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources-normal/arm64 -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources/arm64 -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources -Xcc -DDEBUG\=1 -Xcc -DFMT_USE_CONSTEVAL\=0 -Xcc -DFMT_ENFORCE_COMPILE_STRING\=0 -Xcc -DFMT_USE_CONSTEXPR\=0 -emit-objc-header -emit-objc-header-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore-Swift.h -working-directory /Users/trgysvc/Developer/EliteAgent -experimental-emit-module-separately -disable-cmo
+
+Copy /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/EliteAgentCore.swiftmodule/arm64-apple-macos.abi.json /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.abi.json (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.abi.json /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/EliteAgentCore.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/EliteAgentCore.swiftmodule/arm64-apple-macos.swiftmodule /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.swiftmodule (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.swiftmodule /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/EliteAgentCore.swiftmodule/arm64-apple-macos.swiftmodule
+
+SwiftDriverJobDiscovery normal arm64 Compiling WriteFileTool.swift, XcodeTool.swift, AgentTool.swift, ApplicationIntelligence.swift, CategoryMapper.swift, PluginManager.swift, ToolEngine.swift, ToolIDs.swift, ToolLoopDetector.swift, ToolRegistry.swift, ToolSignature.swift, AccessibilityTool.swift, ChicagoVisionTool.swift, AISessionState.swift, ChatModels.swift, ModelSource.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppDiscoveryTool.swift, AppLauncherTool.swift, BackgroundWebScraper.swift, BlenderBridgeTool.swift, BlenderSandbox.swift, BlenderScriptLibrary.swift, CommunicationTools.swift, EcosystemTools.swift, ExtraUtilityTools.swift, FileTools.swift, GitTool.swift, ID3EditorTool.swift, ImageAnalysisTool.swift, MarkdownReportTool.swift, MediaControllerTool.swift, MemoryTool.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SystemWatchdog.swift, ANEInferenceActor.swift, AutoRecoveryEngine.swift, ChatProcessState.swift, CloudProvider.swift, HarpsichordBridge.swift, InferenceActor.swift, InferenceValidator.swift, LLMConnectionTestService.swift, LLMHealthTypes.swift, LLMModel.swift, LLMProvider.swift, LLMTypes.swift, LocalInferenceServer.swift, LocalModelHealthMonitor.swift, LocalModelWatchdog.swift, MLXEngineGuardian.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MLXProvider.swift, ModelCatalog.swift, ModelError.swift, ModelManager.swift, ModelSetupManager.swift, ModelStateManager.swift, OpenRouterProvider.swift, OutputSchemaGuard.swift, PerformanceArbiter.swift, ProactiveMemoryPressureMonitor.swift, PromptCacheManager.swift, PromptCacheMonitor.swift, PromptRegistry.swift, SessionContext.swift, SystemPrompts.swift, TokenAccountant.swift, TokenBudgetActor.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SignalBus.swift, Types.swift, ModelPickerViewModel.swift, VisualizerView.swift, MachPortCoordinator.swift, SharedMemoryPool.swift, UNODistributedActorSystem.swift, UNORingBuffer.swift, UNOSharedBuffer.swift, UNOTransport.swift, UsageTracker.swift, HardwareMonitor.swift, UXTelemetryManager.swift, AgentLogger.swift, AppleScriptRunner.swift, AsyncUtils.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AdaptiveTaskChunker.swift, AgentProtocol.swift, CriticAgent.swift, CriticTemplate.swift, EliteCoordinator.swift, EliteObservation.swift, EliteServiceProtocol.swift, ExecutorAgent.swift, FailoverPolicy.swift, GuardAgent.swift, InternalMonologueActor.swift, LocalModelFailureDiagnostic.swift, MemoryAgent.swift, Orchestrator.swift, OrchestratorRuntime.swift, PlannerAgent.swift, PlannerTemplate.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AudioArchitect.swift, AutoConfigManager.swift, BlenderDetector.swift, LogicGate.swift, Notifications.swift, PathConfiguration.swift, PerformanceAudit.swift, RegressionAudit.swift, ShortcutCache.swift, SourceKitLSPBridge.swift, ThinkParser.swift, TrajectoryRecorder.swift, UNODiagnostic.swift, VisionAnalyzer.swift, XPCManager.swift, Exports.swift (in target 'EliteAgentCore' from project 'EliteAgent')
+
+SwiftDriver\ Compilation EliteAgentCore normal arm64 com.apple.xcode.tools.swift.compiler (in target 'EliteAgentCore' from project 'EliteAgent')
+    cd /Users/trgysvc/Developer/EliteAgent
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name EliteAgentCore -Onone @/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOWASI.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOLinux.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIODarwin.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOOpenBSD.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/CNIOAtomics.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include/module.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include/module.modulemap -Xcc -fmodule-map-file\=/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/GeneratedModuleMaps/yyjson.modulemap -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-macos15.0 -g -module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -I /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/PackageFrameworks -F /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug -Xfrontend -load-plugin-executable -Xfrontend /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/MLXHuggingFaceMacros\#MLXHuggingFaceMacros -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.4-25E251-688ef53f1462e2c8f657fdc38a81448f30f9ca8789b706f8bd3fc906a70d770f.sdkstatcache -output-file-map /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/trgysvc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore_const_extract_protocols.json -Xcc -iquote -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-generated-files.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-own-target-headers.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgent-721b4d269f90b0c1aa899c38a8b2021d-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/EliteAgentCore-project-headers.hmap -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-system/Sources/CSystem/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-atomics/Sources/_AtomicsShims/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOWASI/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOWindows/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOLinux/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIODarwin/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOOpenBSD/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-nio/Sources/CNIOAtomics/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/SourcePackages/checkouts/yyjson/src -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Products/Debug/include -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources-normal/arm64 -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources/arm64 -Xcc -I/Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/DerivedSources -Xcc -DDEBUG\=1 -Xcc -DFMT_USE_CONSTEVAL\=0 -Xcc -DFMT_ENFORCE_COMPILE_STRING\=0 -Xcc -DFMT_USE_CONSTEXPR\=0 -emit-objc-header -emit-objc-header-path /Users/trgysvc/Library/Developer/Xcode/DerivedData/EliteAgent-btzokozrfsnzjtcxxfzhmbcisvbu/Build/Intermediates.noindex/EliteAgent.build/Debug/EliteAgentCore.build/Objects-normal/arm64/EliteAgentCore-Swift.h -working-directory /Users/trgysvc/Developer/EliteAgent -experimental-emit-module-separately -disable-cmo
+
+** BUILD SUCCEEDED **
+

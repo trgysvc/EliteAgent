@@ -556,3 +556,9 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 - Deleted stale `EliteAgent.xcarchive` artifacts containing the framework.
 
 **Decision made:** Delegated all update management to the Mac App Store. Any manual update checking logic was removed to avoid rejection during Apple's review process.
+
+### [2026-05-03] — Resolved Xcode Build Infrastructure Issues
+**What changed:** Silenced 'no symbols' warnings in EliteAgentCore using -no_warning_for_no_symbols. Removed unused swift-numerics dependency from Package.swift and project file. Standardized Metal 3.1 and C++20 across all targets.
+**Files modified:** Package.swift, EliteAgent.xcodeproj/project.pbxproj
+**Decision made:** Purged Numerics entirely as it was unused and causing symbol resolution failures. Preferred project-level standard enforcement over fragile -Xcc flags.
+**Next:** Monitor for any regressions in MLX-LM v3 integration.

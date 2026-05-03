@@ -1,0 +1,14 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project EliteAgent.xcodeproj -scheme EliteAgentCore -configuration Debug build -sdk macosx
+
+Build settings from command line:
+    SDKROOT = macosx26.4
+
+2026-05-03 19:53:07.064 xcodebuild[14018:71403] Error Domain=NSCocoaErrorDomain Code=3840 "JSON text did not start with array or object and option to allow fragments not set. around line 1, column 0." UserInfo={NSDebugDescription=JSON text did not start with array or object and option to allow fragments not set. around line 1, column 0., NSJSONSerializationErrorIndex=0}
+2026-05-03 19:53:07.065 xcodebuild[14018:71403] Writing error result bundle to /var/folders/bl/m_x8llrx7_q4dq9r3jj2vd9m0000gn/T/ResultBundle_2026-03-05_19-53-0007.xcresult
+xcodebuild: error: Unable to read project 'EliteAgent.xcodeproj'.
+	Reason: The project ‘EliteAgent’ is damaged and cannot be opened due to a parse error. Examine the project file for invalid edits or unresolved source control conflicts.
+
+Path: /Users/trgysvc/Developer/EliteAgent/EliteAgent.xcodeproj
+
+

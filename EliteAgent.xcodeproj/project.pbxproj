@@ -316,8 +316,6 @@
                 AEB132F52F79F6D900626F70 /* yyjson */,
                 AEB132FD2F79F6D900626F70 /* MCP */,
                 AEAB00012F8FD1520080DB7D /* AudioIntelligence */,
-                AE7BBEDE2F885C0100FDE204 /* Numerics */,
-                AE7BBEDF2F885C0100FDE204 /* RealModule */,
             );
             productName = EliteAgentCore;
             productReference = AEB7A8A12F7451CE00A844B2 /* libEliteAgentCore.a */;
@@ -401,7 +399,6 @@
                 AEB132F22F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-hf-api-mlx" */,
                 AEB132F42F79F6D900626F70 /* XCRemoteSwiftPackageReference "yyjson" */,
                 AEB132FC2F79F6D900626F70 /* XCRemoteSwiftPackageReference "swift-sdk" */,
-                AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */,
                 AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */,
             );
             preferredProjectObjectVersion = 77;
@@ -710,6 +707,7 @@
         AEB7A8A62F7451CE00A844B2 /* Debug */ = {
             isa = XCBuildConfiguration;
             buildSettings = {
+                OTHER_LIBTOOLFLAGS = "-no_warning_for_no_symbols";
                 CODE_SIGNING_ALLOWED = NO;
                 CODE_SIGNING_REQUIRED = NO;
                 CODE_SIGN_STYLE = Automatic;
@@ -747,6 +745,7 @@
         AEB7A8A72F7451CE00A844B2 /* Release */ = {
             isa = XCBuildConfiguration;
             buildSettings = {
+                OTHER_LIBTOOLFLAGS = "-no_warning_for_no_symbols";
                 CODE_SIGNING_ALLOWED = NO;
                 CODE_SIGNING_REQUIRED = NO;
                 CODE_SIGN_STYLE = Automatic;
@@ -894,14 +893,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-        AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
-            isa = XCRemoteSwiftPackageReference;
-            repositoryURL = "https://github.com/apple/swift-numerics.git";
-            requirement = {
-                kind = upToNextMajorVersion;
-                minimumVersion = 1.1.0;
-            };
-        };
         AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */ = {
             isa = XCRemoteSwiftPackageReference;
             repositoryURL = "https://github.com/trgysvc/audiointelligence.git";
@@ -961,16 +952,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-        AE7BBEDE2F885C0100FDE204 /* Numerics */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
-            productName = Numerics;
-        };
-        AE7BBEDF2F885C0100FDE204 /* RealModule */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = AE7BBEDD2F885C0100FDE204 /* XCRemoteSwiftPackageReference "swift-numerics" */;
-            productName = RealModule;
-        };
         AEAB00012F8FD1520080DB7D /* AudioIntelligence */ = {
             isa = XCSwiftPackageProductDependency;
             package = AEAB00002F8FD1520080DB7D /* XCRemoteSwiftPackageReference "audiointelligence" */;
