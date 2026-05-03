@@ -562,3 +562,9 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Files modified:** Package.swift, EliteAgent.xcodeproj/project.pbxproj
 **Decision made:** Purged Numerics entirely as it was unused and causing symbol resolution failures. Preferred project-level standard enforcement over fragile -Xcc flags.
 **Next:** Monitor for any regressions in MLX-LM v3 integration.
+
+### [2026-05-03] — Technical Audit & Stabilization
+**What changed:** Implemented ChatPriorityGuard to fix misclassification, added 10-turn limit to Orchestrator, hardened evidence guard against error-success false positives, and increased MLX cache to 2GB. Added new 1024x1024 AppIcon.
+**Files modified:** ANEInferenceActor.swift, TaskClassifier.swift, OrchestratorRuntime.swift, InferenceActor.swift, Contents.json
+**Decision made:** Prioritized emotional chat signals over technical keywords to prevent logic loops in conversational contexts.
+**Next:** Monitor VRAM stability during multi-step tasks.

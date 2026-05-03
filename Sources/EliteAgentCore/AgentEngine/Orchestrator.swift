@@ -394,8 +394,13 @@ public class Orchestrator: ObservableObject {
         if !previouslySelected.isEmpty {
             sessionState.selectedModel = previouslySelected
         } else {
-            if let firstProvider = effectiveConfig.providerPriority.first?.rawValue, !firstProvider.isEmpty {
-                sessionState.selectedModel = firstProvider
+            if let firstProviderID = effectiveConfig.providerPriority.first {
+                if firstProviderID == .mlx {
+                    // v10.5.8 FIX: Avoid setting "mlx" as model ID. Use actual model ID from manager.
+                    sessionState.selectedModel = await MainActor.run { ModelStateManager.shared.currentModelID }
+                } else {
+                    sessionState.selectedModel = firstProviderID.rawValue
+                }
             } else {
                 sessionState.selectedModel = nil
             }

@@ -28,7 +28,13 @@ public actor ANEInferenceActor {
         
         let lowerPrompt = prompt.lowercased()
         
-        // 1. Keyword-based Zero-Latency ANE-level logic (simulated for now)
+        // 1. ChatPriorityGuard: Check for emotional/conversational markers first
+        let chatMarkers = ["selam", "merhaba", "sevindim", "teşekkür", "harika", "nasılsın", "günaydın", "iyi akşamlar", "harika", "güzel", "başarılı"]
+        if chatMarkers.contains(where: { lowerPrompt.contains($0) }) {
+            return .chat
+        }
+
+        // 2. Keyword-based Zero-Latency ANE-level logic (simulated for now)
         if lowerPrompt.contains("hava") || lowerPrompt.contains("sıcaklık") {
             return .weather
         }
@@ -37,8 +43,8 @@ public actor ANEInferenceActor {
             return .task
         }
         
-        // 2. Structural Patterns
-        if lowerPrompt.count < 10 && (lowerPrompt.contains("selam") || lowerPrompt.contains("merhaba")) {
+        // 3. Structural Patterns
+        if lowerPrompt.count < 15 && (lowerPrompt.contains("selam") || lowerPrompt.contains("merhaba")) {
             return .chat
         }
         

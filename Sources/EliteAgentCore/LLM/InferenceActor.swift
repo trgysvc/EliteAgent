@@ -18,6 +18,7 @@ public actor InferenceActor {
     
     private var modelContainer: ModelContainer?
     private var currentGenerationTask: Task<Void, Never>?
+    private var isModelLoading = false
     
     public private(set) var loadedModelID: String?
     public var isModelLoaded: Bool { modelContainer != nil }
@@ -59,8 +60,8 @@ public actor InferenceActor {
             let buffer = device?.makeBuffer(length: size, options: .storageModeShared)
             self.sharedBuffer = MetalBufferWrapper(buffer)
 
-            // Cap Metal cache to 128 MB so the OS can reclaim memory under pressure
-            MLX.Memory.cacheLimit = 128 * 1024 * 1024
+            // Cap Metal cache to 2 GB for M-series performance stability
+            MLX.Memory.cacheLimit = 2 * 1024 * 1024 * 1024
         }
     }
     
@@ -68,6 +69,14 @@ public actor InferenceActor {
     
     /// Loads a model container using the official v3 factory patterns.
     public func loadModel(at url: URL) async throws {
+        guard !isModelLoading else {
+            AgentLogger.logInfo("⚠️ [v3-Engine] Load requested but already in progress. Skipping.")
+            return
+        }
+        
+        isModelLoading = true
+        defer { isModelLoading = false }
+        
         self.cancelOngoingGenerations()
         AgentLogger.logInfo("📦 [v3-Engine] Loading Model Container from: \(url.lastPathComponent)")
         

@@ -10,7 +10,8 @@
       "Bash(ln -s Resources/Config/DEVLOG.md DEVLOG.md)",
       "Bash(grep -v \"// \\\\|fatalError\\\\|#warning\\\\|precondition\\\\|assert\\\\|\\\\\"!\\\\|!\\\\\"\\\\|!\\(\\\\|!=\\\\|!$\\\\|!\\\\\\\\.\")",
       "Bash(grep -n \"DynamicCodingKeys\\(stringValue:.*!\\)$\" /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/Types.swift)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(sort -t/ -k1)"
     ]
   },
   "model": "opusplan"

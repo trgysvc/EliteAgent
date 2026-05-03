@@ -6,6 +6,14 @@ public struct TaskClassifier: Sendable {
     public func classify(prompt: String) -> TaskCategory {
         let p = prompt.lowercased()
         
+        // v24.5: ChatPriorityGuard (CRITICAL)
+        // Detects emotional or conversational intent BEFORE checking technical keywords.
+        // Prevents "çok sevindim... swift" from being tagged as codeGeneration.
+        let chatMarkers = ["selam", "merhaba", "sevindim", "teşekkür", "harika", "nasılsın", "günaydın", "iyi akşamlar", "harika", "güzel", "başarılı", "sağol", "teşekkürler"]
+        if chatMarkers.contains(where: { p.contains($0) }) && p.count < 100 {
+            return .chat
+        }
+        
         // v14.8: Hardware/Telemetry check has HIGHEST PRIORITY to avoid shell_exec fallback.
         if p.contains("cpu") || p.contains("bellek") || p.contains("ram") || p.contains("boş bellek")
             || p.contains("memory") || p.contains("telemetry") || p.contains("işlemci")

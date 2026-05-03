@@ -177,9 +177,21 @@ public actor OrchestratorRuntime {
         
         do {
             var turnCount = 0
+            var planningTurns = 0
+            let maxPlanningTurns = 10
             var healingAttempts = 0
-            while currentState != .completed && turnCount < 15 {
+            while currentState != .completed && turnCount < 20 {
                 turnCount += 1
+                
+                if currentState == .planning {
+                    planningTurns += 1
+                    if planningTurns > maxPlanningTurns {
+                        AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🚨 [TURN LIMIT] Maximum planning turns (\(maxPlanningTurns)) reached. Breaking loop.")
+                        await session.setFinalAnswer("Görev çok fazla adım gerektiriyor veya döngüye girdi. Lütfen görevi basitleştirin veya daha fazla bilgi verin.")
+                        currentState = .completed
+                        break
+                    }
+                }
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🔄 [STATE: \(currentState.rawValue.uppercased())] Turn \(turnCount)")
                 
                 if isInterrupted {
@@ -598,10 +610,13 @@ public actor OrchestratorRuntime {
                 if answer.uppercased().contains("DONE") {
                     let lastObs = currentTurnObservations.last?.lowercased() ?? ""
                     let verificationKeywords = ["ls", "total", "content", "file", "id3", "lufs", "metadata", "status", "output", "read", "docker", "find", "git", "python", "swift", "success", "result", "started", "created"]
-                    let hasEvidence = verificationKeywords.contains(where: { lastObs.contains($0) })
+                    let errorIndicators = ["error", "failed", "could not", "not found", "exception", "failed assertion", "denied", "permission"]
                     
-                    if !hasEvidence && !currentTurnObservations.isEmpty {
-                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [EVIDENCE GUARD] Rejected DONE hallucination. No verification in history.")
+                    let hasEvidence = verificationKeywords.contains(where: { lastObs.contains($0) })
+                    let hasError = errorIndicators.contains(where: { lastObs.contains($0) })
+                    
+                    if (!hasEvidence || hasError) && !currentTurnObservations.isEmpty {
+                        AgentLogger.logAudit(level: .warn, agent: "Orchestrator", message: "🛡 [EVIDENCE GUARD] Rejected DONE. \(hasError ? "Error detected" : "No verification").")
                         await trajectoryRecorder?.record(.evidenceGuardVeto(reason: "No verification in history", timestamp: Date()))
                         let warning = """
                         Observation: [CRITIC_FAIL] You declared DONE, but the last tool output (\(lastObs.prefix(50))...) does not provide objective verification of success. 
