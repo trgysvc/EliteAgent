@@ -197,12 +197,17 @@ public final class ModelSetupManager: NSObject, ObservableObject, @unchecked Sen
         let architectures = UNOExternalBridge.resolveArchitectures(from: data)
         
         // Qwen 3.5 might use Qwen2ForCausalLM as its base architecture or its own.
-        let supported = ["Qwen2ForCausalLM", "MistralForCausalLM", "Qwen2MoEForCausalLM", "Qwen3_5ForConditionalGeneration"]
+        let supported = ["Qwen2ForCausalLM", "MistralForCausalLM", "Qwen2MoEForCausalLM", "Qwen3_5ForConditionalGeneration", "Qwen3_5ForCausalLM"]
         return architectures.contains { supported.contains($0) }
     }
     
     private func getHuggingFaceURL(for modelID: String) -> String {
-        // v10.0: Dynamic author resolution from Registry
+        // Derive base URL from catalog downloadURL so the HF repo name stays in sync.
+        if let model = ModelRegistry.availableModels.first(where: { $0.id == modelID }),
+           !model.downloadURL.isEmpty,
+           let fileURL = URL(string: model.downloadURL) {
+            return fileURL.deletingLastPathComponent().absoluteString + "/"
+        }
         let author = ModelRegistry.availableModels.first(where: { $0.id == modelID })?.author ?? "mlx-community"
         return "https://huggingface.co/\(author)/\(modelID)/resolve/main/"
     }

@@ -1,4 +1,12 @@
-# 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)### [2026-05-02] — Infrastructure & Dependency Stabilization
+# 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)
+
+### [2026-05-04] — Qwen 3.5 Model ID Düzeltmeleri ve JSON Kural İhlalleri Giderildi
+**What changed:** `ModelManager.setupLocalProvider` içindeki `.high` tier model ID'si `qwen-3.5-7b-4bit` (katalogda olmayan) → `qwen-3.5-9b-4bit`; `.low` tier `qwen-2.5-3b-4bit` (katalogda olmayan) → `qwen-2.5-7b-4bit`. `ModelSetupManager.validateModelArchitecture` listesine `Qwen3_5ForCausalLM` eklendi. `getHuggingFaceURL` artık internal ID yerine katalog `downloadURL`'inden base path türetiyor (Qwen3.5-9B-OptiQ-4bit repo adı için kritikti). JSON kural ihlalleri temizlendi: `ModelManager.verifyIntegrity` ve `patchQwen35Config`, `ID3EditorTool`, `SystemDataView`, `LocalInferenceServer` artık UNOExternalBridge üzerinden geçiyor. UNOExternalBridge'e `encodeEncodable` ve `decodeExternalDecodable` metodları eklendi.
+**Files modified:** `Sources/EliteAgentCore/LLM/ModelManager.swift`, `Sources/EliteAgentCore/LLM/ModelSetupManager.swift`, `Sources/EliteAgentCore/LLM/UNOExternalBridge.swift`, `Sources/EliteAgentCore/LLM/LocalInferenceServer.swift`, `Sources/EliteAgentCore/ToolEngine/Tools/ID3EditorTool.swift`, `Sources/EliteAgent/App/Components/System/SystemDataView.swift`
+**Decision made:** UNO kuralı gereği JSON sadece UNOExternalBridge üzerinden erişilebilir. LocalInferenceServer (Ollama-compat HTTP server) de harici protokol olduğu için bridge üzerinden geçmeli.
+**Next:** Qwen 3.5 9B OptiQ model indirme akışını uçtan uca test etmek.
+
+### [2026-05-02] — Infrastructure & Dependency Stabilization
 **What changed:** Synchronized Package.swift and project.pbxproj to enforce 1:1 dependency parity. Purged massive structural corruption (duplicate PBXBuildFile entries). Removed unused Numerics/RealModule imports and dependencies entirely across all targets and source code (MLXEngineGuardian) to fix persistent '_NumericsShims' resolution failures in EliteAgentXPC.
 **Files modified:** Package.swift, project.pbxproj, Sources/EliteAgentXPC/main.swift, Sources/EliteAgentCore/LLM/MLXEngineGuardian.swift, DEVLOG.md
 **Decision made:** Completely decoupled the project from swift-numerics to resolve sandboxed module resolution errors. MLX-LM v3 architecture remains stable with granular modules.
@@ -568,3 +576,45 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Files modified:** ANEInferenceActor.swift, TaskClassifier.swift, OrchestratorRuntime.swift, InferenceActor.swift, Contents.json
 **Decision made:** Prioritized emotional chat signals over technical keywords to prevent logic loops in conversational contexts.
 **Next:** Monitor VRAM stability during multi-step tasks.
+
+### [2026-05-04] — Native Tool Calling (Solution A) + systemPrompt Bug Fix
+
+**What changed:**
+1. **systemPrompt silent bug fixed** — `InferenceActor.generate()` accepted `systemPrompt` but never prepended it to messages. Now correctly injects `["role": "system", "content": sys]` as the first message.
+2. **Native tool calling implemented end-to-end** — `LLMTypes.swift`: added `tools: [[String: any Sendable]]?` to `CompletionRequest`, added `case toolCall(name:arguments:)` to `InferenceChunk`. `InferenceActor.generate()`: accepts `tools` parameter, passes to `UserInput(messages:tools:)`, converts `Generation.toolCall(ToolCall)` stream events to `InferenceChunk.toolCall`. `MLXProvider.complete()`: passes `request.tools` to `InferenceActor`, collects `.toolCall` chunks into `[ToolCall]`, returns them in `CompletionResponse.toolCalls`. `PlannerTemplate`: added `generateNativeToolCallingSystemPrompt(workspace:)` — simplified system prompt without UBID instructions. `OrchestratorRuntime`: added `lastPlanningResponse`, `handlePlanning()` now branches on local vs cloud — for local it uses native system prompt + `buildToolSpecs(for:)`, stores full response; `handleExecution()` checks `lastPlanningResponse.toolCalls` before ThinkParser, all existing guards (ATOMICITY, PLACEHOLDER, MISSION, ANTI-REPETITION) still apply. Added `buildToolSpecs(for:)`, `toolSpec()`, `prop()` helpers with schemas for 11 tools.
+
+**Files modified:**
+`Sources/EliteAgentCore/LLM/LLMTypes.swift`, `Sources/EliteAgentCore/LLM/InferenceActor.swift`, `Sources/EliteAgentCore/LLM/MLXProvider.swift`, `Sources/EliteAgentCore/AgentEngine/PlannerTemplate.swift`, `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`
+
+**Decision made:**
+`UNOGrammarLogitProcessor` retired for native tool calling path (was never wired and was designed for old `CALL([UBID])` format). Qwen 3.5 uses `ToolCallFormat.xmlFunction` (auto-inferred from `model_type="qwen3_5"` in config.json). Name-based `ToolRegistry.getTool(named:)` already supported — native calls (ubid=nil) route through it automatically. All existing execution guards preserved.
+
+**Next:** End-to-end test with Qwen 3.5 9B OptiQ loaded: verify native tool calls flow from model → MLXProvider → OrchestratorRuntime → ToolRegistry.
+
+### [2026-05-04] — Chat Yavaşlık Sorunu: Thinking Leak Düzeltildi
+
+**What changed:** Log analizinden tespit edilen 3 sorun düzeltildi:
+1. **`handleChatting()` local system prompt**: `[RULE: ...]` formatı Qwen 3.5'i yapılandırılmış "Thinking Process:" zinciri üretmeye zorluyordu (her "merhaba" için 1024 token harcanıyordu). Local için minimal Türkçe system prompt kullanıldı: "düşünce sürecini açıklama, doğrudan cevap ver."
+2. **maxTokens düşürüldü**: Local chat için 1024 → 256. 11 TPS'de 256 token = ~23 saniye max (greeter için çok daha az).
+3. **`stripThinkingOutput()`** eklendi: Eğer model hâlâ "Thinking Process:" preamble üretirse, son "Final decision:" / "Output:" paragrafından sonrasını ayıklayıp temiz cevabı gösterir.
+4. **`ThinkParser.cleanForUI()`** `handleChatting()`'e eklendi (daha önce çağrılmıyordu).
+
+**Files modified:** `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`
+
+**Decision made:** `[RULE: ...]` formatı cloud modellerinde iyi çalışıyor ancak Qwen 3.5 gibi düşünen (thinking) local modellerde analitik çıktı modunu tetikliyor. Local chat için ayrı, minimal sistem prompt zorunlu.
+
+**Next:** App yeniden build edip "merhaba" test edilecek. Beklenen: <5 saniyede temiz "Merhaba, nasıl yardımcı olabilirim?" yanıtı.
+
+### [2026-05-04] — Thinking Leak Köklü Düzeltme + Hız Optimizasyonu
+
+**What changed:**
+1. **`enable_thinking: false`** — `InferenceActor.generate()` yeni `enableThinking: Bool` parametresi aldı. `MLXProvider.complete()` bunu `request.complexity` üzerinden yönetiyor: complexity=1 (chat/classify) → `enable_thinking: false`, complexity>1 (planning) → `enable_thinking: true`. Bu Qwen 3.5'in `<think>` bloğunu tamamen atlamasını sağlıyor. mlx-swift-lm resmi API: `UserInput(additionalContext: ["enable_thinking": false])`.
+2. **`MLXProvider.extractThinkBlock()`** — Raw content'tan `<think>...</think>` bloğunu ayıklıyor. `content` = sadece gerçek cevap, `thinkBlock` = model'in düşüncesi. Format A: XML tags, Format B: "Thinking Process:" plain text → son conclusion marker'dan sonraki metin alınıyor.
+3. **`stripRawMarkdown()`** — Local chat display için `**bold**`, `*bullet*`, `# heading` gibi markdown syntax'ı temizliyor. Cloud provider cevaplarına dokunmuyor.
+4. **`handleChatting()` complexity=1** — Zaten 1'di, bu da `enable_thinking: false` path'ini tetikliyor.
+
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`, `Sources/EliteAgentCore/LLM/MLXProvider.swift`, `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`
+
+**Decision made:** `enable_thinking: false` = Qwen 3.5 think block'u tamamen atlar, sadece cevabı üretir. "merhaba" için beklenen: 256 max token × 13 TPS = max 20 saniye (önceki ~90 saniye). Planning için thinking açık kalıyor, model tool call kararı vermeden önce düşünebiliyor.
+
+**Next:** App rebuild edip test: "merhaba" < 5 saniye, temiz cevap, markdown yok.

@@ -33,6 +33,7 @@ public actor OrchestratorRuntime {
     private var currentTaskCategory: TaskCategory = .other
     private var isEscalatedToFullTools = false
     private var currentTurnObservations: [String] = [] // v21.0: Isolate current Turn data
+    private var lastPlanningResponse: CompletionResponse? = nil // Native tool calling: holds mlx-swift-lm parsed tool calls
     private let loopDetector = ToolLoopDetector() // v12.0: Deterministic Loop Guard
     private let chunker = AdaptiveTaskChunker() // v27.0: Adaptive Workload Partitioning
     private var activeChunks: [AdaptiveTaskChunker.TaskChunk] = []
@@ -418,22 +419,41 @@ public actor OrchestratorRuntime {
     
     private func handleChatting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, untrustedContext: [UntrustedData]? = nil) async throws {
         self.currentAction = "Responding..."
-        let systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Pure conversation with user"))
+        let isLocal = provider.providerType == .local
+
+        // Local models (Qwen 3.5): use a minimal, non-rule-based prompt to prevent
+        // the model from entering structured "Thinking Process:" output mode.
+        // The [RULE: ...] format triggers analytical chain-of-thought in Qwen 3.5.
+        let systemPrompt: String
+        let maxTokens: Int
+        if isLocal {
+            systemPrompt = "Sen yardımsever bir asistansın. Kullanıcının dilinde kısa ve doğal yanıt ver. Düşünce sürecini açıklama, doğrudan cevap ver."
+            maxTokens = 256
+        } else {
+            systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Pure conversation with user"))
+            maxTokens = 2000
+        }
+
         var history = await context.getMessages()
         if !history.contains(where: { $0.role == "user" && $0.content == prompt }) {
             history.append(Message(role: "user", content: prompt))
             await context.addMessage(Message(role: "user", content: prompt))
         }
-        let isLocal = provider.providerType == .local
-        let speedHint = isLocal ? "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE CONCISE. DIRECT ANSWER ONLY.]" : ""
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: isLocal ? 1024 : 2000, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
+        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: 1, untrustedContext: untrustedContext)
         let response = try await provider.complete(request, useSafeMode: false)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT INPUT] \(history.map { "[\($0.role)]: \($0.content)" }.joined(separator: " | "))")
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "💬 [CHAT RESPONSE] \(response.content)")
         self.onTokenUpdate?(response.tokensUsed, response.costUSD)
-        self.onChatMessage?(ChatMessage(role: .assistant, content: response.content))
+
+        // Strip any remaining thinking preamble and raw markdown syntax for display.
+        // MLXProvider already extracts <think> blocks, but "Thinking Process:" format may remain.
+        let afterThinkStrip = stripThinkingOutput(from: ThinkParser.cleanForUI(text: response.content))
+        let stripped = afterThinkStrip.isEmpty ? response.content : afterThinkStrip
+        let displayContent = isLocal ? stripRawMarkdown(stripped) : stripped
+
+        self.onChatMessage?(ChatMessage(role: .assistant, content: displayContent))
         await context.addMessage(Message(role: "assistant", content: response.content))
-        await session.setFinalAnswer(response.content)
+        await session.setFinalAnswer(displayContent)
     }
     
     private func handleReporting(prompt: String, provider: any LLMProvider, context: DynamicContextManager, session: Session, untrustedContext: [UntrustedData]? = nil) async throws {
@@ -557,14 +577,44 @@ public actor OrchestratorRuntime {
         }
         let isLocal = provider.providerType == .local
         let maxTokens = isLocal ? 1024 : 4000
-        let speedHint = isLocal ? "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE EXTREMELY CONCISE but NEVER omit mandatory tool parameters (e.g. location, text, recipient).]" : ""
-        
-        let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt + speedHint, messages: history, maxTokens: maxTokens, sensitivityLevel: .public, complexity: isLocal ? 1 : 3, untrustedContext: untrustedContext)
+
+        // Native tool calling path: local providers use mlx-swift-lm xmlFunction format (Qwen 3.5).
+        // The chat template injects tool definitions; the model responds with <tool_call> blocks
+        // which mlx-swift-lm parses into CompletionResponse.toolCalls.
+        let finalSystemPrompt: String
+        let requestTools: [[String: any Sendable]]?
+        if isLocal {
+            let nativeBase = PlannerTemplate.generateNativeToolCallingSystemPrompt(workspace: session.workspaceURL.path)
+            finalSystemPrompt = progressBlock.isEmpty ? nativeBase : nativeBase + progressBlock
+            let specs = buildToolSpecs(for: toolSubset ?? [])
+            requestTools = specs.isEmpty ? nil : specs
+        } else {
+            let speedHint = "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE EXTREMELY CONCISE but NEVER omit mandatory tool parameters (e.g. location, text, recipient).]"
+            finalSystemPrompt = systemPrompt + speedHint
+            requestTools = nil
+        }
+
+        let request = CompletionRequest(
+            taskID: UUID().uuidString,
+            systemPrompt: finalSystemPrompt,
+            messages: history,
+            maxTokens: maxTokens,
+            sensitivityLevel: .public,
+            complexity: isLocal ? 1 : 3,
+            untrustedContext: untrustedContext,
+            tools: requestTools
+        )
         let response = try await provider.complete(request, useSafeMode: useSafeMode)
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
+        if let calls = response.toolCalls, !calls.isEmpty {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🎯 [PLAN NATIVE CALLS] \(calls.map { $0.tool }.joined(separator: ", "))")
+        }
         await trajectoryRecorder?.record(.assistantMessage(content: response.content, timestamp: Date()))
         if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
-        
+
+        // Store full response so handleExecution can pick up native tool calls.
+        self.lastPlanningResponse = isLocal ? response : nil
+
         // v1.1: İlk planning turunda model adım listesi üretirse tracker'a kaydet
         let tracker = session.progressTracker
         let isFirstPlan = await !tracker.isInitialized
@@ -575,37 +625,55 @@ public actor OrchestratorRuntime {
                 AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "📋 [STEPS REGISTERED] \(steps.count) adım kaydedildi: \(steps.joined(separator: " | "))")
             }
         }
-        
+
         await context.addMessage(Message(role: "assistant", content: response.content))
     }
     
     private func handleExecution(provider: any LLMProvider, context: DynamicContextManager, session: Session, config: InferenceConfig, useSafeMode: Bool = false, untrustedContext: [UntrustedData]? = nil) async throws -> (Bool, String?) {
         let history = await context.getMessages()
         let lastMessage = history.last?.content ?? ""
-        let parsedOutputs = try ThinkParser.parseOutputs(from: lastMessage)
-        
+
         var toolBlocks: [ToolCall] = []
         var finalAnswer: String? = nil
-        
-        for output in parsedOutputs {
-            // v10.5.6: Priority for structured steps array
-            if let steps = output.steps {
-                toolBlocks.append(contentsOf: steps)
-            } 
-            
-            // v13.8: UNO Pure - Priority for UBID Action
-            if let ubid = output.ubid {
-                toolBlocks.append(ToolCall(tool: "ubid_call", ubid: ubid, params: output.params ?? [:]))
-            } else if output.type == .tool_call, let action = output.action {
-                toolBlocks.append(ToolCall(tool: action, params: output.params ?? [:]))
-            } else if output.type == .response, let text = output.content {
-                finalAnswer = text
+
+        // Native tool calling path: mlx-swift-lm parsed tool calls from last planning turn.
+        // These bypass ThinkParser since the model used xmlFunction format, not CALL([UBID]).
+        if let nativeResp = lastPlanningResponse {
+            self.lastPlanningResponse = nil
+            if let nativeCalls = nativeResp.toolCalls, !nativeCalls.isEmpty {
+                toolBlocks = nativeCalls
+                AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🎯 [NATIVE EXEC] Using \(nativeCalls.count) mlx-swift-lm tool call(s).")
+            } else if !nativeResp.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // Model responded with text (conversational answer), not tool calls.
+                return (false, ThinkParser.cleanForUI(text: nativeResp.content))
+            }
+            // If both empty: fall through to ThinkParser on lastMessage as safety net.
+        }
+
+        if toolBlocks.isEmpty {
+            // Legacy path: parse CALL([UBID]) / <final> blocks from last assistant message.
+            let parsedOutputs = try ThinkParser.parseOutputs(from: lastMessage)
+
+            for output in parsedOutputs {
+                // v10.5.6: Priority for structured steps array
+                if let steps = output.steps {
+                    toolBlocks.append(contentsOf: steps)
+                }
+
+                // v13.8: UNO Pure - Priority for UBID Action
+                if let ubid = output.ubid {
+                    toolBlocks.append(ToolCall(tool: "ubid_call", ubid: ubid, params: output.params ?? [:]))
+                } else if output.type == .tool_call, let action = output.action {
+                    toolBlocks.append(ToolCall(tool: action, params: output.params ?? [:]))
+                } else if output.type == .response, let text = output.content {
+                    finalAnswer = text
+                }
             }
         }
-        
-        if toolBlocks.isEmpty { 
+
+        if toolBlocks.isEmpty {
             // If no tools but we have a final answer, return it.
-            if let answer = finalAnswer { 
+            if let answer = finalAnswer {
                 // v12.1: Evidence Guard for DONE hallucination
                 if answer.uppercased().contains("DONE") {
                     let lastObs = currentTurnObservations.last?.lowercased() ?? ""
@@ -925,15 +993,141 @@ public actor OrchestratorRuntime {
         }
     }
     
+    /// Removes raw markdown syntax characters from text for plain-text display in chat bubbles.
+    private func stripRawMarkdown(_ text: String) -> String {
+        var result = text
+        // Bold/italic markers
+        result = result.replacingOccurrences(of: "\\*{1,3}([^*]+)\\*{1,3}", with: "$1", options: .regularExpression)
+        // Headings
+        result = result.replacingOccurrences(of: "^#{1,6}\\s+", with: "", options: [.regularExpression, .anchored])
+        result = result.replacingOccurrences(of: "\n#{1,6}\\s+", with: "\n", options: .regularExpression)
+        // Bullet points (normalize * / - bullets to plain dash-free text)
+        result = result.replacingOccurrences(of: "^[\\*\\-]\\s+", with: "", options: [.regularExpression, .anchored])
+        result = result.replacingOccurrences(of: "\n[\\*\\-]\\s+", with: "\n", options: .regularExpression)
+        // Inline code
+        result = result.replacingOccurrences(of: "`([^`]+)`", with: "$1", options: .regularExpression)
+        // Quoted strings: remove surrounding quotes if entire response is wrapped
+        let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"") && trimmed.count > 2 {
+            result = String(trimmed.dropFirst().dropLast())
+        }
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Strips "Thinking Process:" structured reasoning blocks that Qwen 3.5 leaks into chat output.
+    /// These appear when the model's analytical mode is triggered by rule-heavy system prompts.
+    private func stripThinkingOutput(from text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Detect structured "Thinking Process:" preamble — model leaked its chain-of-thought.
+        // Find the last numbered/bulleted conclusion section and extract text after it.
+        let thinkingMarkers = ["Thinking Process:", "Chain of Thought:", "Let me think", "Step 1:", "1. **Analyze"]
+        let hasThinkingPreamble = thinkingMarkers.contains(where: { trimmed.lowercased().hasPrefix($0.lowercased()) })
+
+        guard hasThinkingPreamble else { return trimmed }
+
+        // Find the last "Final decision:" or "Final Polish:" or similar conclusion markers.
+        let conclusionMarkers = ["Final decision:", "Final Polish:", "Final answer:", "Output:", "Response:"]
+        var bestRange: Range<String.Index>? = nil
+        for marker in conclusionMarkers {
+            if let range = trimmed.range(of: marker, options: [.caseInsensitive, .backwards]) {
+                if bestRange == nil || range.lowerBound > bestRange!.lowerBound {
+                    bestRange = range
+                }
+            }
+        }
+
+        if let conclusionRange = bestRange {
+            // Extract the text after the last conclusion marker line
+            let afterConclusion = String(trimmed[conclusionRange.upperBound...])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            // Skip to the next line (the actual answer)
+            let lines = afterConclusion.components(separatedBy: .newlines)
+            let answerLines = lines.drop(while: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+            let answer = answerLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            if !answer.isEmpty { return answer }
+        }
+
+        // Fallback: if last paragraph (after last blank line) is short, use it as the answer.
+        let paragraphs = trimmed.components(separatedBy: "\n\n")
+        if let last = paragraphs.last?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !last.isEmpty, last.count < 300 {
+            return last
+        }
+
+        return trimmed
+    }
+
     private func extractWorkItems(from text: String) -> [String] {
         let lines = text.components(separatedBy: .newlines)
         return lines.filter { line in
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             // Path-like, ID-like, or list-like patterns
-            return (trimmed.contains("/") && !trimmed.contains(" ")) || 
+            return (trimmed.contains("/") && !trimmed.contains(" ")) ||
                    (trimmed.contains(".") && !trimmed.contains(" ") && trimmed.count > 5) ||
                    (trimmed.count >= 2 && Int(trimmed) != nil)
         }.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    /// Builds mlx-swift-lm ToolSpec dictionaries for the given tools.
+    /// Format: OpenAI function-calling schema ([String: any Sendable]).
+    /// Only tools with known parameter schemas are included (others are skipped).
+    private func buildToolSpecs(for tools: [any AgentTool]) -> [[String: any Sendable]] {
+        let schemaMap: [String: [String: any Sendable]] = [
+            "shell_exec": toolSpec(name: "shell_exec", description: "Execute a zsh terminal command on macOS. Use single quotes for paths.", properties: [
+                "command": prop("string", "The zsh command to execute. Wrap every path in single quotes.")
+            ], required: ["command"]),
+            "read_file": toolSpec(name: "read_file", description: "Read a file from disk and return its contents.", properties: [
+                "path": prop("string", "Absolute path to the file.")
+            ], required: ["path"]),
+            "write_file": toolSpec(name: "write_file", description: "Write content to a file on disk.", properties: [
+                "path": prop("string", "Absolute path to the file."),
+                "content": prop("string", "The content to write.")
+            ], required: ["path", "content"]),
+            "get_weather": toolSpec(name: "get_weather", description: "Get current weather for a location.", properties: [
+                "location": prop("string", "City name or region."),
+                "day": prop("string", "Optional day offset (e.g. 'today', 'tomorrow').")
+            ], required: ["location"]),
+            "web_search": toolSpec(name: "web_search", description: "Search the web and return results.", properties: [
+                "query": prop("string", "The search query.")
+            ], required: ["query"]),
+            "app_launcher": toolSpec(name: "app_launcher", description: "Launch a macOS application by name.", properties: [
+                "app_name": prop("string", "Application name (e.g. 'Safari', 'Finder').")
+            ], required: ["app_name"]),
+            "messenger": toolSpec(name: "messenger", description: "Send an iMessage or WhatsApp message.", properties: [
+                "recipient": prop("string", "Recipient name or phone number."),
+                "message": prop("string", "Message text to send."),
+                "platform": prop("string", "Platform: 'imessage' or 'whatsapp'.")
+            ], required: ["recipient", "message"]),
+            "id3_processor": toolSpec(name: "id3_processor", description: "Process and embed ID3 metadata tags into MP3 files in a directory.", properties: [
+                "directory": prop("string", "Path to the directory containing MP3 files.")
+            ], required: ["directory"]),
+            "blender_3d": toolSpec(name: "blender_3d", description: "Execute Blender 3D operations via Python bpy script.", properties: [
+                "action": prop("string", "Action type: execute_script, create_scene, add_mesh, add_light, render."),
+                "script": prop("string", "Python bpy code for execute_script action.")
+            ], required: ["action"]),
+            "media_control": toolSpec(name: "media_control", description: "Control media playback (play, pause, next, previous, volume).", properties: [
+                "action": prop("string", "Action: play, pause, next, previous, volume_up, volume_down.")
+            ], required: ["action"]),
+            "visual_audit": toolSpec(name: "visual_audit", description: "Analyze screen windows, text, and UI elements visually.", properties: [
+                "target": prop("string", "Target window or screen area to analyze.")
+            ], required: [])
+        ]
+
+        return tools.compactMap { schemaMap[$0.name] }
+    }
+
+    private func toolSpec(name: String, description: String, properties: [String: [String: any Sendable]], required: [String]) -> [String: any Sendable] {
+        var params: [String: any Sendable] = ["type": "object", "required": required]
+        params["properties"] = properties as [String: any Sendable]
+        return [
+            "type": "function",
+            "function": ["name": name, "description": description, "parameters": params] as [String: any Sendable]
+        ]
+    }
+
+    private func prop(_ type: String, _ description: String) -> [String: any Sendable] {
+        return ["type": type, "description": description]
     }
 }
 

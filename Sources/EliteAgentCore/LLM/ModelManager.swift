@@ -90,9 +90,9 @@ public final class ModelManager: NSObject, ObservableObject {
         let modelID: String
         
         switch tier {
-        case .high: modelID = "qwen-3.5-7b-4bit"
+        case .high: modelID = "qwen-3.5-9b-4bit"
         case .balanced: modelID = "qwen-2.5-7b-4bit"
-        case .low: modelID = "qwen-2.5-3b-4bit"
+        case .low: modelID = "qwen-2.5-7b-4bit"
         }
         
         AgentLogger.logAudit(level: .info, agent: "ModelManager", message: "Auto-Setup: Detected \(recommendation.ramDescription), recommending \(modelID) for tier \(tier)")
@@ -223,7 +223,7 @@ public final class ModelManager: NSObject, ObservableObject {
             // v21.3: Content Validation (Prevent HF 401/404 error pages from passing as valid JSON)
             if file == "config.json" {
                 guard let data = try? Data(contentsOf: fileURL),
-                      (try? JSONSerialization.jsonObject(with: data)) != nil else {
+                      UNOExternalBridge.resolveDictionary(from: data) != nil else {
                     return false
                 }
             }
@@ -481,7 +481,7 @@ public final class ModelManager: NSObject, ObservableObject {
     /// v24.3: Performs JSON-level surgery on Qwen 3.5 config to make it compatible with Qwen3Next bridge.
     private func patchQwen35Config(at url: URL) -> Bool {
         guard let data = try? Data(contentsOf: url),
-              var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+              var json = UNOExternalBridge.resolveDictionary(from: data) else {
             return false
         }
         
@@ -588,7 +588,7 @@ public final class ModelManager: NSObject, ObservableObject {
         }
         
         if changed {
-            if let updated = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]) {
+            if let updated = UNOExternalBridge.prepareExternalBlob(from: json) {
                 try? updated.write(to: url)
                 return true
             }

@@ -42,7 +42,9 @@ public struct UntrustedData: Codable, Sendable {
     }
 }
 
-public struct CompletionRequest: Codable, Sendable {
+// Codable removed: the tools field ([String: any Sendable]) is not Codable-compatible.
+// CompletionRequest is never serialised to disk; all callers pass it in-process.
+public struct CompletionRequest: Sendable {
     public let taskID: String
     public let systemPrompt: String
     public let messages: [Message]
@@ -52,19 +54,22 @@ public struct CompletionRequest: Codable, Sendable {
     public var maxLatencyMs: Int?
     public var sensitivityLevel: SensitivityLevel
     public var complexity: Int
-    public var untrustedContext: [UntrustedData]? // v13.9: Structural Isolation
-    
+    public var untrustedContext: [UntrustedData]?
+    // Native tool calling (mlx-swift-lm ToolSpec = [String: any Sendable])
+    public var tools: [[String: any Sendable]]?
+
     public init(
-        taskID: String, 
-        systemPrompt: String, 
-        messages: [Message], 
-        maxTokens: Int, 
-        temperature: Double? = 0.2, 
-        requiredCapabilities: [Capability]? = nil, 
-        maxLatencyMs: Int? = 30_000, 
-        sensitivityLevel: SensitivityLevel, 
+        taskID: String,
+        systemPrompt: String,
+        messages: [Message],
+        maxTokens: Int,
+        temperature: Double? = 0.2,
+        requiredCapabilities: [Capability]? = nil,
+        maxLatencyMs: Int? = 30_000,
+        sensitivityLevel: SensitivityLevel,
         complexity: Int,
-        untrustedContext: [UntrustedData]? = nil
+        untrustedContext: [UntrustedData]? = nil,
+        tools: [[String: any Sendable]]? = nil
     ) {
         self.taskID = taskID
         self.systemPrompt = systemPrompt
@@ -76,6 +81,7 @@ public struct CompletionRequest: Codable, Sendable {
         self.sensitivityLevel = sensitivityLevel
         self.complexity = complexity
         self.untrustedContext = untrustedContext
+        self.tools = tools
     }
 }
 
@@ -143,6 +149,8 @@ public enum InferenceChunk: Sendable {
     case token(String)
     case metrics(promptTokens: Int, completionTokens: Int, tps: Double)
     case tool(String)
+    // Native tool call parsed by mlx-swift-lm (Qwen xmlFunction / OpenAI format)
+    case toolCall(name: String, arguments: [String: AnyCodable])
 }
 
 extension Notification.Name {

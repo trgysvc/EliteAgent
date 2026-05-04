@@ -143,6 +143,16 @@ public enum UNOExternalBridge {
     public static func decodeDecodable<T: Decodable>(_ type: T.Type, from data: Data) -> T? {
         return try? JSONDecoder().decode(T.self, from: data)
     }
+
+    /// UNO Pure: Encodes an Encodable type for an external HTTP JSON API.
+    public static func encodeEncodable<T: Encodable>(_ value: T) -> Data? {
+        return try? JSONEncoder().encode(value)
+    }
+
+    /// UNO Pure: Decodes an Encodable type from external HTTP JSON data.
+    public static func decodeExternalDecodable<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+        return try JSONDecoder().decode(type, from: data)
+    }
 }
 
 public enum BridgeError: Error, LocalizedError {

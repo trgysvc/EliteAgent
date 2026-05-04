@@ -11,7 +11,9 @@
       "Bash(grep -v \"// \\\\|fatalError\\\\|#warning\\\\|precondition\\\\|assert\\\\|\\\\\"!\\\\|!\\\\\"\\\\|!\\(\\\\|!=\\\\|!$\\\\|!\\\\\\\\.\")",
       "Bash(grep -n \"DynamicCodingKeys\\(stringValue:.*!\\)$\" /Users/trgysvc/Developer/EliteAgent/Sources/EliteAgentCore/Types/Types.swift)",
       "Bash(grep *)",
-      "Bash(sort -t/ -k1)"
+      "Bash(sort -t/ -k1)",
+      "Read(//Users/trgysvc/Developer/openclaw/**)",
+      "Bash(log show *)"
     ]
   },
   "model": "opusplan"

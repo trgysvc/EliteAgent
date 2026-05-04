@@ -173,7 +173,7 @@ struct SystemData {
         
         let jsonStr = "{\(content[range])}"
         guard let data = jsonStr.data(using: .utf8),
-              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+              let dict = UNOExternalBridge.resolveDictionary(from: data) else {
             return .fallback
         }
         

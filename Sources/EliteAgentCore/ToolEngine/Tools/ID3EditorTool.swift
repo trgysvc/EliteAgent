@@ -55,7 +55,7 @@ public struct ID3EditorTool: AgentTool {
             
             // 1. Process JSON
             if fm.fileExists(atPath: jsonURL.path), let data = try? Data(contentsOf: jsonURL) {
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                if let json = UNOExternalBridge.resolveDictionary(from: data) {
                     metadata["TIT2"] = json["title"] as? String
                     metadata["TPE1"] = json["display_name"] as? String
                     metadata["TALB"] = json["project_name"] as? String

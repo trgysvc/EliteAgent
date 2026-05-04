@@ -140,26 +140,23 @@ public actor LocalInferenceServer {
         Task {
             do {
                 // HTTP boundary: external clients (Ollama-compatible) send JSON
-                let decoder = JSONDecoder()
-                let request = try decoder.decode(InferenceRequest.self, from: bodyData)
-                
+                let request = try UNOExternalBridge.decodeExternalDecodable(InferenceRequest.self, from: bodyData)
+
                 let prompt = request.prompt ?? request.messages?.last?["content"] ?? ""
                 let maxTokens = request.max_tokens ?? 200
-                
+
                 let stream = try await InferenceActor.shared.generate(
                     messages: [Message(role: "user", content: prompt)],
                     maxTokens: maxTokens
                 )
-                
-                sendStreamHeader(on: connection)
 
-                let encoder = JSONEncoder()
+                sendStreamHeader(on: connection)
 
                 for await chunk in stream {
                     guard case .token(let text) = chunk else { continue }
 
                     let response = InferenceResponse(response: text, done: false)
-                    let responseData = try encoder.encode(response)
+                    guard let responseData = UNOExternalBridge.encodeEncodable(response) else { continue }
 
                     // HTTP Chunked encoding: <length in hex>\r\n<data>\r\n
                     let hexLength = String(responseData.count, radix: 16)
@@ -168,7 +165,7 @@ public actor LocalInferenceServer {
                 }
 
                 let finalResponse = InferenceResponse(response: nil, done: true)
-                let finalData = try encoder.encode(finalResponse)
+                guard let finalData = UNOExternalBridge.encodeEncodable(finalResponse) else { return }
                 let finalHex = String(finalData.count, radix: 16)
                 let terminator = Data("\(finalHex)\r\n".utf8) + finalData + Data("\r\n0\r\n\r\n".utf8)
                 connection.send(content: terminator, completion: .contentProcessed({ _ in
@@ -186,10 +183,9 @@ public actor LocalInferenceServer {
         let models = ModelRegistry.availableModels.map { ["name": $0.name, "id": $0.id] }
         let body: [String: [[String: String]]] = ["models": models]
 
-        do {
-            let data = try JSONEncoder().encode(body)
+        if let data = UNOExternalBridge.encodeEncodable(body) {
             sendJSONResponse(on: connection, data: data)
-        } catch {
+        } else {
             sendResponse(on: connection, statusCode: 500, body: "Internal Error")
         }
     }

@@ -99,25 +99,53 @@ public actor InferenceActor {
     }
     
     /// Generates tokens as an AsyncStream using official v3 stream patterns.
-    public func generate(messages: [Message], systemPrompt: String? = nil, maxTokens: Int = 2048) async throws -> AsyncStream<InferenceChunk> {
+    /// - Parameters:
+    ///   - tools: Optional ToolSpec array ([String: any Sendable]). Qwen 3.5 uses xmlFunction format
+    ///            which is auto-detected from model_type="qwen3_5" in config.json.
+    ///   - enableThinking: Pass false to suppress Qwen 3.5 <think> blocks via additionalContext.
+    ///            Use false for chat/classification, true (default) for planning/reasoning tasks.
+    public func generate(
+        messages: [Message],
+        systemPrompt: String? = nil,
+        maxTokens: Int = 2048,
+        tools: [[String: any Sendable]]? = nil,
+        enableThinking: Bool = true
+    ) async throws -> AsyncStream<InferenceChunk> {
         let startTime = Date()
         guard let container = modelContainer else {
             throw NSError(domain: "EliteAgent", code: 404, userInfo: [NSLocalizedDescriptionKey: "Engine not primed."])
         }
-        
-        let mlxMessages = messages.map { ["role": $0.role, "content": $0.content] }
-        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: 0.7)
-        
+
+        // Build message array: prepend system message if provided (was silently ignored before).
+        var mlxMessages: [[String: any Sendable]] = []
+        if let sys = systemPrompt, !sys.isEmpty {
+            mlxMessages.append(["role": "system", "content": sys])
+        }
+        mlxMessages.append(contentsOf: messages.map { ["role": $0.role, "content": $0.content] })
+
+        var parameters = GenerateParameters(maxTokens: maxTokens, temperature: 0.6)
+        parameters.repetitionPenalty = 1.15
+        parameters.repetitionContextSize = 64
+        parameters.kvBits = 4
+        parameters.kvGroupSize = 64
+        parameters.quantizedKVStart = 256
+        parameters.topP = 0.9
+        parameters.minP = 0.05
+
+        // additionalContext["enable_thinking"] is the official mlx-swift-lm API for Qwen 3.5.
+        // false = skip <think> block entirely → dramatically faster responses for chat.
+        let additionalContext: [String: any Sendable]? = enableThinking ? nil : ["enable_thinking": false]
+
         return AsyncStream(InferenceChunk.self) { continuation in
             let task = Task { [parameters] in
                 do {
-                    // Official v3: Prepare and generate inside the same context to avoid data races
-                    let input = try await container.prepare(input: UserInput(messages: mlxMessages))
+                    let userInput = UserInput(messages: mlxMessages, tools: tools, additionalContext: additionalContext)
+                    let input = try await container.prepare(input: userInput)
                     let resultStream = try await container.generate(input: input, parameters: parameters)
-                    
+
                     for await chunk in resultStream {
                         if Task.isCancelled { break }
-                        
+
                         switch chunk {
                         case .chunk(let text):
                             continuation.yield(.token(text))
@@ -127,8 +155,10 @@ public actor InferenceActor {
                             AgentLogger.logInfo("📊 [v3-Engine] TPS: \(metrics.tokensPerSecond.formatted())")
                             continuation.yield(.metrics(promptTokens: metrics.promptTokenCount, completionTokens: metrics.generationTokenCount, tps: metrics.tokensPerSecond))
                         case .toolCall(let call):
-                            AgentLogger.logInfo("🛠 Tool Call: \(String(describing: call))")
-                            continuation.yield(.tool(String(describing: call)))
+                            // Convert mlx-swift-lm ToolCall → InferenceChunk.toolCall
+                            AgentLogger.logInfo("🎯 [v3-Engine] Native tool call: \(call.function.name)")
+                            let args = call.function.arguments.mapValues { AnyCodable($0.anyValue) }
+                            continuation.yield(.toolCall(name: call.function.name, arguments: args))
                         @unknown default:
                             break
                         }
