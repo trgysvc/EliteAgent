@@ -12,12 +12,16 @@ public final class ModelManager: NSObject, ObservableObject {
     @Published public var installedModelIDs: Set<String> = []
     @Published public var vramModelID: String? = nil
     @Published public var loadingModelID: String? = nil
-    @Published public var isAutoUnloadEnabled: Bool = true 
+    @Published public var isAutoUnloadEnabled: Bool = true
+    /// Draft model download status keyed by main model ID. Empty string = idle.
+    @Published public var draftModelStatus: [String: String] = [:]
     
     private var downloadTasks: [String: URLSessionDownloadTask] = [:]
     private var resumeData: [String: Data] = [:]
     private var retryCounts: [String: Int] = [:]
     private var downloadStartTimes: [String: Date] = [:]
+    /// draftModelID → mainModelID mapping for pending background draft downloads.
+    private var pendingDraftLoads: [String: String] = [:]
     
     // v21.3: Shard Progress Aggregator
     // baseModelID -> [taskID: (bytesWritten, totalBytes)]
@@ -429,20 +433,79 @@ public final class ModelManager: NSObject, ObservableObject {
 
     public func load(_ modelID: String) async throws {
         let modelURL = resolveModelPath(modelID)
-        
+
         // 1. Verify completeness first
         do {
             try verifyModelComplete(modelID)
         } catch ModelError.incompleteDownload {
-            // Attempt auto-repair once
             if let catalog = ModelRegistry.availableModels.first(where: { $0.id == modelID }) {
                 try await downloadModelMetadata(catalog)
             }
-            try verifyModelComplete(modelID) // Re-verify
+            try verifyModelComplete(modelID)
         }
-        
+
         try await InferenceActor.shared.loadModel(at: modelURL)
         self.vramModelID = modelID
+        // Draft model loading is triggered by InferenceActor after wired memory measurement
+        // completes (via onWiredMemoryReady). This prevents simultaneous RAM pressure.
+    }
+
+    // MARK: - Draft Model Management
+
+    /// Called by InferenceActor after wired memory measurement completes.
+    /// Ensures draft and main model never load simultaneously.
+    /// Guard against multiple calls from repeated model reloads (e.g. watchdog recovery).
+    public func onWiredMemoryReady(for modelID: String) async {
+        guard let catalog = ModelRegistry.allModels.first(where: { $0.id == modelID }),
+              let draftID = catalog.draftModelID else { return }
+        // If draft is already loaded or a download is in flight, skip.
+        guard pendingDraftLoads[draftID] == nil,
+              await InferenceActor.shared.isDraftModelLoaded == false else { return }
+        await ensureDraftModel(draftID, forMain: modelID)
+    }
+
+    /// Ensures the draft model is downloaded and loaded into the engine.
+    /// Runs entirely in the background — zero user interaction required.
+    private func ensureDraftModel(_ draftID: String, forMain mainID: String) async {
+        // Already on disk → load directly
+        if verifyIntegrity(id: draftID) {
+            await loadDraftIntoEngine(draftID, forMain: mainID)
+            return
+        }
+
+        // Needs download
+        guard let draftCatalog = ModelRegistry.draftModels.first(where: { $0.id == draftID }) else {
+            AgentLogger.logInfo("⚠️ [DraftManager] No catalog entry for draft model: \(draftID)")
+            return
+        }
+
+        await MainActor.run {
+            self.draftModelStatus[mainID] = "⚡ Hız optimizasyonu indiriliyor..."
+            self.pendingDraftLoads[draftID] = mainID
+        }
+
+        do {
+            try await download(draftCatalog)
+            // Actual completion is handled in the URLSession delegate (didFinishDownloadingTo).
+        } catch {
+            await MainActor.run {
+                self.draftModelStatus[mainID] = ""
+                self.pendingDraftLoads.removeValue(forKey: draftID)
+            }
+            AgentLogger.logInfo("⚠️ [DraftManager] Draft download failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func loadDraftIntoEngine(_ draftID: String, forMain mainID: String) async {
+        let draftURL = modelsDirectory.appendingPathComponent(draftID)
+        do {
+            try await InferenceActor.shared.loadDraftModel(at: draftURL)
+            await MainActor.run { self.draftModelStatus[mainID] = "" }
+            AgentLogger.logInfo("🚀 [DraftManager] Speculative decoding active: \(draftID)")
+        } catch {
+            await MainActor.run { self.draftModelStatus[mainID] = "" }
+            AgentLogger.logInfo("⚠️ [DraftManager] Draft engine load failed: \(error.localizedDescription)")
+        }
     }
     
     public func switchTo(_ modelID: String) async throws {
@@ -715,6 +778,14 @@ extension ModelManager: URLSessionDownloadDelegate {
                     self.downloadProgress[baseModelID] = 1.0
                     self.downloadStatus[baseModelID] = "Yüklendi (Hazır)"
                     self.refreshInstalledModels()
+
+                    // If this was a pending draft model, load it into the engine now.
+                    if let mainID = self.pendingDraftLoads[baseModelID] {
+                        self.pendingDraftLoads.removeValue(forKey: baseModelID)
+                        Task { [weak self] in
+                            await self?.loadDraftIntoEngine(baseModelID, forMain: mainID)
+                        }
+                    }
                 } else {
                     self.downloadStatus[baseModelID] = "Parçalar birleştiriliyor (\(relatedTasks.count) parça kaldı)..."
                 }

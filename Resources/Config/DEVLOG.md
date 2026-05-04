@@ -632,3 +632,40 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Decision made:** `UnsafeTransferBox` is safe because model weights are evaluated (read-only) before inference; KV caches are per-inference (never shared). Pattern matches Apple's own internal `SendableBox` in MLXLMCommon. Speculative decoding is opt-in: only activates if a draft model is physically present at `{mainModelURL}-draft` or explicitly loaded via `loadDraftModel(at:)`.
 
 **Next:** To enable speculative decoding, place a compatible small model (same tokenizer family as main model) at the `-draft` path and restart. Example: for Qwen3.5-9B at `.../Models/qwen-3.5-9b-4bit`, place draft at `.../Models/qwen-3.5-9b-4bit-draft`.
+
+**Next:** To enable speculative decoding, place a compatible small model (same tokenizer family as main model) at the `-draft` path and restart. Example: for Qwen3.5-9B at `.../Models/qwen-3.5-9b-4bit`, place draft at `.../Models/qwen-3.5-9b-4bit-draft`.
+
+### [2026-05-04] — Documentation & Rules Hardening: Wiki, README, GEMINI.md, CLAUDE.md
+
+**What changed:**
+- **`GEMINI.md`** (NEW at project root): Created Antigravity-specific instruction file (Gemini CLI reads this at session start). Contains explicit JSON violation incident notice ("VIOLATED 2026-05-03"), forbidden code table with allowed alternatives, full architecture snapshot, GenerateParameters config, tool system rules, and DEVLOG requirement. Modeled after CLAUDE.md but tuned for Gemini's instruction parsing.
+- **`CLAUDE.md`** (REWRITTEN): Added `⛔ ABSOLUTE RULES` section at the top with explicit forbidden code blocks (JSONEncoder, DispatchQueue, force unwrap, untyped Any across XPC) and concrete allowed alternatives. Updated LLM architecture section to reflect v8.1 state (native tool calling, speculative decoding, wired memory).
+- **`Project_Wiki/rules.md`** (REWRITTEN): Bilingual Turkish/English full UNO rules document. JSON prohibition section now explicitly notes "2026-05-03'te bu kural ihlal edildi" with a concrete code example of what NOT to do.
+- **`README.md`** (UPDATED): Bumped to v8.1 "Titan Optimized". Added v8.1 achievements section, architecture rules table, speculative decoding setup instructions, and comparison table vs. OpenClaw.
+- **`Project_Wiki/wiki/native_tool_calling.md`** (NEW): End-to-end native tool calling guide — 7-step flow from user input to tool execution, ToolSpec format, think block extraction (Format A/B), intent classification matrix, chat latency table, OrchestratorRuntime native vs. legacy dispatch code.
+- **`Project_Wiki/wiki/performance_optimization_report.md`** (REPLACED): Old proposal document replaced with actual implementation report for Items 4/5/6. Full code snippets, UnsafeTransferBox rationale, previous problems/solutions table.
+- **`Project_Wiki/index.md`** (UPDATED): v8.1 header, ⛔ rules section at top, new wiki documents linked.
+- **`Project_Wiki/h.md`** (REWRITTEN): Hot memory — current sprint completed items, next steps, version status table, critical architectural decisions, lessons learned.
+
+**Files modified:** `GEMINI.md` (new), `CLAUDE.md`, `Project_Wiki/rules.md`, `README.md`, `Project_Wiki/wiki/native_tool_calling.md` (new), `Project_Wiki/wiki/performance_optimization_report.md`, `Project_Wiki/index.md`, `Project_Wiki/h.md`
+
+**Decision made:** Antigravity (Gemini CLI) ignored the JSON prohibition on 2026-05-03 because the rule was a single bullet point without examples or consequence. Root fix: (1) create `GEMINI.md` at project root so the rule is the FIRST thing Gemini reads, (2) add violation incident note to every rule document with concrete bad/good code, (3) keep both `GEMINI.md` and `CLAUDE.md` synchronized. Lesson: a rule without a concrete code example is not a rule for an AI agent.
+
+**Next:** Add ADRs to `Project_Wiki/DECISIONS.md` for native tool calling, wired memory strategy, speculative decoding, and chat latency fix.
+
+### [2026-05-04] — Speculative Decoding: Tam Otomatik Draft Model Yönetimi
+
+**What changed:**
+- **`ModelCatalog`'a `draftModelID: String?` eklendi:** Her ana model, uyumlu draft modelinin ID'sini biliyor. Default `nil` — mevcut tüm caller'lar bozulmadı.
+- **`ModelRegistry.draftModels` eklendi:** Kullanıcıya gösterilmeyen iki internal draft model kaydı: `qwen-2.5-0.5b-instruct-4bit` (Qwen ailesi için) ve `llama-3.2-1b-instruct-4bit` (Llama ailesi için). `ModelRegistry.allModels` = `availableModels + draftModels` — internal lookup için.
+- **Ana model → draft bağlantıları:** `qwen-3.5-9b-4bit`, `qwen-2.5-7b-4bit`, `qwen-2.5-7b-coder-4bit`, `qwen-2.5-14b-coder-4bit`, `qwen-2.5-14b-coder-abliterated-4bit` → `qwen-2.5-0.5b-instruct-4bit`; `llama-3.1-8b-4bit` → `llama-3.2-1b-instruct-4bit`.
+- **`ModelManager.ensureDraftModel()`:** Ana model yüklendikten sonra arka planda çağrılır. Draft disk'te varsa → direkt engine'e yükle. Yoksa → `ModelManager.download()` ile sessizce indir, URLSession delegate'inde tamamlanınca engine'e yükle.
+- **`ModelManager.pendingDraftLoads: [String: String]`:** `draftID → mainID` mapping'i. Delegate'de hangi main model için draft tamamlandığını bilmek için.
+- **`ModelManager.draftModelStatus: [String: String]`:** `@Published`, `mainID → "⚡ Hız optimizasyonu indiriliyor..."`. UI'da gösterilebilir, tamamlanınca boşaltılır.
+- **`InferenceActor.tryLoadDraftModel(for:)` kaldırıldı:** Filesystem convention (`{model}-draft` dizini) yerine `ModelManager` doğru URL'yi veriyor. `loadDraftModel(at:)` public API korundu.
+
+**Files modified:** `Sources/EliteAgentCore/LLM/ModelCatalog.swift`, `Sources/EliteAgentCore/LLM/ModelManager.swift`, `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+
+**Decision made:** Draft model kullanıcı tarafından indirilmemeli. Ana model seçilince `ModelManager` arka planda draft modeli otomatik indirir ve engine'e yükler. Kullanıcı perspektifinden sıfır aksiyon, sıfır konfigürasyon. Speculative decoding şeffaf şekilde aktive olur.
+
+**Next:** UI'da `draftModelStatus` değerine bakarak küçük bir "⚡" badge gösterilebilir (opsiyonel). Mevcut haliyle draft indirme sessizce çalışır.

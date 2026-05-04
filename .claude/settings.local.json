@@ -14,7 +14,16 @@
       "Bash(sort -t/ -k1)",
       "Read(//Users/trgysvc/Developer/openclaw/**)",
       "Bash(log show *)",
-      "Bash(xxd /Users/trgysvc/.gemini/GEMINI.md)"
+      "Bash(xxd /Users/trgysvc/.gemini/GEMINI.md)",
+      "Bash(curl -s \"https://huggingface.co/api/repos/mlx-community/Qwen3-0.5B-4bit\")",
+      "WebSearch",
+      "Bash(curl -sL \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/config.json\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('vocab_size:', d.get\\('vocab_size'\\)\\); print\\('model_type:', d.get\\('model_type'\\)\\); print\\('architectures:', d.get\\('architectures'\\)\\)\")",
+      "Bash(curl -sL \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/tokenizer_config.json\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('tokenizer_class:', d.get\\('tokenizer_class'\\)\\); print\\('chat_template_exists:', 'chat_template' in d\\)\")",
+      "Bash(curl -sL \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/tokenizer.json\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -sI \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/model.safetensors\")"
     ]
   },
   "model": "opusplan"

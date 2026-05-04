@@ -22,6 +22,7 @@ public actor InferenceActor {
     
     public private(set) var loadedModelID: String?
     public var isModelLoaded: Bool { modelContainer != nil }
+    public var isDraftModelLoaded: Bool { draftModelContainer != nil }
     public var isBusy: Bool { currentGenerationTask != nil }
     
     // Performance Metrics
@@ -115,7 +116,9 @@ public actor InferenceActor {
             AgentLogger.logInfo("✅ [v3-Engine] Titan Core Primed: \(modelID)")
         }
 
-        // Item 4: Measure wired memory budget in the background (does not block inference)
+        // Item 4 → Item 6: Wired memory measurement runs first; draft model loads after.
+        // Sequential ordering prevents simultaneous RAM pressure that triggers the watchdog.
+        let modelID = url.lastPathComponent
         Task { [container] in
             do {
                 let measureParams = GenerateParameters(maxTokens: 32, temperature: 0.6)
@@ -127,13 +130,10 @@ public actor InferenceActor {
                 let kb = m.kvBytes / 1024 / 1024
                 AgentLogger.logInfo("📊 [v3-Wired] Budget measured — weights:\(wb)MB kv:\(kb)MB workspace:\(m.workspaceBytes/1024/1024)MB")
             } catch {
-                AgentLogger.logInfo("⚠️ [v3-Wired] Measurement failed: \(error.localizedDescription)")
+                AgentLogger.logInfo("⚠️ [v3-Wired] Measurement failed (draft load will still proceed): \(error.localizedDescription)")
             }
-        }
-
-        // Item 6: Auto-load draft model if present at {modelDir}-draft (opt-in, no-op if absent)
-        Task {
-            await self.tryLoadDraftModel(for: url)
+            // Wired measurement done (success or fail). Safe to load draft now.
+            await ModelManager.shared.onWiredMemoryReady(for: modelID)
         }
     }
     
@@ -286,24 +286,40 @@ public actor InferenceActor {
         return policy.ticket(size: m.kvBytes, kind: .active)
     }
 
-    private func tryLoadDraftModel(for mainModelURL: URL) async {
-        let draftURL = mainModelURL.deletingLastPathComponent()
-            .appendingPathComponent(mainModelURL.lastPathComponent + "-draft")
-        guard FileManager.default.fileExists(atPath: draftURL.path) else { return }
-        do {
-            let draft = try await loadModelContainer(from: draftURL)
-            self.draftModelContainer = draft
-            AgentLogger.logInfo("🚀 [v3-Speculative] Draft model ready: \(draftURL.lastPathComponent)")
-        } catch {
-            AgentLogger.logInfo("⚠️ [v3-Speculative] Draft model load failed: \(error.localizedDescription)")
+    /// Called by ModelManager after the draft model is confirmed on disk.
+    /// Validates tokenizer vocabulary size compatibility before enabling speculative decoding.
+    /// Draft and main model MUST share the same vocabulary — different families are incompatible.
+    public func loadDraftModel(at url: URL) async throws {
+        guard modelContainer != nil else {
+            throw NSError(domain: "EliteAgent", code: 412,
+                          userInfo: [NSLocalizedDescriptionKey: "Main model not loaded — cannot load draft."])
         }
+
+        // Vocabulary size check: draft and main must share the same tokenizer.
+        // Read vocab sizes from tokenizer.json via UNOExternalBridge (no JSONDecoder — UNO rule).
+        let mainDir = loadedModelID.map { PathConfiguration.shared.modelsURL.appendingPathComponent($0) }
+        let mainVocabSize = readVocabSize(at: mainDir)
+        let draftVocabSize = readVocabSize(at: url)
+
+        if let main = mainVocabSize, let draft = draftVocabSize, main != draft {
+            AgentLogger.logInfo("⛔ [v3-Speculative] Vocab mismatch — main:\(main) draft:\(draft). Speculative decoding disabled.")
+            throw NSError(domain: "EliteAgent", code: 409,
+                          userInfo: [NSLocalizedDescriptionKey: "Draft model tokenizer incompatible (vocab \(draft) ≠ \(main))."])
+        }
+
+        draftModelContainer = try await loadModelContainer(from: url)
+        AgentLogger.logInfo("🚀 [v3-Speculative] Draft model loaded: \(url.lastPathComponent) (vocab:\(draftVocabSize ?? 0))")
     }
 
-    /// Explicitly loads a draft model for speculative decoding.
-    /// The draft model must share the same tokenizer family as the main model.
-    public func loadDraftModel(at url: URL) async throws {
-        draftModelContainer = try await loadModelContainer(from: url)
-        AgentLogger.logInfo("🚀 [v3-Speculative] Draft model explicitly loaded: \(url.lastPathComponent)")
+    /// Reads vocab size from a model directory's tokenizer.json via UNOExternalBridge.
+    private func readVocabSize(at url: URL?) -> Int? {
+        guard let url else { return nil }
+        let tokenizerURL = url.appendingPathComponent("tokenizer.json")
+        guard let data = try? Data(contentsOf: tokenizerURL),
+              let dict = UNOExternalBridge.resolveDictionary(from: data),
+              let model = dict["model"] as? [String: Any],
+              let vocab = model["vocab"] as? [String: Any] else { return nil }
+        return vocab.count
     }
 
     // MARK: - Maintenance & Self-Healing
