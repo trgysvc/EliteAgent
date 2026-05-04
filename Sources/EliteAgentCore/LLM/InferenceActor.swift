@@ -28,10 +28,28 @@ public actor InferenceActor {
     public var lastTPS: Double = 0
     public var lastLatency: Int = 0
     public var nextRequestReducedContext: Bool = false
-    
+
     private let inferenceLog = OSLog(subsystem: "app.eliteagent.titan", category: "InferencePerformance")
     private let maxActivations = 4096
     nonisolated public let sharedBuffer: MetalBufferWrapper
+
+    // Item 4: Wired Memory — measured after model load, applied per inference request
+    private var wiredMeasurement: WiredMemoryMeasurement? = nil
+    private let wiredPolicyID = UUID()
+
+    // Item 6: Speculative Decoding — draft model container loaded alongside main model
+    private var draftModelContainer: ModelContainer? = nil
+
+    // @unchecked Sendable wrapper to transfer non-Sendable MLX types (LMInput, LanguageModel)
+    // across async boundaries inside @Sendable closures. Mirrors MLXLMCommon's internal SendableBox.
+    private final class UnsafeTransferBox<T>: @unchecked Sendable {
+        var value: T?
+        init(_ value: T) { self.value = value }
+        func take() -> T {
+            defer { value = nil }
+            return value!
+        }
+    }
     
     // Process Visualization
     private var stepContinuation: AsyncStream<ProcessStep>.Continuation?
@@ -87,14 +105,35 @@ public actor InferenceActor {
         
         self.modelContainer = container
         self.loadedModelID = url.lastPathComponent
-        
+
         await MainActor.run {
             ModelSetupManager.shared.isModelReady = true
             ModelSetupManager.shared.loadState = .idle
         }
-        
+
         if let modelID = loadedModelID {
             AgentLogger.logInfo("✅ [v3-Engine] Titan Core Primed: \(modelID)")
+        }
+
+        // Item 4: Measure wired memory budget in the background (does not block inference)
+        Task { [container] in
+            do {
+                let measureParams = GenerateParameters(maxTokens: 32, temperature: 0.6)
+                let m = try await container.perform { ctx in
+                    try await WiredMemoryUtils.tune(context: ctx, tokenCount: 64, parameters: measureParams)
+                }
+                self.wiredMeasurement = m
+                let wb = m.weightBytes / 1024 / 1024
+                let kb = m.kvBytes / 1024 / 1024
+                AgentLogger.logInfo("📊 [v3-Wired] Budget measured — weights:\(wb)MB kv:\(kb)MB workspace:\(m.workspaceBytes/1024/1024)MB")
+            } catch {
+                AgentLogger.logInfo("⚠️ [v3-Wired] Measurement failed: \(error.localizedDescription)")
+            }
+        }
+
+        // Item 6: Auto-load draft model if present at {modelDir}-draft (opt-in, no-op if absent)
+        Task {
+            await self.tryLoadDraftModel(for: url)
         }
     }
     
@@ -131,6 +170,8 @@ public actor InferenceActor {
         parameters.quantizedKVStart = 256
         parameters.topP = 0.9
         parameters.minP = 0.05
+        // Item 5: Rotating KV Cache — caps unbounded KV growth; old entries evicted beyond window
+        parameters.maxKVSize = 8192
 
         // additionalContext["enable_thinking"] is the official mlx-swift-lm API for Qwen 3.5.
         // false = skip <think> block entirely → dramatically faster responses for chat.
@@ -141,7 +182,33 @@ public actor InferenceActor {
                 do {
                     let userInput = UserInput(messages: mlxMessages, tools: tools, additionalContext: additionalContext)
                     let input = try await container.prepare(input: userInput)
-                    let resultStream = try await container.generate(input: input, parameters: parameters)
+
+                    // Item 4: Wired Memory ticket — pins weights+workspace in RAM during inference
+                    let wiredTicket = self.makeWiredTicket()
+
+                    // Item 6: Speculative Decoding — use draft model if loaded, else regular path
+                    let resultStream: AsyncStream<Generation>
+                    if let draftContainer = self.draftModelContainer {
+                        // Extract draft LanguageModel (weights read-only after eval — thread-safe)
+                        let draftBox = await draftContainer.perform { ctx in
+                            UnsafeTransferBox<any LanguageModel>(ctx.model)
+                        }
+                        // Box LMInput to safely cross the @Sendable closure boundary
+                        let inputBox = UnsafeTransferBox(input)
+                        resultStream = try await container.perform { mainCtx -> AsyncStream<Generation> in
+                            try MLXLMCommon.generate(
+                                input: inputBox.take(),
+                                parameters: parameters,
+                                context: mainCtx,
+                                draftModel: draftBox.take(),
+                                numDraftTokens: 4,
+                                wiredMemoryTicket: wiredTicket
+                            )
+                        }
+                        AgentLogger.logInfo("🚀 [v3-Speculative] Speculative decoding active (numDraftTokens=4)")
+                    } else {
+                        resultStream = try await container.generate(input: input, parameters: parameters, wiredMemoryTicket: wiredTicket)
+                    }
 
                     for await chunk in resultStream {
                         if Task.isCancelled { break }
@@ -211,8 +278,36 @@ public actor InferenceActor {
         }
     }
     
+    // MARK: - Wired Memory & Draft Model Helpers
+
+    private func makeWiredTicket() -> WiredMemoryTicket? {
+        guard !isCPUOnly, let m = wiredMeasurement else { return nil }
+        let policy = WiredBudgetPolicy(baseBytes: m.weightBytes + m.workspaceBytes, id: wiredPolicyID)
+        return policy.ticket(size: m.kvBytes, kind: .active)
+    }
+
+    private func tryLoadDraftModel(for mainModelURL: URL) async {
+        let draftURL = mainModelURL.deletingLastPathComponent()
+            .appendingPathComponent(mainModelURL.lastPathComponent + "-draft")
+        guard FileManager.default.fileExists(atPath: draftURL.path) else { return }
+        do {
+            let draft = try await loadModelContainer(from: draftURL)
+            self.draftModelContainer = draft
+            AgentLogger.logInfo("🚀 [v3-Speculative] Draft model ready: \(draftURL.lastPathComponent)")
+        } catch {
+            AgentLogger.logInfo("⚠️ [v3-Speculative] Draft model load failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Explicitly loads a draft model for speculative decoding.
+    /// The draft model must share the same tokenizer family as the main model.
+    public func loadDraftModel(at url: URL) async throws {
+        draftModelContainer = try await loadModelContainer(from: url)
+        AgentLogger.logInfo("🚀 [v3-Speculative] Draft model explicitly loaded: \(url.lastPathComponent)")
+    }
+
     // MARK: - Maintenance & Self-Healing
-    
+
     public func cancelOngoingGenerations() {
         currentGenerationTask?.cancel()
         currentGenerationTask = nil
@@ -234,10 +329,12 @@ public actor InferenceActor {
         
         self.cancelOngoingGenerations()
         self.clearCache()
-        
+
         self.modelContainer = nil
         self.loadedModelID = nil
-        
+        self.draftModelContainer = nil
+        self.wiredMeasurement = nil
+
         if reload {
             await ModelSetupManager.shared.reloadCurrentModel()
         }
@@ -249,6 +346,8 @@ public actor InferenceActor {
         self.cancelOngoingGenerations()
         self.modelContainer = nil
         self.loadedModelID = nil
+        self.draftModelContainer = nil
+        self.wiredMeasurement = nil
         self.clearCache()
         
         await MainActor.run {

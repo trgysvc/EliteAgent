@@ -2,6 +2,66 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+## ⛔ ABSOLUTE RULES — READ BEFORE TOUCHING ANY FILE
+
+These rules are non-negotiable. Violating them breaks the architecture and has caused production bugs.
+
+### 1. ZERO JSON IN PRODUCTION CODE
+
+**FORBIDDEN — never write these anywhere except inside `UNOExternalBridge.swift`:**
+```swift
+JSONEncoder()          // FORBIDDEN
+JSONDecoder()          // FORBIDDEN
+JSONSerialization      // FORBIDDEN
+.jsonObject(           // FORBIDDEN
+try? JSONEncoder()     // FORBIDDEN
+```
+
+**WHY:** EliteAgent uses binary PropertyList (UNO protocol) for all internal actor communication. JSON was explicitly chosen as a transport-level concern only, not a data format. Every time JSON leaks into non-bridge code, it creates a type-safety hole and a Sendable violation.
+
+**ALLOWED — the only legal JSON surface:**
+```swift
+// UNOExternalBridge.swift is the ONLY file allowed to touch JSON
+UNOExternalBridge.shared.encode(...)      // OK
+UNOExternalBridge.shared.decode(...)      // OK
+// HTTP server responses (LocalInferenceServer, Ollama-compat layer) — OK because it IS the external protocol
+```
+
+**What to use instead:**
+```swift
+PropertyListEncoder(outputFormat: .binary)  // for Data serialization
+PropertyListDecoder()                        // for Data deserialization
+AnyCodable(value)                           // for heterogeneous values across actors
+```
+
+### 2. ZERO DispatchQueue
+
+**FORBIDDEN:**
+```swift
+DispatchQueue.global()     // FORBIDDEN
+DispatchQueue.main         // FORBIDDEN (except FSEventStreamSetDispatchQueue — Apple API limit, documented in DEVLOG)
+DispatchSemaphore          // FORBIDDEN
+```
+
+**Use instead:** `async/await`, `Task`, `TaskGroup`, `actor`, `AsyncStream`
+
+### 3. ZERO FORCE UNWRAP in production code
+
+```swift
+let x = foo!         // FORBIDDEN
+foo as! Bar          // FORBIDDEN — use guard let with as?
+```
+
+**Use instead:** `guard let`, `if let`, `try?`, `as?`
+
+### 4. NO UNTYPED DICTIONARIES ACROSS ACTOR/XPC BOUNDARIES
+
+`[String: Any]` and `[String: AnyObject]` cannot cross actor or XPC isolation safely. Use typed structs, `AnyCodable`, or binary plist.
+
+---
+
 ## Build & Run
 
 ```bash
@@ -30,6 +90,8 @@ xcodebuild -project EliteAgent.xcodeproj -scheme EliteAgent -configuration Debug
 
 **Swift version:** 6.3.0 (see `.swift-version`). Requires macOS 15+ and Xcode 16+. Apple Silicon only.
 
+---
+
 ## Architecture
 
 EliteAgent is a native macOS autonomous agent built on the **UNO (Unified Native Orchestration)** architecture — distributed actors with binary-native IPC, no JSON anywhere.
@@ -56,7 +118,7 @@ EliteAgent is a native macOS autonomous agent built on the **UNO (Unified Native
 **LLM Provider Layer** (`Sources/EliteAgentCore/LLM/`)
 - `LLMProvider.swift` — Protocol: `Actor` with `complete(_:useSafeMode:)`.
 - `MLXProvider.swift` — Local inference; bridges to `InferenceActor.shared` (Titan Engine running MLX).
-- `InferenceActor.swift` — `actor`. Owns the loaded MLX model and GPU/ANE state. Single source of truth for local inference.
+- `InferenceActor.swift` — `actor`. Owns the loaded MLX model, GPU/ANE state, wired memory measurement, and optional draft model for speculative decoding.
 - `CloudProvider.swift` — Cloud inference via OpenRouter (or any OpenAI-compatible endpoint). Config driven by `VaultManager`.
 - Provider config lives in `vault.plist` (`~/Library/Application Support/EliteAgent/vault.plist`), API keys in Keychain via `VaultManager`.
 
@@ -78,8 +140,8 @@ EliteAgent is a native macOS autonomous agent built on the **UNO (Unified Native
 
 ### UNO Rules (Non-Negotiable)
 
-- **No JSON.** Zero `JSONEncoder`/`JSONDecoder`/`JSONSerialization`. Use `PropertyListEncoder(outputFormat: .binary)` or raw `Data`.
-- **No `DispatchQueue`.** All concurrency via `async/await`, `TaskGroup`, and `actor`.
+- **No JSON.** Zero `JSONEncoder`/`JSONDecoder`/`JSONSerialization` in production code. Route through `UNOExternalBridge` if external JSON parsing is unavoidable.
+- **No `DispatchQueue`.** All concurrency via `async/await`, `TaskGroup`, and `actor`. Exception: `FSEventStreamSetDispatchQueue` is an Apple API constraint, documented in DEVLOG.
 - **No force unwrap (`!`)** in production code. Use `guard let` / `if let`.
 - **No `Any` or untyped dictionaries** across actor/XPC boundaries.
 - Tool invocations must use the UBID lookup path, not string matching.
@@ -91,6 +153,16 @@ EliteAgent is a native macOS autonomous agent built on the **UNO (Unified Native
 2. Create a `struct MyTool: AgentTool, Sendable` in `Sources/EliteAgentCore/ToolEngine/Tools/`.
 3. Set `ubid` to `ToolUBID.myTool.rawValue`.
 4. Register in `Orchestrator`'s tool setup block via `ToolRegistry.shared.register(MyTool())`.
+
+### Key LLM Architecture (v3 Native)
+
+- `InferenceActor.generate()` uses `container.generate(input:parameters:wiredMemoryTicket:)` for regular inference.
+- Speculative decoding activates automatically when `draftModelContainer` is loaded (draft model at `{mainModelURL}-draft` or via `loadDraftModel(at:)`).
+- `enableThinking: false` → `additionalContext["enable_thinking": false]` suppresses Qwen 3.5 `<think>` blocks for chat (complexity == 1).
+- `enableThinking: true` is default for planning/tool-use (complexity > 1).
+- GenerateParameters configured in `InferenceActor.generate()`: kvBits=4, kvGroupSize=64, maxKVSize=8192, repetitionPenalty=1.15, topP=0.9, minP=0.05.
+
+---
 
 ## DEVLOG Requirement
 
@@ -105,6 +177,8 @@ After every completed task, **append** an entry to `Resources/Config/DEVLOG.md`:
 ```
 
 DEVLOG entries are **append-only**. Never edit or delete previous entries.
+
+---
 
 ## Key Dependencies
 

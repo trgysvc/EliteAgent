@@ -13,7 +13,8 @@
       "Bash(grep *)",
       "Bash(sort -t/ -k1)",
       "Read(//Users/trgysvc/Developer/openclaw/**)",
-      "Bash(log show *)"
+      "Bash(log show *)",
+      "Bash(xxd /Users/trgysvc/.gemini/GEMINI.md)"
     ]
   },
   "model": "opusplan"

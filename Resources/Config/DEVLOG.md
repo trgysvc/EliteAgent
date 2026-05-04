@@ -618,3 +618,17 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Decision made:** `enable_thinking: false` = Qwen 3.5 think block'u tamamen atlar, sadece cevabı üretir. "merhaba" için beklenen: 256 max token × 13 TPS = max 20 saniye (önceki ~90 saniye). Planning için thinking açık kalıyor, model tool call kararı vermeden önce düşünebiliyor.
 
 **Next:** App rebuild edip test: "merhaba" < 5 saniye, temiz cevap, markdown yok.
+
+### [2026-05-04] — Performance Optimizations: Wired Memory, Rotating KV Cache, Speculative Decoding
+
+**What changed:**
+- **Item 5 (Rotating KV Cache):** Added `parameters.maxKVSize = 8192` to `InferenceActor.generate()`. Uses `RotatingKVCache` instead of unbounded `KVCacheSimple` — prevents OOM on long conversations and reduces memory pressure during extended agentic loops.
+- **Item 4 (Wired Memory):** After `loadModel()` succeeds, runs `WiredMemoryUtils.tune()` in a background `Task` to measure real weight/KV/workspace bytes. Each `generate()` call creates a `WiredBudgetPolicy` ticket and passes it to `container.generate(wiredMemoryTicket:)`, pinning model weights in RAM for lower first-token latency.
+- **Item 6 (Speculative Decoding):** Added `draftModelContainer: ModelContainer?`, `loadDraftModel(at:)` public API, and auto-detection of `{modelDir}-draft` sibling directory. When a draft model is loaded, `generate()` uses the speculative path via `MLXLMCommon.generate(input:parameters:context:draftModel:numDraftTokens:4:)` — proposes 4 tokens per round, verified by main model in parallel. `UnsafeTransferBox<T>` (`@unchecked Sendable`) mirrors MLXLMCommon's internal `SendableBox` pattern to safely move `LMInput` and `LanguageModel` across `@Sendable` closure boundaries.
+- **Cleanup:** `draftModelContainer` and `wiredMeasurement` cleared in both `restart()` and `unloadModel()`.
+
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+
+**Decision made:** `UnsafeTransferBox` is safe because model weights are evaluated (read-only) before inference; KV caches are per-inference (never shared). Pattern matches Apple's own internal `SendableBox` in MLXLMCommon. Speculative decoding is opt-in: only activates if a draft model is physically present at `{mainModelURL}-draft` or explicitly loaded via `loadDraftModel(at:)`.
+
+**Next:** To enable speculative decoding, place a compatible small model (same tokenizer family as main model) at the `-draft` path and restart. Example: for Qwen3.5-9B at `.../Models/qwen-3.5-9b-4bit`, place draft at `.../Models/qwen-3.5-9b-4bit-draft`.

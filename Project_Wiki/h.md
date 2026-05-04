@@ -1,44 +1,98 @@
-# Hot Memory (Güncel Durum) - 2026-05-01
+# Hot Memory (Güncel Durum) — 2026-05-04
 
-## ACTIVE MISSION: Native Sovereign Transition
-Sistemi reaktif yapıdan proaktif "Yerel Egemen" yapıya taşıma (Sprint: v7.0 Stability).
+## ACTIVE MISSION: Titan Engine v8.1 Optimizasyonu Tamamlandı
 
-## 🎯 TOP 3 PRIORITIES
-1. **Phase 1: Graph Mühürleme:** `mx.compile` + Fixed-Shape Padding entegrasyonu. (KRİTİK) 🚀
-2. **Phase 2: KV-Cache Frozen State:** Shared Prefix (`KVCache.offset`) ile TTFT optimizasyonu. 🏗️
-3. **Phase 3: Hardware IPC:** IOSurface tabanlı Zero-Copy XPC Transport araştırması. 🧪
+v8.1 sprint'i kapatıldı. Native tool calling, chat latency fix ve 3 performans optimizasyonu (Wired Memory, Rotating KV Cache, Speculative Decoding altyapısı) production'a alındı. Build temiz.
 
-## Proje Durumu (Specific Context)
-- **Versiyon:** 7.0.0 "Native Sovereign" (OFFICIAL RELEASE)
-- **Aktif Görev:** v7.0 kararlılık sprinti tamamlandı. "Hot Memory" (Sıcak Hafıza) süreklilik katmanı için altyapı hazır.
-- **Model:** Titan v2 (Qwen 3.5 MLX) - Yerel Çıkarım (Zero-Copy Enabled).
-- **Araç Seti:** 38 aktif araç, tamamı UBID (Unique Binary ID) ile UNO omurgasına kayıtlı.
-- **Güvenlik Katmanı:** Kritik araçlarda (TouchID) biyometrik onay ve Apple Events sandbox kısıtlamaları devrede.
+---
 
-## Teknik Detaylar (Hot context)
-- **Zero-Copy Highway:** SharedMemoryPool üzerinden veri transferi 0.1ms altına çekildi.
-- **VRAM Yönetimi:** UMA Watchdog ile OOM hataları %100 engelleniyor.
-- **UI:** Layout recursion hataları (0x5) giderildi, macOS 15.0+ Sequoia tam uyumluluğu sağlandı.
-- **Analiz:** `wiki/gap_analysis.md` (Vizyon) ve `wiki/tooling_landscape.md` (Araçlar) üzerinden sistemin native derinliği takip ediliyor.
+## 🎯 TAMAMLANAN (Bu Sprint)
 
-## Mimari Vizyon
-EliteAgent, her türlü middleware'den (LangChain vb.) arındırılmış, doğrudan Apple API'leri ve MLX ile konuşan bir "Native Sovereign" (Yerel Egemen) sistemdir. v7.0 ile UNO protokolü "Pointer-Native" seviyesine çekilerek sıfır kopyalama maliyetli veri transferi sağlanmıştır. Gelecek adım, bu işaretçilerin (pointers) oturumlar arası kalıcılığını sağlayacak "Hot Memory" implementasyonudur.
+### ✅ Native Tool Calling (Solution A)
+- `InferenceActor.generate(tools:enableThinking:)` → `UserInput(tools: toolSpecs)`
+- mlx-swift-lm `xmlFunction` formatı → `Generation.toolCall` → `InferenceChunk.toolCall`
+- `OrchestratorRuntime`: `handlePlanning()` ToolSpecs üretir, `handleExecution()` native path dispatch eder
+- `ToolRegistry.getTool(named:)` ile isim bazlı arama (UBID gereksiz native path'te)
+- `MLXProvider.extractThinkBlock()` → `<think>` bloklarını UI'dan gizler
 
-## Öğrenilmiş Dersler (Lessons Learned)
-- **VRAM Yönetimi:** 16GB sistemlerde rastgele VRAM kilitlenmelerini önlemek için Apple'ın `recommendedMaxWorkingSetSize` API'si kullanılmalı; hardcoded yüzdelerden (%55 vb.) kaçınılmalı.
-- **Döngü Engelleme:** Ajanın "Observation" mesajlarını görmezden gelip aynı hatalı komutu tekrarlamasını engellemek için SHA-256 tabanlı `LoopDetector` her zaman aktif tutulmalı.
-- **Bağlam Sıkıştırma:** Otomatik sıkıştırma (compaction) sırasında dosya yolları ve hata kodları silinirse ajan "yolunu kaybediyor". Bu veriler `Must-Preserve` listesinde kalmalı.
-- **Swift Versiyonu:** Dağıtık makinelerde çalışırken `Package.swift` tools version mismatch hatalarını önlemek için projenin en yaygın kararlı sürümü (örn. 6.0.0) hedeflenmeli.
-- **Path Migration:** Sistem güncellemelerinde `Models` klasörü taşınmazsa, kullanıcı modellerin silindiğini sanabiliyor; her zaman tam path migration yapılmalı.
-- **Layout Recursion:** SwiftUI `NSHostingController` içinde sonsuz döngüleri (0x5) önlemek için `sizingOptions = []` kuralı uygulanmalı.
+### ✅ Chat Latency Fix
+- `enable_thinking: false` → `additionalContext` → Qwen 3.5 `<think>` bloğunu tamamen atlar
+- 800 token → ~50 token: ~90s → <10s (13 TPS'de)
+- Lokal chat: minimal Türkçe system prompt, `maxTokens=256`, `complexity=1`
+- `stripRawMarkdown()` + `stripThinkingOutput()` → temiz UI çıktısı
 
-## Bekleyen İşlemler
-- `Project_Wiki` teknik dökümantasyon mührü vuruldu. ✅
-- Performans ve Optimizasyon Araştırması (v7.1 Revize) tamamlandı. ✅
-- `wiki/performance_roadmap.md` (v7.1) mühürlendi. ✅
-- **Sıradaki Odak Noktası:** Phase 1: `mx.compile` + Fixed-Shape Padding (Graph Mühürleme).
+### ✅ Performans: Rotating KV Cache (Item 5)
+- `parameters.maxKVSize = 8192` → `RotatingKVCache` aktif
+- Uzun konuşmalarda sınırsız KV büyümesi engellendi
 
-## Önemli Notlar
-- Donanım kısıtları artık sistemin "tasarım girdisi" olarak kabul ediliyor.
-- Her yeni araç veya özellik, MLX grafik yapısına ve Metal bant genişliğine olan etkisine göre değerlendirilecek.
+### ✅ Performans: Wired Memory (Item 4)
+- Model yüklendikten sonra `WiredMemoryUtils.tune()` arkaplanda çalışır
+- `WiredBudgetPolicy` + `WiredMemoryTicket` → her inference sırasında ağırlıklar RAM'de pinlenir
+- `makeWiredTicket()` → `container.generate(wiredMemoryTicket:)`
 
+### ✅ Performans: Speculative Decoding Altyapısı (Item 6)
+- `draftModelContainer: ModelContainer?` → `{mainModelURL}-draft` otomatik kontrol
+- `loadDraftModel(at:)` public API
+- `UnsafeTransferBox<T>` (@unchecked Sendable) ile `LMInput` + `LanguageModel` güvenli geçişi
+- `MLXLMCommon.generate(draftModel:numDraftTokens:4:)` — aktif olunca 2-4x TPS beklentisi
+
+### ✅ Kural İhlali Düzeltmesi (2026-05-04)
+- **Antigravity JSON ihlali** düzeltildi (2026-05-03 ihlalinin ardından)
+- `GEMINI.md` (Antigravity), `CLAUDE.md` (Claude Code), `Project_Wiki/rules.md` güncellendi
+- JSON yasağı artık her iki AI ajan dosyasında da çok daha açık ve somut örneklerle belirtildi
+
+---
+
+## 🎯 SIRADAKI ADIMLAR
+
+1. **Speculative Decoding Aktivasyonu:** Qwen3 family'den uyumlu 0.5B/1.5B model indir, `-draft` dizinine koy.
+2. **Wired Memory Validasyonu:** Logda `📊 [v3-Wired] Budget measured` satırını doğrula.
+3. **Kernel Fusion (Phase A):** MLX `mx.compile` + Fixed-Shape Padding (Attention, LayerNorm).
+4. **Prefix Sharing (Phase B):** Ortak system prompt için paylaşılan KV Cache pointer.
+5. **Qwen 3.5 9B test:** Gerçek agent görevlerinde native tool calling uçtan uca test.
+
+---
+
+## Versiyon ve Durum
+
+| Alan | Değer |
+|---|---|
+| Versiyon | v8.1 "Titan Optimized" |
+| Model | Qwen 3.5 9B (qwen-3.5-9b-4bit) |
+| Build | ✅ Temiz (swift build) |
+| Araç Sayısı | 38 (UBID ile kayıtlı) |
+| Native Tool Calling | ✅ Aktif (Qwen xmlFunction) |
+| Chat Latency | <10s (enable_thinking=false) |
+| KV Quantization | 4-bit, group=64, start=256 |
+| KV Cache | Rotating (8192 token window) |
+| Wired Memory | ✅ Altyapı hazır |
+| Speculative Decoding | 🟡 Altyapı hazır, draft model gerekli |
+
+---
+
+## Kritik Mimari Kararlar
+
+### JSON Kuralı (UNO)
+- `JSONEncoder`/`JSONDecoder` → SADECE `UNOExternalBridge.swift` içinde
+- İç veri → `PropertyListEncoder(outputFormat: .binary)` veya `AnyCodable`
+- Bu kural **2026-05-03'te** Antigravity tarafından ihlal edildi. Düzeltildi.
+
+### enableThinking Mantığı
+```
+complexity == 1  →  enableThinking = false  →  chat/classification (hızlı)
+complexity > 1   →  enableThinking = true   →  planning/tools (düşünme)
+```
+
+### Native vs. Legacy Tool Dispatch
+- **Native path:** `CompletionResponse.toolCalls` varsa → `ToolRegistry.getTool(named:)`
+- **Legacy path:** ThinkParser → `CALL([UBID]) WITH {...}` → UBID lookup
+- Lokal model: native path. Cloud model: legacy path (UBID tabanlı).
+
+---
+
+## Öğrenilmiş Dersler (Bu Sprint)
+
+- **enable_thinking=false** kritik: mlx-swift-lm'nin `additionalContext["enable_thinking": false]` API'si `<think>` bloğunu üretimden tamamen keser. Sonradan strip etmek yerine hiç üretmemek doğru yaklaşım.
+- **System prompt sessiz hata:** `InferenceActor.generate()` başlangıçta system mesajını hiç eklemiyordu. `mlxMessages.insert` ile düzeltildi.
+- **UnsafeTransferBox:** MLXLMCommon'ın package-internal `SendableBox` deseni gerektiğinde kopyalanabilir. @unchecked Sendable sarmalayıcısı, değer tiplerinin @Sendable closure'lara geçişini sağlar.
+- **AI ajan kuralları:** Yazılı kural olması yetmez. Kural dosyasının (GEMINI.md, CLAUDE.md) ilk satırlarında, somut kod örnekleriyle, "bu kural ihlal edildi" notu ile belirtilmesi gerekiyor.
