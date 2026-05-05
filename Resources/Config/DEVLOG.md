@@ -1,5 +1,11 @@
 # 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)
 
+### [2026-05-05] — v28.5: Widget Auto-Completion — Gereksiz Planlama Döngüleri Kaldırıldı
+**What changed:** `handleExecution` içine widget tespit edildiğinde döngüyü anında kıran (`return (false, "TASK_DONE")`) mantık eklendi. Daha önce widget basılmasına rağmen sistem bir tur daha "planning" yapmaya çalışıyor ve model (Qwen) "başarısız oldum" diyerek halüsinasyon üretiyordu. Artık `SystemDNA`, `WeatherDNA` veya `MusicDNA` widget'larından biri ekrana geldiği an, orchestrator görevi başarılı sayıp duruyor.
+**Files modified:** `OrchestratorRuntime.swift`
+**Decision made:** Widget zaten son kullanıcıya görsel olarak cevabı veriyor. Modelin widget üzerine yorum yapması (reflection) yerel çıkarım (local inference) hızını düşürüyor ve hata payını artırıyor. "Widget bunun için tasarlandı" ilkesi gereği bu tur bypass edildi.
+**Next:** Testler.
+
 ### [2026-05-05] — v28.4: Adaptif Bellek Koruması + Sınıflandırma Sertleştirme
 **What changed:** 
 1. **Adaptive MaxTokens:** Sistem termal durumu `serious/critical` olduğunda veya bellek baskısı arttığında `maxTokens` otomatik olarak 400'e düşürülüyor. Bu, KV cache taşmasını ve sistemin "swapping" nedeniyle yavaşlamasını engelliyor.

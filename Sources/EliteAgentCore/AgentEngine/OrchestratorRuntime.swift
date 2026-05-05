@@ -617,7 +617,7 @@ public actor OrchestratorRuntime {
         if response.content.contains("### ELITE AGENT KERNEL IDENTITY") || 
            response.content.contains("### EXECUTION PROTOCOLS (STATIC)") {
             AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🛡 [LEAK GUARD] Detected prompt leakage. Retrying Turn...")
-            return (true, nil) // Return to planning to retry with fresh context
+            return // Return to planning loop (handled by Orchestrator's turn logic)
         }
 
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
@@ -851,6 +851,11 @@ public actor OrchestratorRuntime {
                 // v21.1: Automatic Narrative Authority Trigger
                 if result.contains("_WIDGET]") {
                     await session.markWidgetAsRendered()
+                    // v28.5: Immediate Completion on Widget — If a widget was rendered, the user's goal
+                    // is likely fulfilled visually. Break orchestration loop immediately to prevent
+                    // redundant reflection turns and hallucinations.
+                    AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🛡 [WIDGET PASS] Task fulfilled via widget. Breaking loop.")
+                    return (false, "TASK_DONE")
                 }
                 
                 // v20.6: Direct Reflection - The System reflects data immediately to UI
