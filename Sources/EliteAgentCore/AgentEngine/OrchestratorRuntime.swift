@@ -594,17 +594,32 @@ public actor OrchestratorRuntime {
         let finalSystemPrompt = systemPrompt + speedHint
         let requestTools: [[String: any Sendable]]? = nil
 
+        // v28.4: Adaptive Context Length based on Memory Pressure
+        // If UMA Alert is warning or thermal state is high, we cap maxTokens to prevent swapping/sluggishness.
+        let thermal = ProcessInfo.processInfo.thermalState
+        let isStrained = thermal == .serious || thermal == .critical
+        let adaptiveMaxTokens = isStrained ? min(maxTokens, 400) : maxTokens
+
         let request = CompletionRequest(
             taskID: UUID().uuidString,
             systemPrompt: finalSystemPrompt,
             messages: history,
-            maxTokens: maxTokens,
+            maxTokens: adaptiveMaxTokens,
             sensitivityLevel: .public,
             complexity: 3,
             untrustedContext: untrustedContext,
             tools: requestTools
         )
         let response = try await provider.complete(request, useSafeMode: useSafeMode)
+        
+        // v28.4: Prompt Leakage Guard
+        // Detect if the model started echoing system prompt instructions (Identity, Protocols, etc.)
+        if response.content.contains("### ELITE AGENT KERNEL IDENTITY") || 
+           response.content.contains("### EXECUTION PROTOCOLS (STATIC)") {
+            AgentLogger.logAudit(level: .error, agent: "Orchestrator", message: "🛡 [LEAK GUARD] Detected prompt leakage. Retrying Turn...")
+            return (true, nil) // Return to planning to retry with fresh context
+        }
+
         AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN RESPONSE] \(response.content)")
         if let calls = response.toolCalls, !calls.isEmpty {
             AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🎯 [PLAN NATIVE CALLS] \(calls.map { $0.tool }.joined(separator: ", "))")

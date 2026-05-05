@@ -11,20 +11,21 @@ public struct PlannerTemplate: Sendable {
             // v19.7.7: Unmask full descriptions and parameter requirements for the Planner
             toolsToDisplay = subset.map { "- [\($0.ubid)] \($0.name): \($0.description)" }
         } else {
-            // Default to Master Toolset if no subset provided (Full Escalation Mode)
-            toolsToDisplay = [
-                "- [18] `music_dna`: Professional audio/music analysis (LUFS, BPM, MFCC). Param: path (string).",
-                "- [32] `shell_exec`: Terminal command execution (zsh). Param: command (string).",
-                "- [33] `read_file`: Reads file content using native Swift APIs. Param: path (string).",
-                "- [34] `write_file`: Writes file content using native Swift APIs (MANDATORY). Params: path, content.",
-                "- [37] `messenger`: Sends iMessage/WhatsApp messages (Native).",
-                "- [40] `safari_automation`: Safari automation and Google search (NATIVE).",
-                "- [45] `web_search`: Performs Google search (WebFetch). Param: query (string).",
-                "- [60] `blender_3d`: Professional Blender Operator (Full API Access). Create 3D scenes, objects, materials, and render. Params: action (execute_script, create_scene, add_mesh, add_light, render), script (Python bpy code for execute_script).",
-                "- [81] `get_weather`: Native weather telemetry. Param: location (string), day (optional string).",
-                "- [85] `id3_processor`: Recursive Native Music Processor (ID3 metadata, cover art, clean rename). Param: directory (string), custom_tags (dictionary, optional - e.g. {'TPE1': 'Artist', 'TALB': 'Album'}).",
-                "- [88] `app_launcher`: Natively launch macOS applications (Safe & Sandbox-friendly). Param: app_name (string)."
-            ]
+            // v28.2: Dynamic Full Escalation — query ToolRegistry for ALL registered tools.
+            // Previous hardcoded list was stale (11 of 38 tools). Now auto-syncs with registry.
+            let allTools = await ToolRegistry.shared.listTools()
+            if !allTools.isEmpty {
+                toolsToDisplay = allTools.map { "- [\($0.ubid)] \($0.name): \($0.description)" }
+            } else {
+                // Absolute fallback if registry is somehow empty (should never happen)
+                toolsToDisplay = [
+                    "- [32] `shell_exec`: Terminal command execution (zsh). Param: command (string).",
+                    "- [33] `read_file`: Reads file content. Param: path (string).",
+                    "- [34] `write_file`: Writes file content. Params: path, content.",
+                    "- [88] `app_launcher`: Launch macOS applications. Param: app_name (string).",
+                    "- [44] `memory`: Persistent memory search/save. Actions: search, save."
+                ]
+            }
         }
         
         return """
@@ -48,7 +49,6 @@ public struct PlannerTemplate: Sendable {
         
         ### CURRENT TOOLS (STABLE):
         \(toolsToDisplay.joined(separator: "\n"))
-        - [30] `visual_audit`: Analyzes screen windows, text, and UI elements.
         
         ### 🛡 SHELL SAFETY:
         - Wrap EACH path or argument in its own SEPARATE set of SINGLE QUOTES `'`.

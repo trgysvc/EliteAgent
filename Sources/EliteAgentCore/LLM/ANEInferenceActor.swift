@@ -41,9 +41,13 @@ public actor ANEInferenceActor {
             "hesapla", "çarpı", "bölü", "artı", "eksi", "kaç eder", "kaçtır", "topla",
             "kaç yaşında", "nedir", "ne demek", "kim", "nerede", "ne zaman",
             "what time", "what date", "what day", "calculate", "how old", "what is",
-            "kaç", "kaçta"
+            "kaç", "kaçta", "çalışan", "uygulama", "process", "bellek", "hafıza", "işlemci"
         ]
         if simpleQuestionMarkers.contains(where: { lowerPrompt.contains($0) }) {
+            // v28.4: Direct redirect to system management if keywords match
+            if lowerPrompt.contains("uygulama") || lowerPrompt.contains("process") {
+                return .systemManagement
+            }
             return .chat
         }
 

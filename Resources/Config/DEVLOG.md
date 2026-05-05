@@ -1,5 +1,20 @@
 # 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)
 
+### [2026-05-05] — v28.4: Adaptif Bellek Koruması + Sınıflandırma Sertleştirme
+**What changed:** 
+1. **Adaptive MaxTokens:** Sistem termal durumu `serious/critical` olduğunda veya bellek baskısı arttığında `maxTokens` otomatik olarak 400'e düşürülüyor. Bu, KV cache taşmasını ve sistemin "swapping" nedeniyle yavaşlamasını engelliyor.
+2. **Prompt Leakage Guard:** Modelin kafası karıştığında kendi sistem prompt'unu cevap olarak üretmesi (leakage) durumunda, bu durum tespit ediliyor ve tur otomatik olarak retry ediliyor.
+3. **ANE Hardening:** "Uygulama", "çalışan", "process" gibi anahtar kelimeler `ANEInferenceActor`'e eklendi. Artık "şu an ne çalışıyor" gibi sorular LLM'in insafına kalmadan doğrudan `systemManagement` kategorisine (hızlı araçlar) yönlendiriliyor, ağır `VISION` kategorisinden kaçınılıyor.
+**Files modified:** `OrchestratorRuntime.swift`, `ANEInferenceActor.swift`
+**Decision made:** Bellek baskısı altında modelin performansı dramatik düşüyor. Adaptif limitler bu darboğazı yönetmek için şart. Sınıflandırma hataları ise en büyük zaman kaybı kaynağı olduğu için deterministik kurallar artırıldı.
+**Next:** `SystemDNA` widget'ının performansını izle.
+
+### [2026-05-05] — v28.3: Dinamik Araç Listesi — Hardcoded Fallback Kaldırıldı
+**What changed:** `PlannerTemplate.generateAgenticPrompt`'taki hardcoded 11 araçlık fallback listesi kaldırıldı. Yerine `ToolRegistry.shared.listTools()` ile dinamik sorgu konuldu — artık escalation modunda modele tüm kayıtlı araçlar (38+) UBID, isim ve description ile iletiliyor. Ayrıca kategoriden bağımsız olarak her zaman eklenen hardcoded `visual_audit [30]` satırı da kaldırıldı — bu araç artık sadece `.vision` kategorisinde subset olarak geliyor.
+**Files modified:** `PlannerTemplate.swift`
+**Decision made:** Hardcoded araç listesi bakım yükü oluşturuyordu — yeni araç eklendiğinde PlannerTemplate güncellenmesi unutuluyordu. ToolRegistry zaten tüm araçları tutuyor, bu bilgiyi direkt kullanmak DRY prensibine uygun. Empty registry durumu için minimal 5 araçlık absolute fallback korundu.
+**Next:** Uygulamayı Xcode'dan yeniden çalıştır. Escalation modunu test etmek için healing gerektiren bir senaryo dene (ör: 2+ hatalı komut).
+
 ### [2026-05-05] — v28.2: Review Döngüsü Düzeltmesi + Widget Auto-Pass + Turn Limit Azaltma
 **What changed:** Xcode loglarında tespit edilen 3 kritik sorun düzeltildi:
 1. **Reviewer `<think>` bloğu üretip skor vermiyor** — Critic modeli dev bir `<think>` analizi yapıp hiç `[SCORE: X] [RESULT: UNOB:PASS]` üretmiyordu → `resultString.contains("UNOB:PASS")` her zaman false → sonsuz döngü. Fix: `handleReview`'de `ThinkParser.cleanForUI()` reviewer yanıtına uygulanıp think blokları temizlendikten sonra PASS/FAIL kontrolü yapılıyor.
