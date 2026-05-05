@@ -58,6 +58,7 @@ public class Orchestrator: ObservableObject {
     private var taskQueue: [QueuedTask] = []
     private var isProcessingTask = false
     private var registrationTask: Task<Void, Never>?
+    private var syncTask: Task<Void, Never>?
     
     public init() {
         let secretString = "ELITE_BUS_SECRET"
@@ -113,23 +114,19 @@ public class Orchestrator: ObservableObject {
                 forName: .activeProviderChanged,
                 object: nil,
                 queue: .main
-            ) { [weak self] note in
-                guard let self = self else { return }
-                // v9.9.16: Optimized NW check
-                guard let model = note.userInfo?["model"] as? ModelSource else { return }
-                
+            ) { [weak self] _ in
                 Task { @MainActor in
-                    switch model {
-                    case .localMLX(let id, let name, _, _):
-                        self.providerUsed = name
-                        if let localProv = self.localProvider {
-                            Task { try? await localProv.loadModel(id) }
-                        }
-                    case .openRouter(_, let name, _, _, _, _):
-                        self.providerUsed = name
-                    default:
-                        break
-                    }
+                    await self?.syncLocalServer()
+                }
+            }
+
+            NotificationCenter.default.addObserver(
+                forName: .draftModelLoaded,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    await self?.syncLocalServer()
                 }
             }
             
@@ -198,6 +195,7 @@ public class Orchestrator: ObservableObject {
             await group.register(TimerTool())
             
             // Advanced Ops Tools
+            await group.register(AppLauncherTool())
             await group.register(ShellTool())
             await group.register(PatchTool())
             await group.register(GitTool())
@@ -713,11 +711,17 @@ public class Orchestrator: ObservableObject {
 
     @MainActor
     public func syncLocalServer() async {
-        let isEnabled = config.isLocalServerEnabled
-        let port = config.localServerPort
-        let server = LocalInferenceServer.shared
+        syncTask?.cancel()
         
-        Task.detached {
+        syncTask = Task {
+            // v11.5: Debounce sync to prevent rapid start/stop loops during init
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+            if Task.isCancelled { return }
+            
+            let isEnabled = config.isLocalServerEnabled
+            let port = config.localServerPort
+            let server = LocalInferenceServer.shared
+            
             if isEnabled {
                 try? await server.start(portNumber: port)
             } else {

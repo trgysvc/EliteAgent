@@ -165,47 +165,73 @@ public actor InferenceActor {
         var parameters = GenerateParameters(maxTokens: maxTokens, temperature: 0.6)
         parameters.repetitionPenalty = 1.15
         parameters.repetitionContextSize = 64
-        parameters.kvBits = 4
-        parameters.kvGroupSize = 64
-        parameters.quantizedKVStart = 256
+        
+        // Item 6: Speculative Decoding Stability — MLX requires a KVCacheSimple (FP16, trimmable).
+        // QuantizedKVCache is NOT trimmable, so ANY quantization parameter (kvBits, quantizedKVStart,
+        // kvGroupSize) must be left at their defaults (nil/unset) when the draft model is active.
+        // Setting quantizedKVStart=0 or kvGroupSize while kvBits=nil can still trigger a
+        // QuantizedKVCache in some mlx-swift-lm versions, causing KVCacheError at runtime.
+        if draftModelContainer != nil {
+            AgentLogger.logInfo("📊 [v3-Speculative] KV cache: FP16/Simple (trimmable). quantizedKVStart and kvGroupSize left at defaults.")
+            parameters.kvBits = nil
+            parameters.maxKVSize = nil
+            // quantizedKVStart and kvGroupSize intentionally NOT set — defaults prevent QuantizedKVCache.
+        } else {
+            parameters.kvBits = 4
+            parameters.kvGroupSize = 64
+            parameters.quantizedKVStart = 256
+            parameters.maxKVSize = 8192 // Standard rotating cache for non-speculative path
+        }
         parameters.topP = 0.9
         parameters.minP = 0.05
-        // Item 5: Rotating KV Cache — caps unbounded KV growth; old entries evicted beyond window
-        parameters.maxKVSize = 8192
 
-        // additionalContext["enable_thinking"] is the official mlx-swift-lm API for Qwen 3.5.
-        // false = skip <think> block entirely → dramatically faster responses for chat.
-        let additionalContext: [String: any Sendable]? = enableThinking ? nil : ["enable_thinking": false]
+        // additionalContext: always nil. Passing enable_thinking=false (or 0) through swift-jinja
+        // breaks because Value.compare() has no boolean case (sameas) and isEquivalent() type
+        // mismatch (Int vs Bool) causes the template's != false check to return true, forcing
+        // <think> into the generation prompt and consuming the token budget before the real answer.
+        // The model self-selects thinking vs no-thinking based on task complexity.
+        // Think blocks are cleaned by extractThinkBlock in MLXProvider.complete().
+        let additionalContext: [String: any Sendable]? = nil
 
         return AsyncStream(InferenceChunk.self) { continuation in
             let task = Task { [parameters] in
                 do {
                     let userInput = UserInput(messages: mlxMessages, tools: tools, additionalContext: additionalContext)
                     let input = try await container.prepare(input: userInput)
-
+                    
                     // Item 4: Wired Memory ticket — pins weights+workspace in RAM during inference
                     let wiredTicket = self.makeWiredTicket()
 
-                    // Item 6: Speculative Decoding — use draft model if loaded, else regular path
+                    // Item 6: Speculative Decoding — use draft model if loaded, else regular path.
+                    // Two boxes: inputBox for the speculative attempt, inputFallback for the standard
+                    // generation fallback in case the model's makeCache() returns a non-trimmable cache.
                     let resultStream: AsyncStream<Generation>
                     if let draftContainer = self.draftModelContainer {
-                        // Extract draft LanguageModel (weights read-only after eval — thread-safe)
                         let draftBox = await draftContainer.perform { ctx in
                             UnsafeTransferBox<any LanguageModel>(ctx.model)
                         }
-                        // Box LMInput to safely cross the @Sendable closure boundary
                         let inputBox = UnsafeTransferBox(input)
-                        resultStream = try await container.perform { mainCtx -> AsyncStream<Generation> in
-                            try MLXLMCommon.generate(
-                                input: inputBox.take(),
-                                parameters: parameters,
-                                context: mainCtx,
-                                draftModel: draftBox.take(),
-                                numDraftTokens: 4,
-                                wiredMemoryTicket: wiredTicket
-                            )
+                        let inputFallback = UnsafeTransferBox(input)
+
+                        do {
+                            resultStream = try await container.perform { mainCtx -> AsyncStream<Generation> in
+                                try MLXLMCommon.generate(
+                                    input: inputBox.take(),
+                                    parameters: parameters,
+                                    context: mainCtx,
+                                    draftModel: draftBox.take(),
+                                    numDraftTokens: 4,
+                                    wiredMemoryTicket: wiredTicket
+                                )
+                            }
+                            AgentLogger.logInfo("🚀 [v3-Speculative] Speculative decoding active (numDraftTokens=4)")
+                        } catch {
+                            // Model's KV cache is not trimmable — disable draft model permanently and
+                            // fall back to standard generation so the current request still completes.
+                            AgentLogger.logInfo("⚠️ [v3-Speculative] Cache incompatible (\(error.localizedDescription)). Draft model disabled. Falling back to standard generation.")
+                            self.draftModelContainer = nil
+                            resultStream = try await container.generate(input: inputFallback.take(), parameters: parameters, wiredMemoryTicket: wiredTicket)
                         }
-                        AgentLogger.logInfo("🚀 [v3-Speculative] Speculative decoding active (numDraftTokens=4)")
                     } else {
                         resultStream = try await container.generate(input: input, parameters: parameters, wiredMemoryTicket: wiredTicket)
                     }
@@ -220,7 +246,36 @@ public actor InferenceActor {
                         case .info(let metrics):
                             self.lastTPS = metrics.tokensPerSecond
                             AgentLogger.logInfo("📊 [v3-Engine] TPS: \(metrics.tokensPerSecond.formatted())")
-                            continuation.yield(.metrics(promptTokens: metrics.promptTokenCount, completionTokens: metrics.generationTokenCount, tps: metrics.tokensPerSecond))
+                            
+                            var specMetrics: SpeculativeDecodingMetrics? = nil
+                            
+                            // v3.31.3: Use Mirror to safely extract speculative metrics across library versions
+                            let mirror = Mirror(reflecting: metrics)
+                            var draftCount = 0
+                            var acceptedCount = 0
+                            for child in mirror.children {
+                                if child.label == "draftTokenCount" || child.label == "draftCount" {
+                                    draftCount = (child.value as? Int) ?? 0
+                                }
+                                if child.label == "acceptedDraftTokenCount" || child.label == "acceptedCount" {
+                                    acceptedCount = (child.value as? Int) ?? 0
+                                }
+                            }
+
+                            if draftCount > 0 {
+                                specMetrics = SpeculativeDecodingMetrics(
+                                    totalDraftTokensGenerated: draftCount,
+                                    acceptedDraftTokens: acceptedCount
+                                )
+                                self.logSpeculativeMetrics(metrics: specMetrics!)
+                            }
+                            
+                            continuation.yield(.metrics(
+                                promptTokens: metrics.promptTokenCount,
+                                completionTokens: metrics.generationTokenCount,
+                                tps: metrics.tokensPerSecond,
+                                speculative: specMetrics
+                            ))
                         case .toolCall(let call):
                             // Convert mlx-swift-lm ToolCall → InferenceChunk.toolCall
                             AgentLogger.logInfo("🎯 [v3-Engine] Native tool call: \(call.function.name)")
@@ -307,6 +362,21 @@ public actor InferenceActor {
                           userInfo: [NSLocalizedDescriptionKey: "Draft model tokenizer incompatible (vocab \(draft) ≠ \(main))."])
         }
 
+        // Architecture compatibility check: speculative decoding requires ALL KV caches to be
+        // trimmable. Hybrid SSM-Attention models (e.g. Qwen3.5) have MambaCache layers which are
+        // never trimmable. Loading the draft model for such architectures wastes RAM with no benefit.
+        guard let mainContainer = modelContainer else { return }
+        // Return Bool (Sendable) — returning [any KVCache] across the @Sendable closure boundary
+        // violates Swift 6 data-race safety since KVCache is not Sendable.
+        let allTrimmable = try await mainContainer.perform { ctx in
+            ctx.model.newCache(parameters: nil).allSatisfy { $0.isTrimmable }
+        }
+        guard allTrimmable else {
+            AgentLogger.logInfo("⛔ [v3-Speculative] Main model has non-trimmable KV cache (hybrid SSM/Mamba architecture). Draft model not loaded — speculative decoding is architecturally incompatible.")
+            throw NSError(domain: "EliteAgent", code: 415,
+                          userInfo: [NSLocalizedDescriptionKey: "Speculative decoding requires trimmable KV caches. This model architecture (hybrid SSM) is incompatible. Draft model not loaded."])
+        }
+
         draftModelContainer = try await loadModelContainer(from: url)
         AgentLogger.logInfo("🚀 [v3-Speculative] Draft model loaded: \(url.lastPathComponent) (vocab:\(draftVocabSize ?? 0))")
     }
@@ -383,5 +453,19 @@ public actor InferenceActor {
         guard let buffer = sharedBuffer.buffer else { return }
         let ptr = buffer.contents().bindMemory(to: Float.self, capacity: 1)
         ptr[0] = Float(activationValue)
+    }
+
+    /// Logs speculative decoding efficiency based on acceptance rate.
+    private func logSpeculativeMetrics(metrics: SpeculativeDecodingMetrics) {
+        let rate = metrics.acceptanceRate * 100.0
+        let formattedRate = String(format: "%.1f", rate)
+        
+        if rate >= 60.0 {
+            AgentLogger.logInfo("🚀 [SpecDec Mükemmel] Kabul Oranı: %\(formattedRate) (Draft: \(metrics.totalDraftTokensGenerated), Kabul: \(metrics.acceptedDraftTokens))")
+        } else if rate >= 35.0 {
+            AgentLogger.logInfo("📊 [SpecDec Normal] Kabul Oranı: %\(formattedRate)")
+        } else {
+            AgentLogger.logInfo("⚠️ [SpecDec Verimsiz] Kabul Oranı: %\(formattedRate). Taslak model overhead yaratıyor olabilir.")
+        }
     }
 }

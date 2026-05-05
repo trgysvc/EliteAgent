@@ -73,7 +73,7 @@ public actor MLXProvider: LocalLLMProvider {
             case .token(let text):
                 if firstTokenTime == nil { firstTokenTime = Date() }
                 fullContent += text
-            case .metrics(let prompt, let completion, let tps):
+            case .metrics(let prompt, let completion, let tps, _):
                 finalMetrics = (prompt, completion, tps)
             case .tool(let call):
                 AgentLogger.logInfo("🛠 [MLX-Provider] Tool indicated: \(call)")

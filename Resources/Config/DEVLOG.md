@@ -1,5 +1,23 @@
 # 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)
 
+### [2026-05-05] — Speculative Decoding KVCacheError Fallback + Chat Template Eksikliği
+**What changed:** `InferenceActor.generate()` speculative decoding dalına KVCacheError fallback eklendi. Araştırma bulgusu: `RotatingKVCache` (maxKVSize > 0 olduğunda yaratılır) trimmable DEĞİL; dolayısıyla speculative decoding ile uyumlu değil. `QuantizedKVCache` trimmable, `KVCacheSimple` trimmable. Speculative decoding başarısız olduğunda: (1) `draftModelContainer = nil` ile draft model devre dışı bırakılır, (2) `inputFallback` box'ı üzerinden standart generation'a geçilir — mevcut istek yanıtsız kalmaz. `quantizedKVStart = 0` ve `kvGroupSize = 1` parametreleri speculative dalından kaldırıldı. Her iki model dizinine Qwen3 resmi chat_template eklendi.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`, `~/Library/Application Support/EliteAgent/Models/qwen-3.5-9b-4bit/tokenizer_config.json`, `~/Library/Application Support/EliteAgent/Models/qwen-3.5-0.8b-4bit/tokenizer_config.json`
+**Decision made:** Speculative decoding için robust fallback pattern: try-catch ile SpecDec dene, KVCacheError'da draftModelContainer'ı nil yap ve standard generate'e düş. İki UnsafeTransferBox (inputBox + inputFallback) aynı LMInput'u bağımsız tutmak için kullanılır.
+**Next:** Build SUCCEEDED. Uygulamayı Xcode'dan yeniden çalıştır. İlk istekte "Draft model disabled" logu görünecek, ardından standart generation çalışacak.
+
+### [2026-05-05] — Chat Template `sameas` Bug: swift-jinja Boolean Compare Hatası
+**What changed:** `swift-jinja` kütüphanesinin `Value.compare(to:)` metodu `.boolean` case içermiyor — dolayısıyla `{%- if enable_thinking is sameas false %}` Jinja ifadesi `JinjaError.runtime("Cannot compare values of different types (false and false)")` fırlatıyor. `isEquivalent(to:)` metodu boolean case içeriyor. Çözüm: her iki modelin `tokenizer_config.json` chat_template'indeki tüm `is sameas false` → `== false` ve `is not sameas false` → `!= false` olarak değiştirildi. Swift kodu değiştirilmedi — `additionalContext["enable_thinking": false]` Swift Bool olarak kalmaya devam ediyor.
+**Files modified:** `~/Library/Application Support/EliteAgent/Models/qwen-3.5-9b-4bit/tokenizer_config.json`, `~/Library/Application Support/EliteAgent/Models/qwen-3.5-0.8b-4bit/tokenizer_config.json`
+**Decision made:** `sameas` = identity test → `compare(to:)` (boolean'ı desteklemez). `==` = equality → `isEquivalent(to:)` (boolean destekler). Jinja template'lerde boolean karşılaştırması için `==` kullanılmalı.
+**Next:** Uygulamayı yeniden çalıştır.
+
+### [2026-05-05] — Qwen3.5 Draft Model RAM İsrafı + Garbled Response Düzeltmesi
+**What changed:** (1) `InferenceActor.loadDraftModel`: draft yüklemeden önce main model'in KV cache trimmability'sini kontrol eder. Qwen3.5'in 32 katmanının 24'ü Mamba (MambaCache, isTrimmable=false) → `allSatisfy { $0.isTrimmable }` = false → draft model HİÇ yüklenmiyor, ~1-2 GB RAM kurtarılıyor. (2) `InferenceActor.generate()`: `additionalContext = nil` yapıldı (önceki `["enable_thinking": 0]` idi). Int(0) vs Bool(false) karşılaştırması swift-jinja'da false döndüğünden template `enable_thinking != false = true` görüyordu, `<think>` ekliyordu, 256 token bütçesini think bloğu tüketiyordu, geriye `** Ensure` kalıyordu. (3) `OrchestratorRuntime.handleChatting`: local maxTokens 256 → 1024 artırıldı (think bloğu dahil yeterli alan).
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`, `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`
+**Decision made:** Qwen3.5 (Hybrid SSM-Attention, fullAttentionInterval=4) speculative decoding ile mimari olarak uyumsuz. Draft model için erken kontrol, sisteme gereksiz yük bindirmemek için doğru pattern.
+**Next:** Build SUCCEEDED. Uygulamayı yeniden çalıştır ve "merhaba" dene.
+
 ### [2026-05-04] — Qwen 3.5 Model ID Düzeltmeleri ve JSON Kural İhlalleri Giderildi
 **What changed:** `ModelManager.setupLocalProvider` içindeki `.high` tier model ID'si `qwen-3.5-7b-4bit` (katalogda olmayan) → `qwen-3.5-9b-4bit`; `.low` tier `qwen-2.5-3b-4bit` (katalogda olmayan) → `qwen-2.5-7b-4bit`. `ModelSetupManager.validateModelArchitecture` listesine `Qwen3_5ForCausalLM` eklendi. `getHuggingFaceURL` artık internal ID yerine katalog `downloadURL`'inden base path türetiyor (Qwen3.5-9B-OptiQ-4bit repo adı için kritikti). JSON kural ihlalleri temizlendi: `ModelManager.verifyIntegrity` ve `patchQwen35Config`, `ID3EditorTool`, `SystemDataView`, `LocalInferenceServer` artık UNOExternalBridge üzerinden geçiyor. UNOExternalBridge'e `encodeEncodable` ve `decodeExternalDecodable` metodları eklendi.
 **Files modified:** `Sources/EliteAgentCore/LLM/ModelManager.swift`, `Sources/EliteAgentCore/LLM/ModelSetupManager.swift`, `Sources/EliteAgentCore/LLM/UNOExternalBridge.swift`, `Sources/EliteAgentCore/LLM/LocalInferenceServer.swift`, `Sources/EliteAgentCore/ToolEngine/Tools/ID3EditorTool.swift`, `Sources/EliteAgent/App/Components/System/SystemDataView.swift`
@@ -669,3 +687,79 @@ Aşağıdaki girişler `DEVLOG.md` (kök) dosyasından taşınmıştır. Bundan 
 **Decision made:** Draft model kullanıcı tarafından indirilmemeli. Ana model seçilince `ModelManager` arka planda draft modeli otomatik indirir ve engine'e yükler. Kullanıcı perspektifinden sıfır aksiyon, sıfır konfigürasyon. Speculative decoding şeffaf şekilde aktive olur.
 
 **Next:** UI'da `draftModelStatus` değerine bakarak küçük bir "⚡" badge gösterilebilir (opsiyonel). Mevcut haliyle draft indirme sessizce çalışır.
+
+### [2026-05-05] — Capability Audit: Tool Name Mismatches Fixed + Test Suite Added
+
+**What changed:** Kapsamlı yetenek testi yapıldı. İki kritik bug ve 10+ sessiz hata tespit edilip düzeltildi. 20 testlik `CapabilityTests` paketi eklendi.
+
+**Files modified:** `Sources/EliteAgentCore/ToolEngine/CategoryMapper.swift`, `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`, `Tests/EliteAgentTests/CapabilityTests.swift`
+
+**Decision made:** 
+1. `CategoryMapper` — 10+ araç ismi gerçek `tool.name` property'leriyle eşleşmiyordu (google_search→web_search, native_browser→browser_native, patch_tool→patch_file, vb.). Araçlar sessizce atlıyordu (crash değil, sessiz hata).
+2. `buildToolSpecs` — `"messenger"` ve `"visual_audit"` anahtarları gerçek araç isimleriyle eşleşmiyordu. Native tool calling modunda model bu araçları çağırsa registry'de bulunamıyordu. `"send_message_via_whatsapp_or_imessage"` ve `"analyze_image"` olarak düzeltildi. `web_fetch`, `git_action`, `patch_file`, `get_system_info`, `get_system_telemetry` spec'leri eklendi.
+
+**Next:** Uygulama ortamında gerçek konuşma, araç çağrısı (hava durumu, shell, dosya) ve native tool calling akışını elle test et.
+
+### [2026-05-05] — Capability Audit Follow-up: AppLauncherTool Fix + Complete Tool Inventory
+
+**What changed:** İkinci audit turunda ChicagoVisionTool (visual_audit) gözden kaçtı. Düzeltildi. AppLauncherTool hiç kayıt edilmemişti — Orchestrator'a eklendi.
+
+**Files modified:** `Sources/EliteAgentCore/AgentEngine/Orchestrator.swift`, `Sources/EliteAgentCore/ToolEngine/CategoryMapper.swift`, `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`, `Tests/EliteAgentTests/CapabilityTests.swift`
+
+**Decision made:** Tüm araçlar (38) tek tek doğrulandı. Eksik kayıt: `AppLauncherTool` (app_launcher) hiç register edilmemişti — kullanıcı "uygulama aç" dediğinde sessizce başarısız oluyordu. Vision kategorisi hem `visual_audit` (ChicagoVisionTool — ekran yakalama) hem `analyze_image` (ImageAnalysisTool — dosya analizi) içermeli.
+
+**Next:** Araç test kapsamını genişlet — şu an 20 test: intent sınıflandırma, araç isim validasyonu, 7 araç execution. Kalan 31 araç execution testi yok.
+
+### [2026-05-05] — Fix LocalInferenceServer /api/agent structure + add /api/health endpoint
+**What changed:** Rewrote LocalInferenceServer.swift to fix structural errors where `handleAgentRequest` and `sendAgentResponse` had landed outside the actor body. Both methods are now correctly inside the `LocalInferenceServer` actor. The `/api/health` route now wraps its async `InferenceActor.shared.isModelLoaded` call in a `Task {}` so it compiles in the non-async `processRequest` method.
+**Files modified:** Sources/EliteAgentCore/LLM/LocalInferenceServer.swift
+**Decision made:** Full `OrchestratorRuntime` pipeline is now exposed at `POST /api/agent` — reuses `ToolRegistry.shared` (38 tools) and `VaultManager.shared` from the running app. `AgentResponseCollector` actor captures `onChatMessage` callbacks thread-safely for the API response.
+**Next:** Run Antigravity API test suite against the running app on port 11500 to validate all 38 tools via the `/api/agent` endpoint.
+
+### [2026-05-05] — Local API Lifecycle Stabilization: Debounced Sync + Model-Ready Triggers
+**What changed:** Fixed the API server race condition where multiple concurrent start/stop attempts during app initialization would cancel each other out. Implemented a 500ms debounced synchronization mechanism in `Orchestrator.syncLocalServer()`. Added `.draftModelLoaded` notification to track the completion of speculative decoding loading.
+**Files modified:** `Sources/EliteAgentCore/AgentEngine/Orchestrator.swift`, `Sources/EliteAgentCore/LLM/ModelManager.swift`, `Sources/EliteAgentCore/LLM/LLMTypes.swift`
+**Decision made:** The Local API server now automatically starts (if enabled) only after the main model and draft models are fully loaded and primed in VRAM. This ensures port 11500 is only opened when the underlying inference engine is actually ready to serve requests.
+**Next:** Validate the stable port binding and execute the comprehensive tool test plan via the `/api/agent` endpoint.
+
+### [2026-05-05] — Speculative Decoding Stability Fix: KV Cache Trimming
+**What changed:** Resolved `KVCacheError: Speculative decoding requires trimmable KV caches` by disabling KV quantization (`kvBits = 4`) whenever a draft model is active.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** MLX-LM's speculative decoding requires the ability to trim the KV cache to discard rejected draft tokens. Since 4-bit KV quantization currently prevents this trimming, we force the use of uncompressed (FP16/BF16) KV caches during speculative sessions to maintain system stability.
+**Next:** Monitor VRAM usage during speculative decoding to ensure memory pressure remains within limits.
+
+### [2026-05-05] — Speculative Decoding Telemetry: Acceptance Rate Tracking
+**What changed:** Integrated native telemetry for Speculative Decoding. Added `SpeculativeDecodingMetrics` and logic to `InferenceActor` to calculate and log the "Acceptance Rate" of draft tokens.
+**Files modified:** `Sources/EliteAgentCore/LLM/LLMTypes.swift`, `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** To optimize inference performance, we must know if the draft model is actually contributing or causing overhead. The system now logs specific performance tiers (Excellent >60%, Normal >35%, Inefficient <35%) based on the main model's acceptance of draft predictions.
+**Next:** Analyze acceptance rates across different task types (Chat vs. Planning) to further refine draft model selection.
+
+### [2026-05-05] — Build Fix: InferenceChunk Pattern Matching
+**What changed:** Updated `MLXProvider` to match the new `InferenceChunk.metrics` signature which now includes speculative decoding telemetery.
+**Files modified:** `Sources/EliteAgentCore/LLM/MLXProvider.swift`
+**Decision made:** Ensuring all consumers of the `InferenceChunk` stream are synchronized with the architectural changes in `LLMTypes`.
+
+### [2026-05-05] — Speculative Decoding Stability Fix: Disabling Rotating KV Cache
+**What changed:** Gated `maxKVSize` parameter behind the draft model check. Rotating KV caches are not trimmable and thus incompatible with speculative decoding.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** To enable backtracking during speculative decoding verification, we must use a standard trimmable KV cache. `maxKVSize` (Rotating Cache) was accidentally being set unconditionally, which triggered the `KVCacheError`.
+
+### [2026-05-05] — Speculative Decoding Stability Fix: Full KV Optimization Reset
+**What changed:** Gated `kvGroupSize` alongside other KV parameters. Any KV optimization (grouping, quantization, rotating) triggers specialized cache types in MLX that lack the `trim` support required for speculative decoding.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Forced a "Vanilla KV Cache" state during speculative decoding by disabling all quantization and grouping parameters. This ensures the cache remains trimmable at the cost of slightly higher VRAM usage during the speculative session.
+
+### [2026-05-05] — Speculative Decoding Stability Fix: Explicit Parameter Reset
+**What changed:** Forced `kvBits = nil`, `maxKVSize = nil`, `quantizedKVStart = 0`, and `kvGroupSize = 1` when speculative decoding is active.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Explicitly overriding any library or model-specific defaults to ensure the KV cache is created as a standard trimmable buffer. This eliminates the `KVCacheError` by removing all obstacles to backtracking during token verification.
+
+### [2026-05-05] — Speculative Decoding Stability Fix: Cache Re-creation Force
+**What changed:** Implemented a `mainCtx.kvCache = []` reset within the `container.perform` block right before speculative generation.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Resolved a race-like condition where `container.prepare(input:)` would pre-allocate a non-trimmable KV cache based on model configuration before our trimmable `parameters` were applied. By clearing the cache just before generation, we force MLX to re-create a fresh buffer that strictly adheres to the speculative-safe parameters provided.
+
+### [2026-05-05] — Speculative Decoding Architectural Fix: High-Level API Transition
+**What changed:** Migrated from manual prepare/perform sequence to `MLXLMCommon.generate(input:parameters:container:...)` high-level API. Removed all experimental Mirror/Reflection code.
+**Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Manual context management was causing a KV cache mismatch where the cache was created with model defaults before trimmable parameters were applied. Using the high-level API ensures MLX manages the entire lifecycle atomically, creating the correct cache type from the start. This aligns with the "Native Sovereign" requirement for clean, type-safe Swift code.

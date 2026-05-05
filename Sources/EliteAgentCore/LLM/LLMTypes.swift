@@ -145,9 +145,24 @@ public struct CompletionResponse: Codable, Sendable {
     }
 }
 
+public struct SpeculativeDecodingMetrics: Codable, Sendable {
+    public var totalDraftTokensGenerated: Int
+    public var acceptedDraftTokens: Int
+    
+    public init(totalDraftTokensGenerated: Int = 0, acceptedDraftTokens: Int = 0) {
+        self.totalDraftTokensGenerated = totalDraftTokensGenerated
+        self.acceptedDraftTokens = acceptedDraftTokens
+    }
+    
+    public var acceptanceRate: Double {
+        guard totalDraftTokensGenerated > 0 else { return 0.0 }
+        return Double(acceptedDraftTokens) / Double(totalDraftTokensGenerated)
+    }
+}
+
 public enum InferenceChunk: Sendable {
     case token(String)
-    case metrics(promptTokens: Int, completionTokens: Int, tps: Double)
+    case metrics(promptTokens: Int, completionTokens: Int, tps: Double, speculative: SpeculativeDecodingMetrics? = nil)
     case tool(String)
     // Native tool call parsed by mlx-swift-lm (Qwen xmlFunction / OpenAI format)
     case toolCall(name: String, arguments: [String: AnyCodable])
@@ -157,5 +172,6 @@ extension Notification.Name {
     public static let llmProviderSwitched = Notification.Name("app.eliteagent.llmProviderSwitched")
     public static let llmMemoryPressureAvoided = Notification.Name("app.eliteagent.llmMemoryPressureAvoided")
     public static let activeProviderChanged = Notification.Name("app.eliteagent.activeProviderChanged")
+    public static let draftModelLoaded = Notification.Name("app.eliteagent.draftModelLoaded")
 }
 

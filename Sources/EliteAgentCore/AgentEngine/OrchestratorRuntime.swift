@@ -428,7 +428,7 @@ public actor OrchestratorRuntime {
         let maxTokens: Int
         if isLocal {
             systemPrompt = "Sen yardımsever bir asistansın. Kullanıcının dilinde kısa ve doğal yanıt ver. Düşünce sürecini açıklama, doğrudan cevap ver."
-            maxTokens = 256
+            maxTokens = 1024 // 256 was too small: model's <think> block consumed the budget, leaving only truncated text.
         } else {
             systemPrompt = PromptRegistry.getPrompt(for: .chatter(context: "Pure conversation with user"))
             maxTokens = 2000
@@ -1094,7 +1094,7 @@ public actor OrchestratorRuntime {
             "app_launcher": toolSpec(name: "app_launcher", description: "Launch a macOS application by name.", properties: [
                 "app_name": prop("string", "Application name (e.g. 'Safari', 'Finder').")
             ], required: ["app_name"]),
-            "messenger": toolSpec(name: "messenger", description: "Send an iMessage or WhatsApp message.", properties: [
+            "send_message_via_whatsapp_or_imessage": toolSpec(name: "send_message_via_whatsapp_or_imessage", description: "Send an iMessage or WhatsApp message.", properties: [
                 "recipient": prop("string", "Recipient name or phone number."),
                 "message": prop("string", "Message text to send."),
                 "platform": prop("string", "Platform: 'imessage' or 'whatsapp'.")
@@ -1109,9 +1109,26 @@ public actor OrchestratorRuntime {
             "media_control": toolSpec(name: "media_control", description: "Control media playback (play, pause, next, previous, volume).", properties: [
                 "action": prop("string", "Action: play, pause, next, previous, volume_up, volume_down.")
             ], required: ["action"]),
-            "visual_audit": toolSpec(name: "visual_audit", description: "Analyze screen windows, text, and UI elements visually.", properties: [
-                "target": prop("string", "Target window or screen area to analyze.")
-            ], required: [])
+            "visual_audit": toolSpec(name: "visual_audit", description: "Take a screenshot and analyze screen windows, UI elements, and visual data.", properties: [
+                "target": prop("string", "Target window or screen area to analyze. Leave empty for full screen.")
+            ], required: []),
+            "analyze_image": toolSpec(name: "analyze_image", description: "Analyze a local image file for text and interactive elements.", properties: [
+                "path": prop("string", "Absolute path to the image file.")
+            ], required: ["path"]),
+            "web_fetch": toolSpec(name: "web_fetch", description: "Fetch the content of a specific URL and return it as text.", properties: [
+                "url": prop("string", "The URL to fetch.")
+            ], required: ["url"]),
+            "git_action": toolSpec(name: "git_action", description: "Execute git operations (status, commit, push, pull, diff, log).", properties: [
+                "action": prop("string", "Git action: status, commit, push, pull, diff, log, clone."),
+                "path": prop("string", "Repository path."),
+                "message": prop("string", "Commit message (for commit action).")
+            ], required: ["action"]),
+            "patch_file": toolSpec(name: "patch_file", description: "Apply a unified diff patch to a file.", properties: [
+                "path": prop("string", "Absolute path to the file to patch."),
+                "patch": prop("string", "Unified diff content to apply.")
+            ], required: ["path", "patch"]),
+            "get_system_info": toolSpec(name: "get_system_info", description: "Get macOS system information (CPU, RAM, storage, OS version).", properties: [:], required: []),
+            "get_system_telemetry": toolSpec(name: "get_system_telemetry", description: "Get real-time system telemetry: CPU load, memory pressure, thermal state.", properties: [:], required: [])
         ]
 
         return tools.compactMap { schemaMap[$0.name] }

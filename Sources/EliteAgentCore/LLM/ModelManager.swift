@@ -501,6 +501,7 @@ public final class ModelManager: NSObject, ObservableObject {
         do {
             try await InferenceActor.shared.loadDraftModel(at: draftURL)
             await MainActor.run { self.draftModelStatus[mainID] = "" }
+            NotificationCenter.default.post(name: .draftModelLoaded, object: draftID)
             AgentLogger.logInfo("🚀 [DraftManager] Speculative decoding active: \(draftID)")
         } catch {
             await MainActor.run { self.draftModelStatus[mainID] = "" }

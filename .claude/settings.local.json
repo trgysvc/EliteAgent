@@ -23,7 +23,18 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('tokenizer_class:', d.get\\('tokenizer_class'\\)\\); print\\('chat_template_exists:', 'chat_template' in d\\)\")",
       "Bash(curl -sL \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/tokenizer.json\")",
       "Bash(python3 -c ' *)",
-      "Bash(curl -sI \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/model.safetensors\")"
+      "Bash(curl -sI \"https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit/resolve/main/model.safetensors\")",
+      "Bash(awk -F: '{print $3}')",
+      "Bash(curl *)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(git -C /Users/trgysvc/Developer/EliteAgent status --short)",
+      "Bash(mkdir -p /tmp/elitetest)",
+      "Bash(python3 -c \"print\\(1847 * 293\\)\")",
+      "Bash(python3 *)",
+      "Bash(xcodebuild -project EliteAgent.xcodeproj -scheme EliteAgent -configuration Debug build)",
+      "Bash(find ~/Library/Developer/Xcode/DerivedData/EliteAgent-*/SourcePackages/checkouts -name \"*.swift\")",
+      "Bash(xargs -I{} basename {} .swift)"
     ]
   },
   "model": "opusplan"
