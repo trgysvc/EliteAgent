@@ -114,12 +114,23 @@ public actor MLXProvider: LocalLLMProvider {
     /// Splits raw model output into (thinkContent, responseContent).
     /// Handles both <think>...</think> XML tags and the "Thinking Process:" plain text format.
     static func extractThinkBlock(from text: String) -> (think: String, response: String) {
-        // Format A: <think>...</think> XML tags (standard Qwen 3.5 thinking mode)
-        if let startRange = text.range(of: "<think>", options: .caseInsensitive),
-           let endRange = text.range(of: "</think>", options: .caseInsensitive, range: startRange.upperBound..<text.endIndex) {
-            let thinkContent = String(text[startRange.upperBound..<endRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-            let response = String(text[endRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-            return (thinkContent, response.isEmpty ? text : response)
+        // Format A: <think>...</think> or <think>...</thinking> XML tags (standard Qwen 3.5 thinking mode)
+        // The model sometimes uses mismatched closing tags (<think> opened, </thinking> closed).
+        if let startRange = text.range(of: "<think>", options: .caseInsensitive) {
+            // Try </think> first, then </thinking> as fallback
+            let searchRange = startRange.upperBound..<text.endIndex
+            let endRange = text.range(of: "</think>", options: .caseInsensitive, range: searchRange)
+                ?? text.range(of: "</thinking>", options: .caseInsensitive, range: searchRange)
+            
+            if let endRange = endRange {
+                let thinkContent = String(text[startRange.upperBound..<endRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let response = String(text[endRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                // v28.0: Return empty response when nothing follows </think>.
+                // Previous fallback returned full text (including think tags), which polluted
+                // downstream processing (cleanForUI, ThinkParser). Empty response correctly
+                // triggers ProviderError.emptyResponse in the caller.
+                return (thinkContent, response)
+            }
         }
 
         // Format B: "Thinking Process:" plain text (when enable_thinking=true but model ignores XML)

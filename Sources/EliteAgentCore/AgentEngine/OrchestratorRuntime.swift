@@ -179,9 +179,9 @@ public actor OrchestratorRuntime {
         do {
             var turnCount = 0
             var planningTurns = 0
-            let maxPlanningTurns = 10
+            let maxPlanningTurns = 6
             var healingAttempts = 0
-            while currentState != .completed && turnCount < 20 {
+            while currentState != .completed && turnCount < 14 {
                 turnCount += 1
                 
                 if currentState == .planning {
@@ -262,9 +262,14 @@ public actor OrchestratorRuntime {
                     healingAttempts = 0 // Reset on successful transition
                 case .executing:
                     do {
-                        let (shouldContinue, finalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
+                        let (shouldContinue, rawFinalAnswer) = try await handleExecution(provider: provider, context: contextManager, session: session, config: config, useSafeMode: healingAttempts > 0, untrustedContext: untrustedContext)
                         if !shouldContinue {
-                            if let answer = finalAnswer {
+                            if let rawAnswer = rawFinalAnswer {
+                                // v28.1: Clean think blocks before display.
+                                // handleExecution returns raw text that may contain <think>...</think> or
+                                // "Thinking Process:" preamble. Must strip before UI display.
+                                let cleaned = self.stripThinkingOutput(from: ThinkParser.cleanForUI(text: rawAnswer))
+                                let answer = cleaned.isEmpty ? rawAnswer : cleaned
                                 let trimmed = answer.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                                 if trimmed != "TASK_DONE" && !trimmed.isEmpty {
                                     // v24.0: Collision Guard. Enhanced semantic check.
@@ -578,21 +583,16 @@ public actor OrchestratorRuntime {
         let isLocal = provider.providerType == .local
         let maxTokens = isLocal ? 1024 : 4000
 
-        // Native tool calling path: local providers use mlx-swift-lm xmlFunction format (Qwen 3.5).
-        // The chat template injects tool definitions; the model responds with <tool_call> blocks
-        // which mlx-swift-lm parses into CompletionResponse.toolCalls.
-        let finalSystemPrompt: String
-        let requestTools: [[String: any Sendable]]?
-        if isLocal {
-            let nativeBase = PlannerTemplate.generateNativeToolCallingSystemPrompt(workspace: session.workspaceURL.path)
-            finalSystemPrompt = progressBlock.isEmpty ? nativeBase : nativeBase + progressBlock
-            let specs = buildToolSpecs(for: toolSubset ?? [])
-            requestTools = specs.isEmpty ? nil : specs
-        } else {
-            let speedHint = "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE EXTREMELY CONCISE but NEVER omit mandatory tool parameters (e.g. location, text, recipient).]"
-            finalSystemPrompt = systemPrompt + speedHint
-            requestTools = nil
-        }
+        // v28.0: Unified UBID Path for all providers.
+        // Native xmlFunction path disabled — Qwen 3.5 with swift-jinja does not reliably
+        // produce <tool_call> blocks. The model generates <think> then EOS without ever
+        // emitting tool call XML, causing a 20-turn death loop. All providers now use the
+        // proven CALL([UBID]) WITH {} text format via generateAgenticPrompt.
+        let speedHint = isLocal
+            ? "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE CONCISE. ALWAYS use CALL([UBID]) WITH {} format for tool calls. NEVER output plain text describing what you will do — ACT NOW.]"
+            : "\n[CONSTRAINT: MIRROR USER LANGUAGE. BE EXTREMELY CONCISE but NEVER omit mandatory tool parameters (e.g. location, text, recipient).]"
+        let finalSystemPrompt = systemPrompt + speedHint
+        let requestTools: [[String: any Sendable]]? = nil
 
         let request = CompletionRequest(
             taskID: UUID().uuidString,
@@ -600,7 +600,7 @@ public actor OrchestratorRuntime {
             messages: history,
             maxTokens: maxTokens,
             sensitivityLevel: .public,
-            complexity: isLocal ? 1 : 3,
+            complexity: 3,
             untrustedContext: untrustedContext,
             tools: requestTools
         )
@@ -612,8 +612,8 @@ public actor OrchestratorRuntime {
         await trajectoryRecorder?.record(.assistantMessage(content: response.content, timestamp: Date()))
         if let think = response.thinkBlock { AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "🧠 [PLAN THINK] \(think)") }
 
-        // Store full response so handleExecution can pick up native tool calls.
-        self.lastPlanningResponse = isLocal ? response : nil
+        // v28.0: Native tool calling disabled — UBID path handles all providers.
+        self.lastPlanningResponse = nil
 
         // v1.1: İlk planning turunda model adım listesi üretirse tracker'a kaydet
         let tracker = session.progressTracker
@@ -666,7 +666,8 @@ public actor OrchestratorRuntime {
                 } else if output.type == .tool_call, let action = output.action {
                     toolBlocks.append(ToolCall(tool: action, params: output.params ?? [:]))
                 } else if output.type == .response, let text = output.content {
-                    finalAnswer = text
+                    // v28.1: Clean think blocks from response text before using as finalAnswer.
+                    finalAnswer = ThinkParser.cleanForUI(text: text)
                 }
             }
         }
@@ -921,15 +922,26 @@ public actor OrchestratorRuntime {
         let lastHistory = await context.getMessages()
         let lastResponse = lastHistory.last?.content ?? ""
         
-        // v19.8: Contextual Review - Extract the last observation for the Critic
+        // v28.2: Auto-pass when a widget has already been rendered.
+        // Widget tasks (weather, system telemetry) are complete once the widget is shown.
+        // Running the critic on these wastes tokens and risks false rejections.
         let lastObservation = lastHistory.last(where: { $0.content.hasPrefix("Observation:") })?.content ?? "No observation found."
+        if lastObservation.contains("_widget]") || lastObservation.contains("_WIDGET]") {
+            AgentLogger.logAudit(level: .info, agent: "Orchestrator", message: "⚖️ [REVIEW] [SCORE: 10] [RESULT: UNOB:PASS] (Widget auto-pass)")
+            return true
+        }
         
         let systemPrompt = PromptRegistry.getPrompt(for: .critic(task: prompt, observation: lastObservation, output: lastResponse))
         
         // v19.5: Binary Review (No JSON)
         let request = CompletionRequest(taskID: UUID().uuidString, systemPrompt: systemPrompt, messages: [], maxTokens: 500, sensitivityLevel: .public, complexity: 1)
         let response = try await provider.complete(request, useSafeMode: false)
-        let resultString = response.content.uppercased()
+        
+        // v28.2: Strip think blocks before checking for PASS/FAIL.
+        // The model sometimes outputs a massive <think> analysis without ever producing
+        // the required [SCORE: X] [RESULT: UNOB:PASS] output → always fails.
+        let cleanedReview = ThinkParser.cleanForUI(text: response.content)
+        let resultString = (cleanedReview.isEmpty ? response.content : cleanedReview).uppercased()
         let passed = resultString.contains("UNOB:PASS") || resultString.contains("SCORE: 10") || resultString.contains("SCORE: 9")
         
         // v20.5: Programmatic Fidelity Guard (Veto Power)

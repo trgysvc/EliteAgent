@@ -185,13 +185,12 @@ public actor InferenceActor {
         parameters.topP = 0.9
         parameters.minP = 0.05
 
-        // additionalContext: always nil. Passing enable_thinking=false (or 0) through swift-jinja
-        // breaks because Value.compare() has no boolean case (sameas) and isEquivalent() type
-        // mismatch (Int vs Bool) causes the template's != false check to return true, forcing
-        // <think> into the generation prompt and consuming the token budget before the real answer.
-        // The model self-selects thinking vs no-thinking based on task complexity.
-        // Think blocks are cleaned by extractThinkBlock in MLXProvider.complete().
-        let additionalContext: [String: any Sendable]? = nil
+        // v28.0: enable_thinking control via additionalContext.
+        // The tokenizer_config.json chat_template was patched to use == instead of sameas
+        // (swift-jinja Value.compare() has no boolean case). Bool false now works correctly.
+        // enableThinking=false for chat/classification skips <think> blocks → faster responses.
+        // enableThinking=true (nil context) lets the model self-select thinking for planning.
+        let additionalContext: [String: any Sendable]? = enableThinking ? nil : ["enable_thinking": false]
 
         return AsyncStream(InferenceChunk.self) { continuation in
             let task = Task { [parameters] in
@@ -368,7 +367,7 @@ public actor InferenceActor {
         guard let mainContainer = modelContainer else { return }
         // Return Bool (Sendable) — returning [any KVCache] across the @Sendable closure boundary
         // violates Swift 6 data-race safety since KVCache is not Sendable.
-        let allTrimmable = try await mainContainer.perform { ctx in
+        let allTrimmable = await mainContainer.perform { ctx in
             ctx.model.newCache(parameters: nil).allSatisfy { $0.isTrimmable }
         }
         guard allTrimmable else {

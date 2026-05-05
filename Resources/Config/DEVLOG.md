@@ -1,6 +1,30 @@
 # 🛰️ ELITE AGENT — Gelişim Günlüğü (DEVLOG)
 
-### [2026-05-05] — Speculative Decoding KVCacheError Fallback + Chat Template Eksikliği
+### [2026-05-05] — v28.2: Review Döngüsü Düzeltmesi + Widget Auto-Pass + Turn Limit Azaltma
+**What changed:** Xcode loglarında tespit edilen 3 kritik sorun düzeltildi:
+1. **Reviewer `<think>` bloğu üretip skor vermiyor** — Critic modeli dev bir `<think>` analizi yapıp hiç `[SCORE: X] [RESULT: UNOB:PASS]` üretmiyordu → `resultString.contains("UNOB:PASS")` her zaman false → sonsuz döngü. Fix: `handleReview`'de `ThinkParser.cleanForUI()` reviewer yanıtına uygulanıp think blokları temizlendikten sonra PASS/FAIL kontrolü yapılıyor.
+2. **Widget görevleri gereksiz review'e giriyor** — Hava durumu widget'ı veya SystemDNA widget'ı zaten render edildikten sonra critic hâlâ "objective evidence yok" diye reject ediyordu. Fix: `handleReview`'e widget auto-pass eklendi — observation'da `_widget]` veya `_WIDGET]` varsa otomatik PASS.
+3. **Tur limitleri çok yüksek** — `maxPlanningTurns=10`, `turnCount<20` basit görevler için çok fazla. Azaltıldı: `maxPlanningTurns=6`, `turnCount<14`. Bu, basit tool-call görevlerinin 6 planning turunda bitmesini zorunlu kılıyor.
+**Files modified:** `OrchestratorRuntime.swift`
+**Decision made:** Widget render edildikten sonra critic çağırmak gereksiz token israfı ve gecikme nedeni. Auto-pass bu durumda güvenli çünkü widget zaten doğru veriyi gösteriyor. Think block temizliği review'de de kritik — model complexity=1 ile bile `<think>` blokları üretebiliyor.
+**Next:** Uygulamayı Xcode'dan yeniden çalıştır ve "cpu yükü, ram baskısı ve termal durumu göster" testini tekrarla.
+
+### [2026-05-05] — v28.1: Think Block UI Sızıntısı + Yanlış Sınıflandırma Düzeltmesi
+**What changed:** Üç kritik sorun düzeltildi:
+1. **Think blokları UI'da görünüyordu** — `handleExecution` sonucu `onChatMessage`'e gönderilirken `cleanForUI()` ve `stripThinkingOutput()` çağrılmıyordu. Artık tüm UI çıktıları temizleniyor. Ayrıca `ThinkParser.parseOutputs`'dan gelen `finalAnswer`'a da `cleanForUI` uygulanıyor.
+2. **Yanlış sınıflandırma** — "bugün tarih ne" → RESEARCH (doğrusu CHAT), "357 çarpı 84'ü hesapla" → TASK (doğrusu CHAT). ANEInferenceActor'a `simpleQuestionMarkers` (tarih, saat, hesapla, çarpı, nedir, ne demek, kim, nerede, vb.) eklendi. Bu basit sorular artık `.chat` olarak sınıflandırılıp 1 turda cevaplanıyor (eskiden 16 tura çıkıyordu).
+3. **Eşleşmeyen tag'ler** — Model `<think>...</thinking>` üretiyor (mismatched). `extractThinkBlock` sadece `</think>` arıyordu → `</thinking>` fallback eklendi. `ThinkParser.cleanForUI`'ye 4 explicit think pattern eklendi (standard, mismatched, full, unclosed).
+**Files modified:** `OrchestratorRuntime.swift`, `ANEInferenceActor.swift`, `MLXProvider.swift`, `ThinkParser.swift`
+**Decision made:** Basit sorular (tarih, saat, hesaplama, bilgi soruları) ANE düzeyinde `.chat` olarak yakalanıp doğrudan `handleChatting`'e yönlendiriliyor. Bu, LLM sınıflandırma turunu ve ardından gelen planlama döngüsünü tamamen atlıyor — tek turda cevap.
+**Next:** Uygulamayı Xcode'dan yeniden çalıştır. Test: "bugün tarih ne", "357 çarpı 84", "merhaba". Hepsi CHAT olarak sınıflandırılmalı ve temiz, think-block'suz cevap vermelidir.
+
+### [2026-05-05] — v28.0: Local Tool Calling Fix — Unified UBID Path + extractThinkBlock + enable_thinking
+**What changed:** Local model (Qwen 3.5) hiç tool call üretmiyordu — 20 tur boyunca `<think>I need to call the tool...</think>` üretip duruyordu, `<tool_call>` XML asla üretilmiyordu. Kök neden: native xmlFunction yolu Qwen 3.5 + swift-jinja ile çalışmıyor. Fix: (1) `handlePlanning()` local providers'ı `generateAgenticPrompt` (UBID yolu) kullanacak şekilde değiştirildi — native tool calling devre dışı, (2) `complexity=3` ile model planning modunda think edebiliyor, (3) `lastPlanningResponse` her zaman nil, (4) `extractThinkBlock` boş response fallback'i düzeltildi — `</think>` sonrası boşsa raw text yerine boş string dönüyor, (5) `enable_thinking` kontrolü geri etkinleştirildi (tokenizer_config.json'daki sameas→== fix'i sayesinde Bool false çalışıyor).
+**Files modified:** `Sources/EliteAgentCore/AgentEngine/OrchestratorRuntime.swift`, `Sources/EliteAgentCore/LLM/MLXProvider.swift`, `Sources/EliteAgentCore/LLM/InferenceActor.swift`
+**Decision made:** Native xmlFunction path Qwen 3.5 ile mimari olarak uyumsuz (model `<tool_call>` XML üretmiyor). Tüm providers UBID `CALL([UBID]) WITH {}` metin formatı üzerinden çalışıyor — bu yol kanıtlanmış ve güvenilir. Native path dead code olarak korunuyor, swift-jinja olgunlaştığında tekrar denenebilir.
+**Next:** Uygulamayı Xcode'dan yeniden çalıştır ve `mac'imin işlemci ve ram bilgilerini ver` ile tool calling'i test et.
+
+
 **What changed:** `InferenceActor.generate()` speculative decoding dalına KVCacheError fallback eklendi. Araştırma bulgusu: `RotatingKVCache` (maxKVSize > 0 olduğunda yaratılır) trimmable DEĞİL; dolayısıyla speculative decoding ile uyumlu değil. `QuantizedKVCache` trimmable, `KVCacheSimple` trimmable. Speculative decoding başarısız olduğunda: (1) `draftModelContainer = nil` ile draft model devre dışı bırakılır, (2) `inputFallback` box'ı üzerinden standart generation'a geçilir — mevcut istek yanıtsız kalmaz. `quantizedKVStart = 0` ve `kvGroupSize = 1` parametreleri speculative dalından kaldırıldı. Her iki model dizinine Qwen3 resmi chat_template eklendi.
 **Files modified:** `Sources/EliteAgentCore/LLM/InferenceActor.swift`, `~/Library/Application Support/EliteAgent/Models/qwen-3.5-9b-4bit/tokenizer_config.json`, `~/Library/Application Support/EliteAgent/Models/qwen-3.5-0.8b-4bit/tokenizer_config.json`
 **Decision made:** Speculative decoding için robust fallback pattern: try-catch ile SpecDec dene, KVCacheError'da draftModelContainer'ı nil yap ve standard generate'e düş. İki UnsafeTransferBox (inputBox + inputFallback) aynı LMInput'u bağımsız tutmak için kullanılır.

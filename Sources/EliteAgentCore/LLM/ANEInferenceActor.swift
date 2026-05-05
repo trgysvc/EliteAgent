@@ -34,6 +34,19 @@ public actor ANEInferenceActor {
             return .chat
         }
 
+        // v28.1: Simple Question Guard — trivial questions should be CHAT, not TASK/RESEARCH.
+        // These cause full planning loops with tool calls for things the model can answer directly.
+        let simpleQuestionMarkers = [
+            "tarih ne", "saat ne", "saat kaç", "gün ne", "hangi gün",
+            "hesapla", "çarpı", "bölü", "artı", "eksi", "kaç eder", "kaçtır", "topla",
+            "kaç yaşında", "nedir", "ne demek", "kim", "nerede", "ne zaman",
+            "what time", "what date", "what day", "calculate", "how old", "what is",
+            "kaç", "kaçta"
+        ]
+        if simpleQuestionMarkers.contains(where: { lowerPrompt.contains($0) }) {
+            return .chat
+        }
+
         // 2. Keyword-based Zero-Latency ANE-level logic (simulated for now)
         if lowerPrompt.contains("hava") || lowerPrompt.contains("sıcaklık") {
             return .weather

@@ -6,8 +6,21 @@ public final class ThinkParser {
     public static func cleanForUI(text: String) -> String {
         var cleaned = text
         
-        // v26.0: Global XML-Style Tag Purge (Covers <think>, <final>, <step>, etc.)
-        // This is a catch-all for any model-generated protocol tags.
+        // v28.1: Explicit think block removal (handles mismatched tags).
+        // The model often outputs <think>...</thinking> or <think>...</think> with varying content.
+        // These MUST be stripped before any other processing.
+        let thinkPatterns = [
+            "<think>[\\s\\S]*?</think>",        // Standard: <think>...</think>
+            "<think>[\\s\\S]*?</thinking>",      // Mismatched: <think>...</thinking>
+            "<thinking>[\\s\\S]*?</thinking>",   // Full: <thinking>...</thinking>
+            "<think>[\\s\\S]*$"                   // Unclosed: <think>... (no closing tag)
+        ]
+        for pattern in thinkPatterns {
+            cleaned = cleaned.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive], range: nil)
+        }
+        
+        // v26.0: Global XML-Style Tag Purge (Covers <final>, <step>, etc.)
+        // This is a catch-all for any remaining model-generated protocol tags.
         let xmlPattern = "<[^>]+>[\\s\\S]*?<\\/[^>]+>"
         cleaned = cleaned.replacingOccurrences(of: xmlPattern, with: "", options: .regularExpression, range: nil)
         
